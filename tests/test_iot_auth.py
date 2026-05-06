@@ -1,4 +1,5 @@
 """Auth and scope enforcement tests for /iot endpoints."""
+
 from __future__ import annotations
 
 import json
@@ -53,7 +54,9 @@ def test_iot_scope_enforcement(monkeypatch, tmp_path):
     write_headers = {"X-ORIUS-Key": "write-key"}
     rw_headers = {"X-ORIUS-Key": "rw-key"}
 
-    write_with_read_scope = client.post("/iot/telemetry", json=_telemetry_payload("scope-d1"), headers=read_headers)
+    write_with_read_scope = client.post(
+        "/iot/telemetry", json=_telemetry_payload("scope-d1"), headers=read_headers
+    )
     read_with_write_scope = client.get("/iot/state", params={"device_id": "scope-d1"}, headers=write_headers)
     assert write_with_read_scope.status_code == 401
     assert read_with_write_scope.status_code == 401

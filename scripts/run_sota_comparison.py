@@ -26,26 +26,23 @@ Usage::
     python scripts/run_sota_comparison.py [--seeds 3] [--rows 48] \\
         [--out reports/sota_comparison]
 """
+
 from __future__ import annotations
 
 import argparse
-import csv
 import json
-import math
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
-from orius.adapters.aerospace import AerospaceTrackAdapter
-from orius.adapters.battery import BatteryTrackAdapter
-from orius.adapters.healthcare import HealthcareTrackAdapter, HealthcareDomainAdapter
-from orius.adapters.industrial import IndustrialTrackAdapter, IndustrialDomainAdapter
-from orius.adapters.navigation import NavigationTrackAdapter, NavigationDomainAdapter
-from orius.adapters.vehicle import VehicleTrackAdapter, VehicleDomainAdapter
-from orius.adapters.aerospace import AerospaceDomainAdapter
+from orius.adapters.aerospace import AerospaceDomainAdapter, AerospaceTrackAdapter
+from orius.adapters.healthcare import HealthcareDomainAdapter, HealthcareTrackAdapter
+from orius.adapters.industrial import IndustrialDomainAdapter, IndustrialTrackAdapter
+from orius.adapters.navigation import NavigationDomainAdapter, NavigationTrackAdapter
+from orius.adapters.vehicle import VehicleDomainAdapter, VehicleTrackAdapter
 from orius.orius_bench.controller_api import DomainAwareController, NominalController
 from orius.orius_bench.fault_engine import active_faults, generate_fault_schedule
 from orius.sota_baselines import STRATEGIES, STRATEGY_LABELS, wrap_adapter
@@ -64,34 +61,34 @@ _TRACKS = [
 ]
 
 _QUANTILES: dict[str, float] = {
-    "battery":    5.0,
-    "vehicle":    0.9,
+    "battery": 5.0,
+    "vehicle": 0.9,
     "healthcare": 5.0,
     "industrial": 30.0,
-    "aerospace":  5.0,
+    "aerospace": 5.0,
     "navigation": 1.0,
 }
 
 _CFGS: dict[str, dict[str, Any]] = {
-    "battery":    {},
-    "vehicle":    {"expected_cadence_s": 0.25},
+    "battery": {},
+    "vehicle": {"expected_cadence_s": 0.25},
     "healthcare": {"expected_cadence_s": 1.0},
     "industrial": {"expected_cadence_s": 3600.0},
-    "aerospace":  {"expected_cadence_s": 1.0},
+    "aerospace": {"expected_cadence_s": 1.0},
     "navigation": {"expected_cadence_s": 0.25},
 }
 
 _HOLD_KEYS: dict[str, tuple[str, ...]] = {
-    "vehicle":    ("position_m", "speed_mps", "speed_limit_mps", "lead_position_m"),
+    "vehicle": ("position_m", "speed_mps", "speed_limit_mps", "lead_position_m"),
     "healthcare": ("hr_bpm", "spo2_pct", "respiratory_rate"),
     "industrial": ("temp_c", "vacuum_cmhg", "pressure_mbar", "humidity_pct", "power_mw"),
-    "aerospace":  ("altitude_m", "airspeed_kt", "bank_angle_deg", "fuel_remaining_pct"),
+    "aerospace": ("altitude_m", "airspeed_kt", "bank_angle_deg", "fuel_remaining_pct"),
     "navigation": ("x", "y", "vx", "vy"),
 }
 
 
 def _iso_ts(step: int) -> str:
-    ts = datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=step)
+    ts = datetime(2026, 1, 1, tzinfo=UTC) + timedelta(seconds=step)
     return ts.isoformat().replace("+00:00", "Z")
 
 
@@ -113,8 +110,11 @@ def _make_constraints(domain: str, state: dict[str, Any]) -> dict[str, Any]:
     if domain == "vehicle":
         return {
             "speed_limit_mps": float(state.get("speed_limit_mps", 30.0)),
-            "accel_min_mps2": -5.0, "accel_max_mps2": 3.0,
-            "dt_s": 0.25, "min_headway_m": 5.0, "headway_time_s": 2.0,
+            "accel_min_mps2": -5.0,
+            "accel_max_mps2": 3.0,
+            "dt_s": 0.25,
+            "min_headway_m": 5.0,
+            "headway_time_s": 2.0,
         }
     if domain == "healthcare":
         return {"spo2_min_pct": 90.0, "hr_min_bpm": 40.0, "hr_max_bpm": 120.0}
@@ -195,7 +195,7 @@ def _run_episode(
         intervention = any(
             abs(float(action.get(k, 0)) - float(candidate.get(k, 0))) > 1e-9
             for k in set(action) | set(candidate)
-            if isinstance(action.get(k, 0), (int, float))
+            if isinstance(action.get(k, 0), int | float)
         )
 
         new_state = track.step(action)
@@ -212,7 +212,13 @@ def _run_episode(
     ir = interventions / horizon if horizon > 0 else 0.0
     p95 = float(np.percentile(latencies_ms, 95)) if latencies_ms else 0.0
 
-    return {"tsvr": tsvr, "ir": ir, "latency_p95_ms": p95, "violations": violations, "interventions": interventions}
+    return {
+        "tsvr": tsvr,
+        "ir": ir,
+        "latency_p95_ms": p95,
+        "violations": violations,
+        "interventions": interventions,
+    }
 
 
 def _run_domain(
@@ -235,8 +241,8 @@ def _run_domain(
         lats = [r["latency_p95_ms"] for r in seed_results]
         results[strategy] = {
             "tsvr_mean": float(np.mean(tsvrs)),
-            "tsvr_std":  float(np.std(tsvrs)),
-            "ir_mean":   float(np.mean(irs)),
+            "tsvr_std": float(np.std(tsvrs)),
+            "ir_mean": float(np.mean(irs)),
             "latency_p95_mean_ms": float(np.mean(lats)),
             "seed_results": seed_results,
         }
@@ -265,7 +271,7 @@ def _write_latex_table(domain_results: list[dict[str, Any]], out_path: Path) -> 
     cmidrules = []
     col = 2
     for _ in STRATEGIES:
-        cmidrules.append(f"\\cmidrule(lr){{{col}--{col+1}}}")
+        cmidrules.append(f"\\cmidrule(lr){{{col}--{col + 1}}}")
         col += 2
     lines.append(" ".join(cmidrules))
     # Header row 2: TSVR / IR per strategy
@@ -306,6 +312,7 @@ def _write_figure(domain_results: list[dict[str, Any]], out_path: Path) -> None:
     """Write a grouped bar chart comparing strategies across domains."""
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except ImportError:
@@ -321,18 +328,34 @@ def _write_figure(domain_results: list[dict[str, Any]], out_path: Path) -> None:
     for i, strategy in enumerate(STRATEGIES):
         tsvrs = [dr[strategy]["tsvr_mean"] * 100.0 for dr in domain_results]
         offset = (i - 1.5) * width
-        bars = ax.bar(x + offset, tsvrs, width, label=STRATEGY_LABELS[strategy],
-                      color=colors[i], alpha=0.85, edgecolor="white")
-        for bar, val in zip(bars, tsvrs):
+        bars = ax.bar(
+            x + offset,
+            tsvrs,
+            width,
+            label=STRATEGY_LABELS[strategy],
+            color=colors[i],
+            alpha=0.85,
+            edgecolor="white",
+        )
+        for bar, val in zip(bars, tsvrs, strict=False):
             if val > 0.5:
-                ax.text(bar.get_x() + bar.get_width() / 2.0, bar.get_height() + 0.2,
-                        f"{val:.1f}", ha="center", va="bottom", fontsize=7, rotation=45)
+                ax.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    bar.get_height() + 0.2,
+                    f"{val:.1f}",
+                    ha="center",
+                    va="bottom",
+                    fontsize=7,
+                    rotation=45,
+                )
 
     ax.set_xticks(x)
     ax.set_xticklabels([d.replace("_", "\n").title() for d in domains], fontsize=9)
     ax.set_ylabel("True-State Violation Rate (%)")
-    ax.set_title("SOTA Safety-Strategy Comparison Across All ORIUS Domains\n"
-                 "(Standard fault schedule: 15% dropout, 8% spike, 10% stale)")
+    ax.set_title(
+        "SOTA Safety-Strategy Comparison Across All ORIUS Domains\n"
+        "(Standard fault schedule: 15% dropout, 8% spike, 10% stale)"
+    )
     ax.legend(loc="upper right", fontsize=9)
     ax.set_ylim(bottom=0)
     ax.spines["top"].set_visible(False)
@@ -345,8 +368,7 @@ def _write_figure(domain_results: list[dict[str, Any]], out_path: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="SOTA safety-strategy comparison")
     parser.add_argument("--seeds", type=int, default=3)
-    parser.add_argument("--rows", type=int, default=48,
-                        help="Episode horizon (steps per seed)")
+    parser.add_argument("--rows", type=int, default=48, help="Episode horizon (steps per seed)")
     parser.add_argument("--out", default="reports/sota_comparison")
     args = parser.parse_args()
 
@@ -362,9 +384,9 @@ def main() -> None:
         dr = _run_domain(track, seeds=args.seeds, horizon=args.rows)
         domain_results.append(dr)
         dc3s_tsvr = dr["dc3s"]["tsvr_mean"] * 100.0
-        tube_tsvr  = dr["tube_mpc"]["tsvr_mean"] * 100.0
-        cbf_tsvr   = dr["cbf"]["tsvr_mean"] * 100.0
-        lag_tsvr   = dr["lagrangian"]["tsvr_mean"] * 100.0
+        tube_tsvr = dr["tube_mpc"]["tsvr_mean"] * 100.0
+        cbf_tsvr = dr["cbf"]["tsvr_mean"] * 100.0
+        lag_tsvr = dr["lagrangian"]["tsvr_mean"] * 100.0
         print(f"DC3S={dc3s_tsvr:.1f}%  TubeMPC={tube_tsvr:.1f}%  CBF={cbf_tsvr:.1f}%  Lag={lag_tsvr:.1f}%")
 
     # Write JSON

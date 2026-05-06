@@ -8,14 +8,15 @@ Runs the benchmark twice with identical seeds/horizon and verifies:
 
 Writes: reports/orius_bench/replay_test.log
 """
+
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import subprocess
 import sys
 import tempfile
-import argparse
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -31,9 +32,12 @@ def _run_benchmark(out_dir: Path, seeds: int = 2, horizon: int = 24) -> int:
     cmd = [
         sys.executable,
         str(REPO / "scripts" / "run_orius_bench_release.py"),
-        "--seeds", str(seeds),
-        "--horizon", str(horizon),
-        "--out", str(out_dir),
+        "--seeds",
+        str(seeds),
+        "--horizon",
+        str(horizon),
+        "--out",
+        str(out_dir),
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(REPO))
     return result.returncode
@@ -117,7 +121,7 @@ def main() -> int:
         if meta_path.exists():
             meta = _load_json(meta_path)
             lines.append("Run metadata:")
-            lines.append(f"  PASS: run_metadata.json exists")
+            lines.append("  PASS: run_metadata.json exists")
             lines.append(f"  seeds: {meta.get('seeds', [])}")
             lines.append(f"  horizon: {meta.get('horizon')}")
             lines.append(f"  n_runs: {meta.get('n_runs')}")
@@ -126,7 +130,9 @@ def main() -> int:
             lines.append("  FAIL: run_metadata.json missing")
 
     lines.append("")
-    lines.append("Step 4.3 Replayability: CLOSED" if rc1 == 0 and rc2 == 0 else "Step 4.3 Replayability: FAILED")
+    lines.append(
+        "Step 4.3 Replayability: CLOSED" if rc1 == 0 and rc2 == 0 else "Step 4.3 Replayability: FAILED"
+    )
 
     log_path.write_text("\n".join(lines))
     print(f"Wrote {log_path}")

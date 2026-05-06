@@ -8,6 +8,7 @@ Produces:
 - fig_degradation_trajectory.png
 - intervention_trace.json
 """
+
 from __future__ import annotations
 
 import argparse

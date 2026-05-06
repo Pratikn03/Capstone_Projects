@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build canonical healthcare runtime artifacts for the promoted MIMIC row."""
+
 from __future__ import annotations
 
 import argparse
@@ -9,8 +10,9 @@ import json
 import math
 import sys
 import time
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 import duckdb
 import pandas as pd
@@ -35,20 +37,30 @@ from orius.dc3s.certificate import recompute_certificate_hash, store_certificate
 from orius.orius_bench.controller_api import DC3SController, DomainAwareController, NominalController
 from orius.orius_bench.fault_engine import active_faults, generate_fault_schedule
 from orius.orius_bench.metrics_engine import StepRecord, compute_all_metrics
+from orius.universal_framework import run_universal_step
 from orius.universal_theory.domain_runtime_contracts import (
     HEALTHCARE_FAIL_SAFE_CONTRACT_ID,
     witness_trace_fields_from_result,
 )
-from orius.universal_framework import run_universal_step
 
-
-DEFAULT_DATASET_PATH = REPO_ROOT / "data" / "healthcare" / "mimic3" / "processed" / "mimic3_healthcare_orius.csv"
+DEFAULT_DATASET_PATH = (
+    REPO_ROOT / "data" / "healthcare" / "mimic3" / "processed" / "mimic3_healthcare_orius.csv"
+)
 DEFAULT_OUT_DIR = REPO_ROOT / "reports" / "healthcare"
 TABLE_NAME = "dispatch_certificates"
 HEALTHCARE_CFG = {
     "expected_cadence_s": 1.0,
     "runtime_surface": "mimic_monitoring_replay",
     "closure_tier": "runtime_contract_closed",
+    # Project interval-only uncertainty cases when current vitals retain a
+    # one-unit margin; true unsafe or missing telemetry still routes to max alert.
+    "graded_alert_projection_margin": 1.0,
+    # For projected-safe states, preserve the candidate hold action. Max-alert
+    # fallback remains mandatory for missing telemetry or truly unsafe vitals.
+    "graded_alert_floor": 0.0,
+    "graded_alert_base": 0.0,
+    "graded_alert_reliability_weight": 0.0,
+    "graded_alert_margin_weight": 0.0,
 }
 
 
@@ -148,11 +160,9 @@ def _summary_row(controller_name: str, records: list[StepRecord]) -> dict[str, A
     fallback_activation_rate = sum(1 for record in records if record.fallback_used) / n_steps
     useful_work_total = sum(float(record.useful_work) for record in records)
     useful_work_mean = useful_work_total / n_steps
-    max_alert_rate = sum(
-        1
-        for record in records
-        if float(record.action.get("alert_level", 0.0) or 0.0) >= 0.999
-    ) / n_steps
+    max_alert_rate = (
+        sum(1 for record in records if float(record.action.get("alert_level", 0.0) or 0.0) >= 0.999) / n_steps
+    )
     return {
         "controller": controller_name,
         "tsvr": metrics.tsvr,
@@ -269,8 +279,12 @@ def _trace_row(
         "prev_hash": str(certificate_payload.get("prev_hash", "") or ""),
         "issuer": str(certificate_payload.get("issuer", "")),
         "domain": str(certificate_payload.get("domain", "")),
-        "action": json.dumps(certificate_payload.get("action", {}), sort_keys=True) if certificate_payload else "",
-        "theorem_contracts": json.dumps(certificate_payload.get("theorem_contracts", {}), sort_keys=True) if certificate_payload else "",
+        "action": json.dumps(certificate_payload.get("action", {}), sort_keys=True)
+        if certificate_payload
+        else "",
+        "theorem_contracts": json.dumps(certificate_payload.get("theorem_contracts", {}), sort_keys=True)
+        if certificate_payload
+        else "",
         "validity_scope": validity_scope,
         "validity_theorem_id": validity_theorem_id,
         "validity_theorem_contract": validity_theorem_contract,
@@ -307,14 +321,22 @@ def _healthcare_policy_action(
     candidate_action: Mapping[str, Any],
 ) -> tuple[dict[str, float], str]:
     if policy_name == "baseline":
-        return {"alert_level": float(candidate_action.get("alert_level", 0.0) or 0.0)}, "nominal_deterministic_controller"
+        return {
+            "alert_level": float(candidate_action.get("alert_level", 0.0) or 0.0)
+        }, "nominal_deterministic_controller"
     if policy_name == "predictor_only_no_runtime":
-        return {"alert_level": float(candidate_action.get("alert_level", 0.0) or 0.0)}, "predictor_only_no_runtime"
+        return {
+            "alert_level": float(candidate_action.get("alert_level", 0.0) or 0.0)
+        }, "predictor_only_no_runtime"
     if policy_name == "fixed_conservative_alert":
         return {"alert_level": 0.65}, "fixed_conservative_alert"
     if policy_name == "ews_threshold":
         reliability = _finite_float_or_none(observed_state.get("reliability"))
-        alert = 1.0 if _observed_vitals_unsafe(observed_state) or (reliability is not None and reliability < 0.2) else 0.25
+        alert = (
+            1.0
+            if _observed_vitals_unsafe(observed_state) or (reliability is not None and reliability < 0.2)
+            else 0.25
+        )
         return {"alert_level": float(alert)}, "ews_threshold"
     if policy_name == "conformal_alert_only":
         try:
@@ -355,7 +377,9 @@ def _run_policy_episode(
         safe_action, policy_family = _healthcare_policy_action(policy_name, observed_state, candidate_action)
         latency_us = (time.perf_counter_ns() - latency_start) / 1_000.0
 
-        release_requires = bool(_observed_vitals_unsafe(observed_state) and float(safe_action.get("alert_level", 0.0)) >= 0.999)
+        release_requires = bool(
+            _observed_vitals_unsafe(observed_state) and float(safe_action.get("alert_level", 0.0)) >= 0.999
+        )
         contract_state = {
             **contract_state,
             **safe_action,
@@ -364,9 +388,13 @@ def _run_policy_episode(
             "runtime_policy_family": policy_family,
         }
         violation = track.check_violation(contract_state)
-        observed_safe = track.observed_constraint_satisfied({**observed_state, **safe_action, "release_requires_max_alert": release_requires})
+        observed_safe = track.observed_constraint_satisfied(
+            {**observed_state, **safe_action, "release_requires_max_alert": release_requires}
+        )
         true_margin = track.constraint_margin(contract_state)
-        observed_margin = track.constraint_margin({**observed_state, **safe_action, "release_requires_max_alert": release_requires})
+        observed_margin = track.constraint_margin(
+            {**observed_state, **safe_action, "release_requires_max_alert": release_requires}
+        )
         trajectory.append(dict(contract_state))
         useful_work = track.compute_useful_work(trajectory[-2:] if len(trajectory) >= 2 else [trajectory[-1]])
         track.step(safe_action)
@@ -487,7 +515,9 @@ def _policy_summary_from_trace(policy_name: str, trace_rows: list[dict[str, Any]
     }
 
 
-def _run_baseline_episode(track: HealthcareTrackAdapter, patient_id: str, horizon: int) -> tuple[list[StepRecord], list[dict[str, Any]]]:
+def _run_baseline_episode(
+    track: HealthcareTrackAdapter, patient_id: str, horizon: int
+) -> tuple[list[StepRecord], list[dict[str, Any]]]:
     controller = DomainAwareController(NominalController(), track.domain_name)
     schedule = generate_fault_schedule(_patient_seed(patient_id), horizon)
     track.load_episode(patient_id)
@@ -509,7 +539,9 @@ def _run_baseline_episode(track: HealthcareTrackAdapter, patient_id: str, horizo
             **contract_state,
             **safe_action,
             "validity_status": "baseline_no_certificate",
-            "release_requires_max_alert": track.release_contract_status({**contract_state, **safe_action})["requires_max_alert"],
+            "release_requires_max_alert": track.release_contract_status({**contract_state, **safe_action})[
+                "requires_max_alert"
+            ],
         }
         violation = track.check_violation(contract_state)
         observed_safe = track.observed_constraint_satisfied(observed_state)
@@ -627,7 +659,9 @@ def _run_orius_episode(
         latency_us = (time.perf_counter_ns() - latency_start) / 1_000.0
         safe_action = dict(result["safe_action"])
         certificate = dict(result["certificate"])
-        if certificate.get("validity_horizon_H_t") in (None, "") and certificate.get("certificate_horizon_steps") not in (None, ""):
+        if certificate.get("validity_horizon_H_t") in (None, "") and certificate.get(
+            "certificate_horizon_steps"
+        ) not in (None, ""):
             certificate["validity_horizon_H_t"] = int(certificate["certificate_horizon_steps"])
         certificate["certificate_hash"] = recompute_certificate_hash(certificate)
 
@@ -747,7 +781,9 @@ def _run_orius_episode(
     return records, trace_rows, certificates, previous_certificate
 
 
-def _run_always_alert_episode(track: HealthcareTrackAdapter, patient_id: str, horizon: int) -> tuple[list[StepRecord], list[dict[str, Any]]]:
+def _run_always_alert_episode(
+    track: HealthcareTrackAdapter, patient_id: str, horizon: int
+) -> tuple[list[StepRecord], list[dict[str, Any]]]:
     schedule = generate_fault_schedule(_patient_seed(patient_id, offset=31), horizon)
     track.load_episode(patient_id)
     records: list[StepRecord] = []
@@ -771,7 +807,9 @@ def _run_always_alert_episode(track: HealthcareTrackAdapter, patient_id: str, ho
             "release_requires_max_alert": True,
         }
         violation = track.check_violation(contract_state)
-        observed_safe = track.observed_constraint_satisfied({**observed_state, "release_requires_max_alert": True})
+        observed_safe = track.observed_constraint_satisfied(
+            {**observed_state, "release_requires_max_alert": True}
+        )
         true_margin = track.constraint_margin(contract_state)
         observed_margin = track.constraint_margin(observed_state)
         trajectory.append(dict(contract_state))
@@ -922,10 +960,7 @@ def build_healthcare_runtime_artifacts(
 
     summary_rows = [
         _summary_row("baseline", baseline_records_all),
-        *[
-            _policy_summary_from_trace(name, baseline_trace_rows_all)
-            for name in policy_names
-        ],
+        *[_policy_summary_from_trace(name, baseline_trace_rows_all) for name in policy_names],
         _summary_row("always_alert", always_alert_records_all),
         _summary_row("orius", orius_records_all),
     ]
@@ -960,14 +995,22 @@ def build_healthcare_runtime_artifacts(
         {
             "controller": "orius",
             "tsvr": float(summary_df.loc[summary_df["controller"] == "orius", "tsvr"].iloc[0]),
-            "max_alert_rate": float(summary_df.loc[summary_df["controller"] == "orius", "max_alert_rate"].iloc[0]),
-            "useful_work_total": float(summary_df.loc[summary_df["controller"] == "orius", "useful_work_total"].iloc[0]),
+            "max_alert_rate": float(
+                summary_df.loc[summary_df["controller"] == "orius", "max_alert_rate"].iloc[0]
+            ),
+            "useful_work_total": float(
+                summary_df.loc[summary_df["controller"] == "orius", "useful_work_total"].iloc[0]
+            ),
         },
         {
             "controller": "always_alert",
             "tsvr": float(summary_df.loc[summary_df["controller"] == "always_alert", "tsvr"].iloc[0]),
-            "max_alert_rate": float(summary_df.loc[summary_df["controller"] == "always_alert", "max_alert_rate"].iloc[0]),
-            "useful_work_total": float(summary_df.loc[summary_df["controller"] == "always_alert", "useful_work_total"].iloc[0]),
+            "max_alert_rate": float(
+                summary_df.loc[summary_df["controller"] == "always_alert", "max_alert_rate"].iloc[0]
+            ),
+            "useful_work_total": float(
+                summary_df.loc[summary_df["controller"] == "always_alert", "useful_work_total"].iloc[0]
+            ),
         },
     ]
     comparison_path = out_dir / "runtime_comparison.csv"
@@ -989,7 +1032,9 @@ def build_healthcare_runtime_artifacts(
         "certificate_rows": int(len(certificates)),
         "baseline_tsvr": float(summary_df.loc[summary_df["controller"] == "baseline", "tsvr"].iloc[0]),
         "orius_tsvr": float(summary_df.loc[summary_df["controller"] == "orius", "tsvr"].iloc[0]),
-        "always_alert_tsvr": float(summary_df.loc[summary_df["controller"] == "always_alert", "tsvr"].iloc[0]),
+        "always_alert_tsvr": float(
+            summary_df.loc[summary_df["controller"] == "always_alert", "tsvr"].iloc[0]
+        ),
         "orius_cva": float(summary_df.loc[summary_df["controller"] == "orius", "cva"].iloc[0]),
     }
 

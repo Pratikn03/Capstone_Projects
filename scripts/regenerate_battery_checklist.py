@@ -5,7 +5,6 @@ import csv
 import json
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports/publication"
 
@@ -90,9 +89,7 @@ def main() -> None:
         ]
     )
     for row in gap_rows:
-        md_lines.append(
-            f"| {row['item']} | {row['status']} | `{row['evidence_or_path']}` | {row['note']} |"
-        )
+        md_lines.append(f"| {row['item']} | {row['status']} | `{row['evidence_or_path']}` | {row['note']} |")
 
     md_lines.extend(
         [
@@ -103,7 +100,9 @@ def main() -> None:
     )
     if partial_chapters or partial_gap_rows:
         for row in partial_chapters:
-            md_lines.append(f"- Chapter `{row['chapter']}` remains `{row['status']}` with primary artifact `{row['primary_artifact']}`.")
+            md_lines.append(
+                f"- Chapter `{row['chapter']}` remains `{row['status']}` with primary artifact `{row['primary_artifact']}`."
+            )
         for row in partial_gap_rows:
             md_lines.append(f"- Gap item `{row['item']}` remains `{row['status']}`: {row['note']}.")
     else:
@@ -141,7 +140,9 @@ def main() -> None:
             f"| {row['theorem_or_scope']} | {row['chapter']} | {row['status']} | "
             f"`{row['code_or_script']}` | `{row['artifact_path']}` |"
         )
-    (PUBLICATION_DIR / "battery_theorem_checklist.md").write_text("\n".join(theorem_md_lines) + "\n", encoding="utf-8")
+    (PUBLICATION_DIR / "battery_theorem_checklist.md").write_text(
+        "\n".join(theorem_md_lines) + "\n", encoding="utf-8"
+    )
 
     out_json = PUBLICATION_DIR / "battery_checklist_summary.json"
     out_json.write_text(

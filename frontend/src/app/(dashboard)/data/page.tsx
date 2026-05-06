@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { Panel } from '@/components/ui/Panel';
 import { StatusBanner } from '@/components/ui/StatusBanner';
 import { useRegion } from '@/components/ui/RegionContext';
@@ -10,10 +12,27 @@ import {
   ResponsiveContainer, Legend, AreaChart, Area,
 } from 'recharts';
 
+function artifactHref(artifact: string): string {
+  if (artifact.startsWith('reports/')) {
+    return `/api/reports/file?path=${encodeURIComponent(artifact.replace(/^reports\//u, ''))}`;
+  }
+  return `/data?artifact=${encodeURIComponent(artifact)}`;
+}
+
 export default function DataExplorerPage() {
   const { region } = useRegion();
+  const [selectedArtifact, setSelectedArtifact] = useState<string | null>(null);
   const dataset = useDatasetData(region);
   const regionLabel = getDomainOption(region).label;
+
+  useEffect(() => {
+    const syncSelectedArtifact = () => {
+      setSelectedArtifact(new URL(window.location.href).searchParams.get('artifact'));
+    };
+    syncSelectedArtifact();
+    window.addEventListener('popstate', syncSelectedArtifact);
+    return () => window.removeEventListener('popstate', syncSelectedArtifact);
+  }, []);
 
   const stats = dataset.stats;
   const timeseries = dataset.timeseries;
@@ -59,6 +78,14 @@ export default function DataExplorerPage() {
       )}
 
       <StatusBanner title="Artifact Status" messages={artifactWarnings} />
+
+      {selectedArtifact && (
+        <Panel title="Selected Artifact" subtitle="Source lineage jump target" badge="linked" accentColor="info">
+          <div className="rounded-lg border border-energy-info/20 bg-energy-info/5 px-3 py-2 font-mono text-[11px] text-slate-200">
+            {selectedArtifact}
+          </div>
+        </Panel>
+      )}
 
       {/* Dataset Overview Cards */}
       {stats && (
@@ -259,9 +286,22 @@ export default function DataExplorerPage() {
         <Panel title="Source Artifacts" subtitle="Tracked repo files used by this dashboard view">
           <div className="space-y-2">
             {sourceArtifacts.map((artifact) => (
-              <div key={artifact} className="rounded-lg bg-white/3 px-3 py-2 font-mono text-[11px] text-slate-300">
+              <Link
+                key={artifact}
+                href={artifactHref(artifact)}
+                target={artifact.startsWith('reports/') ? '_blank' : undefined}
+                rel={artifact.startsWith('reports/') ? 'noreferrer' : undefined}
+                onClick={() => {
+                  if (!artifact.startsWith('reports/')) setSelectedArtifact(artifact);
+                }}
+                className={`block rounded-lg border px-3 py-2 font-mono text-[11px] transition-colors ${
+                  selectedArtifact === artifact
+                    ? 'border-energy-info/40 bg-energy-info/10 text-white'
+                    : 'border-white/[0.04] bg-white/3 text-slate-300 hover:border-energy-info/25 hover:text-white'
+                }`}
+              >
                 {artifact}
-              </div>
+              </Link>
             ))}
           </div>
         </Panel>

@@ -23,6 +23,7 @@ See Also:
     - src/orius/forecasting/uncertainty/conformal.py: Module under test
     - docs/EVALUATION.md: Discussion of uncertainty quantification
 """
+
 import numpy as np
 import pytest
 
@@ -32,21 +33,21 @@ from orius.forecasting.uncertainty.conformal import AdaptiveConformal, Conformal
 def test_conformal_horizon_wise():
     """
     Test horizon-wise conformal prediction intervals.
-    
+
     Horizon-wise calibration computes separate quantiles for each forecast
     step. This is important because error distributions often vary by horizon
     (e.g., hour 24 has wider intervals than hour 1).
-    
+
     Validation:
         - Shapes are correct (N, horizon) for bounds
         - Empirical coverage is approximately (1-alpha)
     """
     # Create reproducible synthetic data
     rng = np.random.default_rng(0)
-    
+
     # Ground truth: 1000 samples, 24-hour horizon
     y_true = rng.normal(size=(1000, 24))
-    
+
     # Predictions: true + noise (simulates forecast errors)
     y_pred = y_true + rng.normal(scale=0.5, size=(1000, 24))
 
@@ -56,10 +57,10 @@ def test_conformal_horizon_wise():
 
     # Generate intervals for a subset
     lo, hi = ci.predict_interval(y_pred[:50])
-    
+
     # Assert: bounds have correct shape
     assert lo.shape == (50, 24), "Lower bound shape should match (n_samples, horizon)"
-    
+
     # Assert: coverage is approximately 90% (allow some variance)
     cov = ci.coverage(y_true[:50], y_pred[:50])
     assert 0.75 <= cov <= 0.99, f"Coverage {cov:.2f} should be close to 90%"
@@ -166,3 +167,23 @@ def test_cqr_calibration_and_interval_evaluation():
     assert "global_mean_width" in eval_metrics
     assert "per_horizon_picp" in eval_metrics
     assert "per_horizon_mpiw" in eval_metrics
+
+
+def test_cqr_safety_multiplier_widens_intervals():
+    y_cal = np.array([0.0, 1.0, 2.0, 3.0])
+    q_lo_cal = y_cal + 0.5
+    q_hi_cal = y_cal + 1.0
+    q_lo_test = np.array([0.0])
+    q_hi_test = np.array([1.0])
+
+    base = ConformalInterval(ConformalConfig(alpha=0.1, method="cqr", q_multiplier=1.0))
+    base.fit_calibration_cqr(y_cal, q_lo_cal, q_hi_cal)
+    base_lo, base_hi = base.predict_interval_cqr(q_lo_test, q_hi_test)
+
+    conservative = ConformalInterval(ConformalConfig(alpha=0.1, method="cqr", q_multiplier=2.0))
+    conservative.fit_calibration_cqr(y_cal, q_lo_cal, q_hi_cal)
+    wide_lo, wide_hi = conservative.predict_interval_cqr(q_lo_test, q_hi_test)
+
+    assert (wide_hi - wide_lo) > (base_hi - base_lo)
+    assert wide_lo[0] <= base_lo[0]
+    assert wide_hi[0] >= base_hi[0]

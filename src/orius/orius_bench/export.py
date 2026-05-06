@@ -3,13 +3,14 @@
 Generates leaderboard CSV, JSON artefact bundles, schemas, and
 reproducibility digests for Paper 4.
 """
+
 from __future__ import annotations
 
 import csv
 import json
-import os
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from orius.orius_bench.metrics_engine import BenchmarkMetrics
 
@@ -144,7 +145,15 @@ def metrics_schema() -> dict[str, Any]:
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "title": "ORIUS-Bench Metrics",
         "type": "object",
-        "required": ["tsvr", "oasg", "cva", "gdq", "intervention_rate", "audit_completeness", "recovery_latency"],
+        "required": [
+            "tsvr",
+            "oasg",
+            "cva",
+            "gdq",
+            "intervention_rate",
+            "audit_completeness",
+            "recovery_latency",
+        ],
         "properties": {
             "tsvr": {"type": "number", "minimum": 0, "maximum": 1},
             "oasg": {"type": "number", "minimum": 0, "maximum": 1},

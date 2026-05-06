@@ -3,6 +3,7 @@
 These routes intentionally source data from checked-in publication assets and
 release manifests rather than local dashboard caches.
 """
+
 from __future__ import annotations
 
 import csv
@@ -25,6 +26,12 @@ IMPACT_PATHS = {
     "DE": REPORTS_ROOT / "impact_summary.csv",
     "US": REPORTS_ROOT / "eia930" / "impact_summary.csv",
 }
+
+
+def _verify_read_scope_for_route(api_key: object) -> None:
+    """Verify route auth while keeping direct unit calls side-effect free."""
+    if isinstance(api_key, str):
+        verify_scope("read", api_key)
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -182,14 +189,16 @@ def _reports_response() -> dict[str, Any]:
             "source": "reports",
             "last_updated": release_manifest.get("frozen_at_utc"),
             "metrics_source": "missing",
-            "warnings": ["Dashboard data is sourced from tracked publication artifacts, not local dashboard caches."],
+            "warnings": [
+                "Dashboard data is sourced from tracked publication artifacts, not local dashboard caches."
+            ],
         },
     }
 
 
 @router.get("/manifest")
 def research_manifest(api_key: str = Security(get_api_key)) -> dict[str, Any]:
-    verify_scope("read", api_key)
+    _verify_read_scope_for_route(api_key)
     release_manifest = _load_json(RELEASE_MANIFEST)
     return {
         "source": str(RELEASE_MANIFEST.relative_to(REPO_ROOT)),
@@ -202,7 +211,7 @@ def research_manifest(api_key: str = Security(get_api_key)) -> dict[str, Any]:
 
 @router.get("/region/{region}")
 def research_region(region: str, api_key: str = Security(get_api_key)) -> dict[str, Any]:
-    verify_scope("read", api_key)
+    _verify_read_scope_for_route(api_key)
     region = region.upper()
     if region not in {"DE", "US"}:
         raise HTTPException(status_code=400, detail="Invalid region. Use DE or US.")
@@ -225,7 +234,7 @@ def research_region(region: str, api_key: str = Security(get_api_key)) -> dict[s
 
 @router.get("/reports")
 def research_reports(api_key: str = Security(get_api_key)) -> dict[str, Any]:
-    verify_scope("read", api_key)
+    _verify_read_scope_for_route(api_key)
     return _reports_response()
 
 

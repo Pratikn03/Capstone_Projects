@@ -9,6 +9,7 @@ Usage:
     python scripts/sync_paper_assets.py --check       # report mismatches
     python scripts/sync_paper_assets.py --check --json # machine-readable
 """
+
 from __future__ import annotations
 
 import argparse
@@ -63,11 +64,15 @@ def _check_release_manifest_contract() -> list[dict[str, Any]]:
     issues: list[dict[str, Any]] = []
     release_id = payload.get("release_id")
     if not release_id:
-        issues.append({"check": "release_manifest", "error": "release_manifest.json missing top-level release_id"})
+        issues.append(
+            {"check": "release_manifest", "error": "release_manifest.json missing top-level release_id"}
+        )
 
     source_runs = payload.get("source_runs")
     if not isinstance(source_runs, dict) or not source_runs:
-        issues.append({"check": "release_manifest", "error": "release_manifest.json missing source_runs provenance"})
+        issues.append(
+            {"check": "release_manifest", "error": "release_manifest.json missing source_runs provenance"}
+        )
     else:
         mismatched: list[str] = []
         for dataset, info in source_runs.items():
@@ -77,14 +82,18 @@ def _check_release_manifest_contract() -> list[dict[str, Any]]:
             if info.get("release_id") != release_id:
                 mismatched.append(dataset)
         if mismatched:
-            issues.append({
-                "check": "release_manifest",
-                "error": f"source_runs entries do not match release_id={release_id}: {sorted(mismatched)}",
-            })
+            issues.append(
+                {
+                    "check": "release_manifest",
+                    "error": f"source_runs entries do not match release_id={release_id}: {sorted(mismatched)}",
+                }
+            )
 
     paper_assets = payload.get("paper_assets")
     if not isinstance(paper_assets, dict) or not paper_assets:
-        issues.append({"check": "release_manifest", "error": "release_manifest.json missing paper_assets mapping"})
+        issues.append(
+            {"check": "release_manifest", "error": "release_manifest.json missing paper_assets mapping"}
+        )
     else:
         missing_mapping: list[str] = []
         missing_source_artifacts: list[str] = []
@@ -99,15 +108,19 @@ def _check_release_manifest_contract() -> list[dict[str, Any]]:
             if not source_artifact.exists():
                 missing_source_artifacts.append(f"{token}:{info['source_artifact']}")
         if missing_mapping:
-            issues.append({
-                "check": "release_manifest",
-                "error": f"paper_assets entries missing source_artifact/build_command: {sorted(missing_mapping)}",
-            })
+            issues.append(
+                {
+                    "check": "release_manifest",
+                    "error": f"paper_assets entries missing source_artifact/build_command: {sorted(missing_mapping)}",
+                }
+            )
         if missing_source_artifacts:
-            issues.append({
-                "check": "release_manifest",
-                "error": f"paper_assets source artifacts not found: {sorted(missing_source_artifacts)}",
-            })
+            issues.append(
+                {
+                    "check": "release_manifest",
+                    "error": f"paper_assets source artifacts not found: {sorted(missing_source_artifacts)}",
+                }
+            )
 
     return issues
 
@@ -120,12 +133,14 @@ def _check_file_for_stale(filepath: Path, stale_variants: list[str]) -> list[dic
     for i, line in enumerate(content.splitlines(), 1):
         for variant in stale_variants:
             if variant in line:
-                issues.append({
-                    "file": str(filepath.relative_to(REPO_ROOT)),
-                    "line": i,
-                    "stale_value": variant,
-                    "line_content": line.strip()[:120],
-                })
+                issues.append(
+                    {
+                        "file": str(filepath.relative_to(REPO_ROOT)),
+                        "line": i,
+                        "stale_value": variant,
+                        "line_content": line.strip()[:120],
+                    }
+                )
     return issues
 
 
@@ -135,18 +150,22 @@ def _check_table13_controller_coverage() -> list[dict[str, Any]]:
     issues: list[dict[str, Any]] = []
 
     if not main_table.exists():
-        issues.append({"check": "table13_coverage", "error": f"Not found: {main_table.relative_to(REPO_ROOT)}"})
+        issues.append(
+            {"check": "table13_coverage", "error": f"Not found: {main_table.relative_to(REPO_ROOT)}"}
+        )
         return issues
 
     with open(main_table, encoding="utf-8") as fh:
         main_controllers = {row.get("controller", "") for row in csv.DictReader(fh)}
 
     if not summary_table.exists():
-        issues.append({
-            "check": "table13_coverage",
-            "error": f"Summary not found: {summary_table.relative_to(REPO_ROOT)}",
-            "main_controllers": sorted(main_controllers),
-        })
+        issues.append(
+            {
+                "check": "table13_coverage",
+                "error": f"Summary not found: {summary_table.relative_to(REPO_ROOT)}",
+                "main_controllers": sorted(main_controllers),
+            }
+        )
         return issues
 
     with open(summary_table, encoding="utf-8") as fh:
@@ -154,12 +173,14 @@ def _check_table13_controller_coverage() -> list[dict[str, Any]]:
 
     missing = main_controllers - summary_controllers
     if missing:
-        issues.append({
-            "check": "table13_coverage",
-            "error": f"Controllers in main but missing in summary: {sorted(missing)}",
-            "main_controllers": sorted(main_controllers),
-            "summary_controllers": sorted(summary_controllers),
-        })
+        issues.append(
+            {
+                "check": "table13_coverage",
+                "error": f"Controllers in main but missing in summary: {sorted(missing)}",
+                "main_controllers": sorted(main_controllers),
+                "summary_controllers": sorted(summary_controllers),
+            }
+        )
     return issues
 
 
@@ -174,13 +195,15 @@ def _check_claim_matrix_gaps() -> list[dict[str, Any]]:
             locations = row.get("manuscript_locations", "").strip()
             if status.lower() in ("unsupported", "needs citation", "needs_citation"):
                 in_manuscript = locations.upper() != "NOT PRESENT"
-                issues.append({
-                    "check": "claim_matrix",
-                    "claim_id": row.get("claim_id", ""),
-                    "status": status,
-                    "in_manuscript": in_manuscript,
-                    "claim": row.get("claim_text", "")[:80],
-                })
+                issues.append(
+                    {
+                        "check": "claim_matrix",
+                        "claim_id": row.get("claim_id", ""),
+                        "status": status,
+                        "in_manuscript": in_manuscript,
+                        "claim": row.get("claim_text", "")[:80],
+                    }
+                )
     return issues
 
 
@@ -193,13 +216,15 @@ def _check_picp_headline() -> list[dict[str, Any]]:
     issues: list[dict[str, Any]] = []
     for i, line in enumerate(content.splitlines(), 1):
         if "33.8" in line and "38.3" in line:
-            issues.append({
-                "check": "picp_headline",
-                "file": "paper/paper.tex",
-                "line": i,
-                "error": "Stale PICP headline (33.8% → 38.3%) must be updated from R1 run family",
-                "line_content": line.strip()[:120],
-            })
+            issues.append(
+                {
+                    "check": "picp_headline",
+                    "file": "paper/paper.tex",
+                    "line": i,
+                    "error": "Stale PICP headline (33.8% → 38.3%) must be updated from R1 run family",
+                    "line_content": line.strip()[:120],
+                }
+            )
     return issues
 
 
@@ -218,17 +243,18 @@ def _check_metrics_completeness() -> list[dict[str, Any]]:
     expected_de = ["load_mw", "solar_mw", "wind_mw"]
     missing = [t for t in expected_de if t not in targets]
     if missing:
-        issues.append({
-            "check": "metrics_completeness",
-            "error": f"Missing DE targets in week2_metrics.json: {missing}",
-            "found_targets": targets,
-        })
+        issues.append(
+            {
+                "check": "metrics_completeness",
+                "error": f"Missing DE targets in week2_metrics.json: {missing}",
+                "found_targets": targets,
+            }
+        )
     return issues
 
 
 def _check_uq_contract_consistency() -> list[dict[str, Any]]:
     """Verify that standard UQ metrics appear in report schemas."""
-    required_metrics = {"picp_90", "picp_95", "mean_interval_width", "pinball_loss", "winkler_score"}
     issues: list[dict[str, Any]] = []
     # Check dc3s_main_table columns
     main_table = REPO_ROOT / "reports" / "publication" / "dc3s_main_table.csv"
@@ -238,10 +264,12 @@ def _check_uq_contract_consistency() -> list[dict[str, Any]]:
             available = set(reader.fieldnames or [])
         missing = {"picp_90", "mean_interval_width"} - available
         if missing:
-            issues.append({
-                "check": "uq_contract",
-                "error": f"dc3s_main_table.csv missing standard UQ columns: {sorted(missing)}",
-            })
+            issues.append(
+                {
+                    "check": "uq_contract",
+                    "error": f"dc3s_main_table.csv missing standard UQ columns: {sorted(missing)}",
+                }
+            )
     return issues
 
 
@@ -258,7 +286,10 @@ def _check_impact_alignment_with_manifest() -> list[dict[str, Any]]:
     cm = manifest.get("canonical_metrics", {})
     tolerance = 0.005  # 0.5% for percentages
 
-    for region, rel_path in [("de", "reports/impact_summary.csv"), ("us", "reports/eia930/impact_summary.csv")]:
+    for region, rel_path in [
+        ("de", "reports/impact_summary.csv"),
+        ("us", "reports/eia930/impact_summary.csv"),
+    ]:
         impact_path = REPO_ROOT / rel_path
         if not impact_path.exists():
             continue
@@ -279,12 +310,14 @@ def _check_impact_alignment_with_manifest() -> list[dict[str, Any]]:
                 actual = float(row.get(key, 0))
                 expected = float(locked.get(manifest_key, 0))
                 if abs(actual - expected) > tolerance:
-                    issues.append({
-                        "check": "impact_alignment",
-                        "error": f"{rel_path} {key}={actual:.4f} diverges from manifest {expected:.4f} (tolerance {tolerance})",
-                    })
+                    issues.append(
+                        {
+                            "check": "impact_alignment",
+                            "error": f"{rel_path} {key}={actual:.4f} diverges from manifest {expected:.4f} (tolerance {tolerance})",
+                        }
+                    )
             except (TypeError, ValueError):
-                pass
+                continue
     return issues
 
 
@@ -294,10 +327,12 @@ def _check_required_canonical_paths() -> list[dict[str, Any]]:
     for rel in REQUIRED_CANONICAL_PATHS:
         p = REPO_ROOT / rel
         if not p.exists():
-            issues.append({
-                "check": "required_asset",
-                "error": f"Required canonical asset missing: {rel}",
-            })
+            issues.append(
+                {
+                    "check": "required_asset",
+                    "error": f"Required canonical asset missing: {rel}",
+                }
+            )
     return issues
 
 

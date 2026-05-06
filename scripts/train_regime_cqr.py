@@ -15,9 +15,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from orius.forecasting.ml_gbm import train_gbm, predict_gbm
-from orius.forecasting.uncertainty.cqr import RegimeCQR, RegimeCQRConfig
 from orius.dc3s.rac_cert import RACCertConfig, RACCertModel
+from orius.forecasting.ml_gbm import predict_gbm, train_gbm
+from orius.forecasting.uncertainty.cqr import RegimeCQR, RegimeCQRConfig
 
 
 def _load_table(path: Path) -> pd.DataFrame:

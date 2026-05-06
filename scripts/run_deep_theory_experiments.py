@@ -12,6 +12,7 @@ Produces:
 Usage:
     python scripts/run_deep_theory_experiments.py [--out reports/deep_theory]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -44,20 +45,29 @@ def run_wmin_sweep(out: Path) -> list[dict]:
 
     csv_path = out / "wmin_sweep.csv"
     with open(csv_path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "n_calibration", "w_min", "n_eff", "epsilon",
-            "coverage_bound", "nominal_coverage",
-        ])
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "n_calibration",
+                "w_min",
+                "n_eff",
+                "epsilon",
+                "coverage_bound",
+                "nominal_coverage",
+            ],
+        )
         writer.writeheader()
         for r in surface:
-            writer.writerow({
-                "n_calibration": r["n_calibration"],
-                "w_min": f"{r['w_min']:.2f}",
-                "n_eff": r["n_eff"],
-                "epsilon": f"{r['epsilon']:.4f}",
-                "coverage_bound": f"{r['coverage_bound']:.4f}",
-                "nominal_coverage": f"{r['nominal_coverage']:.2f}",
-            })
+            writer.writerow(
+                {
+                    "n_calibration": r["n_calibration"],
+                    "w_min": f"{r['w_min']:.2f}",
+                    "n_eff": r["n_eff"],
+                    "epsilon": f"{r['epsilon']:.4f}",
+                    "coverage_bound": f"{r['coverage_bound']:.4f}",
+                    "nominal_coverage": f"{r['nominal_coverage']:.2f}",
+                }
+            )
 
     print(f"  w_min sweep → {csv_path} ({len(surface)} points)")
     return surface
@@ -69,21 +79,26 @@ def run_adversarial_degradation(out: Path) -> list[dict]:
     for w_min in [0.05, 0.10, 0.20, 0.50]:
         for n_steps in [200, 500, 1000]:
             sim = simulate_separation_construction(
-                n_steps=n_steps, w_min=w_min, alpha=0.10, seed=42,
+                n_steps=n_steps,
+                w_min=w_min,
+                alpha=0.10,
+                seed=42,
             )
             dc3s = sim["controllers"]["dc3s"]
             narrow = sim["controllers"]["blind_narrow"]
             wide = sim["controllers"]["blind_wide"]
-            results.append({
-                "w_min": w_min,
-                "n_steps": n_steps,
-                "dc3s_violation_rate": dc3s["violation_rate"],
-                "dc3s_intervention_rate": dc3s["intervention_rate"],
-                "blind_narrow_violation_rate": narrow["violation_rate"],
-                "blind_narrow_intervention_rate": narrow["intervention_rate"],
-                "blind_wide_violation_rate": wide["violation_rate"],
-                "blind_wide_intervention_rate": wide["intervention_rate"],
-            })
+            results.append(
+                {
+                    "w_min": w_min,
+                    "n_steps": n_steps,
+                    "dc3s_violation_rate": dc3s["violation_rate"],
+                    "dc3s_intervention_rate": dc3s["intervention_rate"],
+                    "blind_narrow_violation_rate": narrow["violation_rate"],
+                    "blind_narrow_intervention_rate": narrow["intervention_rate"],
+                    "blind_wide_violation_rate": wide["violation_rate"],
+                    "blind_wide_intervention_rate": wide["intervention_rate"],
+                }
+            )
 
     csv_path = out / "adversarial_results.csv"
     with open(csv_path, "w", newline="") as f:
@@ -101,7 +116,10 @@ def run_separation_empirical(out: Path) -> list[dict]:
     results = []
     for w_min in [0.01, 0.05, 0.10, 0.20, 0.30, 0.50, 0.80]:
         bound = compute_finite_sample_coverage_bound(
-            n_calibration=2608, alpha=0.10, delta=0.05, w_min=w_min,
+            n_calibration=2608,
+            alpha=0.10,
+            delta=0.05,
+            w_min=w_min,
         )
 
         sep = compute_separation_gap(
@@ -113,15 +131,17 @@ def run_separation_empirical(out: Path) -> list[dict]:
             alpha=0.10,
         )
 
-        results.append({
-            "w_min": w_min,
-            "n_eff": bound["n_eff"],
-            "coverage_bound": bound["coverage_bound"],
-            "epsilon": bound["epsilon"],
-            "violation_lower_bound": sep.violation_lower_bound,
-            "intervention_lower_bound": sep.intervention_lower_bound,
-            "pareto_dominant": sep.pareto_dominant,
-        })
+        results.append(
+            {
+                "w_min": w_min,
+                "n_eff": bound["n_eff"],
+                "coverage_bound": bound["coverage_bound"],
+                "epsilon": bound["epsilon"],
+                "violation_lower_bound": sep.violation_lower_bound,
+                "intervention_lower_bound": sep.intervention_lower_bound,
+                "pareto_dominant": sep.pareto_dominant,
+            }
+        )
 
     csv_path = out / "separation_empirical.csv"
     with open(csv_path, "w", newline="") as f:
@@ -140,20 +160,28 @@ def run_regret_tracking(out: Path) -> list[dict]:
     for tau in [5.0, 10.0, 30.0, 50.0, 100.0]:
         for T in [100, 500, 2000]:
             sim = simulate_adaptive_tracking(
-                T=T, tau=tau, n_jumps=5, jump_magnitude=0.3, seed=42,
+                T=T,
+                tau=tau,
+                n_jumps=5,
+                jump_magnitude=0.3,
+                seed=42,
             )
             bound = compute_adaptive_regret_bound(
-                T=T, tau=tau, max_oracle_jump=sim["max_oracle_jump"],
+                T=T,
+                tau=tau,
+                max_oracle_jump=sim["max_oracle_jump"],
             )
-            results.append({
-                "tau": tau,
-                "T": T,
-                "max_oracle_jump": sim["max_oracle_jump"],
-                "empirical_per_step_error": sim["empirical_per_step_error"],
-                "theoretical_per_step_bound": bound["per_step_bound"],
-                "bound_ratio": sim["empirical_per_step_error"] / max(bound["per_step_bound"], 1e-12),
-                "bound_valid": sim["empirical_cumulative_error"] <= bound["cumulative_bound"] * 1.1,
-            })
+            results.append(
+                {
+                    "tau": tau,
+                    "T": T,
+                    "max_oracle_jump": sim["max_oracle_jump"],
+                    "empirical_per_step_error": sim["empirical_per_step_error"],
+                    "theoretical_per_step_bound": bound["per_step_bound"],
+                    "bound_ratio": sim["empirical_per_step_error"] / max(bound["per_step_bound"], 1e-12),
+                    "bound_valid": sim["empirical_cumulative_error"] <= bound["cumulative_bound"] * 1.1,
+                }
+            )
 
     csv_path = out / "regret_tracking.csv"
     with open(csv_path, "w", newline="") as f:
@@ -179,7 +207,9 @@ def build_latex_table(sweep: list[dict], out: Path) -> None:
         f.write("% Auto-generated by run_deep_theory_experiments.py\n")
         f.write("\\begin{table}[htbp]\n")
         f.write("\\centering\\small\n")
-        f.write("\\caption{Finite-sample coverage bound (Theorem~T9) at $n=2{,}608$ calibration points, $\\alpha=0.10$, $\\delta=0.05$.}\n")
+        f.write(
+            "\\caption{Finite-sample coverage bound (Theorem~T9) at $n=2{,}608$ calibration points, $\\alpha=0.10$, $\\delta=0.05$.}\n"
+        )
         f.write("\\label{tab:wmin_sweep}\n")
         f.write("\\begin{tabular}{rrrrr}\n")
         f.write("\\toprule\n")
@@ -201,7 +231,10 @@ def build_summary(sweep: list, adversarial: list, separation: list, regret: list
     """Build a machine-readable summary JSON."""
     # Key result: coverage bound at our canonical calibration size
     canonical = compute_finite_sample_coverage_bound(
-        n_calibration=2608, alpha=0.10, delta=0.05, w_min=0.50,
+        n_calibration=2608,
+        alpha=0.10,
+        delta=0.05,
+        w_min=0.50,
     )
 
     summary = {

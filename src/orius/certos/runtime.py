@@ -7,10 +7,12 @@ step-by-step runtime. Enforces the three CertOS invariants:
     INV-2: Certificate hash chain is unbroken
     INV-3: Fallback triggers iff H_t ≤ 0
 """
+
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -36,7 +38,7 @@ class CertOSConfig:
     degraded_threshold: int = 4
     fallback_horizon: int = 12
     alpha: float = 0.10
-    governance_policy: "DomainGovernancePolicy" = field(default_factory=lambda: DomainGovernancePolicy())
+    governance_policy: DomainGovernancePolicy = field(default_factory=lambda: DomainGovernancePolicy())
     # Legacy compatibility fields. Deprecated for new code.
     soc_min_mwh: float | None = 20.0
     soc_max_mwh: float | None = 180.0
@@ -67,11 +69,11 @@ def _to_json_safe(obj: Any) -> Any:
     """Convert numpy types to JSON-serializable Python types."""
     if isinstance(obj, np.ndarray):
         return obj.tolist()
-    if isinstance(obj, (np.floating, np.integer)):
+    if isinstance(obj, np.floating | np.integer):
         return float(obj) if isinstance(obj, np.floating) else int(obj)
     if isinstance(obj, dict):
         return {k: _to_json_safe(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple)):
+    if isinstance(obj, list | tuple):
         return [_to_json_safe(x) for x in obj]
     return obj
 
@@ -295,7 +297,8 @@ class CertOSRuntime:
         return sum(
             1
             for entry in self.audit_log
-            if entry.get("op") in (LifecycleOp.FALLBACK.value, LifecycleOp.REVOKE.value, LifecycleOp.EXPIRE.value)
+            if entry.get("op")
+            in (LifecycleOp.FALLBACK.value, LifecycleOp.REVOKE.value, LifecycleOp.EXPIRE.value)
         )
 
     @property
@@ -412,7 +415,9 @@ class CertOSRuntime:
                 },
             )
 
-        fb_action = self.cfg.governance_policy.fallback_action(constraints=constraints, state=observed_state or safe)
+        fb_action = self.cfg.governance_policy.fallback_action(
+            constraints=constraints, state=observed_state or safe
+        )
         self._cert_engine.fallback(fb_action)
         self._audit.append(
             LifecycleOp.FALLBACK.value,

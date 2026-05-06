@@ -21,9 +21,7 @@ parameter calibration context.
 
 from __future__ import annotations
 
-import math
-from dataclasses import dataclass, field
-from typing import Union
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -86,8 +84,8 @@ def rss_safe_gap(
         Safe following distance (metres), ≥ 0.
     """
     reaction_dist = v_ego * t_resp
-    ego_brake_dist = (v_ego ** 2) / (2.0 * a_min_brake_ego)
-    lead_brake_dist = (v_lead ** 2) / (2.0 * a_max_brake_lead)
+    ego_brake_dist = (v_ego**2) / (2.0 * a_min_brake_ego)
+    lead_brake_dist = (v_lead**2) / (2.0 * a_max_brake_lead)
     return max(0.0, reaction_dist + ego_brake_dist - lead_brake_dist)
 
 
@@ -100,9 +98,7 @@ def rss_violation(
     a_max_brake_lead: float = 6.0,
 ) -> bool:
     """Return ``True`` if the actual gap violates the RSS safe distance."""
-    return gap_actual < rss_safe_gap(
-        v_ego, v_lead, t_resp, a_min_brake_ego, a_max_brake_lead
-    )
+    return gap_actual < rss_safe_gap(v_ego, v_lead, t_resp, a_min_brake_ego, a_max_brake_lead)
 
 
 # ---------------------------------------------------------------------------
@@ -113,7 +109,7 @@ def rss_violation(
 def rss_safe_gap_vec(
     v_ego: np.ndarray,
     v_lead: np.ndarray,
-    params: Union[RssParameters, None] = None,
+    params: RssParameters | None = None,
 ) -> np.ndarray:
     """Vectorised RSS safe gap over arrays.
 
@@ -130,7 +126,7 @@ def rss_violation_vec(
     gap_actual: np.ndarray,
     v_ego: np.ndarray,
     v_lead: np.ndarray,
-    params: Union[RssParameters, None] = None,
+    params: RssParameters | None = None,
 ) -> np.ndarray:
     """Vectorised RSS violation check.  Returns a bool array."""
     return gap_actual < rss_safe_gap_vec(v_ego, v_lead, params)

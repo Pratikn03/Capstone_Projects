@@ -1,4 +1,5 @@
 """Shared helpers for repo-local real-data contracts and provenance."""
+
 from __future__ import annotations
 
 import csv
@@ -8,17 +9,17 @@ import json
 import os
 import shutil
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from orius.data_pipeline.external_raw import (
     EXTERNAL_DATA_ROOT_ENV,
     get_external_data_root,
     get_external_dataset_dir,
 )
-
 
 DEFAULT_MIN_FREE_GIB = 250.0
 
@@ -34,7 +35,7 @@ class ResolvedRawSource:
 
 def utc_now_iso() -> str:
     """Return the current UTC timestamp in ISO-8601 format."""
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> Path:
@@ -206,9 +207,7 @@ def resolve_repo_or_external_raw_dir(
     if external_dataset_key is not None:
         external_dir = get_external_dataset_dir(external_dataset_key, explicit_root, required=False)
         checked_locations.append(
-            f"${EXTERNAL_DATA_ROOT_ENV}/{external_dataset_key}"
-            if external_dir is None
-            else str(external_dir)
+            f"${EXTERNAL_DATA_ROOT_ENV}/{external_dataset_key}" if external_dir is None else str(external_dir)
         )
         if external_dir is not None and external_dir.exists():
             return ResolvedRawSource(
@@ -218,9 +217,7 @@ def resolve_repo_or_external_raw_dir(
             )
 
     if required:
-        raise FileNotFoundError(
-            "Missing required raw dataset. Checked: " + " ; ".join(checked_locations)
-        )
+        raise FileNotFoundError("Missing required raw dataset. Checked: " + " ; ".join(checked_locations))
     return None
 
 

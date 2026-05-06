@@ -34,7 +34,14 @@ def main() -> None:
     rows: list[dict] = []
     for t, covered in enumerate(df["covered"].tolist()):
         update_adaptive_quantile(state, miss=not bool(covered))
-        rows.append({"t": t, "covered": int(bool(covered)), "effective_alpha": state.effective_alpha, "miss_streak": state.miss_streak})
+        rows.append(
+            {
+                "t": t,
+                "covered": int(bool(covered)),
+                "effective_alpha": state.effective_alpha,
+                "miss_streak": state.miss_streak,
+            }
+        )
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)

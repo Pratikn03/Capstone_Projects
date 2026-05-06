@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
 import re
+from pathlib import Path
 
+from orius.dc3s.theoretical_guarantees import compute_finite_sample_coverage_bound
 
 ROOT = Path(__file__).resolve().parents[1]
 PAPERS = ROOT / "papers"
@@ -45,3 +46,23 @@ def test_no_fabricated_out_of_scope_numeric_rows() -> None:
         for line in text.splitlines():
             if any(domain.lower() in line.lower() for domain in forbidden_domains):
                 assert re.search(r"\d", line) is None
+
+
+def test_active_theory_surfaces_do_not_overclaim_weighted_cp() -> None:
+    defense_lock = _read(ROOT / "appendices" / "app_n_defense_lock_templates.tex")
+    deep_theory = _read(ROOT / "paper" / "longform" / "ch25_deep_theoretical_guarantees.tex")
+
+    assert r"preserving coverage $\geq 1-\alpha$" not in defense_lock
+    assert "By weighted exchangeability" not in deep_theory
+    assert "diagnostic witness" not in deep_theory
+    assert "compute\\_separation\\_gap" not in deep_theory
+    assert r"\mathbb{E}[\mathrm{OASG}_T(\pi)]" in deep_theory
+    assert r"\sum_{t=1}^T \delta_t p_t(1-w_t)" in deep_theory
+
+
+def test_finite_sample_helper_is_documented_as_audit_envelope() -> None:
+    doc = compute_finite_sample_coverage_bound.__doc__ or ""
+
+    assert "P(Y_{n+1}" not in doc
+    assert "audit" in doc.lower()
+    assert "not a conformal validity theorem" in doc.lower()

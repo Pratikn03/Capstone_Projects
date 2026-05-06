@@ -14,6 +14,7 @@ This script is intentionally conservative. It classifies files into:
 The goal is not to decide every file from filename alone, but to produce a
 repo-grounded keep/delete surface that can be inspected and rerun.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -21,9 +22,8 @@ import csv
 import json
 import subprocess
 from collections import Counter, defaultdict
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT_DIR = REPO_ROOT / "reports" / "audit"
@@ -161,24 +161,55 @@ def _classify(rel_path: str, tracked: bool) -> tuple[str, str]:
             "paper/paper.docx",
             "paper/paper.pdf",
         }:
-            return "keep_active_generated" if rel_path.endswith((".pdf", ".docx")) else "keep_active_source", "paper control surface explicitly referenced by manuscript policy"
+            return "keep_active_generated" if rel_path.endswith(
+                (".pdf", ".docx")
+            ) else "keep_active_source", "paper control surface explicitly referenced by manuscript policy"
         if rel_path.startswith("paper/slides/"):
-            return ("keep_active_generated", "active slide deck compiled artifact") if suffix == ".pdf" else ("keep_active_source", "active slide deck source")
-        if rel_path.startswith(("paper/monograph/", "paper/review/", "paper/ieee/", "paper/assets/", "paper/bibliography/", "paper/longform/")):
+            return (
+                ("keep_active_generated", "active slide deck compiled artifact")
+                if suffix == ".pdf"
+                else ("keep_active_source", "active slide deck source")
+            )
+        if rel_path.startswith(
+            (
+                "paper/monograph/",
+                "paper/review/",
+                "paper/ieee/",
+                "paper/assets/",
+                "paper/bibliography/",
+                "paper/longform/",
+            )
+        ):
             return "keep_active_generated", "generator-owned or active derivative manuscript surface"
         if rel_path in {"paper/paper_r1.tex", "paper/paper_r1.pdf"}:
-            return "legacy_reference", "legacy derivative retained for provenance and referenced by release manifests/tests"
-        if rel_path in {"paper/paper_single_column_backup.tex", "paper/file.md", "paper/# Conference-Main R1 Upgrade for GridPul.prompt.md"}:
-            return "legacy_reference", "legacy or working-note manuscript aid not part of canonical control surface"
+            return (
+                "legacy_reference",
+                "legacy derivative retained for provenance and referenced by release manifests/tests",
+            )
+        if rel_path in {
+            "paper/paper_single_column_backup.tex",
+            "paper/file.md",
+            "paper/# Conference-Main R1 Upgrade for GridPul.prompt.md",
+        }:
+            return (
+                "legacy_reference",
+                "legacy or working-note manuscript aid not part of canonical control surface",
+            )
         return "ambiguous_review", "paper-area file outside the explicit authority list"
 
     if top == "chapters_merged":
-        return "legacy_reference", "legacy merged chapter surface still referenced by audit/manuscript-count tooling"
+        return (
+            "legacy_reference",
+            "legacy merged chapter surface still referenced by audit/manuscript-count tooling",
+        )
 
     if top == "reports":
         if rel_path.startswith("reports/publication/"):
             if suffix == ".tar.gz" or name.endswith(".tar.gz"):
-                return "legacy_reference", "frozen package archive duplicated by extracted legacy archive contents"
+                return (
+                    "legacy_reference",
+                    "frozen package archive duplicated by extracted legacy archive contents",
+                )
             if suffix in {".csv", ".json", ".md", ".tex", ".png", ".pdf"}:
                 return "keep_active_generated", "tracked publication artifact or matrix"
             return "ambiguous_review", "publication artifact with uncommon type"
@@ -186,20 +217,50 @@ def _classify(rel_path: str, tracked: bool) -> tuple[str, str]:
             return "keep_provenance", "repo audit output used for cleanup and integrity review"
         if rel_path.startswith("reports/legacy_archive/"):
             return "keep_provenance", "explicitly archived provenance bundle"
-        if rel_path.startswith(("reports/publish/", "reports/figures/", "reports/eia930/figures/", "reports/fault_benchmark/", "reports/industrial/figures/")):
-            return "keep_provenance", "tracked reporting or figure artifact used by publication and audit surfaces"
+        if rel_path.startswith(
+            (
+                "reports/publish/",
+                "reports/figures/",
+                "reports/eia930/figures/",
+                "reports/fault_benchmark/",
+                "reports/industrial/figures/",
+            )
+        ):
+            return (
+                "keep_provenance",
+                "tracked reporting or figure artifact used by publication and audit surfaces",
+            )
         if len(path.parts) >= 3 and path.parts[2] == "figures":
             return "keep_provenance", "per-domain report figure artifact retained for auditability"
         if rel_path.startswith("reports/paper") or name.startswith("research_metrics_"):
             return "keep_provenance", "tracked reporting surface retained for publication traceability"
-        if rel_path.startswith(("reports/runs/", "reports/closure_refresh/", "reports/camera_ready/", "reports/universal_", "reports/orius_framework_proof/")):
-            return "keep_provenance", "run or audit evidence referenced by manifests and reproducibility surfaces"
+        if rel_path.startswith(
+            (
+                "reports/runs/",
+                "reports/closure_refresh/",
+                "reports/camera_ready/",
+                "reports/universal_",
+                "reports/orius_framework_proof/",
+            )
+        ):
+            return (
+                "keep_provenance",
+                "run or audit evidence referenced by manifests and reproducibility surfaces",
+            )
         if suffix in {".log"}:
             return "safe_delete", "rebuildable log outside the active publication surface"
         return "ambiguous_review", "report surface not clearly active or archived"
 
     if top == "artifacts":
-        if rel_path.startswith(("artifacts/runs/", "artifacts/models", "artifacts/backtests/", "artifacts/uncertainty/", "artifacts/canonical_runs/")):
+        if rel_path.startswith(
+            (
+                "artifacts/runs/",
+                "artifacts/models",
+                "artifacts/backtests/",
+                "artifacts/uncertainty/",
+                "artifacts/canonical_runs/",
+            )
+        ):
             return "keep_provenance", "model/run provenance referenced by release and training surfaces"
         if rel_path.startswith("artifacts/paper"):
             return "keep_provenance", "paper-era locked artifact surface kept for provenance"
@@ -208,7 +269,11 @@ def _classify(rel_path: str, tracked: bool) -> tuple[str, str]:
         return "ambiguous_review", "artifact surface outside the main provenance paths"
 
     if top == "data":
-        if rel_path.endswith("PLACE_REAL_AV_DATA_HERE.md") or rel_path.endswith("PLACE_REAL_NAVIGATION_DATA_HERE.md") or rel_path.endswith("PLACE_REAL_AEROSPACE_DATA_HERE.md"):
+        if (
+            rel_path.endswith("PLACE_REAL_AV_DATA_HERE.md")
+            or rel_path.endswith("PLACE_REAL_NAVIGATION_DATA_HERE.md")
+            or rel_path.endswith("PLACE_REAL_AEROSPACE_DATA_HERE.md")
+        ):
             return "keep_active_source", "tracked raw-data contract placeholder"
         return "keep_provenance", "data or data manifest surface"
 
@@ -269,7 +334,9 @@ def _write_markdown(path: Path, rows: list[FileRecord], summary: dict[str, objec
                 "|---|---:|---|",
             ]
         )
-        for row in sorted(by_category.get(category, []), key=lambda item: (-item.size_bytes, item.path))[:120]:
+        for row in sorted(by_category.get(category, []), key=lambda item: (-item.size_bytes, item.path))[
+            :120
+        ]:
             lines.append(f"| `{row.path}` | {row.size_bytes} | {row.rationale} |")
 
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")

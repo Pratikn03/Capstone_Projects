@@ -53,7 +53,7 @@ def format_value(value: Any) -> str:
 def collect_metric_defaults(tex: str) -> dict[str, str]:
     # \PaperMetric{KEY}{DEFAULT}
     pairs = re.findall(r"\\PaperMetric\{([^}]+)\}\{([^}]*)\}", tex)
-    return {k: v for k, v in pairs}
+    return dict(pairs)
 
 
 def main() -> int:

@@ -10,6 +10,7 @@ Outputs a JSON report with certificates and safe actions per domain.
 Usage:
     python scripts/run_multi_domain_framework.py [--out reports/multi_domain]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -18,18 +19,18 @@ from pathlib import Path
 
 import numpy as np
 
-from orius.universal_framework import run_universal_step, get_adapter, list_domains
+from orius.universal_framework import get_adapter, list_domains, run_universal_step
 
 
 def _json_serializable(obj: object) -> object:
     """Convert numpy types to JSON-serializable Python types."""
     if isinstance(obj, np.ndarray):
         return obj.tolist()
-    if isinstance(obj, (np.floating, np.integer)):
+    if isinstance(obj, np.floating | np.integer):
         return float(obj) if isinstance(obj, np.floating) else int(obj)
     if isinstance(obj, dict):
         return {k: _json_serializable(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple)):
+    if isinstance(obj, list | tuple):
         return [_json_serializable(x) for x in obj]
     return obj
 
@@ -142,12 +143,14 @@ def main() -> None:
     for cfg in DOMAIN_CONFIGS:
         domain_id = cfg["id"]
         if domain_id not in available:
-            results.append({
-                "domain_id": domain_id,
-                "domain_name": cfg["name"],
-                "status": "skipped",
-                "reason": f"Domain not registered: {domain_id}",
-            })
+            results.append(
+                {
+                    "domain_id": domain_id,
+                    "domain_name": cfg["name"],
+                    "status": "skipped",
+                    "reason": f"Domain not registered: {domain_id}",
+                }
+            )
             continue
 
         try:
@@ -161,22 +164,26 @@ def main() -> None:
                 quantile=50.0,
             )
             safe_action = result.get("safe_action")
-            results.append({
-                "domain_id": domain_id,
-                "domain_name": cfg["name"],
-                "status": "ok",
-                "safe_action": _json_serializable(safe_action) if safe_action else {},
-                "reliability_w": float(result.get("reliability_w", 0.0)),
-                "drift_flag": result.get("drift_flag", False),
-                "certificate_keys": list(result.get("certificate", {}).keys()),
-            })
+            results.append(
+                {
+                    "domain_id": domain_id,
+                    "domain_name": cfg["name"],
+                    "status": "ok",
+                    "safe_action": _json_serializable(safe_action) if safe_action else {},
+                    "reliability_w": float(result.get("reliability_w", 0.0)),
+                    "drift_flag": result.get("drift_flag", False),
+                    "certificate_keys": list(result.get("certificate", {}).keys()),
+                }
+            )
         except Exception as e:
-            results.append({
-                "domain_id": domain_id,
-                "domain_name": cfg["name"],
-                "status": "error",
-                "error": str(e),
-            })
+            results.append(
+                {
+                    "domain_id": domain_id,
+                    "domain_name": cfg["name"],
+                    "status": "error",
+                    "error": str(e),
+                }
+            )
 
     report_path = out / "multi_domain_report.json"
     with open(report_path, "w") as f:

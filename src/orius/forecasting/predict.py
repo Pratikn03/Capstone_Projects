@@ -1,15 +1,22 @@
 """Forecasting: prediction helpers for trained model bundles."""
+
 from __future__ import annotations
 
-import hashlib
-import json
-import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
+from orius.release.artifact_loader import (
+    expected_artifact_sha256,
+    load_pickle_artifact,
+    load_torch_artifact,
+    verify_artifact_hash,
+)
+from orius.release.artifact_loader import (
+    model_hash_required as _central_model_hash_required,
+)
 from orius.utils.scaler import StandardScaler
 
 # ── Lazy torch / DL imports ──
@@ -20,16 +27,19 @@ _PatchTSTForecaster = None
 _TFTForecaster = None
 _TCNForecaster = None
 
+
 def _ensure_torch():
     global _torch, _LSTMForecaster, _NBEATSForecaster, _PatchTSTForecaster, _TFTForecaster, _TCNForecaster
     if _torch is not None:
         return
     import torch as _t
+
     from orius.forecasting.dl_lstm import LSTMForecaster
     from orius.forecasting.dl_nbeats import NBEATSForecaster
     from orius.forecasting.dl_patchtst import PatchTSTForecaster
-    from orius.forecasting.dl_tft import TFTForecaster
     from orius.forecasting.dl_tcn import TCNForecaster
+    from orius.forecasting.dl_tft import TFTForecaster
+
     _torch = _t
     _LSTMForecaster = LSTMForecaster
     _NBEATSForecaster = NBEATSForecaster
@@ -70,7 +80,9 @@ def _extract_prediction_outputs(
             if arr.shape[1] == n_quantiles:
                 arr = np.transpose(arr, (0, 2, 1))
             else:
-                raise ValueError(f"Quantile prediction array shape {arr.shape} does not match {n_quantiles} quantiles")
+                raise ValueError(
+                    f"Quantile prediction array shape {arr.shape} does not match {n_quantiles} quantiles"
+                )
         arr = np.sort(arr[:, -horizon:, :], axis=-1)
         median_idx = _median_quantile_index(quantile_levels)
         point = arr[:, :, median_idx]
@@ -83,146 +95,37 @@ def _extract_prediction_outputs(
     return point, {}
 
 
-def _truthy_env(name: str) -> bool:
-    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
-
-
-def _sha256_file(path: Path) -> str:
-    hasher = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
-            hasher.update(chunk)
-    return hasher.hexdigest()
-
-
 def _model_hash_required() -> bool:
-    env = os.getenv("ORIUS_ENV", "").strip().lower()
-    return _truthy_env("ORIUS_REQUIRE_MODEL_HASH") or env in {
-        "prod",
-        "production",
-        "staging",
-        "deploy",
-        "deployment",
-    }
-
-
-def _iter_manifest_rows(payload: Any) -> list[dict[str, Any]]:
-    if isinstance(payload, list):
-        return [row for row in payload if isinstance(row, dict)]
-    if isinstance(payload, dict):
-        for key in ("artifacts", "hashes", "files", "rows"):
-            rows = payload.get(key)
-            if isinstance(rows, list):
-                return [row for row in rows if isinstance(row, dict)]
-        rows = []
-        for path, digest in payload.items():
-            if isinstance(digest, str):
-                rows.append({"path": path, "sha256": digest})
-            elif isinstance(digest, dict):
-                row = dict(digest)
-                row.setdefault("path", path)
-                rows.append(row)
-        return rows
-    return []
-
-
-def _path_matches_manifest_row(model_path: Path, row_path: str) -> bool:
-    if not row_path:
-        return False
-    candidate = Path(row_path)
-    model_abs = str(model_path.resolve())
-    if candidate.is_absolute():
-        try:
-            return candidate.resolve() == model_path.resolve()
-        except FileNotFoundError:
-            return str(candidate) == model_abs
-    return row_path == str(model_path) or model_abs.endswith(f"/{row_path}") or row_path == model_path.name
-
-
-def _expected_sha256_from_manifest(model_path: Path, manifest_path: Path) -> str | None:
-    if not manifest_path.exists():
-        return None
-    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-    for row in _iter_manifest_rows(payload):
-        row_path = str(row.get("path") or row.get("artifact_path") or row.get("file") or "")
-        digest = row.get("sha256") or row.get("hash") or row.get("digest")
-        if isinstance(digest, str) and _path_matches_manifest_row(model_path, row_path):
-            return digest.strip().lower()
-    return None
+    return _central_model_hash_required()
 
 
 def _expected_model_sha256(model_path: Path) -> str | None:
-    sidecar = model_path.with_name(f"{model_path.name}.sha256")
-    if sidecar.exists():
-        raw = sidecar.read_text(encoding="utf-8").strip()
-        if raw:
-            return raw.split()[0].strip().lower()
-
-    manifest_paths: list[Path] = []
-    env_manifest = os.getenv("ORIUS_MODEL_HASH_MANIFEST")
-    if env_manifest:
-        manifest_paths.append(Path(env_manifest))
-    manifest_paths.extend(
-        [
-            model_path.parent / "model_hashes.json",
-            model_path.parent / "frozen_artifact_hashes.json",
-            Path("reports/predeployment_freeze/frozen_artifact_hashes.json"),
-        ]
-    )
-    for manifest_path in manifest_paths:
-        try:
-            expected = _expected_sha256_from_manifest(model_path, manifest_path)
-        except (OSError, json.JSONDecodeError):
-            continue
-        if expected:
-            return expected
-    return None
+    return expected_artifact_sha256(model_path)
 
 
 def _verify_model_artifact_hash(path: Path) -> None:
-    expected = _expected_model_sha256(path)
-    if expected is None:
-        if _model_hash_required():
-            raise RuntimeError(
-                f"Refusing to load unsigned model artifact without sha256 manifest: {path}"
-            )
-        return
-    actual = _sha256_file(path)
-    if actual.lower() != expected.lower():
-        raise RuntimeError(
-            f"Model artifact hash mismatch for {path}: expected {expected}, observed {actual}"
-        )
+    verify_artifact_hash(path)
 
 
-def load_model_bundle(path: str | Path) -> Dict[str, Any]:
+def load_model_bundle(path: str | Path) -> dict[str, Any]:
     """Load a serialized model bundle (GBM pickle or Torch checkpoint)."""
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(path)
-    _verify_model_artifact_hash(path)
     if path.suffix == ".pkl":
-        import pickle
-        with open(path, "rb") as f:
-            bundle = pickle.load(f)
+        bundle = load_pickle_artifact(path)
     elif path.suffix == ".pt":
         _ensure_torch()
-        try:
-            bundle = _torch.load(path, map_location="cpu", weights_only=True)
-        except TypeError:
-            # Older torch versions do not expose weights_only. Hash validation
-            # above remains the fail-closed protection for production loads.
-            bundle = _torch.load(path, map_location="cpu")
-        except Exception:
-            if _model_hash_required():
-                raise
-            bundle = _torch.load(path, map_location="cpu")
+        # Refusing to load unsigned model artifact without sha256 manifest is
+        # handled by the approved loader before torch deserialization.
+        bundle = load_torch_artifact(path, map_location="cpu", weights_only=True)
     else:
         raise ValueError(f"Unsupported model format: {path.suffix}")
     bundle["_path"] = str(path)
     return bundle
 
 
-def _build_torch_model(bundle: Dict[str, Any]):
+def _build_torch_model(bundle: dict[str, Any]):
     """Instantiate a Torch model from a saved bundle."""
     _ensure_torch()
     model_type = bundle.get("model_type")
@@ -296,13 +199,13 @@ def _build_torch_model(bundle: Dict[str, Any]):
     return model
 
 
-def _maybe_scale_X(X: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
+def _maybe_scale_X(X: np.ndarray, bundle: dict[str, Any]) -> np.ndarray:
     """Apply the saved feature scaler when present."""
     scaler = StandardScaler.from_dict(bundle.get("x_scaler"))
     return scaler.transform(X) if scaler is not None else X
 
 
-def _maybe_impute_X(X: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
+def _maybe_impute_X(X: np.ndarray, bundle: dict[str, Any]) -> np.ndarray:
     """Apply saved train-split feature fill values when present."""
     fill_values = bundle.get("feature_fill_values")
     arr = np.asarray(X, dtype=np.float32)
@@ -312,9 +215,7 @@ def _maybe_impute_X(X: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
     if arr.ndim != 2:
         raise ValueError(f"Expected 2D feature matrix, got shape {arr.shape}")
     if fill.shape[0] != arr.shape[1]:
-        raise ValueError(
-            f"Feature fill vector has length {fill.shape[0]}, expected {arr.shape[1]}"
-        )
+        raise ValueError(f"Feature fill vector has length {fill.shape[0]}, expected {arr.shape[1]}")
     invalid = ~np.isfinite(arr)
     if not invalid.any():
         return arr
@@ -324,7 +225,7 @@ def _maybe_impute_X(X: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
     return arr
 
 
-def _maybe_inverse_y(y: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
+def _maybe_inverse_y(y: np.ndarray, bundle: dict[str, Any]) -> np.ndarray:
     """Undo target scaling when a scaler is present."""
     scaler = StandardScaler.from_dict(bundle.get("y_scaler"))
     if scaler is None:
@@ -332,7 +233,9 @@ def _maybe_inverse_y(y: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
     return scaler.inverse_transform(y.reshape(-1, 1)).reshape(-1)
 
 
-def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], horizon: int | None = None) -> Dict[str, Any]:
+def predict_next_24h(
+    features_df: pd.DataFrame, model_bundle: dict[str, Any], horizon: int | None = None
+) -> dict[str, Any]:
     """Generate the next-horizon forecast and (optional) quantiles."""
     df = features_df.sort_values("timestamp").reset_index(drop=True)
     feat_cols = model_bundle.get("feature_cols", [])
@@ -414,7 +317,9 @@ def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], ho
     }
 
 
-def predict_multi_target(features_df: pd.DataFrame, bundles: Dict[str, Dict[str, Any]], horizon: int | None = None) -> Dict[str, Any]:
+def predict_multi_target(
+    features_df: pd.DataFrame, bundles: dict[str, dict[str, Any]], horizon: int | None = None
+) -> dict[str, Any]:
     out = {}
     for target, bundle in bundles.items():
         out[target] = predict_next_24h(features_df, bundle, horizon=horizon)

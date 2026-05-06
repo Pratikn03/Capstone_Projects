@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
-from typing import Any, Iterable
+from collections.abc import Iterable
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,6 @@ if str(REPO_ROOT / "src") not in sys.path:
 from orius.cpsbench_iot.baselines import dc3s_wrapped_dispatch
 from orius.cpsbench_iot.metrics import compute_all_metrics
 from orius.cpsbench_iot.scenarios import FAULT_COLUMNS, generate_episode
-
 
 POLICY_ORDER = [
     "dc3s_no_wt",
@@ -206,7 +206,9 @@ def run_dc3s_ablations(
                     "intervention_rate": float(metrics["intervention_rate"]),
                     "violation_rate": float(metrics["violation_rate"]),
                     "true_soc_violation_rate": float(metrics["true_soc_violation_rate"]),
-                    "expected_cost_usd": float(result["expected_cost_usd"]) if result["expected_cost_usd"] is not None else np.nan,
+                    "expected_cost_usd": float(result["expected_cost_usd"])
+                    if result["expected_cost_usd"] is not None
+                    else np.nan,
                     "mae": float(metrics["mae"]),
                     "rmse": float(metrics["rmse"]),
                 }
@@ -232,7 +234,9 @@ def run_dc3s_ablations(
         .mean()
         .reset_index()
     )
-    seed_counts = raw.groupby(["scenario", "policy"], dropna=False)["seed"].nunique().rename("n_seeds").reset_index()
+    seed_counts = (
+        raw.groupby(["scenario", "policy"], dropna=False)["seed"].nunique().rename("n_seeds").reset_index()
+    )
     summary = _ordered_summary(summary.merge(seed_counts, on=["scenario", "policy"], how="left"))
 
     out_path = Path(out_dir)

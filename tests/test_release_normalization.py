@@ -51,10 +51,14 @@ def test_write_run_context_emits_normalized_run_manifest(tmp_path: Path) -> None
     assert manifest["promoted_at"] is None
 
 
-def test_load_release_source_runs_reads_single_release_family(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_load_release_source_runs_reads_single_release_family(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr(pub, "REPO_ROOT", tmp_path)
     for dataset in pub.RELEASE_DATASETS:
-        manifest_path = tmp_path / "artifacts" / "runs" / dataset.lower() / "TEST123" / "registry" / "run_manifest.json"
+        manifest_path = (
+            tmp_path / "artifacts" / "runs" / dataset.lower() / "TEST123" / "registry" / "run_manifest.json"
+        )
         manifest_path.parent.mkdir(parents=True, exist_ok=True)
         manifest_path.write_text(
             json.dumps(
@@ -92,7 +96,9 @@ def test_run_r1_verify_main_returns_nonzero_on_failed_acceptance(monkeypatch: py
     assert r1.main() == 1
 
 
-def test_check_release_manifest_contract_accepts_single_release_family(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_check_release_manifest_contract_accepts_single_release_family(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr(sync, "REPO_ROOT", tmp_path)
     source_artifact = tmp_path / "reports" / "publication" / "dc3s_main_table.csv"
     source_artifact.parent.mkdir(parents=True, exist_ok=True)

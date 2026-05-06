@@ -1,10 +1,9 @@
 """Tests for Paper 3 graceful degradation planner and promoted artifacts."""
+
 from __future__ import annotations
 
 import csv
 from pathlib import Path
-
-import pytest
 
 from orius.dc3s.graceful import compare_policies, optimized_graceful, plan_graceful_degradation
 from scripts.build_graceful_trajectory_figures import build_publication_figure

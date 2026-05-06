@@ -6,6 +6,7 @@ empirical measurement for any domain with a scalar safe-set margin.
 This complements the battery-specific ``half_life.py`` which implements
 the operational certificate-state engine.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

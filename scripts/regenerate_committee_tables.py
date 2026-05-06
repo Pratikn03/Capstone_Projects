@@ -18,10 +18,10 @@ Writes:
 
 from __future__ import annotations
 
+import contextlib
 import csv
 import json
 import math
-import os
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
@@ -33,6 +33,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
+
 
 def _read_csv(path: Path) -> list[dict]:
     with open(path) as f:
@@ -66,11 +67,7 @@ def _enrich_validation_rows(rows: list[dict], validation_report: dict) -> list[d
         proof_reports = {}
 
     reference_domain = str(validation_report.get("reference_domain", "battery"))
-    proof_domains = {
-        str(domain)
-        for domain in validation_report.get("proof_domains", [])
-        if str(domain)
-    }
+    proof_domains = {str(domain) for domain in validation_report.get("proof_domains", []) if str(domain)}
 
     enriched: list[dict] = []
     for row in rows:
@@ -91,7 +88,11 @@ def _enrich_validation_rows(rows: list[dict], validation_report: dict) -> list[d
                 if key in domain_result and (merged.get(key) in (None, "")):
                     merged[key] = domain_result[key]
         proof_report = proof_reports.get(domain, {})
-        if isinstance(proof_report, dict) and "evidence_pass" in proof_report and merged.get("evidence_pass") in (None, ""):
+        if (
+            isinstance(proof_report, dict)
+            and "evidence_pass" in proof_report
+            and merged.get("evidence_pass") in (None, "")
+        ):
             merged["evidence_pass"] = proof_report["evidence_pass"]
 
         if merged.get("orius_reduction_pct") in (None, ""):
@@ -126,20 +127,21 @@ def _tsvr(v: str | float) -> str:
 
 
 DOMAIN_PRETTY = {
-    "battery":    "Battery (Ref.)",
-    "vehicle":    "Vehicle (AV)",
+    "battery": "Battery (Ref.)",
+    "vehicle": "Vehicle (AV)",
     "healthcare": "Healthcare",
     "industrial": "Industrial",
-    "aerospace":  "Aerospace",
+    "aerospace": "Aerospace",
     "navigation": "Navigation",
-    "av":         "Vehicle (AV)",
-    "energy":     "Battery (Ref.)",
+    "av": "Vehicle (AV)",
+    "energy": "Battery (Ref.)",
 }
 
 
 # ---------------------------------------------------------------------------
 # tbl_all_domain_comparison.tex
 # ---------------------------------------------------------------------------
+
 
 def write_all_domain_comparison(rows: list[dict]) -> None:
     lines = [
@@ -155,7 +157,11 @@ def write_all_domain_comparison(rows: list[dict]) -> None:
     for r in rows:
         dom = DOMAIN_PRETTY.get(r["domain"], r["domain"].capitalize())
         gate = r.get("evidence_pass", "")
-        gate_str = r"$\checkmark$" if str(gate).lower() == "true" else ("Ref." if r.get("maturity_label") == "reference" else "—")
+        gate_str = (
+            r"$\checkmark$"
+            if str(gate).lower() == "true"
+            else ("Ref." if r.get("maturity_label") == "reference" else "—")
+        )
         lines.append(
             f"{dom} & {_tsvr(r['baseline_tsvr_mean'])} & {_tsvr(r['orius_tsvr_mean'])} "
             f"& {_pct(r['orius_reduction_pct'])} & {gate_str} \\\\"
@@ -172,6 +178,7 @@ def write_all_domain_comparison(rows: list[dict]) -> None:
 # ---------------------------------------------------------------------------
 # tbl_multi_domain_evidence_gate.tex
 # ---------------------------------------------------------------------------
+
 
 def write_evidence_gate(rows: list[dict]) -> None:
     proof = [r for r in rows if r.get("maturity_label") == "proof_domain"]
@@ -207,6 +214,7 @@ def write_evidence_gate(rows: list[dict]) -> None:
 # cross_domain_oasg_table.tex
 # ---------------------------------------------------------------------------
 
+
 def write_oasg_table(rows: list[dict]) -> None:
     lines = [
         r"\begin{table}[htbp]",
@@ -225,10 +233,7 @@ def write_oasg_table(rows: list[dict]) -> None:
         reduction = r.get("orius_reduction_pct")
         if reduction in (None, ""):
             reduction = _compute_reduction_pct(baseline, orius)
-        lines.append(
-            f"{dom} & {_tsvr(baseline)} & {_tsvr(orius)} "
-            f"& {_pct(reduction)} \\\\"
-        )
+        lines.append(f"{dom} & {_tsvr(baseline)} & {_tsvr(orius)} & {_pct(reduction)} \\\\")
     lines += [
         r"\bottomrule",
         r"\end{tabular}",
@@ -241,6 +246,7 @@ def write_oasg_table(rows: list[dict]) -> None:
 # ---------------------------------------------------------------------------
 # tbl_latency_benchmark.tex  (overwrite with real numbers)
 # ---------------------------------------------------------------------------
+
 
 def write_latency(report: dict) -> None:
     domains = report["domains"]
@@ -257,9 +263,7 @@ def write_latency(report: dict) -> None:
     for d in domains:
         dom = DOMAIN_PRETTY.get(d["domain"], d["domain"].capitalize())
         gate = r"$\checkmark$" if d["passed"] else r"$\times$"
-        lines.append(
-            f"{dom} & {d['p50_ms']:.3f} & {d['p95_ms']:.3f} & {d['p99_ms']:.3f} & {gate} \\\\"
-        )
+        lines.append(f"{dom} & {d['p50_ms']:.3f} & {d['p95_ms']:.3f} & {d['p99_ms']:.3f} & {gate} \\\\")
     lines += [
         r"\bottomrule",
         r"\multicolumn{5}{l}{\small Gate: p99 $<$ 50\,ms. All domains pass.}\\",
@@ -273,6 +277,7 @@ def write_latency(report: dict) -> None:
 # ---------------------------------------------------------------------------
 # tbl_adversarial_tsvr.tex  (overwrite with real numbers)
 # ---------------------------------------------------------------------------
+
 
 def write_adversarial(report: dict) -> None:
     domains_d = report["domains"]
@@ -327,13 +332,14 @@ def write_adversarial(report: dict) -> None:
 # which represents the fraction of violation steps caught and repaired.
 # Supplemented with manually curated useful_work from benchmark runs.
 USEFUL_WORK = {
-    "battery":    0.82,
-    "vehicle":    0.91,
+    "battery": 0.82,
+    "vehicle": 0.91,
     "healthcare": 0.78,
     "industrial": 0.95,
-    "aerospace":  0.97,
+    "aerospace": 0.97,
     "navigation": 0.93,
 }
+
 
 def write_intervention_tradeoff(rows: list[dict]) -> None:
     lines = [
@@ -382,11 +388,11 @@ def write_intervention_tradeoff(rows: list[dict]) -> None:
 
 CONTROLLER_ORDER = ["nominal", "robust", "dc3s", "fallback", "naive"]
 CONTROLLER_PRETTY = {
-    "nominal":  "Nominal",
-    "robust":   "Robust",
-    "dc3s":     "DC3S",
+    "nominal": "Nominal",
+    "robust": "Robust",
+    "dc3s": "DC3S",
     "fallback": "Fallback",
-    "naive":    "Naive",
+    "naive": "Naive",
 }
 
 DOMAIN_ORDER = ["battery", "vehicle", "healthcare"]
@@ -406,13 +412,12 @@ def write_per_domain_controllers(csv_path: Path) -> None:
 
     # Aggregate: mean TSVR per (domain, controller)
     from collections import defaultdict
+
     data: dict[tuple[str, str], list[float]] = defaultdict(list)
     for r in rows:
         key = (r["domain"], r["controller"])
-        try:
+        with contextlib.suppress(ValueError, KeyError):
             data[key].append(float(r["tsvr"]))
-        except (ValueError, KeyError):
-            pass
 
     def _mean(vals: list[float]) -> str:
         if not vals:
@@ -423,8 +428,7 @@ def write_per_domain_controllers(csv_path: Path) -> None:
     # Determine which controllers are present
     present_ctrl = [c for c in CONTROLLER_ORDER if any(k[1] == c for k in data)]
     col_heads = " & ".join(
-        f"\\textbf{{{CONTROLLER_PRETTY.get(c, c.capitalize())} TSVR}}"
-        for c in present_ctrl
+        f"\\textbf{{{CONTROLLER_PRETTY.get(c, c.capitalize())} TSVR}}" for c in present_ctrl
     )
 
     lines = [
@@ -464,11 +468,11 @@ def write_per_domain_controllers(csv_path: Path) -> None:
 
 FAULT_ORDER = ["bias", "noise", "stuck_sensor", "blackout", "multi"]
 FAULT_PRETTY = {
-    "bias":         "Bias",
-    "noise":        "Noise",
+    "bias": "Bias",
+    "noise": "Noise",
     "stuck_sensor": "Stuck",
-    "blackout":     "Blackout",
-    "multi":        "Multi",
+    "blackout": "Blackout",
+    "multi": "Multi",
 }
 
 
@@ -485,6 +489,7 @@ def write_fault_type_breakdown(csv_path: Path) -> None:
     rows = _read_csv(csv_path)
 
     from collections import defaultdict
+
     # data[(domain, fault_type, controller)] = [tsvr, ...]
     data: dict[tuple[str, str, str], list[float]] = defaultdict(list)
     for r in rows:
@@ -493,12 +498,12 @@ def write_fault_type_breakdown(csv_path: Path) -> None:
             if v == v:  # not NaN
                 data[(r["domain"], r["fault_type"], r["controller"])].append(v)
         except (ValueError, KeyError):
-            pass
+            continue
 
     def _m(vals: list[float]) -> str:
         if not vals:
             return "---"
-        return f"{sum(vals)/len(vals):.3f}"
+        return f"{sum(vals) / len(vals):.3f}"
 
     def _reduction(nom: list[float], dc3s: list[float]) -> str:
         if not nom or not dc3s:
@@ -510,13 +515,11 @@ def write_fault_type_breakdown(csv_path: Path) -> None:
         return f"{(1 - d / n) * 100:.1f}\\%"
 
     # Build fault-type columns: each fault_type gets Nom/DC3S/Red sub-columns
-    present_faults = [f for f in FAULT_ORDER
-                      if any((dom, f, "nominal") in data for dom in DOMAIN_ORDER)]
+    present_faults = [f for f in FAULT_ORDER if any((dom, f, "nominal") in data for dom in DOMAIN_ORDER)]
 
     # Simplified: one column per fault type showing DC3S TSVR and reduction
-    col_heads = " & ".join(
-        f"\\textbf{{{FAULT_PRETTY.get(ft, ft)}}}\\\\ \\textbf{{(Nom / DC3S)}}"
-        for ft in present_faults
+    " & ".join(
+        f"\\textbf{{{FAULT_PRETTY.get(ft, ft)}}}\\\\ \\textbf{{(Nom / DC3S)}}" for ft in present_faults
     )
 
     lines = [
@@ -529,11 +532,11 @@ def write_fault_type_breakdown(csv_path: Path) -> None:
         r"\label{tab:fault_type_breakdown_per_domain}",
         f"\\begin{{tabular}}{{l{'cc' * len(present_faults)}}}",
         r"\toprule",
-        r"\multirow{2}{*}{\textbf{Domain}} & " +
-        " & ".join(
-            f"\\multicolumn{{2}}{{c}}{{\\textbf{{{FAULT_PRETTY.get(ft, ft)}}}}}"
-            for ft in present_faults
-        ) + r" \\",
+        r"\multirow{2}{*}{\textbf{Domain}} & "
+        + " & ".join(
+            f"\\multicolumn{{2}}{{c}}{{\\textbf{{{FAULT_PRETTY.get(ft, ft)}}}}}" for ft in present_faults
+        )
+        + r" \\",
         r" & " + " & ".join(r"\textbf{Nom} & \textbf{DC3S}" for _ in present_faults) + r" \\",
         r"\midrule",
     ]
@@ -542,7 +545,7 @@ def write_fault_type_breakdown(csv_path: Path) -> None:
         pretty = DOMAIN_PRETTY.get(dom, dom.capitalize())
         cells = []
         for ft in present_faults:
-            nom  = data[(dom, ft, "nominal")]
+            nom = data[(dom, ft, "nominal")]
             dc3s = data[(dom, ft, "dc3s")]
             cells.append(_m(nom))
             cells.append(_m(dc3s))
@@ -568,6 +571,7 @@ def write_fault_type_breakdown(csv_path: Path) -> None:
 # tbl_{domain}_leaderboard.tex  (per-domain controller rankings)
 # ---------------------------------------------------------------------------
 
+
 def write_per_domain_leaderboard(csv_path: Path) -> None:
     """Per-domain leaderboard: all 5 controllers ranked by TSVR for each domain.
 
@@ -581,24 +585,19 @@ def write_per_domain_leaderboard(csv_path: Path) -> None:
     rows = _read_csv(csv_path)
 
     from collections import defaultdict
+
     # Aggregate: mean TSVR, intervention_rate, oasg per (domain, controller)
     tsvr_data: dict[tuple[str, str], list[float]] = defaultdict(list)
-    ir_data:   dict[tuple[str, str], list[float]] = defaultdict(list)
+    ir_data: dict[tuple[str, str], list[float]] = defaultdict(list)
     oasg_data: dict[tuple[str, str], list[float]] = defaultdict(list)
     for r in rows:
         dom, ctrl = r["domain"], r["controller"]
-        try:
+        with contextlib.suppress(ValueError, KeyError):
             tsvr_data[(dom, ctrl)].append(float(r["tsvr"]))
-        except (ValueError, KeyError):
-            pass
-        try:
+        with contextlib.suppress(ValueError, KeyError):
             ir_data[(dom, ctrl)].append(float(r["intervention_rate"]))
-        except (ValueError, KeyError):
-            pass
-        try:
+        with contextlib.suppress(ValueError, KeyError):
             oasg_data[(dom, ctrl)].append(float(r["oasg"]))
-        except (ValueError, KeyError):
-            pass
 
     def _mean(vals: list[float]) -> float:
         return sum(vals) / len(vals) if vals else float("nan")
@@ -646,9 +645,7 @@ def write_per_domain_leaderboard(csv_path: Path) -> None:
             # Bold rank 1
             rank_str = rf"\textbf{{{rank}}}" if rank == 1 else str(rank)
             ctrl_str = rf"\textbf{{{ctrl_pretty}}}" if rank == 1 else ctrl_pretty
-            lines.append(
-                f"{rank_str} & {ctrl_str} & {_fmt(t)} & {_fmt2(ir)} & {_fmt2(oa)} \\\\"
-            )
+            lines.append(f"{rank_str} & {ctrl_str} & {_fmt(t)} & {_fmt2(ir)} & {_fmt2(oa)} \\\\")
 
         lines += [
             r"\bottomrule",
@@ -665,23 +662,24 @@ def write_per_domain_leaderboard(csv_path: Path) -> None:
 # main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     print("Regenerating committee tables...")
 
     summary_path = REPORTS / "universal_orius_validation" / "domain_validation_summary.csv"
     validation_report_path = REPORTS / "universal_orius_validation" / "validation_report.json"
-    oasg_path    = REPORTS / "universal_orius_validation" / "cross_domain_oasg_table.csv"
-    adv_path     = REPORTS / "adversarial_run" / "adversarial_benchmark_report.json"
-    lat_path     = REPORTS / "latency_run" / "latency_report.json"
+    oasg_path = REPORTS / "universal_orius_validation" / "cross_domain_oasg_table.csv"
+    adv_path = REPORTS / "adversarial_run" / "adversarial_benchmark_report.json"
+    lat_path = REPORTS / "latency_run" / "latency_report.json"
     per_ctrl_path = REPORTS / "universal_orius_validation" / "per_controller_tsvr.csv"
     ablation_path = REPORTS / "multi_domain_ablation" / "fault_type_tsvr.csv"
 
     summary = _read_csv(summary_path)
     validation_report = _read_json(validation_report_path) if validation_report_path.exists() else {}
     summary = _enrich_validation_rows(summary, validation_report)
-    oasg    = _read_csv(oasg_path)
-    adv     = _read_json(adv_path) if adv_path.exists() else {}
-    lat     = _read_json(lat_path) if lat_path.exists() else {}
+    oasg = _read_csv(oasg_path)
+    adv = _read_json(adv_path) if adv_path.exists() else {}
+    lat = _read_json(lat_path) if lat_path.exists() else {}
 
     write_all_domain_comparison(summary)
     write_evidence_gate(summary)

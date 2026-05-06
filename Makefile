@@ -1,4 +1,4 @@
-.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data table-result-integrity-repair table-result-integrity-audit na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact clean-artifact-release analyze-artifact av-datasets nuplan-av-surface healthcare-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark orius-monograph-assets review-compile orius-book orius-evidence-rerun camera-ready-assets camera-ready-verify camera-ready-freeze orius-review-pack orius-final ieee-assets ieee-main-compile ieee-detailed-compile ieee-appendix-compile ieee-pack ieee-prof-assets ieee-prof-main-compile ieee-prof-appa-compile ieee-prof-appb-compile ieee-prof-pack orius-flagship-manuscripts battery-deep-novelty phase3-proof-book app-c-flagship-proofs app-c-all-theorems external-ssd-setup external-ssd-shell external-ssd-verify external-ssd-preflight full-folder-audit pre-clean clean clean-status fresh-research pre-release appledouble-clean appledouble-check workspace-hygiene-check workspace-hygiene-clean
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data table-result-integrity-repair table-result-integrity-audit na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact clean-artifact-release analyze-artifact av-datasets nuplan-av-surface healthcare-datasets multi-domain-datasets multi-domain-build universal-framework-figure universal-contract-check paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark t9-t10-research-build t9-t10-research-check t9-t10-research-verify t9-t10-assumption-build t9-t10-assumption-check t9-t10-assumption-verify t9-t10-mechanized-build theorem-promotion-build theorem-promotion-check theorem-promotion-verify theorem-promotion-require-promoted model-quality-build model-quality-check model-quality-verify model-quality-require-pass orius-monograph-assets review-compile orius-book orius-evidence-rerun camera-ready-assets camera-ready-verify camera-ready-freeze orius-review-pack orius-final ieee-assets ieee-main-compile ieee-detailed-compile ieee-appendix-compile ieee-pack ieee-prof-assets ieee-prof-main-compile ieee-prof-appa-compile ieee-prof-appb-compile ieee-prof-pack orius-flagship-manuscripts battery-deep-novelty phase3-proof-book app-c-flagship-proofs app-c-all-theorems external-ssd-setup external-ssd-shell external-ssd-verify external-ssd-preflight full-folder-audit pre-clean clean clean-status fresh-research pre-release appledouble-clean appledouble-check workspace-hygiene-check workspace-hygiene-clean baselines-advanced baseline-significance release release-smoke
 
 PRE_RELEASE_TESTS = tests/test_submission_artifacts.py tests/test_three_domain_submission_lane.py tests/test_thesis_package_assets.py
 
@@ -48,6 +48,46 @@ workspace-hygiene-check:
 workspace-hygiene-clean:
 	PYTHONPATH=scripts $(PYTHON) scripts/cleanup_appledouble.py --root . --delete
 	PYTHONPATH=scripts $(PYTHON) scripts/validate_workspace_hygiene.py --root . --exclude-active --delete-stale-pids
+
+universal-contract-check:
+	PYTHONPATH=src $(PYTHON) scripts/validate_universal_contract_manifest.py
+
+.PHONY: quality quality-bootstrap workspace-cleanup-manifest code-quality-bundle hf-code-quality-plan
+
+QUALITY_STAMP ?= $(shell date -u +%Y%m%dT%H%M%SZ)
+CODE_QUALITY_BUNDLE_DIR ?= artifacts/code_quality/orius-code-quality-$(QUALITY_STAMP)
+
+quality-bootstrap:
+	$(PYTHON) -m pip install ruff==0.9.10 mypy==1.15.0 mypy_extensions==1.1.0 pathspec==0.12.1
+
+workspace-cleanup-manifest:
+	PYTHONPATH=scripts COPYFILE_DISABLE=1 PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/build_workspace_cleanup_manifest.py --root . --out reports/audit/workspace_cleanup_manifest.json
+	$(PYTHON) scripts/validate_workspace_cleanup_manifest.py reports/audit/workspace_cleanup_manifest.json
+
+code-quality-bundle:
+	$(PYTHON) scripts/build_code_quality_bundle.py --root . --out-root artifacts/code_quality --stamp $(QUALITY_STAMP)
+	$(PYTHON) scripts/validate_code_quality_bundle.py $(CODE_QUALITY_BUNDLE_DIR)
+
+hf-code-quality-plan:
+	$(PYTHON) scripts/run_hf_code_quality_job.py --bundle-dir $(CODE_QUALITY_BUNDLE_DIR) --dry-run
+
+quality:
+	PYTHONPYCACHEPREFIX=/tmp/orius_pycache $(PYTHON) -m compileall -q -x '(^|/)\._' src scripts tests
+	$(PYTHON) -m ruff check src scripts tests services
+	$(PYTHON) -m ruff format --check src scripts tests services
+	$(PYTHON) -m mypy src/orius/dc3s src/orius/cpsbench_iot src/orius/universal_theory
+	$(PYTHON) scripts/audit_code_health.py --config configs/publish_audit.yaml
+	$(PYTHON) scripts/validate_generated_artifact_policy.py
+	COPYFILE_DISABLE=1 PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/validate_workspace_hygiene.py --root . --exclude-active --allow-git-temp-packs
+	$(PYTHON) scripts/validate_no_appledouble.py --exclude-active
+	$(PYTHON) scripts/validate_theorem_surface.py
+	$(MAKE) theorem-promotion-verify
+	$(MAKE) model-quality-verify
+	$(PYTHON) scripts/validate_assumption_consistency.py
+	$(MAKE) universal-contract-check
+	$(PYTHON) scripts/validate_paper_claims.py
+	$(PYTHON) scripts/validate_equal_domain_artifact_discipline.py
+	$(PYTHON) -m pytest -q tests/test_audit_code_health.py tests/test_clean_artifact_release.py tests/test_nuplan_av_surface.py tests/test_battery_av_pipeline.py tests/test_av_waymo_dry_run.py tests/test_validate_paper_claims.py tests/test_camera_ready_figure_lineage.py
 
 clean:
 	rm -f paper/*.aux paper/*.log paper/*.out paper/*.fdb_latexmk paper/*.fls paper/*.bbl paper/*.blg paper/*.toc paper/*.lof paper/*.lot
@@ -345,6 +385,89 @@ train-baselines:
 eval-baselines:
 	PYTHONPATH=src $(PYTHON) -c "from orius.forecasting.advanced_baselines import evaluate_baselines; print(evaluate_baselines('data/processed/splits/test.parquet').to_markdown())"
 
+# Train Prophet/NGBoost/Darts-NBEATS/FLAML on canonical splits and merge into
+# the regional week2_metrics.json so the publication table picks them up.
+# Usage: make baselines-advanced REGION=DE RELEASE_ID=R1_... TRAIN=... CAL=... TEST=...
+ADV_REGION ?= DE
+ADV_HOLIDAY ?= DE
+ADV_MODELS ?= prophet ngboost nbeats_darts flaml
+ADV_SEEDS ?= 42 123 456 789 2024 1337 7777 9999
+baselines-advanced:
+ifndef RELEASE_ID
+	$(error RELEASE_ID is not set. Usage: make baselines-advanced REGION=DE RELEASE_ID=... TRAIN=... CAL=... TEST=...)
+endif
+ifndef TRAIN
+	$(error TRAIN parquet split is required)
+endif
+ifndef CAL
+	$(error CAL parquet split is required)
+endif
+ifndef TEST
+	$(error TEST parquet split is required)
+endif
+	PYTHONPATH=src $(PYTHON) -m orius.forecasting.train_advanced \
+		--region $(ADV_REGION) --release-id $(RELEASE_ID) \
+		--train $(TRAIN) --calibration $(CAL) --test $(TEST) \
+		--holiday-country $(ADV_HOLIDAY) \
+		--models $(ADV_MODELS) --seeds $(ADV_SEEDS)
+
+# Unified release: one command, deterministic splits hash, every model on the same data,
+# publication table + DM/Holm significance, single release_manifest.json.
+# Required: REGION, RELEASE_ID, FEATURES, CONFIG. Optional: HOLIDAY, SEEDS, TARGETS.
+RELEASE_REGION ?= DE
+RELEASE_HOLIDAY ?= DE
+RELEASE_TARGETS ?= load_mw wind_mw solar_mw
+RELEASE_SEEDS ?= 42 123 456 789 2024 1337 7777 9999
+release:
+ifndef RELEASE_ID
+	$(error RELEASE_ID is required. Usage: make release REGION=DE RELEASE_ID=R1_... FEATURES=data/processed/features.parquet CONFIG=configs/train_forecast.yaml)
+endif
+ifndef FEATURES
+	$(error FEATURES path is required (the canonical features.parquet for this region))
+endif
+ifndef CONFIG
+	$(error CONFIG path is required (the canonical training yaml for this region))
+endif
+	PYTHONPATH=src $(PYTHON) scripts/run_release.py \
+		--region $(RELEASE_REGION) --release-id $(RELEASE_ID) \
+		--features $(FEATURES) --config $(CONFIG) \
+		--holiday-country $(RELEASE_HOLIDAY) \
+		--targets $(RELEASE_TARGETS) \
+		--seeds $(RELEASE_SEEDS)
+
+# Smoke variant: 1 target, 1 seed, NGBoost only, no legacy retrain. ~2-5 min.
+release-smoke:
+ifndef RELEASE_ID
+	$(error RELEASE_ID is required)
+endif
+ifndef FEATURES
+	$(error FEATURES path is required)
+endif
+ifndef CONFIG
+	$(error CONFIG path is required)
+endif
+	PYTHONPATH=src $(PYTHON) scripts/run_release.py \
+		--region $(RELEASE_REGION) --release-id $(RELEASE_ID) \
+		--features $(FEATURES) --config $(CONFIG) \
+		--holiday-country $(RELEASE_HOLIDAY) \
+		--smoke
+
+# Diebold-Mariano + paired-bootstrap + Holm across the full baseline family.
+# Requires per-(model, target, seed).npz prediction archives under
+# artifacts/runs/$(REGION_LOWER)/$(RELEASE_ID)/predictions/.
+SIG_REGION ?= DE
+SIG_REFERENCE ?= gbm
+SIG_BASELINES ?= lstm tcn nbeats tft patchtst prophet nbeats_darts ngboost flaml
+SIG_HORIZON ?= 24
+baseline-significance:
+ifndef RELEASE_ID
+	$(error RELEASE_ID is not set. Usage: make baseline-significance REGION=DE RELEASE_ID=...)
+endif
+	PYTHONPATH=src $(PYTHON) scripts/run_baseline_significance.py \
+		--region $(SIG_REGION) --release-id $(RELEASE_ID) \
+		--reference $(SIG_REFERENCE) --baselines $(SIG_BASELINES) \
+		--horizon $(SIG_HORIZON)
+
 # ============================================================
 # Production Release Workflow
 # ============================================================
@@ -366,6 +489,55 @@ paper-assets:
 	bash scripts/export_paper_assets.sh
 	PYTHONPATH=src $(PYTHON) scripts/build_paper_table_tex.py
 	PYTHONPATH=src $(PYTHON) scripts/update_paper_metrics.py
+
+t9-t10-research-build:
+	PYTHONPATH=src $(PYTHON) scripts/build_t9_t10_research_package.py
+
+t9-t10-research-check:
+	PYTHONPATH=src $(PYTHON) scripts/validate_t9_t10_research_package.py
+
+t9-t10-research-verify: t9-t10-research-build t9-t10-research-check
+
+.PHONY: t9-discharge-build t10-discharge-build
+
+t9-discharge-build:
+	PYTHONPATH=src $(PYTHON) scripts/build_t9_discharge_artifacts.py
+
+t10-discharge-build:
+	PYTHONPATH=src $(PYTHON) scripts/build_t10_discharge_artifacts.py
+
+t9-t10-assumption-build:
+	PYTHONPATH=src $(PYTHON) scripts/build_t9_t10_assumption_discharge.py
+
+t9-t10-assumption-check:
+	PYTHONPATH=src $(PYTHON) scripts/validate_t9_t10_assumption_discharge.py
+
+t9-t10-assumption-verify: t9-t10-assumption-build t9-t10-assumption-check
+
+t9-t10-mechanized-build:
+	PYTHONPATH=src $(PYTHON) scripts/build_t9_t10_mechanized_status.py
+
+theorem-promotion-build: t9-t10-assumption-build t9-t10-mechanized-build
+	PYTHONPATH=src $(PYTHON) scripts/build_theorem_promotion_gates.py
+
+theorem-promotion-check:
+	PYTHONPATH=src $(PYTHON) scripts/validate_theorem_promotion_gates.py
+
+theorem-promotion-require-promoted:
+	PYTHONPATH=src $(PYTHON) scripts/validate_theorem_promotion_gates.py --require-promoted T9 --require-promoted T10
+
+theorem-promotion-verify: t9-t10-research-check t9-t10-assumption-check theorem-promotion-build theorem-promotion-check
+
+model-quality-build:
+	PYTHONPATH=src $(PYTHON) scripts/build_model_quality_gate.py
+
+model-quality-check:
+	PYTHONPATH=src $(PYTHON) scripts/validate_model_quality_gate.py
+
+model-quality-require-pass:
+	PYTHONPATH=src $(PYTHON) scripts/validate_model_quality_gate.py --require-pass
+
+model-quality-verify: model-quality-build model-quality-check
 
 orius-monograph-assets:
 	PYTHONPATH=src $(PYTHON) scripts/build_active_theorem_audit.py

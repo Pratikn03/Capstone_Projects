@@ -1,8 +1,9 @@
 """Utilities: artifact registry."""
+
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -42,7 +43,7 @@ def register_models(
                     "path": str(path),
                     "size_bytes": path.stat().st_size,
                     "sha256": _sha256(path),
-                    "modified_at": datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat(),
+                    "modified_at": datetime.fromtimestamp(path.stat().st_mtime, tz=UTC).isoformat(),
                 }
             )
 
@@ -57,12 +58,12 @@ def register_models(
                         "path": str(path),
                         "size_bytes": path.stat().st_size,
                         "sha256": _sha256(path),
-                        "modified_at": datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat(),
+                        "modified_at": datetime.fromtimestamp(path.stat().st_mtime, tz=UTC).isoformat(),
                     }
                 )
 
     snapshot = {
-        "generated_at": datetime.now(tz=timezone.utc).isoformat(),
+        "generated_at": datetime.now(tz=UTC).isoformat(),
         "run_id": run_id,
         "models_dir": str(models_dir),
         "models": models,

@@ -5,17 +5,17 @@ The report is intentionally bounded: it inventories local Waymo Motion shards,
 processed ORIUS AV surfaces, and runtime replay evidence. It does not claim
 closed-loop simulator validation or road deployment.
 """
+
 from __future__ import annotations
 
 import argparse
 import csv
-from datetime import datetime, timezone
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RAW = REPO_ROOT / "data" / "orius_av" / "raw" / "waymo_motion" / "validation"
@@ -26,7 +26,7 @@ DEFAULT_OUT = REPO_ROOT / "reports" / "data_expansion" / "waymo_readiness"
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _file_count(path: Path, pattern: str) -> int:
@@ -65,7 +65,9 @@ def _parquet_summary(path: Path) -> dict[str, Any]:
     if "scenario_id" in df.columns:
         summary["scenario_count"] = int(df["scenario_id"].nunique())
     if "split" in df.columns:
-        summary["split_counts"] = {str(k): int(v) for k, v in df["split"].value_counts().sort_index().to_dict().items()}
+        summary["split_counts"] = {
+            str(k): int(v) for k, v in df["split"].value_counts().sort_index().to_dict().items()
+        }
     return summary
 
 
@@ -79,16 +81,22 @@ def _csv_first_matching_row(path: Path, key: str, value: str) -> dict[str, Any]:
     return {}
 
 
-def build_report(raw_dir: Path, processed_dir: Path, canonical_reports: Path, audit_reports: Path) -> dict[str, Any]:
+def build_report(
+    raw_dir: Path, processed_dir: Path, canonical_reports: Path, audit_reports: Path
+) -> dict[str, Any]:
     replay_summary = _parquet_summary(processed_dir / "replay_windows.parquet")
     step_summary = _parquet_summary(processed_dir / "step_features.parquet")
     split_summaries = {
         split: _parquet_summary(processed_dir / "splits" / f"{split}.parquet")
         for split in ("train", "val", "calibration", "test")
     }
-    canonical_orius = _csv_first_matching_row(canonical_reports / "runtime_summary.csv", "controller", "orius")
+    canonical_orius = _csv_first_matching_row(
+        canonical_reports / "runtime_summary.csv", "controller", "orius"
+    )
     audit_orius = _csv_first_matching_row(audit_reports / "runtime_summary.csv", "controller", "orius")
-    audit_always_brake = _csv_first_matching_row(audit_reports / "runtime_summary.csv", "controller", "always_brake")
+    audit_always_brake = _csv_first_matching_row(
+        audit_reports / "runtime_summary.csv", "controller", "always_brake"
+    )
     return {
         "generated_at_utc": _utc_now(),
         "dataset": "Waymo Open Motion validation shards",
@@ -120,7 +128,8 @@ def build_report(raw_dir: Path, processed_dir: Path, canonical_reports: Path, au
             "bounded_audit_orius_row": audit_orius,
             "bounded_audit_always_brake_row": audit_always_brake,
             "bounded_audit_utility_above_always_brake": (
-                float(audit_orius.get("useful_work_total", 0.0)) > float(audit_always_brake.get("useful_work_total", 0.0))
+                float(audit_orius.get("useful_work_total", 0.0))
+                > float(audit_always_brake.get("useful_work_total", 0.0))
                 if audit_orius and audit_always_brake
                 else None
             ),
@@ -135,7 +144,9 @@ def build_report(raw_dir: Path, processed_dir: Path, canonical_reports: Path, au
 
 def write_outputs(out_dir: Path, payload: dict[str, Any]) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "waymo_dataset_readiness.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    (out_dir / "waymo_dataset_readiness.json").write_text(
+        json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+    )
     rows = [
         {"metric": "validation_shards_present", "value": payload["raw"]["validation_shards_present"]},
         {"metric": "raw_size", "value": payload["raw"]["size_human"]},
@@ -143,9 +154,18 @@ def write_outputs(out_dir: Path, payload: dict[str, Any]) -> None:
         {"metric": "replay_rows", "value": payload["processed"]["replay_windows"].get("rows")},
         {"metric": "replay_scenarios", "value": payload["processed"]["replay_windows"].get("scenario_count")},
         {"metric": "step_feature_rows", "value": payload["processed"]["step_features"].get("rows")},
-        {"metric": "step_feature_scenarios", "value": payload["processed"]["step_features"].get("scenario_count")},
-        {"metric": "bounded_audit_orius_tsvr", "value": payload["runtime_evidence"]["bounded_audit_orius_row"].get("tsvr")},
-        {"metric": "bounded_audit_orius_fallback", "value": payload["runtime_evidence"]["bounded_audit_orius_row"].get("fallback_activation_rate")},
+        {
+            "metric": "step_feature_scenarios",
+            "value": payload["processed"]["step_features"].get("scenario_count"),
+        },
+        {
+            "metric": "bounded_audit_orius_tsvr",
+            "value": payload["runtime_evidence"]["bounded_audit_orius_row"].get("tsvr"),
+        },
+        {
+            "metric": "bounded_audit_orius_fallback",
+            "value": payload["runtime_evidence"]["bounded_audit_orius_row"].get("fallback_activation_rate"),
+        },
         {
             "metric": "bounded_audit_utility_above_always_brake",
             "value": payload["runtime_evidence"]["bounded_audit_utility_above_always_brake"],

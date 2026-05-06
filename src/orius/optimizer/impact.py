@@ -11,18 +11,19 @@ Key metrics computed:
 
 These metrics are used in reports, dashboards, and the scientific paper.
 """
+
 from __future__ import annotations
 
-from typing import Dict, Any
+from typing import Any
 
 
-def impact_summary(baseline: Dict[str, Any], optimized: Dict[str, Any]) -> Dict[str, Any]:
+def impact_summary(baseline: dict[str, Any], optimized: dict[str, Any]) -> dict[str, Any]:
     """Compare baseline vs optimized dispatch plans and compute impact metrics.
-    
+
     Args:
         baseline: Results from rule-based dispatch (charge low/discharge high)
         optimized: Results from ORIUS MILP optimization
-    
+
     Returns:
         Dictionary containing:
         - baseline_cost_usd: Total cost under baseline strategy
@@ -37,7 +38,7 @@ def impact_summary(baseline: Dict[str, Any], optimized: Dict[str, Any]) -> Dict[
     # Extract costs from both plans
     base_cost = float(baseline.get("expected_cost_usd", 0.0))
     opt_cost = float(optimized.get("expected_cost_usd", 0.0))
-    
+
     # Extract carbon emissions from both plans
     base_carbon = float(baseline.get("carbon_kg", 0.0))
     opt_carbon = float(optimized.get("carbon_kg", 0.0))

@@ -8,23 +8,25 @@ Phase 2 of ORIUS gap-closing plan:
   - hoeffding_violation_bound: high-probability tail bound on TSVR
   - evaluate_group_conditional_coverage: record-list API
 """
+
 from __future__ import annotations
 
 import math
+
 import numpy as np
 import pytest
 
 from orius.dc3s.coverage_theorem import (
-    mondrian_group_coverage,
-    hoeffding_violation_bound,
-    evaluate_group_conditional_coverage,
     compute_expected_violation_bound,
+    evaluate_group_conditional_coverage,
+    hoeffding_violation_bound,
+    mondrian_group_coverage,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_perfect_intervals(n: int, rng_seed: int = 0) -> tuple:
     """Return intervals that always cover y_true (picp=1.0)."""
@@ -42,7 +44,7 @@ def _make_partial_intervals(n: int, coverage_frac: float = 0.90, rng_seed: int =
     y_true = rng.normal(0, 1, n)
     # Fixed interval [-1.645, 1.645] covers ~90% of N(0,1) regardless of y_true
     lower = np.full(n, -1.645)
-    upper = np.full(n,  1.645)
+    upper = np.full(n, 1.645)
     w = rng.uniform(0.0, 1.0, n)
     return y_true, lower, upper, w
 
@@ -50,6 +52,7 @@ def _make_partial_intervals(n: int, coverage_frac: float = 0.90, rng_seed: int =
 # ---------------------------------------------------------------------------
 # mondrian_group_coverage
 # ---------------------------------------------------------------------------
+
 
 class TestMondrianGroupCoverage:
     def test_perfect_coverage_all_bins_pass(self):
@@ -84,8 +87,8 @@ class TestMondrianGroupCoverage:
         rng = np.random.default_rng(0)
         n = 1000
         y = rng.normal(0, 1, n)
-        lo = np.full(n, -0.1)   # fixed tiny interval, NOT centred on y
-        hi = np.full(n,  0.1)   # ~8% coverage for N(0,1)
+        lo = np.full(n, -0.1)  # fixed tiny interval, NOT centred on y
+        hi = np.full(n, 0.1)  # ~8% coverage for N(0,1)
         w = rng.uniform(0, 1, n)
         result = mondrian_group_coverage(y, lo, hi, w, n_bins=3, alpha=0.10)
         assert result["all_pass"] is False
@@ -100,7 +103,7 @@ class TestMondrianGroupCoverage:
         y = np.ones(10)
         lo = np.ones(9)
         hi = np.ones(10)
-        w  = np.ones(10)
+        w = np.ones(10)
         with pytest.raises(ValueError, match="same length"):
             mondrian_group_coverage(y, lo, hi, w)
 
@@ -128,6 +131,7 @@ class TestMondrianGroupCoverage:
 # ---------------------------------------------------------------------------
 # hoeffding_violation_bound
 # ---------------------------------------------------------------------------
+
 
 class TestHoeffdingViolationBound:
     def test_basic_values(self):
@@ -178,14 +182,22 @@ class TestHoeffdingViolationBound:
 
     def test_returns_all_keys(self):
         result = hoeffding_violation_bound(T=48, alpha=0.10, w_bar=0.80, epsilon=0.05)
-        for key in ("expectation_bound", "high_prob_bound", "tail_probability",
-                    "T", "alpha", "w_bar", "epsilon"):
+        for key in (
+            "expectation_bound",
+            "high_prob_bound",
+            "tail_probability",
+            "T",
+            "alpha",
+            "w_bar",
+            "epsilon",
+        ):
             assert key in result
 
 
 # ---------------------------------------------------------------------------
 # evaluate_group_conditional_coverage (record-list API)
 # ---------------------------------------------------------------------------
+
 
 class TestEvaluateGroupConditionalCoverage:
     def _make_records(self, n: int, perfect: bool = True, rng_seed: int = 0) -> list:
@@ -197,8 +209,12 @@ class TestEvaluateGroupConditionalCoverage:
         else:
             lo, hi = y - 0.05, y + 0.05  # negligible coverage
         return [
-            {"y_true": float(y[i]), "lower": float(lo[i]),
-             "upper": float(hi[i]), "reliability_w": float(w[i])}
+            {
+                "y_true": float(y[i]),
+                "lower": float(lo[i]),
+                "upper": float(hi[i]),
+                "reliability_w": float(w[i]),
+            }
             for i in range(n)
         ]
 
@@ -231,6 +247,7 @@ class TestEvaluateGroupConditionalCoverage:
 # Integration: empirical TSVR <= Hoeffding high_prob_bound for real traces
 # ---------------------------------------------------------------------------
 
+
 class TestHoeffdingIntegration:
     def test_orius_tsvr_within_hoeffding_bound(self):
         """Simulate a DC3S run and verify TSVR <= Hoeffding bound with epsilon=0.10."""
@@ -257,6 +274,6 @@ class TestHoeffdingIntegration:
         alpha = 0.10
 
         evb = compute_expected_violation_bound(w, alpha=alpha)
-        hb  = hoeffding_violation_bound(T=100, alpha=alpha, w_bar=w_bar, epsilon=0.05)
+        hb = hoeffding_violation_bound(T=100, alpha=alpha, w_bar=w_bar, epsilon=0.05)
 
         assert evb["bound_tsvr"] == pytest.approx(hb["expectation_bound"], abs=1e-6)

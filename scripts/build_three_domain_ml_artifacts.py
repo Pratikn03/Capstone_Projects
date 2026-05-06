@@ -9,18 +9,19 @@ The flagship ML/novelty lane is intentionally narrow:
 This script emits the reviewer-facing artifact bundle for that lane without
 promoting draft theory or stale six-domain wording.
 """
+
 from __future__ import annotations
 
 import csv
 import json
 import math
+from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import duckdb
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
@@ -29,51 +30,111 @@ BATTERY_RUNTIME_SUMMARY = REPO_ROOT / "reports" / "battery_av" / "battery" / "ru
 BATTERY_RUNTIME_TRACES = REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_traces.csv"
 BATTERY_GOVERNANCE = REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_governance_summary.csv"
 BATTERY_WITNESS_TABLE = REPO_ROOT / "reports" / "publication" / "dc3s_main_table.csv"
-AV_RUNTIME_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+TRAINING_AUDIT_SUMMARY = (
+    REPO_ROOT / "reports" / "orius_framework_proof" / "training_audit" / "domain_training_summary.csv"
+)
+AV_FORECAST_SUMMARY = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped" / "training_summary.csv"
+AV_RUNTIME_DIR = (
+    REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+)
 AV_RUNTIME_SUMMARY = AV_RUNTIME_DIR / "runtime_summary.csv"
 AV_RUNTIME_TRACES = AV_RUNTIME_DIR / "runtime_traces.csv"
 AV_GOVERNANCE = AV_RUNTIME_DIR / "runtime_governance_summary.csv"
+AV_PLANNER_DIR = REPO_ROOT / "reports" / "predeployment_external_validation" / "av_closed_loop_planner"
+AV_PLANNER_FRONTIER = AV_PLANNER_DIR / "av_utility_safety_frontier.csv"
+AV_PLANNER_SUMMARY = AV_PLANNER_DIR / "av_planner_closed_loop_summary.csv"
 HEALTHCARE_RUNTIME_SUMMARY = REPO_ROOT / "reports" / "healthcare" / "runtime_summary.csv"
 HEALTHCARE_RUNTIME_TRACES = REPO_ROOT / "reports" / "healthcare" / "runtime_traces.csv"
 HEALTHCARE_RUNTIME_DB = REPO_ROOT / "reports" / "healthcare" / "healthcare_runtime.duckdb"
 HEALTHCARE_GOVERNANCE = REPO_ROOT / "reports" / "healthcare" / "runtime_governance_summary.csv"
 HEALTHCARE_CERTOS = REPO_ROOT / "reports" / "healthcare" / "certos_verification_summary.json"
 DOMAIN_COMPARATOR_SUMMARIES = {
-    "Battery Energy Storage": REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_comparator_summary.csv",
+    "Battery Energy Storage": REPO_ROOT
+    / "reports"
+    / "battery_av"
+    / "battery"
+    / "runtime_comparator_summary.csv",
     "Autonomous Vehicles": AV_RUNTIME_DIR / "runtime_comparator_summary.csv",
-    "Medical and Healthcare Monitoring": REPO_ROOT / "reports" / "healthcare" / "runtime_comparator_summary.csv",
+    "Medical and Healthcare Monitoring": REPO_ROOT
+    / "reports"
+    / "healthcare"
+    / "runtime_comparator_summary.csv",
 }
 DOMAIN_ABLATION_SUMMARIES = {
-    "Battery Energy Storage": REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_ablation_summary.csv",
+    "Battery Energy Storage": REPO_ROOT
+    / "reports"
+    / "battery_av"
+    / "battery"
+    / "runtime_ablation_summary.csv",
     "Autonomous Vehicles": AV_RUNTIME_DIR / "runtime_ablation_summary.csv",
-    "Medical and Healthcare Monitoring": REPO_ROOT / "reports" / "healthcare" / "runtime_ablation_summary.csv",
+    "Medical and Healthcare Monitoring": REPO_ROOT
+    / "reports"
+    / "healthcare"
+    / "runtime_ablation_summary.csv",
 }
 DOMAIN_NEGATIVE_CONTROLS = {
-    "Battery Energy Storage": REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_negative_controls.csv",
+    "Battery Energy Storage": REPO_ROOT
+    / "reports"
+    / "battery_av"
+    / "battery"
+    / "runtime_negative_controls.csv",
     "Autonomous Vehicles": AV_RUNTIME_DIR / "runtime_negative_controls.csv",
-    "Medical and Healthcare Monitoring": REPO_ROOT / "reports" / "healthcare" / "runtime_negative_controls.csv",
+    "Medical and Healthcare Monitoring": REPO_ROOT
+    / "reports"
+    / "healthcare"
+    / "runtime_negative_controls.csv",
 }
 DOMAIN_RUNTIME_CONTRACT_SUMMARY = PUBLICATION_DIR / "domain_runtime_contract_summary.json"
 HEALTHCARE_SPLITS_DIR = REPO_ROOT / "data" / "healthcare" / "processed" / "splits"
 VALIDATION_REPORT = REPO_ROOT / "reports" / "universal_orius_validation" / "validation_report.json"
 VALIDATION_SUMMARY = REPO_ROOT / "reports" / "universal_orius_validation" / "domain_validation_summary.csv"
 PER_CONTROLLER_TSVR = REPO_ROOT / "reports" / "universal_orius_validation" / "per_controller_tsvr.csv"
-DIAGNOSTIC_HARNESS_TSVR = REPO_ROOT / "reports" / "universal_orius_validation" / "diagnostic_validation_harness_tsvr.csv"
+DIAGNOSTIC_HARNESS_TSVR = (
+    REPO_ROOT / "reports" / "universal_orius_validation" / "diagnostic_validation_harness_tsvr.csv"
+)
 RUNTIME_BUDGET = REPO_ROOT / "reports" / "publication" / "orius_runtime_budget_matrix.csv"
 THREE_DOMAIN_DIR = REPO_ROOT / "reports" / "battery_av_healthcare" / "overall"
 CALIBRATION_FIG_DIR = PUBLICATION_DIR / "three_domain_calibration_figures"
 PROMOTED_RUNTIME_MAX_TSVR = 1e-3
 PROMOTED_RUNTIME_MIN_PASS_RATE = 1.0 - PROMOTED_RUNTIME_MAX_TSVR
+UNIFORM_EVIDENCE_FIELDS = [
+    "domain",
+    "active_dataset",
+    "claim_surface",
+    "forecast_source",
+    "forecast_target",
+    "forecast_split",
+    "forecast_coverage",
+    "forecast_interval_width",
+    "calibration_bucket_count",
+    "calibration_min_coverage",
+    "calibration_min_bucket_n",
+    "runtime_source",
+    "runtime_trace_rows",
+    "orius_runtime_rows",
+    "baseline_tsvr",
+    "orius_tsvr",
+    "oasg",
+    "intervention_rate",
+    "fallback_activation_rate",
+    "certificate_valid_rate",
+    "t11_pass_rate",
+    "domain_postcondition_pass_rate",
+    "runtime_witness_pass_rate",
+    "strict_runtime_gate",
+    "postcondition_basis",
+    "claim_boundary",
+]
 
 CENTRAL_NOVELTY_SENTENCE = (
-    "ORIUS identifies OASG as the degraded-observation release hazard and "
-    "provides a reliability-aware runtime safety layer across Battery, AV, "
-    "and Healthcare."
+    "ORIUS provides a reliability-aware runtime safety layer for physical AI "
+    "under degraded observation, enforcing certificate-backed action release "
+    "through uncertainty coverage, repair, and fallback."
 )
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _ensure_parent(path: Path) -> None:
@@ -98,12 +159,13 @@ def _read_parquet_rows(path: Path, *, columns: Iterable[str] | None = None) -> l
         return []
     con = duckdb.connect()
     try:
-        select_expr = "*"
-        if columns is not None:
-            select_expr = ", ".join(f'"{column}"' for column in columns)
-        cursor = con.execute(f"select {select_expr} from read_parquet(?)", [str(path)])
-        columns = [desc[0] for desc in cursor.description]
-        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+        cursor = con.execute("select * from read_parquet(?)", [str(path)])
+        parquet_columns = [desc[0] for desc in cursor.description]
+        rows = [dict(zip(parquet_columns, row, strict=False)) for row in cursor.fetchall()]
+        if columns is None:
+            return rows
+        selected_columns = list(columns)
+        return [{column: row.get(column) for column in selected_columns} for row in rows]
     finally:
         con.close()
 
@@ -144,6 +206,10 @@ def _safe_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _truthy(value: Any) -> bool:
+    return str(value).strip().lower() in {"1", "true", "yes", "y"}
+
+
 def _binomial_ci(successes: int, total: int) -> tuple[float, float]:
     if total <= 0:
         return (0.0, 0.0)
@@ -176,9 +242,54 @@ def _rank_bucket_labels(values: list[float]) -> list[str]:
         return []
     order = sorted(range(len(values)), key=lambda idx: (values[idx], idx))
     labels = [""] * len(values)
-    for bucket_name, positions in zip(("low", "mid", "high"), _array_split_indices(len(values), 3)):
+    for bucket_name, positions in zip(
+        ("low", "mid", "high"), _array_split_indices(len(values), 3), strict=False
+    ):
         for pos in positions:
             labels[order[pos]] = bucket_name
+    return labels
+
+
+def _split_conformal_qhat(errors: list[float], *, alpha: float = 0.1) -> float:
+    finite_errors = sorted(error for error in errors if math.isfinite(error))
+    if not finite_errors:
+        return 0.0
+    index = math.ceil((len(finite_errors) + 1) * (1.0 - alpha)) - 1
+    index = max(0, min(index, len(finite_errors) - 1))
+    return float(finite_errors[index])
+
+
+def _calibration_bucket_edges(reliability: list[float]) -> tuple[float, float] | None:
+    labels = _rank_bucket_labels(reliability)
+    if not labels:
+        return None
+    low_values = [value for value, label in zip(reliability, labels, strict=False) if label == "low"]
+    mid_values = [value for value, label in zip(reliability, labels, strict=False) if label == "mid"]
+    if not low_values or not mid_values:
+        return None
+    low_upper = max(low_values)
+    mid_upper = max(mid_values)
+    if not math.isfinite(low_upper) or not math.isfinite(mid_upper) or low_upper >= mid_upper:
+        return None
+    return float(low_upper), float(mid_upper)
+
+
+def _apply_calibration_bucket_labels(
+    calibration_reliability: list[float],
+    eval_reliability: list[float],
+) -> list[str]:
+    edges = _calibration_bucket_edges(calibration_reliability)
+    if edges is None:
+        return _rank_bucket_labels(eval_reliability)
+    low_upper, mid_upper = edges
+    labels: list[str] = []
+    for value in eval_reliability:
+        if value <= low_upper:
+            labels.append("low")
+        elif value <= mid_upper:
+            labels.append("mid")
+        else:
+            labels.append("high")
     return labels
 
 
@@ -261,7 +372,7 @@ def _battery_calibration_rows() -> list[CalibrationRow]:
     rows = _read_csv_rows(BATTERY_CALIBRATION)
     bucket_names = ("low", "mid", "high")
     result: list[CalibrationRow] = []
-    for bucket_name, row in zip(bucket_names, rows):
+    for bucket_name, row in zip(bucket_names, rows, strict=False):
         n = _safe_int(row.get("n"))
         coverage = _safe_float(row.get("picp"))
         ci_low, ci_high = _binomial_ci(int(round(coverage * n)), n)
@@ -299,8 +410,8 @@ def _av_calibration_rows() -> list[CalibrationRow]:
                 target.append(_safe_float(row.get("target_ego_speed_1s")))
                 lower.append(_safe_float(row.get("pred_ego_speed_lower_mps")))
                 upper.append(_safe_float(row.get("pred_ego_speed_upper_mps")))
-    covered = [lo <= y <= hi for y, lo, hi in zip(target, lower, upper)]
-    widths = [max(0.0, hi - lo) for lo, hi in zip(lower, upper)]
+    covered = [lo <= y <= hi for y, lo, hi in zip(target, lower, upper, strict=False)]
+    widths = [max(0.0, hi - lo) for lo, hi in zip(lower, upper, strict=False)]
     return _compute_bucket_rows(
         "Autonomous Vehicles",
         "ego_speed_1s_interval",
@@ -319,17 +430,15 @@ def _healthcare_row_metric(row: dict[str, Any], primary: str, fallback: str) -> 
     return _safe_float(value)
 
 
-def _healthcare_interval_rows() -> tuple[list[CalibrationRow], dict[str, Any]]:
-    healthcare_columns = ("spo2_pct", "forecast_spo2_pct", "reliability")
-    calibration_rows = _read_parquet_rows(HEALTHCARE_SPLITS_DIR / "calibration.parquet", columns=healthcare_columns)
-    eval_rows = _read_parquet_rows(HEALTHCARE_SPLITS_DIR / "val.parquet", columns=healthcare_columns)
-    eval_rows.extend(_read_parquet_rows(HEALTHCARE_SPLITS_DIR / "test.parquet", columns=healthcare_columns))
-
+def _healthcare_interval_rows_from_records(
+    calibration_rows: list[dict[str, Any]],
+    eval_rows: list[dict[str, Any]],
+) -> tuple[list[CalibrationRow], dict[str, Any]]:
     cal_reliability = [_safe_float(row.get("reliability"), 0.05) for row in calibration_rows]
     cal_labels = _rank_bucket_labels(cal_reliability)
     bucket_errors: dict[str, list[float]] = {"low": [], "mid": [], "high": []}
     all_errors: list[float] = []
-    for row, label in zip(calibration_rows, cal_labels):
+    for row, label in zip(calibration_rows, cal_labels, strict=False):
         err = abs(
             _healthcare_row_metric(row, "spo2_pct", "target")
             - _healthcare_row_metric(row, "forecast_spo2_pct", "forecast")
@@ -337,20 +446,18 @@ def _healthcare_interval_rows() -> tuple[list[CalibrationRow], dict[str, Any]]:
         bucket_errors[label].append(err)
         all_errors.append(err)
 
-    global_qhat = sorted(all_errors)[int(0.9 * max(len(all_errors) - 1, 0))] if all_errors else 0.0
+    global_qhat = _split_conformal_qhat(all_errors, alpha=0.1)
     bucket_qhat: dict[str, float] = {}
     for label, errors in bucket_errors.items():
-        if errors:
-            sorted_errors = sorted(errors)
-            bucket_qhat[label] = sorted_errors[int(0.9 * max(len(sorted_errors) - 1, 0))]
-        else:
-            bucket_qhat[label] = global_qhat
+        bucket_qhat[label] = max(_split_conformal_qhat(errors, alpha=0.1), global_qhat)
+    bucket_qhat["mid"] = max(bucket_qhat["mid"], bucket_qhat["high"])
+    bucket_qhat["low"] = max(bucket_qhat["low"], bucket_qhat["mid"])
 
     eval_reliability = [_safe_float(row.get("reliability"), 0.05) for row in eval_rows]
-    eval_labels = _rank_bucket_labels(eval_reliability)
+    eval_labels = _apply_calibration_bucket_labels(cal_reliability, eval_reliability)
     covered: list[bool] = []
     widths: list[float] = []
-    for row, label in zip(eval_rows, eval_labels):
+    for row, label in zip(eval_rows, eval_labels, strict=False):
         forecast = _healthcare_row_metric(row, "forecast_spo2_pct", "forecast")
         truth = _healthcare_row_metric(row, "spo2_pct", "target")
         qhat = bucket_qhat[label]
@@ -365,15 +472,28 @@ def _healthcare_interval_rows() -> tuple[list[CalibrationRow], dict[str, Any]]:
         widths,
         source_surface="data/healthcare/processed/splits/{calibration,val,test}.parquet",
         calibration_note=(
-            "Bucketed absolute-residual calibration on the audited patient-disjoint healthcare splits; "
-            "used only as the bounded healthcare grouped-calibration surface."
+            "Reliability-bucketed split conformal calibration on audited patient-disjoint healthcare splits, "
+            "using calibration-derived reliability bins, finite-sample split-conformal quantiles, and a "
+            "pooled monotone widening floor for low-reliability regimes."
         ),
     )
     return calibration_rows_out, {
         "calibration_rows": len(calibration_rows),
         "evaluation_rows": len(eval_rows),
         "bucket_qhat": {key: round(val, 6) for key, val in bucket_qhat.items()},
+        "bucket_label_policy": "calibration_cutpoints_with_rank_fallback_for_ties",
+        "finite_sample_quantile": "ceil((n+1)*(1-alpha))/n split conformal index, alpha=0.1",
     }
+
+
+def _healthcare_interval_rows() -> tuple[list[CalibrationRow], dict[str, Any]]:
+    healthcare_columns = ("spo2_pct", "forecast_spo2_pct", "reliability")
+    calibration_rows = _read_parquet_rows(
+        HEALTHCARE_SPLITS_DIR / "calibration.parquet", columns=healthcare_columns
+    )
+    eval_rows = _read_parquet_rows(HEALTHCARE_SPLITS_DIR / "val.parquet", columns=healthcare_columns)
+    eval_rows.extend(_read_parquet_rows(HEALTHCARE_SPLITS_DIR / "test.parquet", columns=healthcare_columns))
+    return _healthcare_interval_rows_from_records(calibration_rows, eval_rows)
 
 
 def _runtime_budget_rows() -> dict[str, dict[str, str]]:
@@ -383,8 +503,12 @@ def _runtime_budget_rows() -> dict[str, dict[str, str]]:
 
 def _load_battery_reference_counts() -> dict[str, int]:
     rows = _read_csv_rows(REPO_ROOT / "reports" / "publication" / "dc3s_main_table.csv")
-    baseline_n = sum(1 for row in rows if row.get("scenario") == "nominal" and row.get("controller") == "deterministic_lp")
-    orius_n = sum(1 for row in rows if row.get("scenario") == "nominal" and row.get("controller") == "dc3s_ftit")
+    baseline_n = sum(
+        1 for row in rows if row.get("scenario") == "nominal" and row.get("controller") == "deterministic_lp"
+    )
+    orius_n = sum(
+        1 for row in rows if row.get("scenario") == "nominal" and row.get("controller") == "dc3s_ftit"
+    )
     return {"baseline_n": max(baseline_n, 1), "orius_n": max(orius_n, 1)}
 
 
@@ -419,20 +543,12 @@ def _domain_witness_summary() -> dict[str, dict[str, Any]]:
 def _validation_domain_rows() -> dict[str, dict[str, Any]]:
     summary_rows = _read_csv_rows(VALIDATION_SUMMARY)
     if summary_rows:
-        return {
-            str(row["domain"]): dict(row)
-            for row in summary_rows
-            if row.get("domain")
-        }
+        return {str(row["domain"]): dict(row) for row in summary_rows if row.get("domain")}
 
     report = _read_json(VALIDATION_REPORT)
     domain_results = report.get("domain_results", {})
     if isinstance(domain_results, dict):
-        return {
-            str(domain): dict(row)
-            for domain, row in domain_results.items()
-            if isinstance(row, dict)
-        }
+        return {str(domain): dict(row) for domain, row in domain_results.items() if isinstance(row, dict)}
     rows: dict[str, dict[str, Any]] = {}
     for row in domain_results:
         if isinstance(row, dict) and row.get("domain"):
@@ -503,7 +619,342 @@ def _battery_witness_controller_rows() -> dict[str, dict[str, float]]:
     return result
 
 
-def _benchmark_rows(calibration_rows: list[CalibrationRow], healthcare_calibration_meta: dict[str, Any]) -> list[dict[str, Any]]:
+def _repo_relative(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
+def _training_audit_by_domain() -> dict[str, dict[str, str]]:
+    return {
+        str(row.get("domain", "")): row for row in _read_csv_rows(TRAINING_AUDIT_SUMMARY) if row.get("domain")
+    }
+
+
+def _runtime_summary_by_controller(path: Path) -> dict[str, dict[str, str]]:
+    return {str(row.get("controller", "")): row for row in _read_csv_rows(path) if row.get("controller")}
+
+
+def _dominance_ratio(value: float, reference: float) -> str:
+    if reference <= 0.0:
+        return "inf" if value > 0.0 else "0.000000"
+    return f"{value / reference:.6f}"
+
+
+def _utility_safety_dominance_row(
+    *,
+    domain: str,
+    runtime_surface: str,
+    source_path: Path,
+    safety_reference_controller: str,
+    orius_row: dict[str, str],
+    safety_reference_row: dict[str, str],
+    baseline_row: dict[str, str],
+    claim_boundary: str,
+) -> dict[str, str]:
+    orius_tsvr = _safe_float(orius_row.get("tsvr"))
+    reference_tsvr = _safe_float(safety_reference_row.get("tsvr"))
+    baseline_tsvr = _safe_float(baseline_row.get("tsvr"))
+    orius_work = _safe_float(orius_row.get("useful_work_total"))
+    reference_work = _safe_float(safety_reference_row.get("useful_work_total"))
+    baseline_work = _safe_float(baseline_row.get("useful_work_total"))
+    orius_fallback = _safe_float(orius_row.get("fallback_activation_rate"))
+    reference_fallback = _safe_float(safety_reference_row.get("fallback_activation_rate"))
+    orius_intervention = _safe_float(orius_row.get("intervention_rate"))
+    reference_intervention = _safe_float(safety_reference_row.get("intervention_rate"))
+
+    excess_tsvr = max(0.0, orius_tsvr - reference_tsvr)
+    nonvacuous_gate = bool(
+        excess_tsvr <= PROMOTED_RUNTIME_MAX_TSVR
+        and orius_work > reference_work
+        and orius_fallback < reference_fallback
+        and orius_intervention < reference_intervention
+    )
+
+    return {
+        "domain": domain,
+        "runtime_surface": runtime_surface,
+        "source_surface": _repo_relative(source_path),
+        "safety_reference_controller": safety_reference_controller,
+        "baseline_controller": "baseline",
+        "orius_tsvr": f"{orius_tsvr:.6f}",
+        "safety_reference_tsvr": f"{reference_tsvr:.6f}",
+        "baseline_tsvr": f"{baseline_tsvr:.6f}",
+        "excess_tsvr_over_safety_reference": f"{excess_tsvr:.6f}",
+        "baseline_tsvr_reduction": f"{baseline_tsvr - orius_tsvr:.6f}",
+        "orius_fallback_activation_rate": f"{orius_fallback:.6f}",
+        "safety_reference_fallback_activation_rate": f"{reference_fallback:.6f}",
+        "fallback_reduction_vs_safety_reference": f"{reference_fallback - orius_fallback:.6f}",
+        "orius_intervention_rate": f"{orius_intervention:.6f}",
+        "safety_reference_intervention_rate": f"{reference_intervention:.6f}",
+        "intervention_reduction_vs_safety_reference": f"{reference_intervention - orius_intervention:.6f}",
+        "orius_useful_work_total": f"{orius_work:.6f}",
+        "safety_reference_useful_work_total": f"{reference_work:.6f}",
+        "baseline_useful_work_total": f"{baseline_work:.6f}",
+        "utility_gain_over_safety_reference": _dominance_ratio(orius_work, reference_work),
+        "utility_delta_over_safety_reference": f"{orius_work - reference_work:.6f}",
+        "orius_progress_total": f"{_safe_float(orius_row.get('progress_total')):.6f}"
+        if "progress_total" in orius_row
+        else "",
+        "orius_near_miss_rate": f"{_safe_float(orius_row.get('near_miss_rate')):.6f}"
+        if "near_miss_rate" in orius_row
+        else "",
+        "orius_collision_proxy_rate": f"{_safe_float(orius_row.get('collision_proxy_rate')):.6f}"
+        if "collision_proxy_rate" in orius_row
+        else "",
+        "orius_mean_abs_jerk": f"{_safe_float(orius_row.get('mean_abs_jerk')):.6f}"
+        if "mean_abs_jerk" in orius_row
+        else "",
+        "nonvacuous_utility_gate": "True" if nonvacuous_gate else "False",
+        "claim_boundary": claim_boundary,
+    }
+
+
+def _utility_safety_dominance_rows() -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+
+    av_frontier = _runtime_summary_by_controller(AV_PLANNER_FRONTIER)
+    if {"orius", "always_brake", "baseline"}.issubset(av_frontier):
+        rows.append(
+            _utility_safety_dominance_row(
+                domain="Autonomous Vehicles",
+                runtime_surface="bounded_closed_loop_planner",
+                source_path=AV_PLANNER_FRONTIER,
+                safety_reference_controller="always_brake",
+                orius_row=av_frontier["orius"],
+                safety_reference_row=av_frontier["always_brake"],
+                baseline_row=av_frontier["baseline"],
+                claim_boundary=(
+                    "Closed-loop AV utility is judged against the always-brake fail-safe reference. "
+                    "Raw closed-loop TSVR includes unavoidable initial unsafe states, so the promoted "
+                    "non-vacuity statistic is excess TSVR over that fail-safe plus useful-work gain."
+                ),
+            )
+        )
+
+    healthcare_summary = _runtime_summary_by_controller(HEALTHCARE_RUNTIME_SUMMARY)
+    if {"orius", "always_alert", "baseline"}.issubset(healthcare_summary):
+        rows.append(
+            _utility_safety_dominance_row(
+                domain="Medical and Healthcare Monitoring",
+                runtime_surface="retrospective_fail_safe_release",
+                source_path=HEALTHCARE_RUNTIME_SUMMARY,
+                safety_reference_controller="always_alert",
+                orius_row=healthcare_summary["orius"],
+                safety_reference_row=healthcare_summary["always_alert"],
+                baseline_row=healthcare_summary["baseline"],
+                claim_boundary=(
+                    "Healthcare utility is judged against the always-alert fail-safe reference. "
+                    "The promoted non-vacuity statistic requires zero excess TSVR with less fallback, "
+                    "less intervention, and positive monitoring utility."
+                ),
+            )
+        )
+
+    return rows
+
+
+def _runtime_comparator_by_family(path: Path) -> dict[str, dict[str, str]]:
+    return {
+        str(row.get("baseline_family", "")): row for row in _read_csv_rows(path) if row.get("baseline_family")
+    }
+
+
+def _csv_record_count(path: Path) -> int:
+    if not path.exists():
+        return 0
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return max(sum(1 for _ in handle) - 1, 0)
+
+
+def _summary_total_steps(summary: dict[str, dict[str, str]]) -> int:
+    return sum(_safe_int(row.get("n_steps")) for row in summary.values())
+
+
+def _battery_postcondition_pass_rate() -> tuple[float, int]:
+    rows = _read_csv_rows(BATTERY_RUNTIME_TRACES)
+    total = 0
+    passed = 0
+    for row in rows:
+        if row.get("controller_label") != "heuristic:dc3s_ftit":
+            continue
+        total += 1
+        passed += int(not _truthy(row.get("true_constraint_violated")))
+    return (passed / total if total else 0.0, total)
+
+
+def _nuplan_forecast_row() -> dict[str, str]:
+    rows = _read_csv_rows(AV_FORECAST_SUMMARY)
+    for row in rows:
+        if (
+            row.get("target") == "ego_speed_mps"
+            and row.get("horizon_label") == "1s"
+            and row.get("split") == "test"
+        ):
+            return row
+    return rows[0] if rows else {}
+
+
+def _calibration_rollup(calibration_rows: list[CalibrationRow]) -> dict[str, dict[str, float]]:
+    by_domain: dict[str, list[CalibrationRow]] = {}
+    for row in calibration_rows:
+        by_domain.setdefault(row.domain, []).append(row)
+    result: dict[str, dict[str, float]] = {}
+    for domain, rows in by_domain.items():
+        nonempty = [row for row in rows if row.n > 0]
+        result[domain] = {
+            "bucket_count": float(len(rows)),
+            "min_coverage": min((row.coverage for row in nonempty), default=0.0),
+            "min_bucket_n": float(min((row.n for row in nonempty), default=0)),
+        }
+    return result
+
+
+def _uniform_evidence_rows(
+    calibration_rows: list[CalibrationRow],
+    benchmark_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    training_audit = _training_audit_by_domain()
+    calibration = _calibration_rollup(calibration_rows)
+    benchmark = {row["domain"]: row for row in benchmark_rows}
+    witness = _domain_witness_summary()
+
+    battery_runtime = _runtime_summary_by_controller(BATTERY_RUNTIME_SUMMARY)
+    av_runtime = _runtime_summary_by_controller(AV_RUNTIME_SUMMARY)
+    healthcare_runtime = _runtime_summary_by_controller(HEALTHCARE_RUNTIME_SUMMARY)
+    battery_comparator = _runtime_comparator_by_family(DOMAIN_COMPARATOR_SUMMARIES["Battery Energy Storage"])
+    av_comparator = _runtime_comparator_by_family(DOMAIN_COMPARATOR_SUMMARIES["Autonomous Vehicles"])
+    healthcare_comparator = _runtime_comparator_by_family(
+        DOMAIN_COMPARATOR_SUMMARIES["Medical and Healthcare Monitoring"]
+    )
+
+    battery_post_rate, battery_orius_rows = _battery_postcondition_pass_rate()
+    av_forecast = _nuplan_forecast_row()
+
+    specs = [
+        {
+            "domain": "Battery Energy Storage",
+            "active_dataset": "German OPSD battery witness",
+            "claim_surface": "locked battery witness runtime",
+            "forecast_source": _repo_relative(TRAINING_AUDIT_SUMMARY),
+            "forecast_target": training_audit.get("battery", {}).get("primary_target", "load_mw"),
+            "forecast_split": "test",
+            "forecast_coverage": _safe_float(training_audit.get("battery", {}).get("picp_90")),
+            "forecast_interval_width": _safe_float(
+                training_audit.get("battery", {}).get("mean_interval_width")
+            ),
+            "runtime_source": _repo_relative(BATTERY_RUNTIME_SUMMARY),
+            "runtime_trace_rows": _csv_record_count(BATTERY_RUNTIME_TRACES),
+            "orius_runtime_rows": battery_orius_rows,
+            "runtime_row": battery_runtime.get("heuristic:dc3s_ftit", {}),
+            "comparator_row": battery_comparator.get("orius_full_stack", {}),
+            "certificate_valid_rate": _safe_float(
+                battery_comparator.get("orius_full_stack", {}).get("certificate_valid_rate")
+            ),
+            "t11_pass_rate": _safe_float(battery_comparator.get("orius_full_stack", {}).get("t11_pass_rate")),
+            "domain_postcondition_pass_rate": battery_post_rate,
+            "runtime_witness_pass_rate": _safe_float(
+                battery_comparator.get("orius_full_stack", {}).get("runtime_witness_pass_rate")
+            ),
+            "postcondition_basis": "battery_true_state_witness_postcondition",
+            "claim_boundary": "Locked battery witness runtime evidence; not an unrestricted field deployment claim.",
+        },
+        {
+            "domain": "Autonomous Vehicles",
+            "active_dataset": "nuPlan all-zip grouped replay",
+            "claim_surface": "bounded nuPlan runtime replay/surrogate",
+            "forecast_source": _repo_relative(AV_FORECAST_SUMMARY),
+            "forecast_target": f"{av_forecast.get('target', 'ego_speed_mps')}_{av_forecast.get('horizon_label', '1s')}",
+            "forecast_split": av_forecast.get("split", "test"),
+            "forecast_coverage": _safe_float(av_forecast.get("widened_coverage")),
+            "forecast_interval_width": _safe_float(av_forecast.get("widened_mean_width")),
+            "runtime_source": _repo_relative(AV_RUNTIME_SUMMARY),
+            "runtime_trace_rows": _summary_total_steps(av_runtime),
+            "orius_runtime_rows": _safe_int(av_runtime.get("orius", {}).get("n_steps")),
+            "runtime_row": av_runtime.get("orius", {}),
+            "comparator_row": av_comparator.get("orius_full_stack", {}),
+            "certificate_valid_rate": _safe_float(witness.get("av", {}).get("certificate_valid_rate")),
+            "t11_pass_rate": _safe_float(witness.get("av", {}).get("t11_pass_rate")),
+            "domain_postcondition_pass_rate": _safe_float(
+                witness.get("av", {}).get("postcondition_pass_rate")
+            ),
+            "runtime_witness_pass_rate": _safe_float(witness.get("av", {}).get("witness_pass_rate")),
+            "postcondition_basis": "av_t11_brake_hold_runtime_witness",
+            "claim_boundary": "Bounded all-zip grouped nuPlan replay/surrogate evidence; no road deployment or full autonomous-driving field closure claimed.",
+        },
+        {
+            "domain": "Medical and Healthcare Monitoring",
+            "active_dataset": "MIMIC retrospective monitoring",
+            "claim_surface": "bounded retrospective healthcare monitoring",
+            "forecast_source": _repo_relative(TRAINING_AUDIT_SUMMARY),
+            "forecast_target": training_audit.get("healthcare", {}).get("primary_target", "hr_bpm"),
+            "forecast_split": "test",
+            "forecast_coverage": _safe_float(training_audit.get("healthcare", {}).get("picp_90")),
+            "forecast_interval_width": _safe_float(
+                training_audit.get("healthcare", {}).get("mean_interval_width")
+            ),
+            "runtime_source": _repo_relative(HEALTHCARE_RUNTIME_SUMMARY),
+            "runtime_trace_rows": _csv_record_count(HEALTHCARE_RUNTIME_TRACES),
+            "orius_runtime_rows": _safe_int(healthcare_runtime.get("orius", {}).get("n_steps")),
+            "runtime_row": healthcare_runtime.get("orius", {}),
+            "comparator_row": healthcare_comparator.get("orius_full_stack", {}),
+            "certificate_valid_rate": _safe_float(
+                witness.get("healthcare", {}).get("certificate_valid_rate")
+            ),
+            "t11_pass_rate": _safe_float(witness.get("healthcare", {}).get("t11_pass_rate")),
+            "domain_postcondition_pass_rate": _safe_float(
+                witness.get("healthcare", {}).get("postcondition_pass_rate")
+            ),
+            "runtime_witness_pass_rate": _safe_float(witness.get("healthcare", {}).get("witness_pass_rate")),
+            "postcondition_basis": "healthcare_t11_fail_safe_release_runtime_witness",
+            "claim_boundary": "Retrospective MIMIC monitoring evidence; no prospective clinical trial or live clinical deployment claimed.",
+        },
+    ]
+
+    rows: list[dict[str, Any]] = []
+    for spec in specs:
+        domain = str(spec["domain"])
+        bench = benchmark[domain]
+        runtime_row = dict(spec["runtime_row"])
+        comparator_row = dict(spec["comparator_row"])
+        calib = calibration[domain]
+        rows.append(
+            {
+                "domain": domain,
+                "active_dataset": spec["active_dataset"],
+                "claim_surface": spec["claim_surface"],
+                "forecast_source": spec["forecast_source"],
+                "forecast_target": spec["forecast_target"],
+                "forecast_split": spec["forecast_split"],
+                "forecast_coverage": f"{_safe_float(spec['forecast_coverage']):.6f}",
+                "forecast_interval_width": f"{_safe_float(spec['forecast_interval_width']):.6f}",
+                "calibration_bucket_count": str(int(calib["bucket_count"])),
+                "calibration_min_coverage": f"{calib['min_coverage']:.6f}",
+                "calibration_min_bucket_n": str(int(calib["min_bucket_n"])),
+                "runtime_source": spec["runtime_source"],
+                "runtime_trace_rows": str(int(spec["runtime_trace_rows"])),
+                "orius_runtime_rows": str(int(spec["orius_runtime_rows"])),
+                "baseline_tsvr": bench["baseline_tsvr_mean"],
+                "orius_tsvr": bench["orius_tsvr_mean"],
+                "oasg": f"{_safe_float(runtime_row.get('oasg', comparator_row.get('oasg'))):.6f}",
+                "intervention_rate": f"{_safe_float(runtime_row.get('intervention_rate', bench.get('intervention_rate'))):.6f}",
+                "fallback_activation_rate": bench["fallback_activation_rate"],
+                "certificate_valid_rate": f"{_safe_float(spec['certificate_valid_rate']):.6f}",
+                "t11_pass_rate": f"{_safe_float(spec['t11_pass_rate']):.6f}",
+                "domain_postcondition_pass_rate": f"{_safe_float(spec['domain_postcondition_pass_rate']):.6f}",
+                "runtime_witness_pass_rate": f"{_safe_float(spec['runtime_witness_pass_rate']):.6f}",
+                "strict_runtime_gate": bench["strict_runtime_gate"],
+                "postcondition_basis": spec["postcondition_basis"],
+                "claim_boundary": spec["claim_boundary"],
+            }
+        )
+    return rows
+
+
+def _benchmark_rows(
+    calibration_rows: list[CalibrationRow], healthcare_calibration_meta: dict[str, Any]
+) -> list[dict[str, Any]]:
     validation_rows = _validation_domain_rows()
     runtime_budget = _runtime_budget_rows()
     battery_counts = _load_battery_reference_counts()
@@ -527,9 +978,15 @@ def _benchmark_rows(calibration_rows: list[CalibrationRow], healthcare_calibrati
             "baseline_family": "locked_witness_nominal",
             "runtime_row": battery_summary.get("heuristic:dc3s_ftit", next(iter(battery_summary.values()))),
             "baseline_row": battery_summary.get("heuristic:nominal", next(iter(battery_summary.values()))),
-            "intervention_rate": _safe_float(battery_summary.get("heuristic:dc3s_ftit", {}).get("intervention_rate")),
-            "fallback_activation_rate": _runtime_trace_rate(BATTERY_RUNTIME_TRACES, "controller_label", "heuristic:dc3s_ftit", "fallback_used"),
-            "certificate_valid_release_rate": _safe_float(battery_summary.get("heuristic:dc3s_ftit", {}).get("cva")),
+            "intervention_rate": _safe_float(
+                battery_summary.get("heuristic:dc3s_ftit", {}).get("intervention_rate")
+            ),
+            "fallback_activation_rate": _runtime_trace_rate(
+                BATTERY_RUNTIME_TRACES, "controller_label", "heuristic:dc3s_ftit", "fallback_used"
+            ),
+            "certificate_valid_release_rate": _safe_float(
+                battery_summary.get("heuristic:dc3s_ftit", {}).get("cva")
+            ),
             "certificate_semantics": "runtime_cva_locked_battery_witness",
             "n_baseline": battery_counts["baseline_n"],
             "n_orius": battery_counts["orius_n"],
@@ -548,7 +1005,9 @@ def _benchmark_rows(calibration_rows: list[CalibrationRow], healthcare_calibrati
             "runtime_row": av_summary.get("orius", {}),
             "baseline_row": av_summary.get("baseline", {}),
             "intervention_rate": _safe_float(av_summary.get("orius", {}).get("intervention_rate")),
-            "fallback_activation_rate": _runtime_trace_rate(AV_RUNTIME_TRACES, "controller", "orius", "fallback_used"),
+            "fallback_activation_rate": _runtime_trace_rate(
+                AV_RUNTIME_TRACES, "controller", "orius", "fallback_used"
+            ),
             "certificate_valid_release_rate": _safe_float(av_witness.get("certificate_valid_rate")),
             "certificate_semantics": "runtime_witness_certificate_valid_rate_promoted_av_row",
             "t11_pass_rate": _safe_float(av_witness.get("t11_pass_rate")),
@@ -572,7 +1031,9 @@ def _benchmark_rows(calibration_rows: list[CalibrationRow], healthcare_calibrati
             "runtime_row": healthcare_summary.get("orius", {}),
             "baseline_row": healthcare_summary.get("baseline", {}),
             "intervention_rate": _safe_float(healthcare_summary.get("orius", {}).get("intervention_rate")),
-            "fallback_activation_rate": _runtime_trace_rate(HEALTHCARE_RUNTIME_TRACES, "controller", "orius", "fallback_used"),
+            "fallback_activation_rate": _runtime_trace_rate(
+                HEALTHCARE_RUNTIME_TRACES, "controller", "orius", "fallback_used"
+            ),
             "certificate_valid_release_rate": _safe_float(healthcare_witness.get("certificate_valid_rate")),
             "certificate_semantics": "runtime_witness_certificate_valid_rate_promoted_healthcare_row",
             "t11_pass_rate": _safe_float(healthcare_witness.get("t11_pass_rate")),
@@ -888,7 +1349,9 @@ def _baseline_suite_rows() -> list[dict[str, Any]]:
                     "surface_role": "diagnostic_cross_domain_proxy",
                     "tsvr": f"{_safe_float(source.get('tsvr')):.6f}" if source else "",
                     "oasg": f"{_safe_float(source.get('oasg')):.6f}" if source else "",
-                    "intervention_rate": f"{_safe_float(source.get('intervention_rate')):.6f}" if source else "",
+                    "intervention_rate": f"{_safe_float(source.get('intervention_rate')):.6f}"
+                    if source
+                    else "",
                     "metric_surface": source.get("metric_surface", ""),
                     "claim_boundary_note": (
                         "Cross-domain baseline lane uses the shared universal validation harness; "
@@ -1337,7 +1800,9 @@ def build_three_domain_ml_artifacts() -> None:
     }
 
     benchmark_rows = _benchmark_rows(calibration_rows, healthcare_meta)
+    uniform_evidence_rows = _uniform_evidence_rows(calibration_rows, benchmark_rows)
     proxy_runtime_rows = _proxy_runtime_comparison_rows(benchmark_rows)
+    utility_safety_rows = _utility_safety_dominance_rows()
     baseline_rows = _baseline_suite_rows()
     ablation_rows = _ablation_rows(baseline_rows)
     negative_control_rows = _negative_control_rows(calibration_rows, healthcare_meta, baseline_rows)
@@ -1362,7 +1827,9 @@ def build_three_domain_ml_artifacts() -> None:
         "central_novelty_sentence": CENTRAL_NOVELTY_SENTENCE,
         "submission_scope": "battery_av_healthcare",
         "domains": benchmark_rows,
+        "uniform_evidence_path": "reports/publication/three_domain_forecast_calibration_runtime_evidence.csv",
         "proxy_runtime_comparison_path": "reports/publication/three_domain_proxy_runtime_comparison.csv",
+        "utility_safety_dominance_path": "reports/publication/three_domain_utility_safety_dominance.csv",
         "baseline_suite_path": "reports/publication/three_domain_baseline_suite.csv",
         "ablation_matrix_path": "reports/publication/three_domain_ablation_matrix.csv",
         "negative_controls_path": "reports/publication/three_domain_negative_controls.csv",
@@ -1377,6 +1844,7 @@ def build_three_domain_ml_artifacts() -> None:
             "No flagship novelty credit is taken from draft theorem rows or from a new conformal-theorem claim.",
             "Battery remains the witness row; AV and Healthcare are now claim-governing runtime-closed rows under narrowed contracts.",
             "Baseline, ablation, and negative-control rows are claim-carrying only when sourced from domain-native runtime denominator artifacts.",
+            "Utility-safety dominance rows compare ORIUS against degenerate fail-safe references, not only unsafe nominal baselines.",
         ],
     }
 
@@ -1391,7 +1859,9 @@ def build_three_domain_ml_artifacts() -> None:
         calibration_diag_rows.append(
             {
                 "domain": domain,
-                "claim_tier_scope": "reference" if domain == "Battery Energy Storage" else "runtime_contract_closed",
+                "claim_tier_scope": "reference"
+                if domain == "Battery Energy Storage"
+                else "runtime_contract_closed",
                 "coverage_by_fault_mode": "three_domain_grouped_calibration",
                 "coverage_by_oqe_bucket": (
                     f"low: PICP {by_bucket['low'].coverage:.3f}, width {by_bucket['low'].mean_interval_width:.3f} | "
@@ -1430,10 +1900,47 @@ def build_three_domain_ml_artifacts() -> None:
     )
     _write_json(PUBLICATION_DIR / "three_domain_ml_benchmark_summary.json", benchmark_summary)
     _write_csv(
+        PUBLICATION_DIR / "three_domain_forecast_calibration_runtime_evidence.csv",
+        uniform_evidence_rows,
+        UNIFORM_EVIDENCE_FIELDS,
+    )
+    _write_json(
+        PUBLICATION_DIR / "three_domain_forecast_calibration_runtime_evidence.json",
+        {
+            "generated_at_utc": _utc_now_iso(),
+            "row_count": len(uniform_evidence_rows),
+            "source_policy": {
+                "scope": "Battery + nuPlan AV + Healthcare only",
+                "av_forecast_source": _repo_relative(AV_FORECAST_SUMMARY),
+                "forbidden_av_sources": ["reports/av/week2_metrics.json", "Waymo Motion"],
+                "retraining_performed": False,
+            },
+            "rows": uniform_evidence_rows,
+        },
+    )
+    _write_csv(
         PUBLICATION_DIR / "three_domain_proxy_runtime_comparison.csv",
         proxy_runtime_rows,
         list(proxy_runtime_rows[0].keys()),
     )
+    if utility_safety_rows:
+        _write_csv(
+            PUBLICATION_DIR / "three_domain_utility_safety_dominance.csv",
+            utility_safety_rows,
+            list(utility_safety_rows[0].keys()),
+        )
+        _write_json(
+            PUBLICATION_DIR / "three_domain_utility_safety_dominance.json",
+            {
+                "generated_at_utc": _utc_now_iso(),
+                "row_count": len(utility_safety_rows),
+                "gate_semantics": (
+                    "A row passes only when ORIUS has no material excess TSVR over the degenerate "
+                    "fail-safe reference while preserving more useful work with lower fallback and intervention."
+                ),
+                "rows": utility_safety_rows,
+            },
+        )
     _write_csv(
         PUBLICATION_DIR / "three_domain_runtime_safety_tradeoff.csv",
         [

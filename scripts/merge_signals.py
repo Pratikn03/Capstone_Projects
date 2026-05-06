@@ -1,4 +1,5 @@
 """Merge carbon intensity and MOER signals into a single file."""
+
 from __future__ import annotations
 
 import argparse
@@ -8,17 +9,16 @@ import pandas as pd
 
 
 def _load(path: Path) -> pd.DataFrame:
-    if path.suffix == ".parquet":
-        df = pd.read_parquet(path)
-    else:
-        df = pd.read_csv(path)
+    df = pd.read_parquet(path) if path.suffix == ".parquet" else pd.read_csv(path)
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
     return df
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--carbon", required=True, help="Carbon signals CSV/Parquet (timestamp, carbon_kg_per_mwh)")
+    ap.add_argument(
+        "--carbon", required=True, help="Carbon signals CSV/Parquet (timestamp, carbon_kg_per_mwh)"
+    )
     ap.add_argument("--moer", required=True, help="MOER signals CSV/Parquet (timestamp, moer_kg_per_mwh)")
     ap.add_argument("--out", default="data/raw/price_carbon_signals.csv")
     args = ap.parse_args()

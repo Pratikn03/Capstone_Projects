@@ -19,6 +19,7 @@ Path A semantics: ego-only 1D speed-limit track.  lead_position_m is pinned
 at a far constant so it is never the binding safety predicate; Path B will
 replace it with neighbor-anchor-derived collision geometry.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,7 +30,6 @@ import numpy as np
 import pandas as pd
 
 from orius.vehicles.rss_safety import RssParameters, rss_safe_gap_vec
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FULL_CORPUS = REPO_ROOT / "data" / "orius_av" / "av" / "processed_full_corpus"
@@ -43,7 +43,15 @@ LEAD_GAP_PATH = FULL_CORPUS / "per_step_lead_gap.parquet"
 
 def _load_replay_windows(full_corpus: Path) -> pd.DataFrame:
     df = pd.read_parquet(full_corpus / "replay_windows.parquet")
-    required = {"scenario_id", "step_index", "ego_track_id", "ego_x_m", "ego_y_m", "ego_speed_mps", "timestamp_us"}
+    required = {
+        "scenario_id",
+        "step_index",
+        "ego_track_id",
+        "ego_x_m",
+        "ego_y_m",
+        "ego_speed_mps",
+        "timestamp_us",
+    }
     missing = required - set(df.columns)
     if missing:
         raise ValueError(f"replay_windows.parquet missing columns: {sorted(missing)}")
@@ -85,7 +93,9 @@ def _translate(df: pd.DataFrame) -> pd.DataFrame:
                 "scenario_id": scenario_id,
             }
         )
-        frame["ts_utc"] = pd.to_datetime(frame["timestamp_us"], unit="us", utc=True).dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        frame["ts_utc"] = pd.to_datetime(frame["timestamp_us"], unit="us", utc=True).dt.strftime(
+            "%Y-%m-%dT%H:%M:%S.%fZ"
+        )
         frame["timestamp"] = pd.to_datetime(frame["timestamp_us"], unit="us", utc=True)
         out_frames.append(frame)
     if not out_frames:
@@ -199,12 +209,22 @@ def _write_outputs(
 
     split_row_counts: dict[str, int] = {"features": len(features_out)}
     for split_name, scenarios in scenarios_by_split.items():
-        sub = _filter_to_scenarios(features_df, scenarios).drop(columns=[c for c in feature_cols_drop if c in features_df.columns])
+        sub = _filter_to_scenarios(features_df, scenarios).drop(
+            columns=[c for c in feature_cols_drop if c in features_df.columns]
+        )
         out_path = splits_dir / f"{split_name}.parquet"
         sub.to_parquet(out_path, index=False)
         split_row_counts[split_name] = len(sub)
 
-    trajectory_cols = ["vehicle_id", "step", "position_m", "speed_mps", "speed_limit_mps", "lead_position_m", "ts_utc"]
+    trajectory_cols = [
+        "vehicle_id",
+        "step",
+        "position_m",
+        "speed_mps",
+        "speed_limit_mps",
+        "lead_position_m",
+        "ts_utc",
+    ]
     optional_trajectory_cols = [
         "lead_present",
         "lead_track_id",
@@ -237,10 +257,14 @@ def main() -> int:
         for name in ("train", "calibration", "val", "test")
     }
     all_split_scenarios = set().union(*scenarios_by_split.values())
-    print(f"[bridge] split scenarios: train={len(scenarios_by_split['train'])} cal={len(scenarios_by_split['calibration'])} val={len(scenarios_by_split['val'])} test={len(scenarios_by_split['test'])}")
+    print(
+        f"[bridge] split scenarios: train={len(scenarios_by_split['train'])} cal={len(scenarios_by_split['calibration'])} val={len(scenarios_by_split['val'])} test={len(scenarios_by_split['test'])}"
+    )
 
     trajectories_df = _translate(replay)
-    print(f"[bridge] translated trajectories: {len(trajectories_df):,} rows, {trajectories_df['vehicle_id'].nunique()} vehicles")
+    print(
+        f"[bridge] translated trajectories: {len(trajectories_df):,} rows, {trajectories_df['vehicle_id'].nunique()} vehicles"
+    )
     trajectories_df = _augment_with_rss(trajectories_df, args.full_corpus / LEAD_GAP_PATH.name)
 
     trajectories_in_splits = _filter_to_scenarios(trajectories_df, all_split_scenarios)

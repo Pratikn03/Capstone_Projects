@@ -2,12 +2,11 @@
 
 Single source of truth for all dataset configurations, paths, and defaults.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,37 +14,38 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 @dataclass
 class DatasetConfig:
     """Configuration for a registered dataset."""
-    name: str                           # Short name (DE, US, etc.)
-    display_name: str                   # Full name for logging
-    config_file: str                    # Path to training config YAML
-    features_path: str                  # Path to features.parquet
-    splits_path: str                    # Path to splits directory
-    models_dir: str                     # Path to model artifacts directory
-    reports_dir: str                    # Path to reports output
-    uncertainty_dir: str                # Path to conformal artifacts directory
-    backtests_dir: str                  # Path to calibration/test artifact directory
+
+    name: str  # Short name (DE, US, etc.)
+    display_name: str  # Full name for logging
+    config_file: str  # Path to training config YAML
+    features_path: str  # Path to features.parquet
+    splits_path: str  # Path to splits directory
+    models_dir: str  # Path to model artifacts directory
+    reports_dir: str  # Path to reports output
+    uncertainty_dir: str  # Path to conformal artifacts directory
+    backtests_dir: str  # Path to calibration/test artifact directory
 
     # Feature pipeline settings
-    raw_data_path: str                  # Path to raw data
-    feature_module: str                 # Module to build features
+    raw_data_path: str  # Path to raw data
+    feature_module: str  # Module to build features
 
     # Optional settings
-    ba_code: Optional[str] = None       # Balancing authority (for US)
-    start_date: Optional[str] = None    # Date filter start
-    end_date: Optional[str] = None      # Date filter end
-    alias_of: Optional[str] = None      # Backward-compatible dataset alias
-    provenance_path: Optional[str] = None  # Standardized real-data manifest when available
-    canonical_raw_source_path: Optional[str] = None
-    runtime_domain: Optional[str] = None
-    publication_label: Optional[str] = None
-    closure_target_tier: Optional[str] = None
-    maturity_tier: Optional[str] = None
-    canonical_runtime_path: Optional[str] = None
-    support_runtime_path: Optional[str] = None
-    runtime_provenance_path: Optional[str] = None
-    support_runtime_provenance_path: Optional[str] = None
-    fallback_policy: Optional[str] = None
-    exact_blocker: Optional[str] = None
+    ba_code: str | None = None  # Balancing authority (for US)
+    start_date: str | None = None  # Date filter start
+    end_date: str | None = None  # Date filter end
+    alias_of: str | None = None  # Backward-compatible dataset alias
+    provenance_path: str | None = None  # Standardized real-data manifest when available
+    canonical_raw_source_path: str | None = None
+    runtime_domain: str | None = None
+    publication_label: str | None = None
+    closure_target_tier: str | None = None
+    maturity_tier: str | None = None
+    canonical_runtime_path: str | None = None
+    support_runtime_path: str | None = None
+    runtime_provenance_path: str | None = None
+    support_runtime_provenance_path: str | None = None
+    fallback_policy: str | None = None
+    exact_blocker: str | None = None
     strict_runtime_required: bool = False
 
 
@@ -219,6 +219,75 @@ MAX_QUALITY_DEFAULTS = {
     "HEALTHCARE": {"n_trials": 140, "top_pct": 0.15, "max_seeds": 4},
 }
 
+PRODUCTION_MAX_FAST_DEFAULTS = {
+    "DE": {
+        "n_trials": 64,
+        "top_pct": 0.20,
+        "max_seeds": 4,
+        "tuning_n_jobs": 3,
+        "gbm_threads": 2,
+        "max_deep_epochs": 16,
+        "deep_patience": 4,
+        "deep_warmup_epochs": 2,
+        "reuse_best_gbm": True,
+    },
+    "US_MISO": {
+        "n_trials": 80,
+        "top_pct": 0.20,
+        "max_seeds": 4,
+        "tuning_n_jobs": 2,
+        "gbm_threads": 2,
+        "max_deep_epochs": 16,
+        "deep_patience": 4,
+        "deep_warmup_epochs": 2,
+        "reuse_best_gbm": True,
+    },
+    "US_PJM": {
+        "n_trials": 80,
+        "top_pct": 0.20,
+        "max_seeds": 4,
+        "tuning_n_jobs": 2,
+        "gbm_threads": 2,
+        "max_deep_epochs": 16,
+        "deep_patience": 4,
+        "deep_warmup_epochs": 2,
+        "reuse_best_gbm": True,
+    },
+    "US_ERCOT": {
+        "n_trials": 80,
+        "top_pct": 0.20,
+        "max_seeds": 4,
+        "tuning_n_jobs": 2,
+        "gbm_threads": 2,
+        "max_deep_epochs": 16,
+        "deep_patience": 4,
+        "deep_warmup_epochs": 2,
+        "reuse_best_gbm": True,
+    },
+    "AV": {
+        "n_trials": 48,
+        "top_pct": 0.20,
+        "max_seeds": 3,
+        "tuning_n_jobs": 2,
+        "gbm_threads": 2,
+        "max_deep_epochs": 12,
+        "deep_patience": 3,
+        "deep_warmup_epochs": 1,
+        "reuse_best_gbm": False,
+    },
+    "HEALTHCARE": {
+        "n_trials": 48,
+        "top_pct": 0.20,
+        "max_seeds": 3,
+        "tuning_n_jobs": 2,
+        "gbm_threads": 2,
+        "max_deep_epochs": 12,
+        "deep_patience": 3,
+        "deep_warmup_epochs": 1,
+        "reuse_best_gbm": True,
+    },
+}
+
 
 @dataclass
 class RunLayout:
@@ -278,10 +347,7 @@ def get_runtime_dataset_config(domain: str) -> DatasetConfig:
 
 
 def runtime_domain_configs() -> dict[str, DatasetConfig]:
-    return {
-        domain: DATASET_REGISTRY[key]
-        for domain, key in RUNTIME_DOMAIN_DATASET_KEYS.items()
-    }
+    return {domain: DATASET_REGISTRY[key] for domain, key in RUNTIME_DOMAIN_DATASET_KEYS.items()}
 
 
 def get_runtime_dataset_path(domain: str, *, allow_support_tier: bool = False) -> Path | None:

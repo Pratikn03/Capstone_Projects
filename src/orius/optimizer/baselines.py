@@ -1,13 +1,15 @@
 """Optimization baselines for dispatch comparisons."""
+
 from __future__ import annotations
 
-from typing import Dict, Any
+from typing import Any
+
 import numpy as np
 
 
 def _as_array(x) -> np.ndarray:
     """Convert scalars/lists to a float NumPy array."""
-    if isinstance(x, (list, tuple, np.ndarray)):
+    if isinstance(x, list | tuple | np.ndarray):
         return np.asarray(x, dtype=float)
     return np.asarray([x], dtype=float)
 
@@ -77,7 +79,9 @@ def _compute_costs(
         if carbon.size == 1 and H > 1:
             carbon = np.full(H, float(carbon[0]))
         carbon_kg = float(np.sum(grid * carbon))
-        cost_per_kg = (cfg["grid"]["carbon_cost"] / cfg["grid"]["carbon_kg"]) if cfg["grid"]["carbon_kg"] > 0 else 0.0
+        cost_per_kg = (
+            (cfg["grid"]["carbon_cost"] / cfg["grid"]["carbon_kg"]) if cfg["grid"]["carbon_kg"] > 0 else 0.0
+        )
         carbon_cost = float(carbon_kg * cost_per_kg)
     else:
         carbon_kg = float(np.sum(grid) * cfg["grid"]["carbon_kg"])
@@ -92,7 +96,7 @@ def grid_only_dispatch(
     cfg: dict,
     price_series=None,
     carbon_series=None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Baseline: meet net load using grid only (no battery)."""
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)
@@ -140,7 +144,7 @@ def naive_battery_dispatch(
     cfg: dict,
     price_series=None,
     carbon_series=None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Simple policy: charge at night (00–05), discharge at evening peak (17–21)."""
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)
@@ -217,7 +221,7 @@ def peak_shaving_dispatch(
     price_series=None,
     carbon_series=None,
     target_quantile: float = 0.8,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Heuristic peak‑shaving policy: cap net load near a target quantile."""
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)
@@ -300,7 +304,7 @@ def greedy_price_dispatch(
     carbon_series=None,
     low_quantile: float = 0.3,
     high_quantile: float = 0.7,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Greedy price‑based dispatch: charge on cheap hours, discharge on expensive hours."""
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)

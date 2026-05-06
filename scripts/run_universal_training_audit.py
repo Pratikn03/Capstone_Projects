@@ -12,6 +12,7 @@ It verifies that each canonical ORIUS domain has:
 It can also repair missing or invalid domains by invoking the canonical
 ``train_dataset.py`` pipeline.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -20,23 +21,21 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from _dataset_registry import DATASET_REGISTRY, DatasetConfig, REPO_ROOT
+from _dataset_registry import DATASET_REGISTRY, REPO_ROOT, DatasetConfig
 from train_dataset import (
     _configured_model_types,
     _configured_targets,
     _load_training_cfg,
     _resolved_uncertainty_targets,
 )
-
 
 BASE_DOMAIN_DATASET_MAP: tuple[tuple[str, str], ...] = (
     ("battery", "DE"),
@@ -111,7 +110,9 @@ def _primary_metrics(cfg: DatasetConfig) -> dict[str, object]:
     }
 
 
-def _healthcare_calibration_repair(cfg: DatasetConfig, target: str | None, *, target_picp: float = 0.90) -> dict[str, object] | None:
+def _healthcare_calibration_repair(
+    cfg: DatasetConfig, target: str | None, *, target_picp: float = 0.90
+) -> dict[str, object] | None:
     if cfg.name != "HEALTHCARE" or not target:
         return None
     test_path = REPO_ROOT / cfg.backtests_dir / f"gbm_{target}_test.npz"
@@ -278,8 +279,16 @@ def _nuplan_av_domain_row(
     uncertainty_exists = _has_any(uncertainty_dir, "nuplan_av_*_conformal.json")
     report_exists = (reports_dir / "training_summary.csv").exists()
     week2_exists = report_exists
-    preflight_exists = (REPO_ROOT / cfg.features_path).exists() and (reports_dir / "feature_stats.json").exists()
-    figures_exist = (REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest" / "shift_aware").exists()
+    preflight_exists = (REPO_ROOT / cfg.features_path).exists() and (
+        reports_dir / "feature_stats.json"
+    ).exists()
+    figures_exist = (
+        REPO_ROOT
+        / "reports"
+        / "orius_av"
+        / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+        / "shift_aware"
+    ).exists()
     backtests_exist = (reports_dir / "subgroup_coverage.csv").exists()
     provenance_exists = bool(cfg.provenance_path) and (REPO_ROOT / str(cfg.provenance_path)).exists()
     processed_surface_exists = (REPO_ROOT / cfg.raw_data_path).exists()
@@ -346,7 +355,9 @@ def _nuplan_av_domain_row(
     }
 
 
-def _domain_row(domain: str, cfg: DatasetConfig, *, verify_log: str, train_status: str, train_command: str | None) -> dict[str, object]:
+def _domain_row(
+    domain: str, cfg: DatasetConfig, *, verify_log: str, train_status: str, train_command: str | None
+) -> dict[str, object]:
     if cfg.name == "AV" and "processed_nuplan_allzip_grouped" in cfg.features_path:
         return _nuplan_av_domain_row(
             domain,
@@ -367,7 +378,9 @@ def _domain_row(domain: str, cfg: DatasetConfig, *, verify_log: str, train_statu
 
     metrics = _primary_metrics(cfg)
     calibration_repair = _healthcare_calibration_repair(cfg, metrics.get("primary_target"))
-    if calibration_repair is not None and float(calibration_repair.get("picp_90", 0.0)) >= float(metrics.get("picp_90") or 0.0):
+    if calibration_repair is not None and float(calibration_repair.get("picp_90", 0.0)) >= float(
+        metrics.get("picp_90") or 0.0
+    ):
         metrics["picp_90"] = calibration_repair["picp_90"]
         metrics["mean_interval_width"] = calibration_repair["mean_interval_width"]
     model_bundle_exists = _has_any(models_dir, "gbm_*_*.pkl")
@@ -397,9 +410,7 @@ def _domain_row(domain: str, cfg: DatasetConfig, *, verify_log: str, train_statu
     if not processed_surface_exists:
         note_parts.append("processed_surface_missing")
     if not split_valid:
-        note_parts.append(
-            "invalid_splits:" + ",".join(f"{k}={v}" for k, v in split_counts.items())
-        )
+        note_parts.append("invalid_splits:" + ",".join(f"{k}={v}" for k, v in split_counts.items()))
     if not report_exists:
         note_parts.append("formal_report_missing")
     if not figures_exist:
@@ -449,7 +460,9 @@ def _domain_row(domain: str, cfg: DatasetConfig, *, verify_log: str, train_statu
         "smape": metrics["smape"],
         "picp_90": metrics["picp_90"],
         "mean_interval_width": metrics["mean_interval_width"],
-        "calibration_repair": json.dumps(calibration_repair, sort_keys=True) if calibration_repair is not None else "",
+        "calibration_repair": json.dumps(calibration_repair, sort_keys=True)
+        if calibration_repair is not None
+        else "",
         "note": ";".join(note_parts) if note_parts else "verified",
     }
 
@@ -542,9 +555,7 @@ def main() -> int:
     _write_csv(out_dir / "domain_training_summary.csv", rows)
     _write_tex(out_dir / "tbl_domain_training_audit.tex", rows)
     calibration_repairs = [
-        json.loads(str(row["calibration_repair"]))
-        for row in rows
-        if row.get("calibration_repair")
+        json.loads(str(row["calibration_repair"])) for row in rows if row.get("calibration_repair")
     ]
     if calibration_repairs:
         (out_dir / "healthcare_calibration_repair.json").write_text(

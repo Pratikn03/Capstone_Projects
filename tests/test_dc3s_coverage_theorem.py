@@ -3,8 +3,8 @@ import pytest
 
 from orius.dc3s.coverage_theorem import (
     assert_coverage_guarantee,
-    compute_expected_violation_bound,
     compute_empirical_coverage,
+    compute_expected_violation_bound,
     evaluate_empirical_core_bound,
     get_core_bound_assumptions,
     inflation_lower_bound,
@@ -45,7 +45,7 @@ def test_assert_coverage_guarantee():
     # Target alpha=0.20 -> 0.80. Tolerance=0.05. Minimum needed = 0.75. Should pass.
     res = assert_coverage_guarantee(y_true, lower, upper, alpha=0.20, tolerance=0.05)
     assert res["passed"] is True
-    
+
     with pytest.raises(AssertionError):
         # Target alpha=0.10 -> 0.90. Tolerance=0.01. Minimum needed = 0.89. Fails with 0.75.
         assert_coverage_guarantee(y_true, lower, upper, alpha=0.10, tolerance=0.01)

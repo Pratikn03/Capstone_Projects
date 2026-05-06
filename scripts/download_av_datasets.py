@@ -12,6 +12,7 @@ Legacy/testing sources:
 - HEE raw CSV already in-repo
 - explicit synthetic generation, opt-in only
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,7 +23,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT / "src") not in sys.path:
@@ -40,7 +40,6 @@ from orius.data_pipeline.real_data_contract import (
     utc_now_iso,
     write_json,
 )
-
 
 DATA_AV = REPO_ROOT / "data" / "av"
 RAW_DIR = DATA_AV / "raw"
@@ -106,7 +105,9 @@ def _row_summary_path(out_path: Path) -> Path:
     return out_path.parent / f"{out_path.stem}_row_summary.json"
 
 
-def _resolve_real_source(source_key: str, *, external_root: Path | None = None) -> tuple[dict[str, object], ResolvedRawSource]:
+def _resolve_real_source(
+    source_key: str, *, external_root: Path | None = None
+) -> tuple[dict[str, object], ResolvedRawSource]:
     cfg = REAL_SOURCE_CONFIG[source_key]
     raw_source = resolve_repo_or_external_raw_dir(
         RAW_DIR / str(cfg["dataset_dir"]),
@@ -250,32 +251,38 @@ def _normalize_longitudinal_frame(df: pd.DataFrame, *, default_split: str) -> pd
     else:
         base = pd.Timestamp("2026-01-01T00:00:00Z")
         frame["ts_utc"] = (
-            base + pd.to_timedelta(frame["step"].fillna(0), unit="s")
-        ).astype(str).str.replace("+00:00", "Z", regex=False)
+            (base + pd.to_timedelta(frame["step"].fillna(0), unit="s"))
+            .astype(str)
+            .str.replace("+00:00", "Z", regex=False)
+        )
 
     frame["source_split"] = df[split_col].astype(str) if split_col is not None else default_split
     frame = frame.dropna(subset=["position_m", "speed_mps", "step"]).copy()
     frame["step"] = frame["step"].astype(int)
-    return frame[
-        [
-            "vehicle_id",
-            "step",
-            "position_m",
-            "speed_mps",
-            "speed_limit_mps",
-            "lead_position_m",
-            "ts_utc",
-            "source_split",
+    return (
+        frame[
+            [
+                "vehicle_id",
+                "step",
+                "position_m",
+                "speed_mps",
+                "speed_limit_mps",
+                "lead_position_m",
+                "ts_utc",
+                "source_split",
+            ]
         ]
-    ].sort_values(["vehicle_id", "step"]).reset_index(drop=True)
+        .sort_values(["vehicle_id", "step"])
+        .reset_index(drop=True)
+    )
 
 
 def _infer_split(path: Path, dataset_dir: Path) -> str:
     rel = path.relative_to(dataset_dir).as_posix().lower()
     stem = path.stem.lower()
-    for token in ("train", "training", "validation", "val", "test", "calibration"):
-        if token in rel or token in stem:
-            return "val" if token == "validation" else token
+    for split_token in ("train", "training", "validation", "val", "test", "calibration"):
+        if split_token in rel or split_token in stem:
+            return "val" if split_token == "validation" else split_token
     return "unknown"
 
 
@@ -382,7 +389,9 @@ def build_sensor_summary(out_path: Path, *, external_root: Path | None = None) -
     return out_path
 
 
-def generate_synthetic_trajectories(out_path: Path, n_vehicles: int = 50, steps_per_vehicle: int = 200) -> Path:
+def generate_synthetic_trajectories(
+    out_path: Path, n_vehicles: int = 50, steps_per_vehicle: int = 200
+) -> Path:
     """Generate synthetic longitudinal trajectories in ORIUS format."""
     import random
 
@@ -521,7 +530,9 @@ def main() -> int:
     )
     parser.add_argument("--external-root", type=Path, default=None, help="Override ORIUS_EXTERNAL_DATA_ROOT")
     parser.add_argument("--convert", type=Path, help="Convert an existing legacy AV CSV to ORIUS format")
-    parser.add_argument("--out", type=Path, default=PROCESSED_DIR / "av_trajectories_orius.csv", help="Output path")
+    parser.add_argument(
+        "--out", type=Path, default=PROCESSED_DIR / "av_trajectories_orius.csv", help="Output path"
+    )
     parser.add_argument(
         "--sensor-summary-out",
         type=Path,

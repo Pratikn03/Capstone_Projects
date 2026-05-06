@@ -9,6 +9,7 @@ These are dense analogs of the battery reference row, structured for the
 ORIUS DC³S pipeline with columns:
   timestamp, target, forecast, reliability, domain_label
 """
+
 from __future__ import annotations
 
 import csv
@@ -58,14 +59,14 @@ def build_zema_orius(out_dir: Path) -> int:
 
     # Compute per-cycle features
     ps1_mean = ps1.mean(axis=1)  # mean pressure per cycle
-    ps1_std = ps1.std(axis=1)    # pressure variability
+    ps1_std = ps1.std(axis=1)  # pressure variability
     ts1_mean = ts1.mean(axis=1)  # mean temperature per cycle
 
     # Reliability: combine fault conditions into a [0, 1] score
     # Higher = healthier. Normalize each fault indicator to [0, 1] and average.
-    cooler_rel = profile[:, 0] / 100.0        # 3→0.03, 100→1.0
-    valve_rel = profile[:, 1] / 100.0         # 73→0.73, 100→1.0
-    pump_rel = 1.0 - profile[:, 2] / 2.0      # 0→1.0, 2→0.0
+    cooler_rel = profile[:, 0] / 100.0  # 3→0.03, 100→1.0
+    valve_rel = profile[:, 1] / 100.0  # 73→0.73, 100→1.0
+    pump_rel = 1.0 - profile[:, 2] / 2.0  # 0→1.0, 2→0.0
     accum_rel = (profile[:, 3] - 90.0) / 40.0  # 90→0.0, 130→1.0
     accum_rel = np.clip(accum_rel, 0, 1)
     stable = profile[:, 4]
@@ -88,25 +89,39 @@ def build_zema_orius(out_dir: Path) -> int:
     out_path = out_dir / "industrial_zema_orius.csv"
     with open(out_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["timestamp", "target", "forecast", "reliability",
-                         "ps1_mean", "ps1_std", "ts1_mean",
-                         "cooler_cond", "valve_cond", "pump_leak", "accum_press",
-                         "domain_label"])
+        writer.writerow(
+            [
+                "timestamp",
+                "target",
+                "forecast",
+                "reliability",
+                "ps1_mean",
+                "ps1_std",
+                "ts1_mean",
+                "cooler_cond",
+                "valve_cond",
+                "pump_leak",
+                "accum_press",
+                "domain_label",
+            ]
+        )
         for i in range(n_cycles):
-            writer.writerow([
-                f"2015-01-01T{i // 3600:02d}:{(i % 3600) // 60:02d}:{i % 60:02d}",
-                f"{target[i]:.4f}",
-                f"{forecast[i]:.4f}",
-                f"{reliability[i]:.4f}",
-                f"{ps1_mean[i]:.4f}",
-                f"{ps1_std[i]:.4f}",
-                f"{ts1_mean[i]:.4f}",
-                f"{profile[i, 0]:.0f}",
-                f"{profile[i, 1]:.0f}",
-                f"{profile[i, 2]:.0f}",
-                f"{profile[i, 3]:.0f}",
-                "industrial",
-            ])
+            writer.writerow(
+                [
+                    f"2015-01-01T{i // 3600:02d}:{(i % 3600) // 60:02d}:{i % 60:02d}",
+                    f"{target[i]:.4f}",
+                    f"{forecast[i]:.4f}",
+                    f"{reliability[i]:.4f}",
+                    f"{ps1_mean[i]:.4f}",
+                    f"{ps1_std[i]:.4f}",
+                    f"{ts1_mean[i]:.4f}",
+                    f"{profile[i, 0]:.0f}",
+                    f"{profile[i, 1]:.0f}",
+                    f"{profile[i, 2]:.0f}",
+                    f"{profile[i, 3]:.0f}",
+                    "industrial",
+                ]
+            )
 
     print(f"  → {out_path} ({n_cycles} rows)")
 
@@ -116,22 +131,25 @@ def build_zema_orius(out_dir: Path) -> int:
     step = 60  # 6000 / 100
     with open(expanded_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["timestamp", "target", "forecast", "reliability",
-                         "cycle_id", "sample_id", "domain_label"])
+        writer.writerow(
+            ["timestamp", "target", "forecast", "reliability", "cycle_id", "sample_id", "domain_label"]
+        )
         row_count = 0
         for i in range(n_cycles):
             for j in range(0, 6000, step):
                 t_val = ps1[i, j]
                 f_val = t_val + rng.normal(0, ps1_std[i] * 0.2)
-                writer.writerow([
-                    f"2015-01-01T{i // 3600:02d}:{(i % 3600) // 60:02d}:{i % 60:02d}.{j:04d}",
-                    f"{t_val:.4f}",
-                    f"{f_val:.4f}",
-                    f"{reliability[i]:.4f}",
-                    i,
-                    j,
-                    "industrial",
-                ])
+                writer.writerow(
+                    [
+                        f"2015-01-01T{i // 3600:02d}:{(i % 3600) // 60:02d}:{i % 60:02d}.{j:04d}",
+                        f"{t_val:.4f}",
+                        f"{f_val:.4f}",
+                        f"{reliability[i]:.4f}",
+                        i,
+                        j,
+                        "industrial",
+                    ]
+                )
                 row_count += 1
 
     print(f"  → {expanded_path} ({row_count} rows — dense)")
@@ -209,24 +227,37 @@ def build_bidmc_orius(out_dir: Path) -> int:
         reliability = np.clip(reliability, 0.1, 1.0)
 
         for i in range(len(times)):
-            all_rows.append([
-                f"patient_{patient_id:02d}_t{times[i]:.0f}",
-                f"{spo2_arr[i]:.2f}",
-                f"{forecast[i]:.4f}",
-                f"{reliability[i]:.4f}",
-                f"{hr_arr[i]:.1f}",
-                f"{pulse_arr[i]:.1f}",
-                f"{resps[i]:.1f}",
-                patient_id,
-                "healthcare",
-            ])
+            all_rows.append(
+                [
+                    f"patient_{patient_id:02d}_t{times[i]:.0f}",
+                    f"{spo2_arr[i]:.2f}",
+                    f"{forecast[i]:.4f}",
+                    f"{reliability[i]:.4f}",
+                    f"{hr_arr[i]:.1f}",
+                    f"{pulse_arr[i]:.1f}",
+                    f"{resps[i]:.1f}",
+                    patient_id,
+                    "healthcare",
+                ]
+            )
 
     # Write ORIUS CSV
     out_path = out_dir / "healthcare_bidmc_orius.csv"
     with open(out_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["timestamp", "target", "forecast", "reliability",
-                         "hr", "pulse", "resp", "patient_id", "domain_label"])
+        writer.writerow(
+            [
+                "timestamp",
+                "target",
+                "forecast",
+                "reliability",
+                "hr",
+                "pulse",
+                "resp",
+                "patient_id",
+                "domain_label",
+            ]
+        )
         writer.writerows(all_rows)
 
     print(f"  → {out_path} ({len(all_rows)} rows)")
@@ -234,12 +265,12 @@ def build_bidmc_orius(out_dir: Path) -> int:
     # Also build from Signal files (125 Hz) for maximum density
     sig_rows = 0
     expanded_path = out_dir / "healthcare_bidmc_dense_orius.csv"
-    rng = np.random.RandomState(42)
 
     with open(expanded_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["timestamp", "target", "forecast", "reliability",
-                         "patient_id", "sample_id", "domain_label"])
+        writer.writerow(
+            ["timestamp", "target", "forecast", "reliability", "patient_id", "sample_id", "domain_label"]
+        )
 
         for patient_id in range(1, 54):
             sig_path = bidmc_dir / f"bidmc_{patient_id:02d}_Signals.csv"
@@ -275,19 +306,21 @@ def build_bidmc_orius(out_dir: Path) -> int:
             rel = np.ones(n)
             window = 50
             for i in range(window, n):
-                local_std = np.std(pleth_sub[i - window:i])
+                local_std = np.std(pleth_sub[i - window : i])
                 rel[i] = max(0.1, 1.0 - local_std * 2.0)
 
             for i in range(n):
-                writer.writerow([
-                    f"patient_{patient_id:02d}_s{i * 10}",
-                    f"{pleth_sub[i]:.6f}",
-                    f"{fc[i]:.6f}",
-                    f"{rel[i]:.4f}",
-                    patient_id,
-                    i * 10,
-                    "healthcare",
-                ])
+                writer.writerow(
+                    [
+                        f"patient_{patient_id:02d}_s{i * 10}",
+                        f"{pleth_sub[i]:.6f}",
+                        f"{fc[i]:.6f}",
+                        f"{rel[i]:.4f}",
+                        patient_id,
+                        i * 10,
+                        "healthcare",
+                    ]
+                )
                 sig_rows += 1
 
     print(f"  → {expanded_path} ({sig_rows} rows — dense from PPG signals)")

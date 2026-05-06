@@ -3,12 +3,12 @@ from __future__ import annotations
 import csv
 import importlib.util
 import json
+from datetime import datetime
 from pathlib import Path
 
 import duckdb
 
 from orius.adapters.healthcare import HealthcareTrackAdapter
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "build_healthcare_runtime_artifacts.py"
@@ -34,6 +34,26 @@ def test_healthcare_track_blackout_observation_is_not_treated_as_safe() -> None:
 
     assert track.observed_constraint_satisfied(observed) is None
     assert track.constraint_margin(observed) is None
+
+
+def test_healthcare_track_normalizes_token_timestamp_to_iso(tmp_path: Path) -> None:
+    csv_path = tmp_path / "healthcare.csv"
+    csv_path.write_text(
+        "\n".join(
+            [
+                "timestamp,target,forecast,reliability,hr,resp,patient_id,domain_label,is_critical",
+                "p1_t7,96.0,95.5,0.9,72.0,14.0,p1,healthcare,False",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    track = HealthcareTrackAdapter(dataset_path=csv_path)
+
+    state = track.load_episode("p1")
+
+    assert state["ts_utc"].endswith("Z")
+    datetime.fromisoformat(state["ts_utc"].replace("Z", "+00:00"))
 
 
 def test_build_healthcare_runtime_artifacts_emits_domain_native_runtime_surfaces(tmp_path: Path) -> None:
@@ -156,13 +176,9 @@ def test_build_healthcare_runtime_artifacts_emits_domain_native_runtime_surfaces
 
     conn = duckdb.connect(str(db_path), read_only=True)
     try:
-        columns = {
-            row[1]
-            for row in conn.execute("PRAGMA table_info('dispatch_certificates')").fetchall()
-        }
+        columns = {row[1] for row in conn.execute("PRAGMA table_info('dispatch_certificates')").fetchall()}
         runtime_trace_columns = {
-            row[1]
-            for row in conn.execute("PRAGMA table_info('healthcare_runtime_traces')").fetchall()
+            row[1] for row in conn.execute("PRAGMA table_info('healthcare_runtime_traces')").fetchall()
         }
         typed = conn.execute(
             """

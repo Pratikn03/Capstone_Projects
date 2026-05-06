@@ -15,11 +15,13 @@ inflate_q / inflate_interval
 calibrate_ambiguity_lambda
     One-shot ambiguity parameter calibration from residual quantiles.
 """
+
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import Any
 
 import numpy as np
 
@@ -27,15 +29,15 @@ from .ambiguity import AmbiguityConfig, widen_bounds
 from .rac_cert import RACCertConfig, compute_q_multiplier, normalize_sensitivity
 
 __all__ = [
+    "DOMAIN_INFLATION_FACTORS",
     "DC3SConfig",
     "build_uncertainty_set",
     "build_uncertainty_set_kappa",
-    "inflate_q",
-    "inflate_interval",
     "calibrate_ambiguity_lambda",
     "derived_inflation_factor",
     "effective_sample_size",
-    "DOMAIN_INFLATION_FACTORS",
+    "inflate_interval",
+    "inflate_q",
 ]
 
 # ---------------------------------------------------------------------------
@@ -183,8 +185,6 @@ def calibrate_ambiguity_lambda(
     return float(lam)
 
 
-
-
 @dataclass
 class DC3SConfig:
     """Typed configuration for :func:`build_uncertainty_set`.
@@ -234,7 +234,7 @@ class DC3SConfig:
     ambiguity_raw: dict = field(default_factory=dict)
 
     @classmethod
-    def from_mapping(cls, cfg: Mapping[str, Any]) -> "DC3SConfig":
+    def from_mapping(cls, cfg: Mapping[str, Any]) -> DC3SConfig:
         """Parse a raw config mapping into a typed DC3SConfig.
 
         Supports both canonical keys (``k_quality``) and the legacy ``k_q``
@@ -263,7 +263,9 @@ class DC3SConfig:
             cooldown_smoothing=float(d.get("cooldown_smoothing", 0.0)),
             min_w=float(reliability_raw.get("min_w", 0.05)),
             adversarial_mode=bool(reliability_raw.get("adversarial_mode", False)),
-            reliability_history=_float_tuple(_cfg_get(d, "reliability_history", default=reliability_raw.get("history"))),
+            reliability_history=_float_tuple(
+                _cfg_get(d, "reliability_history", default=reliability_raw.get("history"))
+            ),
             domain_id=str(d.get("domain_id", "battery")).strip().lower(),
             sensitivity_t=float(_cfg_get(d, "sensitivity_t", "runtime_sensitivity_t", default=0.0)),
             sensitivity_norm=_cfg_get(d, "sensitivity_norm", "runtime_sensitivity_norm"),
@@ -386,7 +388,9 @@ def build_uncertainty_set(
 
         smoothing = dc.cooldown_smoothing
         if prev_inflation is not None and 0.0 < smoothing < 1.0:
-            inflation = float(np.clip(smoothing * float(prev_inflation) + (1.0 - smoothing) * inflation, 1.0, infl_max))
+            inflation = float(
+                np.clip(smoothing * float(prev_inflation) + (1.0 - smoothing) * inflation, 1.0, infl_max)
+            )
 
         if base_lower is not None or base_upper is not None:
             if base_lower is None or base_upper is None:
@@ -477,7 +481,9 @@ def build_uncertainty_set(
             "quality": float(k_q * (1.0 - w_eff)) if law != "ftit_ro" else 0.0,
             "drift": float(k_d * drift_term) if law != "ftit_ro" else 0.0,
             "sensitivity": float(k_s * float(sensitivity_norm_val)) if law != "ftit_ro" else 0.0,
-            "q_multiplier_raw": float(q_meta.get("q_multiplier_raw", q_multiplier)) if law != "ftit_ro" else 1.0,
+            "q_multiplier_raw": float(q_meta.get("q_multiplier_raw", q_multiplier))
+            if law != "ftit_ro"
+            else 1.0,
             "derived_selected": float(inflation_selector == "derived") if law != "ftit_ro" else 0.0,
         },
     }

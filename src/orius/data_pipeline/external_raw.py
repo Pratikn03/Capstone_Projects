@@ -3,12 +3,12 @@
 Large real-data sources should live on an external volume and be referenced
 through ``ORIUS_EXTERNAL_DATA_ROOT`` instead of being copied into the repo.
 """
+
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
 from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 EXTERNAL_DATA_ROOT_ENV = "ORIUS_EXTERNAL_DATA_ROOT"
@@ -26,10 +26,30 @@ class ExternalDatasetSpec:
 
 
 EXTERNAL_DATASETS: dict[str, ExternalDatasetSpec] = {
+    "nuplan": ExternalDatasetSpec(
+        key="nuplan",
+        directory_name="nuplan",
+        description="nuPlan raw archive root",
+    ),
+    "nuplan_maps": ExternalDatasetSpec(
+        key="nuplan_maps",
+        directory_name="nuplan_maps",
+        description="nuPlan maps archive root",
+    ),
+    "carla": ExternalDatasetSpec(
+        key="carla",
+        directory_name="carla",
+        description="CARLA simulation assets and generated raw outputs",
+    ),
     "waymo_open_motion": ExternalDatasetSpec(
         key="waymo_open_motion",
         directory_name="waymo_open_motion",
         description="Waymo Open Motion Dataset raw root",
+    ),
+    "healthcare_private": ExternalDatasetSpec(
+        key="healthcare_private",
+        directory_name="healthcare_private",
+        description="private/local healthcare raw rows and patient-level extracts",
     ),
     "argoverse2_motion": ExternalDatasetSpec(
         key="argoverse2_motion",
@@ -114,9 +134,7 @@ def get_external_dataset_dir(
         return None
     dataset_dir = root / EXTERNAL_DATASETS[dataset_key].directory_name
     if required and not dataset_dir.exists():
-        raise FileNotFoundError(
-            f"Missing {EXTERNAL_DATASETS[dataset_key].description} at {dataset_dir}."
-        )
+        raise FileNotFoundError(f"Missing {EXTERNAL_DATASETS[dataset_key].description} at {dataset_dir}.")
     return dataset_dir
 
 

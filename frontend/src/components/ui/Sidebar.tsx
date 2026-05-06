@@ -6,9 +6,6 @@ import {
   LayoutDashboard,
   BarChart3,
   Zap,
-  AlertTriangle,
-  Leaf,
-  Activity,
   FileText,
   Database,
   Settings,
@@ -18,20 +15,17 @@ import {
   ShieldCheck,
   Globe2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { dashboardConfig, operatorInitial } from '@/lib/dashboard-config';
 
 const navItems = [
-  { href: '/', label: 'Overview', icon: LayoutDashboard },
-  { href: '/forecasting', label: 'Forecasting', icon: BarChart3 },
-  { href: '/optimization', label: 'Optimization', icon: Zap },
-  { href: '/anomalies', label: 'Anomalies', icon: AlertTriangle },
-  { href: '/carbon', label: 'Carbon', icon: Leaf },
-  { href: '/monitoring', label: 'Monitoring', icon: Activity },
-  { href: '/theorems', label: 'Theorems', icon: BookOpen },
-  { href: '/safety', label: 'Safety & OASG', icon: ShieldCheck },
-  { href: '/domains', label: 'Domains', icon: Globe2 },
+  { href: '/', label: 'Research Hub', icon: LayoutDashboard },
+  { href: '/theorems', label: 'Theorem Ledger', icon: BookOpen },
+  { href: '/safety', label: 'Safety / OASG / DC3S', icon: ShieldCheck },
+  { href: '/domains', label: 'Domain Evidence', icon: Globe2 },
+  { href: '/forecasting', label: 'Forecasting Evidence', icon: BarChart3 },
+  { href: '/optimization', label: 'Optimization / Cost-Safety Tradeoff', icon: Zap },
   { href: '/reports', label: 'Reports', icon: FileText },
   { href: '/data', label: 'Data Explorer', icon: Database },
 ];
@@ -43,20 +37,30 @@ const bottomItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [isNarrow, setIsNarrow] = useState(false);
+  const effectiveCollapsed = collapsed || isNarrow;
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 768px)');
+    const update = () => setIsNarrow(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   return (
     <motion.aside
-      animate={{ width: collapsed ? 68 : 220 }}
+      animate={{ width: effectiveCollapsed ? 68 : 292 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
       className="glass-sidebar flex flex-col h-screen sticky top-0 z-30 select-none"
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-white/6">
         <div className="w-8 h-8 rounded-lg bg-energy-primary flex items-center justify-center flex-shrink-0">
-          <Zap className="w-4 h-4 text-grid-dark" />
+          <ShieldCheck className="w-4 h-4 text-grid-dark" />
         </div>
         <AnimatePresence>
-          {!collapsed && (
+          {!effectiveCollapsed && (
             <motion.span
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: 'auto' }}
@@ -78,7 +82,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200
                 ${isActive
                   ? 'bg-energy-primary/15 text-energy-primary border border-energy-primary/20'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
@@ -87,12 +91,12 @@ export function Sidebar() {
             >
               <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-energy-primary' : ''}`} />
               <AnimatePresence>
-                {!collapsed && (
+                {!effectiveCollapsed && (
                   <motion.span
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 1, width: 'auto' }}
                     exit={{ opacity: 0, width: 0 }}
-                    className="overflow-hidden whitespace-nowrap"
+                    className="overflow-hidden whitespace-nowrap leading-tight"
                   >
                     {item.label}
                   </motion.span>
@@ -111,7 +115,7 @@ export function Sidebar() {
             {operatorInitial()}
           </div>
           <AnimatePresence>
-            {!collapsed && (
+            {!effectiveCollapsed && (
               <motion.div
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: 'auto' }}
@@ -133,7 +137,7 @@ export function Sidebar() {
           >
             <item.icon className="w-5 h-5 flex-shrink-0" />
             <AnimatePresence>
-              {!collapsed && (
+              {!effectiveCollapsed && (
                 <motion.span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -152,7 +156,7 @@ export function Sidebar() {
           onClick={() => setCollapsed(!collapsed)}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all w-full"
         >
-          {collapsed ? (
+          {effectiveCollapsed ? (
             <ChevronRight className="w-5 h-5 flex-shrink-0" />
           ) : (
             <>

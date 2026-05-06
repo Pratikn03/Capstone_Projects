@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 """Build an ORIUS AV replay surface from local nuPlan zip archives."""
+
 from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
 import tempfile
-
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from orius.av_nuplan import DEFAULT_TRAIN_GLOB, build_feature_tables, build_nuplan_replay_surface, inspect_nuplan_archives
-
+from orius.av_nuplan import (
+    DEFAULT_TRAIN_GLOB,
+    build_feature_tables,
+    build_nuplan_replay_surface,
+    inspect_nuplan_archives,
+)
 
 DEFAULT_TRAIN_ZIP = REPO_ROOT / "nuplan-v1.1_train_singapore.zip"
 DEFAULT_MAPS_ZIP = REPO_ROOT / "nuplan-maps-v1.0.zip"
@@ -24,35 +28,83 @@ DEFAULT_OUT_DIR = REPO_ROOT / "data" / "orius_av" / "av" / "processed_nuplan_sin
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build ORIUS replay windows from nuPlan Singapore DB logs")
-    parser.add_argument("--train-zip", type=Path, action="append", default=None, help="nuPlan train split zip containing .db logs; repeat for multiple archives")
-    parser.add_argument("--train-dir", type=Path, action="append", default=None, help="Directory containing completed nuPlan train zip archives; repeat as needed")
-    parser.add_argument("--train-glob", type=str, default=DEFAULT_TRAIN_GLOB, help="Glob used inside each --train-dir")
-    parser.add_argument("--archive-role", choices=("train", "val", "test", "trainval"), default="train", help="Evidence role recorded in the nuPlan source manifest")
-    parser.add_argument("--skip-incomplete", action=argparse.BooleanOptionalAction, default=True, help="Skip .crdownload, invalid, or incomplete archives")
-    parser.add_argument("--hf-dataset", type=str, default=None, help="Private HF dataset repo containing nuPlan zip archives")
-    parser.add_argument("--hf-cache-dir", type=Path, default=None, help="Optional Hugging Face snapshot cache directory")
-    parser.add_argument("--maps-zip", type=Path, default=DEFAULT_MAPS_ZIP, help="nuPlan maps zip; inventoried for provenance")
-    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR, help="Output directory for ORIUS AV parquet artifacts")
+    parser.add_argument(
+        "--train-zip",
+        type=Path,
+        action="append",
+        default=None,
+        help="nuPlan train split zip containing .db logs; repeat for multiple archives",
+    )
+    parser.add_argument(
+        "--train-dir",
+        type=Path,
+        action="append",
+        default=None,
+        help="Directory containing completed nuPlan train zip archives; repeat as needed",
+    )
+    parser.add_argument(
+        "--train-glob", type=str, default=DEFAULT_TRAIN_GLOB, help="Glob used inside each --train-dir"
+    )
+    parser.add_argument(
+        "--archive-role",
+        choices=("train", "val", "test", "trainval"),
+        default="train",
+        help="Evidence role recorded in the nuPlan source manifest",
+    )
+    parser.add_argument(
+        "--skip-incomplete",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Skip .crdownload, invalid, or incomplete archives",
+    )
+    parser.add_argument(
+        "--hf-dataset", type=str, default=None, help="Private HF dataset repo containing nuPlan zip archives"
+    )
+    parser.add_argument(
+        "--hf-cache-dir", type=Path, default=None, help="Optional Hugging Face snapshot cache directory"
+    )
+    parser.add_argument(
+        "--maps-zip", type=Path, default=DEFAULT_MAPS_ZIP, help="nuPlan maps zip; inventoried for provenance"
+    )
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=DEFAULT_OUT_DIR,
+        help="Output directory for ORIUS AV parquet artifacts",
+    )
     parser.add_argument("--temp-dir", type=Path, default=None, help="Optional extraction scratch directory")
     parser.add_argument("--max-dbs", type=int, default=None, help="Bound the number of DB logs converted")
-    parser.add_argument("--max-scenarios", type=int, default=None, help="Bound generated 91-step scenario windows")
-    parser.add_argument("--max-dbs-per-archive", type=int, default=None, help="Bound DB logs converted from each completed archive")
+    parser.add_argument(
+        "--max-scenarios", type=int, default=None, help="Bound generated 91-step scenario windows"
+    )
+    parser.add_argument(
+        "--max-dbs-per-archive",
+        type=int,
+        default=None,
+        help="Bound DB logs converted from each completed archive",
+    )
     parser.add_argument(
         "--max-scenarios-per-archive",
         type=int,
         default=None,
         help="Bound generated scenario windows from each completed archive",
     )
-    parser.add_argument("--scenario-stride", type=int, default=91, help="Stride between generated windows within each scene")
+    parser.add_argument(
+        "--scenario-stride", type=int, default=91, help="Stride between generated windows within each scene"
+    )
     parser.add_argument("--batch-size", type=int, default=8192, help="Parquet writer batch size")
-    parser.add_argument("--build-features", action="store_true", help="Also build ORIUS step and anchor feature tables")
+    parser.add_argument(
+        "--build-features", action="store_true", help="Also build ORIUS step and anchor feature tables"
+    )
     parser.add_argument(
         "--split-strategy",
         choices=("hash", "balanced", "all_test", "grouped_archive_db_city"),
         default="grouped_archive_db_city",
         help="Feature split policy when --build-features is set; use all_test for held-out val/test surfaces",
     )
-    parser.add_argument("--inspect-only", action="store_true", help="Only print archive manifests without extracting DB files")
+    parser.add_argument(
+        "--inspect-only", action="store_true", help="Only print archive manifests without extracting DB files"
+    )
     return parser.parse_args()
 
 
@@ -129,7 +181,9 @@ def main() -> int:
                 out_dir=args.out_dir,
                 split_strategy=args.split_strategy,
             )
-            (args.out_dir / "nuplan_surface_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+            (args.out_dir / "nuplan_surface_report.json").write_text(
+                json.dumps(report, indent=2), encoding="utf-8"
+            )
         print(json.dumps(report, indent=2))
     finally:
         if hf_temp is not None:

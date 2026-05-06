@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from orius.forecasting.uncertainty.shift_aware import summarize_legacy_vs_shift, write_comparison_package
+from orius.forecasting.uncertainty.shift_aware import write_comparison_package
 from orius.monitoring.residual_validity import ResidualValidityMonitor
 
 
@@ -40,8 +40,12 @@ def test_comparison_package_outputs(tmp_path) -> None:
 
 def test_residual_monitor_root_cause_and_sustained_state() -> None:
     monitor = ResidualValidityMonitor(sustained_steps=2)
-    out1 = monitor.update(abs_residual=5.0, covered=False, reliability_score=0.1, telemetry_degraded=True, subgroup_gap=0.2)
-    out2 = monitor.update(abs_residual=5.0, covered=False, reliability_score=0.1, telemetry_degraded=True, subgroup_gap=0.2)
+    out1 = monitor.update(
+        abs_residual=5.0, covered=False, reliability_score=0.1, telemetry_degraded=True, subgroup_gap=0.2
+    )
+    out2 = monitor.update(
+        abs_residual=5.0, covered=False, reliability_score=0.1, telemetry_degraded=True, subgroup_gap=0.2
+    )
     assert out1["state"] in {"watch", "nominal"}
     assert out2["state"] in {"watch", "degraded", "invalid"}
     assert out2["root_cause"] == "telemetry_and_uq"

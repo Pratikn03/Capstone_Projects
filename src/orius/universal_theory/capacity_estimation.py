@@ -5,6 +5,7 @@ Provides:
 - FaultChannelModel: composable erasure+delay+noise channel model
 - Blahut-Arimoto iterative rate-distortion solver
 """
+
 from __future__ import annotations
 
 import math
@@ -47,7 +48,7 @@ def ksg_mutual_information(
         raise ValueError("X and Y must have the same number of samples.")
     n = x.shape[0]
     if n < k + 1:
-        raise ValueError(f"Need at least k+1={k+1} samples, got {n}.")
+        raise ValueError(f"Need at least k+1={k + 1} samples, got {n}.")
 
     xy = np.hstack([x, y])
     tree_xy = cKDTree(xy)
@@ -57,21 +58,13 @@ def ksg_mutual_information(
     dists, _ = tree_xy.query(xy, k=k + 1, p=np.inf)
     eps = dists[:, -1]
 
-    nx = np.array([
-        tree_x.query_ball_point(x[i], r=eps[i] - 1e-15, p=np.inf).__len__() - 1
-        for i in range(n)
-    ])
-    ny = np.array([
-        tree_y.query_ball_point(y[i], r=eps[i] - 1e-15, p=np.inf).__len__() - 1
-        for i in range(n)
-    ])
+    nx = np.array([tree_x.query_ball_point(x[i], r=eps[i] - 1e-15, p=np.inf).__len__() - 1 for i in range(n)])
+    ny = np.array([tree_y.query_ball_point(y[i], r=eps[i] - 1e-15, p=np.inf).__len__() - 1 for i in range(n)])
 
     nx = np.maximum(nx, 1)
     ny = np.maximum(ny, 1)
 
-    mi = float(
-        digamma(k) - np.mean(digamma(nx + 1) + digamma(ny + 1)) + digamma(n)
-    )
+    mi = float(digamma(k) - np.mean(digamma(nx + 1) + digamma(ny + 1)) + digamma(n))
 
     return {
         "I_XY": max(0.0, mi),
@@ -109,7 +102,7 @@ class FaultChannelModel:
         """Shannon capacity of this fault channel (bits per use)."""
         if self.erasure_prob >= 1.0:
             return 0.0
-        snr = self.signal_power / max(self.noise_std ** 2, 1e-15) if self.noise_std > 0 else float("inf")
+        snr = self.signal_power / max(self.noise_std**2, 1e-15) if self.noise_std > 0 else float("inf")
         gaussian_cap = 0.5 * math.log2(1.0 + snr) if snr < float("inf") else float("inf")
         delay_attenuation = 1.0 / (1.0 + self.delay_steps)
         raw = (1.0 - self.erasure_prob) * gaussian_cap * delay_attenuation
@@ -119,7 +112,7 @@ class FaultChannelModel:
         """Serial composition of two fault channels (data processing inequality)."""
         combined_erasure = 1.0 - (1.0 - self.erasure_prob) * (1.0 - other.erasure_prob)
         combined_delay = self.delay_steps + other.delay_steps
-        combined_noise_var = self.noise_std ** 2 + other.noise_std ** 2
+        combined_noise_var = self.noise_std**2 + other.noise_std**2
         return FaultChannelModel(
             erasure_prob=min(combined_erasure, 1.0),
             delay_steps=combined_delay,
@@ -175,8 +168,10 @@ def blahut_arimoto(
 
     prev_rate = float("inf")
     converged = False
+    iterations = 0
 
-    for iteration in range(max_iter):
+    for _ in range(max_iter):
+        iterations += 1
         log_q = np.log(np.maximum(q_a, 1e-15))
         exponent = log_q[np.newaxis, :] - beta * d
         exponent -= exponent.max(axis=1, keepdims=True)
@@ -190,7 +185,9 @@ def blahut_arimoto(
 
         avg_dist = float(np.sum(p_x[:, np.newaxis] * p_ax * d))
 
-        kl_terms = p_ax * (np.log(np.maximum(p_ax, 1e-15)) - np.log(np.maximum(q_a_new[np.newaxis, :], 1e-15)))
+        kl_terms = p_ax * (
+            np.log(np.maximum(p_ax, 1e-15)) - np.log(np.maximum(q_a_new[np.newaxis, :], 1e-15))
+        )
         rate = float(np.sum(p_x[:, np.newaxis] * kl_terms))
 
         q_a = q_a_new
@@ -210,12 +207,12 @@ def blahut_arimoto(
         "distortion": max(0.0, avg_dist),
         "optimal_policy": policy,
         "converged": converged,
-        "iterations": iteration + 1,
+        "iterations": iterations,
     }
 
 
 __all__ = [
-    "ksg_mutual_information",
     "FaultChannelModel",
     "blahut_arimoto",
+    "ksg_mutual_information",
 ]

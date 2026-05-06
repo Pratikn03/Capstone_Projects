@@ -1,12 +1,10 @@
 """Tests for the DC3S run_dc3s_step pipeline entry point."""
+
 from __future__ import annotations
 
-import numpy as np
-import pytest
-
-from orius.dc3s.pipeline import run_dc3s_step
-from orius.dc3s.drift import PageHinkleyDetector, AdaptivePageHinkleyDetector
 from orius.dc3s import BatteryDomainAdapter
+from orius.dc3s.drift import AdaptivePageHinkleyDetector, PageHinkleyDetector
+from orius.dc3s.pipeline import run_dc3s_step
 
 
 class _MockState:

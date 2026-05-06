@@ -1,8 +1,8 @@
 """Comprehensive tests for CPSBench metrics computation."""
+
 from __future__ import annotations
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from orius.cpsbench_iot.metrics import (
@@ -33,7 +33,9 @@ class TestForecastMetrics:
 
     def test_zero_coverage(self):
         y = np.array([100.0, 200.0])
-        m = compute_forecast_metrics(y_true=y, y_pred=y, lower_90=np.array([0.0, 0.0]), upper_90=np.array([1.0, 1.0]))
+        m = compute_forecast_metrics(
+            y_true=y, y_pred=y, lower_90=np.array([0.0, 0.0]), upper_90=np.array([1.0, 1.0])
+        )
         assert m["picp_90"] == pytest.approx(0.0)
 
     def test_mean_interval_width(self):
@@ -59,8 +61,9 @@ class TestForecastMetrics:
 
     def test_explicit_95_interval(self):
         y = np.ones(5)
-        m = compute_forecast_metrics(y_true=y, y_pred=y, lower_90=y - 1, upper_90=y + 1,
-                                      lower_95=y - 2, upper_95=y + 2)
+        m = compute_forecast_metrics(
+            y_true=y, y_pred=y, lower_90=y - 1, upper_90=y + 1, lower_95=y - 2, upper_95=y + 2
+        )
         assert m["picp_95"] == pytest.approx(1.0)
 
 
@@ -85,16 +88,22 @@ class TestTrueSocViolations:
 
 class TestControlMetrics:
     def _base(self, n=10, **kw):
-        defaults = dict(
-            proposed_charge_mw=np.zeros(n),
-            proposed_discharge_mw=np.zeros(n),
-            safe_charge_mw=np.zeros(n),
-            safe_discharge_mw=np.zeros(n),
-            soc_mwh=np.full(n, 50.0),
-            constraints={"min_soc_mwh": 10.0, "max_soc_mwh": 90.0, "max_power_mw": 50.0,
-                          "charge_efficiency": 1.0, "discharge_efficiency": 1.0, "time_step_hours": 1.0,
-                          "initial_soc_mwh": 50.0},
-        )
+        defaults = {
+            "proposed_charge_mw": np.zeros(n),
+            "proposed_discharge_mw": np.zeros(n),
+            "safe_charge_mw": np.zeros(n),
+            "safe_discharge_mw": np.zeros(n),
+            "soc_mwh": np.full(n, 50.0),
+            "constraints": {
+                "min_soc_mwh": 10.0,
+                "max_soc_mwh": 90.0,
+                "max_power_mw": 50.0,
+                "charge_efficiency": 1.0,
+                "discharge_efficiency": 1.0,
+                "time_step_hours": 1.0,
+                "initial_soc_mwh": 50.0,
+            },
+        }
         defaults.update(kw)
         return defaults
 
@@ -107,10 +116,12 @@ class TestControlMetrics:
         assert m["violation_rate"] > 0.0
 
     def test_intervention_rate(self):
-        m = compute_control_metrics(**self._base(
-            proposed_charge_mw=np.full(10, 10.0),
-            safe_charge_mw=np.full(10, 5.0),
-        ))
+        m = compute_control_metrics(
+            **self._base(
+                proposed_charge_mw=np.full(10, 10.0),
+                safe_charge_mw=np.full(10, 5.0),
+            )
+        )
         assert m["intervention_rate"] == pytest.approx(1.0)
 
     def test_no_interventions(self):
@@ -122,19 +133,23 @@ class TestControlMetrics:
         assert m["true_soc_violation_rate"] > 0.0
 
     def test_unsafe_command_rate(self):
-        m = compute_control_metrics(**self._base(
-            proposed_charge_mw=np.full(10, 100.0),
-            proposed_discharge_mw=np.full(10, 100.0),
-        ))
+        m = compute_control_metrics(
+            **self._base(
+                proposed_charge_mw=np.full(10, 100.0),
+                proposed_discharge_mw=np.full(10, 100.0),
+            )
+        )
         assert m["unsafe_command_rate"] > 0.0
 
     def test_ramp_violation(self):
         safe_dis = np.zeros(10)
         safe_dis[5] = 50.0
-        m = compute_control_metrics(**self._base(
-            safe_discharge_mw=safe_dis,
-            constraints={**self._base()["constraints"], "ramp_mw": 5.0},
-        ))
+        m = compute_control_metrics(
+            **self._base(
+                safe_discharge_mw=safe_dis,
+                constraints={**self._base()["constraints"], "ramp_mw": 5.0},
+            )
+        )
         assert m["violation_rate"] > 0.0
 
     def test_mismatched_arrays_raises(self):
@@ -188,11 +203,19 @@ class TestComputeAllMetrics:
             safe_charge_mw=np.zeros(n),
             safe_discharge_mw=np.zeros(n),
             soc_mwh=np.full(n, 50.0),
-            constraints={"min_soc_mwh": 10.0, "max_soc_mwh": 90.0, "max_power_mw": 50.0,
-                          "charge_efficiency": 1.0, "discharge_efficiency": 1.0,
-                          "time_step_hours": 1.0, "initial_soc_mwh": 50.0},
-            certificates=[{"command_id": f"c{i}", "certificate_hash": "h",
-                            "proposed_action": {}, "safe_action": {}} for i in range(n)],
+            constraints={
+                "min_soc_mwh": 10.0,
+                "max_soc_mwh": 90.0,
+                "max_power_mw": 50.0,
+                "charge_efficiency": 1.0,
+                "discharge_efficiency": 1.0,
+                "time_step_hours": 1.0,
+                "initial_soc_mwh": 50.0,
+            },
+            certificates=[
+                {"command_id": f"c{i}", "certificate_hash": "h", "proposed_action": {}, "safe_action": {}}
+                for i in range(n)
+            ],
         )
         assert "mae" in m
         assert "violation_rate" in m

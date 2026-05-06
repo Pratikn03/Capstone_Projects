@@ -1,8 +1,8 @@
 """Tests retrain_if_needed activation when DC3S trigger reasons are present."""
+
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import subprocess
 import sys
 
@@ -27,7 +27,7 @@ def test_retrain_if_needed_runs_pipeline_on_dc3s_trigger(tmp_path, monkeypatch) 
 
     calls: list[list[str]] = []
 
-    def fake_run(cmd, check):  # noqa: ANN001
+    def fake_run(cmd, check):
         calls.append(list(cmd))
         return subprocess.CompletedProcess(cmd, 0)
 

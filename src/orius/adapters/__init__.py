@@ -6,11 +6,11 @@ Importing ``orius.adapters.<domain>`` first loads this package, so eagerly
 re-exporting every domain module here can create circular imports while the
 canonical adapter packages are still initializing.
 """
+
 from __future__ import annotations
 
 from importlib import import_module
 from typing import Any
-
 
 _EXPORTS = {
     "BatteryDomainAdapter": ("orius.adapters.battery", "BatteryDomainAdapter"),

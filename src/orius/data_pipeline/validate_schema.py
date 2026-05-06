@@ -1,4 +1,5 @@
 """Schema validation and data-quality checks for OPSD raw data and feature parquet."""
+
 from __future__ import annotations
 
 import argparse
@@ -47,15 +48,30 @@ def _write_report(
         md.append(f"{key}: {value}\n")
     md.append("```\n")
     report_path.write_text("".join(md), encoding="utf-8")
-    print(f"Wrote report: {report_path}")
 
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--in", dest="in_path", required=True, help="Input directory (data/raw) or features parquet file")
+    parser.add_argument(
+        "--in", dest="in_path", required=True, help="Input directory (data/raw) or features parquet file"
+    )
     parser.add_argument("--report", default="reports/data_quality_report.md", help="Markdown report output")
     parser.add_argument("--country", default="DE", help="OPSD country code for raw validation (default: DE)")
-    parser.add_argument("--required-cols", default="", help="Comma-separated required columns (default: load_mw,wind_mw,solar_mw for energy)")
+    parser.add_argument(
+        "--required-cols",
+        default="",
+        help="Comma-separated required columns (default: load_mw,wind_mw,solar_mw for energy)",
+    )
+    parser.add_argument(
+        "--timestamp-col",
+        default="timestamp",
+        help="Timestamp column for ordinary time-series feature tables",
+    )
+    parser.add_argument(
+        "--order-cols",
+        default="",
+        help="Comma-separated ordering columns for replay tables without timestamps",
+    )
     return parser.parse_args()
 
 
@@ -69,31 +85,47 @@ def main() -> None:
     if in_path.is_file() and in_path.suffix == ".parquet":
         df = pd.read_parquet(in_path)
         required_cols_arg = str(args.required_cols or "").strip()
+        order_cols = [c.strip() for c in str(args.order_cols or "").split(",") if c.strip()]
+        timestamp_col = str(args.timestamp_col or "").strip()
         if required_cols_arg:
-            required_feature_cols = ["timestamp"] + [c.strip() for c in required_cols_arg.split(",") if c.strip()]
+            order_required = order_cols or ([timestamp_col] if timestamp_col else [])
+            required_feature_cols = order_required + [
+                c.strip() for c in required_cols_arg.split(",") if c.strip()
+            ]
         else:
-            required_feature_cols = ["timestamp", "load_mw", "wind_mw", "solar_mw"]
+            required_feature_cols = [timestamp_col or "timestamp", "load_mw", "wind_mw", "solar_mw"]
         missing_cols = [column for column in required_feature_cols if column not in df.columns]
         if missing_cols:
             raise ValueError(f"Missing required feature columns: {missing_cols}")
 
-        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
-        if df["timestamp"].isna().any():
-            raise ValueError("Feature schema invalid: timestamp contains null/invalid values.")
-        df = df.sort_values("timestamp").reset_index(drop=True)
-        dup_ts = int(df["timestamp"].duplicated().sum())
-        if dup_ts > 0 and "vehicle_id" not in df.columns and "patient_id" not in df.columns:
-            raise ValueError(f"Feature schema invalid: duplicate timestamps detected ({dup_ts}).")
+        if order_cols:
+            df = df.sort_values(order_cols).reset_index(drop=True)
+            start_ts = "ordered:" + ",".join(order_cols)
+            end_ts = "ordered:" + ",".join(order_cols)
+            dup_ts = int(df[order_cols].duplicated().sum())
+        else:
+            df[timestamp_col] = pd.to_datetime(df[timestamp_col], utc=True, errors="coerce")
+            if df[timestamp_col].isna().any():
+                raise ValueError(f"Feature schema invalid: {timestamp_col} contains null/invalid values.")
+            df = df.sort_values(timestamp_col).reset_index(drop=True)
+            start_ts = df[timestamp_col].min()
+            end_ts = df[timestamp_col].max()
+            dup_ts = int(df[timestamp_col].duplicated().sum())
+            if dup_ts > 0 and "vehicle_id" not in df.columns and "patient_id" not in df.columns:
+                raise ValueError(f"Feature schema invalid: duplicate timestamps detected ({dup_ts}).")
 
         miss_frac = df.isna().mean().sort_values(ascending=False).to_string()
-        numeric_cols = [column for column in df.columns if column != "timestamp"]
-        negatives = {column: int((pd.to_numeric(df[column], errors="coerce") < 0).sum()) for column in numeric_cols}
+        non_numeric_check_cols = set(order_cols or [timestamp_col])
+        numeric_cols = [column for column in df.columns if column not in non_numeric_check_cols]
+        negatives = {
+            column: int((pd.to_numeric(df[column], errors="coerce") < 0).sum()) for column in numeric_cols
+        }
         _write_report(
             report_path=report_path,
             title="Feature Schema Validation Report",
             input_label=str(in_path),
-            start_ts=df["timestamp"].min(),
-            end_ts=df["timestamp"].max(),
+            start_ts=start_ts,
+            end_ts=end_ts,
             rows=len(df),
             duplicate_timestamps=dup_ts,
             missing_timestamp_count=None,
@@ -119,7 +151,9 @@ def main() -> None:
     df_idx = normalized.set_index("timestamp")
     missing_ts = int(len(full_idx.difference(df_idx.index)))
     miss_frac = normalized.isna().mean().sort_values(ascending=False).to_string()
-    negatives = {column: int((pd.to_numeric(normalized[column], errors="coerce") < 0).sum()) for column in numeric_cols}
+    negatives = {
+        column: int((pd.to_numeric(normalized[column], errors="coerce") < 0).sum()) for column in numeric_cols
+    }
     missing_optional = [column for column in optional_cols if column not in raw.columns]
 
     _write_report(
@@ -135,7 +169,9 @@ def main() -> None:
         negatives=negatives,
         extra_lines=[
             f"Country: **{country}**",
-            f"Missing optional columns: **{missing_optional}**" if missing_optional else "Missing optional columns: **[]**",
+            f"Missing optional columns: **{missing_optional}**"
+            if missing_optional
+            else "Missing optional columns: **[]**",
         ],
     )
 

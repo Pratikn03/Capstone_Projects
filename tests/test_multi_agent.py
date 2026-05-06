@@ -7,13 +7,11 @@ Covers:
 - Margin allocation schemes + fairness
 - Distributed negotiation converges
 """
+
 from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-
-import numpy as np
-import pytest
 
 from orius.multi_agent.margin_allocation import (
     allocate_margins,
@@ -26,7 +24,6 @@ from orius.multi_agent.protocol import (
     IndependentLocalProtocol,
 )
 from orius.multi_agent.scenarios import run_transformer_capacity_scenario
-
 
 _TWO_BATTERIES = [
     {"capacity_mwh": 100.0, "initial_soc_frac": 0.5},
@@ -71,7 +68,7 @@ class TestProtocols:
         actions = [{"charge_mw": 0, "discharge_mw": 60} for _ in range(2)]
         result = proto.compute_actions({}, actions, feeder_capacity_mw=80.0)
         # Independent should not modify actions
-        for r, a in zip(result, actions):
+        for r, a in zip(result, actions, strict=False):
             assert r["discharge_mw"] == a["discharge_mw"]
 
     def test_centralized_respects_feeder(self):
@@ -159,18 +156,14 @@ class TestNonCompositionCounterexample:
         """Heterogeneous per-agent degradation produces different joint_violations."""
         r_none = run_transformer_capacity_scenario(out_dir=None)
         # [0.5, 0.5]: both propose 30 MW, total 60 < 80 → no violation
-        r_deg = run_transformer_capacity_scenario(
-            out_dir=None, agent_degradation=[0.5, 0.5]
-        )
+        r_deg = run_transformer_capacity_scenario(out_dir=None, agent_degradation=[0.5, 0.5])
         assert r_none["independent"]["joint_violations"] > 0
         assert r_deg["independent"]["joint_violations"] == 0
 
     def test_heterogeneous_degradation_injectable(self):
         """Per-agent efficiency degradation (degradation_per_agent) is injectable."""
         # [1.0, 0.85]: agent 1 has 85% charge/discharge efficiency (0.95*0.85)
-        results = run_transformer_capacity_scenario(
-            out_dir=None, degradation_per_agent=[1.0, 0.85]
-        )
+        results = run_transformer_capacity_scenario(out_dir=None, degradation_per_agent=[1.0, 0.85])
         assert "independent" in results
         assert "centralized" in results
         assert results["independent"]["joint_violations"] >= 0

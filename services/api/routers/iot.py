@@ -1,9 +1,10 @@
 """API router: IoT closed-loop telemetry, queue, and acknowledgement endpoints."""
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 import yaml
 from fastapi import APIRouter, HTTPException, Query, Security
@@ -12,6 +13,7 @@ from pydantic import BaseModel, Field
 from orius.dc3s.certificate import get_certificate
 from orius.dc3s.quality import compute_reliability
 from orius.iot.store import IoTLoopStore
+from orius.security.device_identity import verify_device_request
 from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
@@ -21,7 +23,7 @@ class TelemetryEvent(BaseModel):
     ts_utc: datetime
     load_mw: float = Field(..., ge=0.0, le=200000.0)
     renewables_mw: float = Field(..., ge=0.0, le=120000.0)
-    soc_mwh: Optional[float] = Field(default=None, ge=0.0)
+    soc_mwh: float | None = Field(default=None, ge=0.0)
 
     class Config:
         extra = "allow"
@@ -31,6 +33,10 @@ class IoTTelemetryRequest(BaseModel):
     device_id: str
     zone_id: Literal["DE", "US"] = "DE"
     telemetry_event: TelemetryEvent
+    device_key_id: str | None = None
+    device_ts_utc: str | None = None
+    device_nonce: str | None = None
+    device_signature: str | None = None
 
 
 class IoTTelemetryResponse(BaseModel):
@@ -38,22 +44,26 @@ class IoTTelemetryResponse(BaseModel):
     device_id: str
     ts_utc: str
     reliability_w: float
-    reliability_flags: Dict[str, Any]
+    reliability_flags: dict[str, Any]
 
 
 class IoTCommandNextResponse(BaseModel):
     status: str
-    command: Optional[Dict[str, Any]] = None
-    hold_reason: Optional[str] = None
+    command: dict[str, Any] | None = None
+    hold_reason: str | None = None
 
 
 class IoTAckRequest(BaseModel):
     device_id: str
     command_id: str
     status: Literal["acked", "nacked"]
-    certificate_id: Optional[str] = None
-    reason: Optional[str] = None
-    payload: Dict[str, Any] = Field(default_factory=dict)
+    certificate_id: str | None = None
+    reason: str | None = None
+    payload: dict[str, Any] = Field(default_factory=dict)
+    device_key_id: str | None = None
+    device_ts_utc: str | None = None
+    device_nonce: str | None = None
+    device_signature: str | None = None
 
 
 class IoTAckResponse(BaseModel):
@@ -64,17 +74,17 @@ class IoTAckResponse(BaseModel):
 
 class IoTHoldResetRequest(BaseModel):
     device_id: str
-    reason: Optional[str] = None
+    reason: str | None = None
 
 
 class IoTHoldResetResponse(BaseModel):
     status: str
     device_id: str
     hold_active: bool
-    hold_reason: Optional[str] = None
+    hold_reason: str | None = None
 
 
-def _load_reliability_cfg() -> tuple[float, Dict[str, Any]]:
+def _load_reliability_cfg() -> tuple[float, dict[str, Any]]:
     cfg_path = Path("configs/dc3s.yaml")
     if not cfg_path.exists():
         return 3600.0, {}
@@ -95,15 +105,33 @@ def _load_dc3s_audit_cfg() -> tuple[str, str]:
     )
 
 
-def _telemetry_payload(event: TelemetryEvent) -> Dict[str, Any]:
-    if hasattr(event, "model_dump"):
-        payload = event.model_dump(mode="json")
-    else:
-        payload = event.dict()
+def _telemetry_payload(event: TelemetryEvent) -> dict[str, Any]:
+    payload = event.model_dump(mode="json") if hasattr(event, "model_dump") else event.dict()
     ts_val = payload.get("ts_utc")
     if isinstance(ts_val, datetime):
-        payload["ts_utc"] = ts_val.astimezone(timezone.utc).isoformat()
+        payload["ts_utc"] = ts_val.astimezone(UTC).isoformat()
     return dict(payload)
+
+
+def _request_payload(model: BaseModel) -> dict[str, Any]:
+    if hasattr(model, "model_dump"):
+        return dict(model.model_dump(mode="json", exclude_none=True))
+    return dict(model.dict(exclude_none=True))
+
+
+def _verify_device_identity_or_raise(payload: dict[str, Any], store: IoTLoopStore) -> None:
+    verification = verify_device_request(payload)
+    if not verification["valid"]:
+        status_code = 403
+        raise HTTPException(status_code=status_code, detail=str(verification["reason"]))
+    if verification.get("verified"):
+        recorded = store.record_device_nonce(
+            device_id=str(verification["device_id"]),
+            device_key_id=str(verification["device_key_id"]),
+            device_nonce=str(verification["device_nonce"]),
+        )
+        if not recorded:
+            raise HTTPException(status_code=409, detail="device nonce replay detected")
 
 
 @router.post("/telemetry", response_model=IoTTelemetryResponse)
@@ -112,10 +140,11 @@ def post_telemetry(req: IoTTelemetryRequest, api_key: str = Security(get_api_key
     cadence_s, reliability_cfg = _load_reliability_cfg()
     store = IoTLoopStore()
     try:
+        _verify_device_identity_or_raise(_request_payload(req), store)
         current = _telemetry_payload(req.telemetry_event)
         current.setdefault("device_id", req.device_id)
         current.setdefault("zone_id", req.zone_id)
-        current["ts_utc"] = str(current.get("ts_utc") or datetime.now(timezone.utc).isoformat())
+        current["ts_utc"] = str(current.get("ts_utc") or datetime.now(UTC).isoformat())
 
         last = store.get_last_telemetry(req.device_id)
         w_t, flags = compute_reliability(
@@ -146,11 +175,26 @@ def post_telemetry(req: IoTTelemetryRequest, api_key: str = Security(get_api_key
 def get_command_next(
     device_id: str = Query(...),
     peek: bool = Query(default=False),
+    device_key_id: str | None = Query(default=None),
+    device_ts_utc: str | None = Query(default=None),
+    device_nonce: str | None = Query(default=None),
+    device_signature: str | None = Query(default=None),
     api_key: str = Security(get_api_key),
 ) -> IoTCommandNextResponse:
     verify_scope("read", api_key)
     store = IoTLoopStore()
     try:
+        _verify_device_identity_or_raise(
+            {
+                "device_id": device_id,
+                "peek": bool(peek),
+                "device_key_id": device_key_id,
+                "device_ts_utc": device_ts_utc,
+                "device_nonce": device_nonce,
+                "device_signature": device_signature,
+            },
+            store,
+        )
         store.expire_stale_commands(device_id=device_id)
         state = store.get_state(device_id) or {}
         if bool(state.get("hold_active", False)):
@@ -168,6 +212,7 @@ def post_ack(req: IoTAckRequest, api_key: str = Security(get_api_key)) -> IoTAck
     verify_scope("write", api_key)
     store = IoTLoopStore()
     try:
+        _verify_device_identity_or_raise(_request_payload(req), store)
         ack = store.record_ack(
             device_id=req.device_id,
             command_id=req.command_id,
@@ -182,7 +227,7 @@ def post_ack(req: IoTAckRequest, api_key: str = Security(get_api_key)) -> IoTAck
 
 
 @router.get("/state")
-def get_state(device_id: str = Query(...), api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+def get_state(device_id: str = Query(...), api_key: str = Security(get_api_key)) -> dict[str, Any]:
     verify_scope("read", api_key)
     store = IoTLoopStore()
     try:
@@ -195,7 +240,7 @@ def get_state(device_id: str = Query(...), api_key: str = Security(get_api_key))
 
 
 @router.get("/audit/{command_id}")
-def get_audit(command_id: str, api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+def get_audit(command_id: str, api_key: str = Security(get_api_key)) -> dict[str, Any]:
     verify_scope("read", api_key)
     duckdb_path, table_name = _load_dc3s_audit_cfg()
     cert = get_certificate(command_id=command_id, duckdb_path=duckdb_path, table_name=table_name)

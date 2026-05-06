@@ -10,10 +10,11 @@ Constraint form::
 
     h_eff(x, w_t) = h(x) - margin_fn(1 - w_t) >= 0
 """
+
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 import numpy as np
 
@@ -101,9 +102,7 @@ def evaluate_constraint_set(
     k: float = 1.0,
 ) -> ConstraintSetResult:
     """Evaluate a set of reliability-conditioned constraints."""
-    results = tuple(
-        evaluate_constraint(float(h), w_t, margin_fn, k) for h in h_nominals
-    )
+    results = tuple(evaluate_constraint(float(h), w_t, margin_fn, k) for h in h_nominals)
     return ConstraintSetResult(
         individual=results,
         all_satisfied=all(r.satisfied for r in results),

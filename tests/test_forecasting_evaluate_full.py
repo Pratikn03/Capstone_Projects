@@ -1,12 +1,13 @@
 """Comprehensive tests for forecasting evaluation metrics and CV."""
+
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from orius.utils.metrics import daylight_mape, mae, mape, r2_score, rmse, smape
-from orius.forecasting.evaluate import evaluate_model_cv, multi_horizon_cv_score, time_series_cv_score
 from orius.forecasting.backtest import multi_horizon_metrics, walk_forward_horizon_metrics
+from orius.forecasting.evaluate import evaluate_model_cv, multi_horizon_cv_score, time_series_cv_score
+from orius.utils.metrics import daylight_mape, mae, mape, r2_score, rmse, smape
 
 
 class TestRMSE:
@@ -75,8 +76,10 @@ class TestTimeSeriesCV:
     def test_basic_cv(self):
         X, y = self._data()
         from sklearn.linear_model import LinearRegression
+
         result = time_series_cv_score(
-            X, y,
+            X,
+            y,
             train_fn=lambda X, y: LinearRegression().fit(X, y),
             predict_fn=lambda m, X: m.predict(X),
             n_splits=3,
@@ -88,8 +91,10 @@ class TestTimeSeriesCV:
     def test_fold_metrics_have_required_keys(self):
         X, y = self._data()
         from sklearn.linear_model import LinearRegression
+
         result = time_series_cv_score(
-            X, y,
+            X,
+            y,
             train_fn=lambda X, y: LinearRegression().fit(X, y),
             predict_fn=lambda m, X: m.predict(X),
             n_splits=2,
@@ -102,8 +107,10 @@ class TestTimeSeriesCV:
     def test_aggregated_stats(self):
         X, y = self._data()
         from sklearn.linear_model import LinearRegression
+
         result = time_series_cv_score(
-            X, y,
+            X,
+            y,
             train_fn=lambda X, y: LinearRegression().fit(X, y),
             predict_fn=lambda m, X: m.predict(X),
             n_splits=3,
@@ -119,11 +126,14 @@ class TestMultiHorizonCV:
         X = rng.normal(0, 1, (200, 3))
         y = X[:, 0] + rng.normal(0, 0.1, 200)
         from sklearn.linear_model import LinearRegression
+
         result = multi_horizon_cv_score(
-            X, y,
+            X,
+            y,
             train_fn=lambda X, y: LinearRegression().fit(X, y),
             predict_fn=lambda m, X: m.predict(X),
-            horizon=4, n_splits=2,
+            horizon=4,
+            n_splits=2,
         )
         assert result["horizon"] == 4
         assert len(result["fold_results"]) == 2
@@ -135,12 +145,15 @@ class TestEvaluateModelCV:
         X = rng.normal(0, 1, (200, 3))
         y = X[:, 0] + rng.normal(0, 0.1, 200)
         from sklearn.linear_model import LinearRegression
+
         result = evaluate_model_cv(
             "linear",
-            X, y,
+            X,
+            y,
             train_fn=lambda X, y: LinearRegression().fit(X, y),
             predict_fn=lambda m, X: m.predict(X),
-            n_splits=2, horizon=4,
+            n_splits=2,
+            horizon=4,
         )
         assert result["model_type"] == "linear"
         assert "cv_standard" in result
@@ -159,7 +172,7 @@ class TestWalkForwardHorizonMetrics:
     def test_per_step_metrics(self):
         y = np.ones(48)
         result = walk_forward_horizon_metrics(y, y + 1, horizon=12, target="load_mw")
-        for step_key, metrics in result["per_horizon"].items():
+        for _step_key, metrics in result["per_horizon"].items():
             assert "rmse" in metrics
             assert "mae" in metrics
 

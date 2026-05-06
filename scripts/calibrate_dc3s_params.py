@@ -20,12 +20,13 @@ This turns the previously hardcoded k_quality=0.8, k_drift=0.6 into
 
 The output YAML is a drop-in override for configs/dc3s.yaml.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import numpy as np
 import yaml
@@ -36,7 +37,6 @@ if str(repo_root / "src") not in sys.path:
 
 from orius.dc3s.calibration import build_uncertainty_set
 from orius.dc3s.coverage_theorem import compute_empirical_coverage
-
 
 # ---------------------------------------------------------------------------
 # Parameter grids
@@ -142,11 +142,16 @@ def calibrate(
                 picp = result["picp"]
                 width = result["mean_width"]
 
-                all_results.append({
-                    "k_quality": k_q, "k_drift": k_d, "infl_max": infl_max,
-                    "picp": picp, "mean_width": width,
-                    "meets_coverage": picp >= target_picp,
-                })
+                all_results.append(
+                    {
+                        "k_quality": k_q,
+                        "k_drift": k_d,
+                        "infl_max": infl_max,
+                        "picp": picp,
+                        "mean_width": width,
+                        "meets_coverage": picp >= target_picp,
+                    }
+                )
 
                 # Accept this config if it meets coverage AND is narrower
                 if picp >= target_picp and width < best_width:
@@ -156,8 +161,10 @@ def calibrate(
 
                 done += 1
                 if verbose and done % 10 == 0:
-                    print(f"  [{done}/{total}] k_q={k_q} k_d={k_d} infl_max={infl_max}"
-                          f" → picp={picp:.4f} width={width:.2f}")
+                    print(
+                        f"  [{done}/{total}] k_q={k_q} k_d={k_d} infl_max={infl_max}"
+                        f" → picp={picp:.4f} width={width:.2f}"
+                    )
 
     if best_params is None:
         # Fallback: pick config with highest PICP if none meets coverage
@@ -169,8 +176,10 @@ def calibrate(
         }
         best_picp = best_result["picp"]
         best_width = best_result["mean_width"]
-        print(f"  WARNING: No config met coverage target {target_picp:.3f}. "
-              f"Selecting highest PICP={best_picp:.4f}.")
+        print(
+            f"  WARNING: No config met coverage target {target_picp:.3f}. "
+            f"Selecting highest PICP={best_picp:.4f}."
+        )
 
     return {
         "best_params": best_params,
@@ -185,14 +194,20 @@ def calibrate(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Calibrate DC³S k_quality and k_drift from data.")
-    parser.add_argument("--residuals", default=None,
-                        help="Path to .npz with 'y_true' and 'y_pred' arrays, or .npy of residuals")
+    parser.add_argument(
+        "--residuals",
+        default=None,
+        help="Path to .npz with 'y_true' and 'y_pred' arrays, or .npy of residuals",
+    )
     parser.add_argument("--y-true", default=None, help="Separate path to y_true .npy")
     parser.add_argument("--yhat", default=None, help="Separate path to yhat .npy")
-    parser.add_argument("--q", default=None,
-                        help="Path to conformal half-widths .npy (default: use residual std)")
+    parser.add_argument(
+        "--q", default=None, help="Path to conformal half-widths .npy (default: use residual std)"
+    )
     parser.add_argument("--w-t-series", default=None, help="Path to w_t array .npy (default: synthetic)")
-    parser.add_argument("--drift-flags", default=None, help="Path to drift flag array .npy (default: synthetic)")
+    parser.add_argument(
+        "--drift-flags", default=None, help="Path to drift flag array .npy (default: synthetic)"
+    )
     parser.add_argument("--alpha", type=float, default=0.10)
     parser.add_argument("--coverage-slack", type=float, default=0.01)
     parser.add_argument("--out", default="configs/dc3s_calibrated.yaml")
@@ -212,7 +227,9 @@ def main() -> None:
         else:
             yhat = None
         if y_true is None or yhat is None:
-            raise ValueError("--residuals npz must contain 'y_true' and 'y_pred' (or 'q_lo' and 'q_hi') arrays.")
+            raise ValueError(
+                "--residuals npz must contain 'y_true' and 'y_pred' (or 'q_lo' and 'q_hi') arrays."
+            )
     elif args.y_true and args.yhat:
         y_true = _load_npz_or_npy(args.y_true)
         yhat = _load_npz_or_npy(args.yhat)
@@ -234,23 +251,39 @@ def main() -> None:
         q = np.full(n, float(np.quantile(residuals, 1.0 - args.alpha)))
         print(f"  Using residual quantile({1.0 - args.alpha:.0%}) = {q[0]:.4f} as base q.")
 
-    w_t = _load_npz_or_npy(args.w_t_series) if args.w_t_series and Path(args.w_t_series).exists() \
+    w_t = (
+        _load_npz_or_npy(args.w_t_series)
+        if args.w_t_series and Path(args.w_t_series).exists()
         else _synthetic_w_t(n)
-    drift_flags = _load_npz_or_npy(args.drift_flags) if args.drift_flags and Path(args.drift_flags).exists() \
+    )
+    drift_flags = (
+        _load_npz_or_npy(args.drift_flags)
+        if args.drift_flags and Path(args.drift_flags).exists()
         else _synthetic_drift_flags(n)
+    )
 
     print(f"  Calibration set: n={n}, mean_residual={residuals.mean():.4f}, mean_w_t={w_t.mean():.4f}")
 
     result = calibrate(
-        y_true=y_true, yhat=yhat, q=q, w_t=w_t, drift_flags=drift_flags,
-        alpha=args.alpha, coverage_slack=args.coverage_slack, verbose=True,
+        y_true=y_true,
+        yhat=yhat,
+        q=q,
+        w_t=w_t,
+        drift_flags=drift_flags,
+        alpha=args.alpha,
+        coverage_slack=args.coverage_slack,
+        verbose=True,
     )
 
     best = result["best_params"]
-    print(f"\n✅ Best params: k_quality={best['k_quality']}, k_drift={best['k_drift']}, "
-          f"infl_max={best['infl_max']}")
-    print(f"   PICP={result['best_picp']:.4f} (target≥{result['target_coverage'] - result['coverage_slack']:.4f}), "
-          f"mean_width={result['best_mean_width']:.4f}")
+    print(
+        f"\n✅ Best params: k_quality={best['k_quality']}, k_drift={best['k_drift']}, "
+        f"infl_max={best['infl_max']}"
+    )
+    print(
+        f"   PICP={result['best_picp']:.4f} (target≥{result['target_coverage'] - result['coverage_slack']:.4f}), "
+        f"mean_width={result['best_mean_width']:.4f}"
+    )
 
     # Write calibrated YAML
     out_path = Path(args.out)
@@ -273,7 +306,9 @@ def main() -> None:
             },
         }
     }
-    out_path.write_text(yaml.dump(calibrated_cfg, default_flow_style=False, sort_keys=False), encoding="utf-8")
+    out_path.write_text(
+        yaml.dump(calibrated_cfg, default_flow_style=False, sort_keys=False), encoding="utf-8"
+    )
     print(f"\n📄 Calibrated config written to: {out_path}")
 
     if args.results_json:

@@ -3,6 +3,7 @@
 Each test exercises the code witness for a supporting result in the
 thesis surface register, verifying the mathematical claim holds.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -36,7 +37,6 @@ from orius.dc3s.supporting_results import (
     verify_transfer_failure_breaks_pattern,
     verify_zero_violation_regime,
 )
-
 
 # ═══════════════════════════════════════════════════════════════════════
 # Register completeness
@@ -88,9 +88,7 @@ class TestS2FeasibilityGuarantee:
         assert r["feasibility_guaranteed"] is False
 
     def test_infeasible_without_repair(self):
-        r = verify_dc3s_feasibility_guarantee(
-            inflation=1.2, soc=0.5, action_repair_available=False
-        )
+        r = verify_dc3s_feasibility_guarantee(inflation=1.2, soc=0.5, action_repair_available=False)
         assert r["feasibility_guaranteed"] is False
 
 
@@ -169,9 +167,7 @@ class TestLemmaAggregation:
 
 class TestPropInsufficiency:
     def test_true_exceeds_observed(self):
-        r = verify_insufficiency_of_observed_evaluation(
-            violations_observed=3, violations_true=8
-        )
+        r = verify_insufficiency_of_observed_evaluation(violations_observed=3, violations_true=8)
         assert r["holds"] is True
         assert r["evaluation_gap"] == 5
 
@@ -188,15 +184,11 @@ class TestPropInflatedSet:
         assert r["state_contained"] is True
 
     def test_not_contained_insufficient_inflation(self):
-        r = verify_inflated_set_contains_state(
-            x_true=0.8, x_obs=0.5, inflation=1.0, interval_half_width=0.1
-        )
+        r = verify_inflated_set_contains_state(x_true=0.8, x_obs=0.5, inflation=1.0, interval_half_width=0.1)
         assert r["state_contained"] is False
 
     def test_minimum_inflation_computed(self):
-        r = verify_inflated_set_contains_state(
-            x_true=0.6, x_obs=0.5, inflation=2.0, interval_half_width=0.1
-        )
+        r = verify_inflated_set_contains_state(x_true=0.6, x_obs=0.5, inflation=2.0, interval_half_width=0.1)
         assert r["minimum_inflation_needed"] == pytest.approx(1.0)
 
 
@@ -204,16 +196,20 @@ class TestPropTightenedFeasibility:
     def test_tightened_action_is_true_feasible(self):
         r = verify_tightened_feasibility(
             action=0.3,
-            tightened_lower=0.2, tightened_upper=0.4,
-            true_lower=0.0, true_upper=1.0,
+            tightened_lower=0.2,
+            tightened_upper=0.4,
+            true_lower=0.0,
+            true_upper=1.0,
         )
         assert r["holds"] is True
 
     def test_fails_when_not_subset(self):
         r = verify_tightened_feasibility(
             action=0.3,
-            tightened_lower=-0.1, tightened_upper=0.4,
-            true_lower=0.0, true_upper=1.0,
+            tightened_lower=-0.1,
+            tightened_upper=0.4,
+            true_lower=0.0,
+            true_upper=1.0,
         )
         assert r["holds"] is False
 
@@ -354,15 +350,21 @@ class TestCorReliabilityProportional:
 class TestCorInterventionSufficiency:
     def test_safe_intervention(self):
         r = verify_intervention_sufficiency(
-            soc=0.5, repaired_action=0.1,
-            capacity_mwh=1.0, efficiency=0.95, dt_h=1.0,
+            soc=0.5,
+            repaired_action=0.1,
+            capacity_mwh=1.0,
+            efficiency=0.95,
+            dt_h=1.0,
         )
         assert r["within_bounds"] is True
 
     def test_violation_intervention(self):
         r = verify_intervention_sufficiency(
-            soc=0.95, repaired_action=0.5,
-            capacity_mwh=1.0, efficiency=0.95, dt_h=1.0,
+            soc=0.95,
+            repaired_action=0.5,
+            capacity_mwh=1.0,
+            efficiency=0.95,
+            dt_h=1.0,
         )
         assert r["within_bounds"] is False
 

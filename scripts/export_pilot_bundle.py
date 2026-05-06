@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Export a future-pilot evidence bundle from existing IoT and certificate stores."""
+
 from __future__ import annotations
 
 import argparse
 import json
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -14,14 +15,14 @@ import duckdb
 def _json_safe(value: Any) -> Any:
     if isinstance(value, dict):
         return {str(key): _json_safe(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, list | tuple):
         return [_json_safe(item) for item in value]
     if hasattr(value, "item") and callable(value.item):
         try:
             return _json_safe(value.item())
         except (TypeError, ValueError):
-            pass
-    if isinstance(value, (datetime, date)):
+            return str(value)
+    if isinstance(value, datetime | date):
         return value.isoformat()
     return value
 
@@ -41,7 +42,7 @@ def export_bundle(
 ) -> Path:
     """Export telemetry, queue, ACK, and certificate artifacts into one bundle directory."""
     bundle_root = Path(out_dir)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     bundle_dir = bundle_root / f"pilot_bundle_{device_id or 'all'}_{timestamp}"
     bundle_dir.mkdir(parents=True, exist_ok=True)
 
@@ -91,7 +92,7 @@ def export_bundle(
     manifest = {
         "bundle_version": 1,
         "bundle_name": bundle_dir.name,
-        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "created_at_utc": datetime.now(UTC).isoformat(),
         "device_id": device_id,
         "source": {
             "iot_db_path": iot_db_path,
@@ -113,7 +114,9 @@ def export_bundle(
             "device_state": 0 if state is None else len(state),
         },
     }
-    (bundle_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    (bundle_dir / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8"
+    )
     return bundle_dir
 
 

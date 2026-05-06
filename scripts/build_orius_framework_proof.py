@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build a witness-first ORIUS framework proof bundle."""
+
 from __future__ import annotations
 
 import argparse
@@ -16,9 +17,7 @@ def _run(cmd: list[str], cwd: Path) -> None:
     env = dict(os.environ)
     repo_src = str(cwd / "src")
     existing_pythonpath = env.get("PYTHONPATH", "")
-    env["PYTHONPATH"] = (
-        f"{repo_src}{os.pathsep}{existing_pythonpath}" if existing_pythonpath else repo_src
-    )
+    env["PYTHONPATH"] = f"{repo_src}{os.pathsep}{existing_pythonpath}" if existing_pythonpath else repo_src
     subprocess.run(cmd, cwd=cwd, env=env, check=True)
 
 
@@ -49,9 +48,7 @@ def _validation_domain_rows(validation_report: dict[str, object]) -> list[dict[s
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Build a witness-first ORIUS framework proof bundle."
-    )
+    parser = argparse.ArgumentParser(description="Build a witness-first ORIUS framework proof bundle.")
     parser.add_argument(
         "--seeds",
         type=int,
@@ -164,21 +161,15 @@ def main() -> None:
     proof_validated_domains = list(proof_report.get("proof_validated_domains", []))
     if not proof_validated_domains:
         proof_validated_domains = [
-            domain
-            for domain, maturity in domain_maturity.items()
-            if maturity == "proof_validated"
+            domain for domain, maturity in domain_maturity.items() if maturity == "proof_validated"
         ]
 
     proof_candidate_domains = [
-        item["domain"]
-        for item in proof_report.get("proof_downgraded_domains", [])
-        if item.get("domain")
+        item["domain"] for item in proof_report.get("proof_downgraded_domains", []) if item.get("domain")
     ]
     if not proof_candidate_domains:
         proof_candidate_domains = [
-            domain
-            for domain, maturity in domain_maturity.items()
-            if maturity == "proof_candidate"
+            domain for domain, maturity in domain_maturity.items() if maturity == "proof_candidate"
         ]
 
     shadow_synthetic_domains = [
@@ -197,9 +188,7 @@ def main() -> None:
             {
                 "domain": domain,
                 "data_source": (
-                    "locked_artifact"
-                    if domain == validation_report.get("reference_domain")
-                    else "locked_csv"
+                    "locked_artifact" if domain == validation_report.get("reference_domain") else "locked_csv"
                 ),
                 "evidence_tier": maturity,
                 "validation_status": row["validation_status"],
@@ -224,9 +213,7 @@ def main() -> None:
             {
                 "domain": domain,
                 "data_source": (
-                    "locked_artifact"
-                    if domain == validation_report.get("reference_domain")
-                    else "locked_csv"
+                    "locked_artifact" if domain == validation_report.get("reference_domain") else "locked_csv"
                 ),
                 "evidence_tier": maturity,
                 "validation_status": str(row["validation_status"]),
@@ -237,12 +224,8 @@ def main() -> None:
                 "validation_artifact": _display_path(validation_report_path, repo_root),
                 "proof_artifact": _display_path(proof_report_path, repo_root),
                 "closure_matrix_artifact": _display_path(closure_matrix_path, repo_root),
-                "bounded_composition_artifact": _optional_display_path(
-                    composition_matrix_path, repo_root
-                ),
-                "runtime_governance_artifact": _optional_display_path(
-                    governance_matrix_path, repo_root
-                ),
+                "bounded_composition_artifact": _optional_display_path(composition_matrix_path, repo_root),
+                "runtime_governance_artifact": _optional_display_path(governance_matrix_path, repo_root),
             }
         )
 
@@ -270,12 +253,8 @@ def main() -> None:
         "validation_report": _display_path(validation_report_path, repo_root),
         "proof_report": _display_path(proof_report_path, repo_root),
         "domain_closure_matrix": _display_path(closure_matrix_path, repo_root),
-        "bounded_composition_matrix": _optional_display_path(
-            composition_matrix_path, repo_root
-        ),
-        "runtime_governance_matrix": _optional_display_path(
-            governance_matrix_path, repo_root
-        ),
+        "bounded_composition_matrix": _optional_display_path(composition_matrix_path, repo_root),
+        "runtime_governance_matrix": _optional_display_path(governance_matrix_path, repo_root),
         "artifact_register": _display_path(artifact_csv, repo_root),
         "domain_controller_summary": _display_path(summary_csv, repo_root),
         "seeds": args.seeds,

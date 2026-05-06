@@ -6,24 +6,26 @@ builder is opt-in and merges the richer BIDMC bridge plus the staged MIMIC-III
 bridge into a per-patient feature surface suitable for larger healthcare
 training runs without disturbing the canonical submission-facing path.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import re
-from typing import Sequence
+from collections.abc import Sequence
+from pathlib import Path
 
 import pandas as pd
 
 from orius.data_pipeline.split_time_series import time_split_with_calibration
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_RAW = REPO_ROOT / "data" / "healthcare" / "processed" / "healthcare_orius.csv"
 DEFAULT_OUT = REPO_ROOT / "data" / "healthcare" / "processed"
 DEFAULT_BIDMC_BRIDGE = REPO_ROOT / "data" / "healthcare" / "processed" / "healthcare_bidmc_orius.csv"
-DEFAULT_MIMIC3_BRIDGE = REPO_ROOT / "data" / "healthcare" / "mimic3" / "processed" / "mimic3_healthcare_orius.csv"
+DEFAULT_MIMIC3_BRIDGE = (
+    REPO_ROOT / "data" / "healthcare" / "mimic3" / "processed" / "mimic3_healthcare_orius.csv"
+)
 DEFAULT_MAX_INPUT_OUT = REPO_ROOT / "data" / "healthcare" / "max_input"
 TARGET = "hr_bpm"
 LAG_STEPS = [1, 2, 4, 8, 12, 24]
@@ -119,9 +121,7 @@ def _split_summary_markdown(
         patient_overlap = _pair_overlap(left_patients, right_patients)
         if not left_ts.empty and not right_ts.empty and not (left_ts.max() < right_ts.min()):
             boundary_ok = False
-        overlap_rows.append(
-            f"| {left} / {right} | {timestamp_overlap} | {patient_overlap} |"
-        )
+        overlap_rows.append(f"| {left} / {right} | {timestamp_overlap} | {patient_overlap} |")
 
     return "\n".join(
         [
@@ -162,7 +162,11 @@ def _select_patient_block_splits(
 
     frame = df.copy()
     frame["timestamp"] = pd.to_datetime(frame["timestamp"], errors="coerce", utc=True)
-    frame = frame.dropna(subset=["timestamp", "patient_id"]).sort_values(["timestamp", "patient_id"]).reset_index(drop=True)
+    frame = (
+        frame.dropna(subset=["timestamp", "patient_id"])
+        .sort_values(["timestamp", "patient_id"])
+        .reset_index(drop=True)
+    )
     patient_meta = (
         frame.groupby("patient_id", dropna=False)
         .agg(rows=("patient_id", "size"), start=("timestamp", "min"))
@@ -201,7 +205,7 @@ def _select_patient_block_splits(
                     _rows(third, patient_count),
                 )
                 ratios = tuple(count / total_rows for count in counts)
-                errors = tuple(abs(actual - target) for actual, target in zip(ratios, targets))
+                errors = tuple(abs(actual - target) for actual, target in zip(ratios, targets, strict=False))
                 key = (
                     round(sum(errors), 12),
                     round(max(errors), 12),
@@ -335,7 +339,9 @@ def _legacy_build_features(
     if "ts_utc" in df.columns:
         df["timestamp"] = pd.to_datetime(df["ts_utc"], errors="coerce", utc=True)
     elif "Time [s]" in df.columns:
-        df["timestamp"] = pd.Timestamp("2026-01-01T00:00:00Z") + pd.to_timedelta(pd.to_numeric(df["Time [s]"], errors="coerce"), unit="s")
+        df["timestamp"] = pd.Timestamp("2026-01-01T00:00:00Z") + pd.to_timedelta(
+            pd.to_numeric(df["Time [s]"], errors="coerce"), unit="s"
+        )
     else:
         df["timestamp"] = pd.Timestamp("2026-01-01T00:00:00Z") + pd.to_timedelta(df["step"], unit="s")
     df = df.dropna(subset=["patient_id", "timestamp", "hr_bpm", "spo2_pct", "respiratory_rate"]).copy()
@@ -379,16 +385,34 @@ def _normalize_bridge_source(path: Path, source_dataset: str) -> pd.DataFrame:
     if missing:
         raise ValueError(f"{path} is missing required bridge columns: {sorted(missing)}")
 
-    reliability = pd.to_numeric(df["reliability"], errors="coerce") if "reliability" in df.columns else pd.Series(1.0, index=df.index)
-    forecast = pd.to_numeric(df["forecast"], errors="coerce") if "forecast" in df.columns else pd.to_numeric(df["target"], errors="coerce")
-    pulse = pd.to_numeric(df["pulse"], errors="coerce") if "pulse" in df.columns else pd.Series(pd.NA, index=df.index, dtype="object")
-    is_critical = _parse_bool_like_series(df["is_critical"]) if "is_critical" in df.columns else pd.Series(False, index=df.index)
+    reliability = (
+        pd.to_numeric(df["reliability"], errors="coerce")
+        if "reliability" in df.columns
+        else pd.Series(1.0, index=df.index)
+    )
+    forecast = (
+        pd.to_numeric(df["forecast"], errors="coerce")
+        if "forecast" in df.columns
+        else pd.to_numeric(df["target"], errors="coerce")
+    )
+    pulse = (
+        pd.to_numeric(df["pulse"], errors="coerce")
+        if "pulse" in df.columns
+        else pd.Series(pd.NA, index=df.index, dtype="object")
+    )
+    is_critical = (
+        _parse_bool_like_series(df["is_critical"])
+        if "is_critical" in df.columns
+        else pd.Series(False, index=df.index)
+    )
 
     normalized = pd.DataFrame(
         {
             "patient_id": [f"{source_dataset}:{value}" for value in df["patient_id"].astype(str)],
             "source_dataset": source_dataset,
-            "step": df["timestamp"].map(_extract_step_from_token) if "timestamp" in df.columns else range(len(df)),
+            "step": df["timestamp"].map(_extract_step_from_token)
+            if "timestamp" in df.columns
+            else range(len(df)),
             "spo2_pct": pd.to_numeric(df["target"], errors="coerce"),
             "hr_bpm": pd.to_numeric(df["hr"], errors="coerce"),
             "respiratory_rate": pd.to_numeric(df["resp"], errors="coerce"),
@@ -503,8 +527,7 @@ def _write_max_input_manifest(
             for source, group in normalized.groupby("source_dataset")
         },
         "source_row_counts": {
-            source: int(len(group))
-            for source, group in normalized.groupby("source_dataset")
+            source: int(len(group)) for source, group in normalized.groupby("source_dataset")
         },
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -528,14 +551,18 @@ def build_max_input_features(
     normalized_frames = [_normalize_input_source(path) for path in input_paths]
     normalized = pd.concat(normalized_frames, ignore_index=True)
     normalized = normalized.dropna(subset=["spo2_pct", "hr_bpm", "respiratory_rate"]).reset_index(drop=True)
-    normalized["reliability"] = pd.to_numeric(normalized["reliability"], errors="coerce").fillna(1.0).clip(0.05, 1.0)
+    normalized["reliability"] = (
+        pd.to_numeric(normalized["reliability"], errors="coerce").fillna(1.0).clip(0.05, 1.0)
+    )
     normalized = _assign_monotonic_timestamps(normalized)
     normalized["shock_index"] = normalized["hr_bpm"] / normalized["spo2_pct"].clip(lower=1.0)
 
     features = _engineer_max_input_features(normalized)
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    normalized[[column for column in MAX_INPUT_COLUMNS + ["is_critical"] if column in normalized.columns]].to_csv(
+    normalized[
+        [column for column in [*MAX_INPUT_COLUMNS, "is_critical"] if column in normalized.columns]
+    ].to_csv(
         out_dir / "healthcare_max_input_orius.csv",
         index=False,
     )
@@ -569,7 +596,9 @@ def build_promoted_features(
 
     normalized = _normalize_input_source(csv_path)
     normalized = normalized.dropna(subset=["spo2_pct", "hr_bpm", "respiratory_rate"]).reset_index(drop=True)
-    normalized["reliability"] = pd.to_numeric(normalized["reliability"], errors="coerce").fillna(1.0).clip(0.05, 1.0)
+    normalized["reliability"] = (
+        pd.to_numeric(normalized["reliability"], errors="coerce").fillna(1.0).clip(0.05, 1.0)
+    )
     normalized = _assign_monotonic_timestamps(normalized)
 
     features = _engineer_max_input_features(normalized)
@@ -622,19 +651,15 @@ def main() -> int:
         inputs = args.inputs or [DEFAULT_BIDMC_BRIDGE, DEFAULT_MIMIC3_BRIDGE]
         missing = [path for path in inputs if not path.exists()]
         if missing:
-            print(f"Input not found: {missing}")
             return 1
         out_dir = args.out if args.out != DEFAULT_OUT else DEFAULT_MAX_INPUT_OUT
         build_max_input_features(inputs, out_dir)
-        print(f"Healthcare max-input features -> {out_dir / 'features.parquet'}")
         return 0
 
     input_path = args.inputs[0] if args.inputs else DEFAULT_RAW
     if not input_path.exists():
-        print(f"Input not found: {input_path}. Run: make healthcare-datasets")
         return 1
     build_features(input_path, args.out)
-    print(f"Healthcare features -> {args.out / 'features.parquet'}")
     return 0
 
 

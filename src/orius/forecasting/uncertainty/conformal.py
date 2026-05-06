@@ -8,15 +8,17 @@ Supports:
 
 This is model-agnostic: works with GBM/LSTM/TCN as long as you provide y_true and y_pred arrays.
 """
+
 from __future__ import annotations
 
+import json
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Optional, Tuple
+from typing import Any, Literal
 
-import json
 import numpy as np
+
 from .shift_aware import (
     ShiftAwareConfig,
     ShiftAwareIntervalDecision,
@@ -34,6 +36,15 @@ class ConformalConfig:
     rolling: bool = True
     rolling_window: int = 720
     eps: float = 1e-6
+    q_multiplier: float = 1.0
+
+    def __post_init__(self) -> None:
+        self.alpha = float(self.alpha)
+        self.rolling_window = int(self.rolling_window)
+        self.eps = float(self.eps)
+        self.q_multiplier = float(self.q_multiplier)
+        if self.q_multiplier < 1.0:
+            raise ValueError("q_multiplier must be >= 1.0")
 
 
 def _split_conformal_quantile(scores: np.ndarray, alpha: float) -> float:
@@ -80,14 +91,14 @@ class AdaptiveConformal:
         self.eps = float(eps)
 
         self.alpha_t: float | np.ndarray = float(alpha)
-        self._alpha0_h: Optional[np.ndarray] = None
+        self._alpha0_h: np.ndarray | None = None
 
     def _normalize_inputs(
         self,
         y_true: np.ndarray | list[float] | float,
         y_pred_interval: tuple[np.ndarray | list[float] | float, np.ndarray | list[float] | float],
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        if not isinstance(y_pred_interval, (tuple, list)) or len(y_pred_interval) != 2:
+        if not isinstance(y_pred_interval, tuple | list) or len(y_pred_interval) != 2:
             raise ValueError("y_pred_interval must be a tuple/list of (lower, upper)")
 
         lower, upper = y_pred_interval
@@ -178,8 +189,8 @@ class AdaptiveConformal:
 class ConformalInterval:
     def __init__(self, cfg: ConformalConfig):
         self.cfg = cfg
-        self.q_global: Optional[float] = None
-        self.q_h: Optional[np.ndarray] = None
+        self.q_global: float | None = None
+        self.q_h: np.ndarray | None = None
         self._resid_buffers = None
         self.method: Literal["residual", "cqr"] = cfg.method
 
@@ -239,15 +250,19 @@ class ConformalInterval:
                     self._resid_buffers[0].append(float(val))
 
         if self.cfg.horizon_wise:
-            self.q_h = np.array([
-                _split_conformal_quantile(np.array(buf, dtype=float), self.cfg.alpha)
-                for buf in self._resid_buffers
-            ])
+            self.q_h = np.array(
+                [
+                    _split_conformal_quantile(np.array(buf, dtype=float), self.cfg.alpha)
+                    for buf in self._resid_buffers
+                ]
+            )
             all_vals = np.concatenate([np.array(buf) for buf in self._resid_buffers if len(buf) > 0])
             if all_vals.size:
                 self.q_global = _split_conformal_quantile(all_vals, self.cfg.alpha)
         else:
-            self.q_global = _split_conformal_quantile(np.array(self._resid_buffers[0], dtype=float), self.cfg.alpha)
+            self.q_global = _split_conformal_quantile(
+                np.array(self._resid_buffers[0], dtype=float), self.cfg.alpha
+            )
 
     def fit_calibration_cqr(self, y_true: np.ndarray, q_lo: np.ndarray, q_hi: np.ndarray) -> None:
         """
@@ -284,7 +299,7 @@ class ConformalInterval:
 
         self.method = "cqr"
 
-    def predict_interval(self, y_pred: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def predict_interval(self, y_pred: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Return lower/upper arrays with the same shape as y_pred."""
         y_pred = np.asarray(y_pred)
         if y_pred.ndim == 1:
@@ -299,9 +314,9 @@ class ConformalInterval:
             if self.q_h is None:
                 raise RuntimeError("ConformalInterval not calibrated. Call fit_calibration() first.")
             if len(self.q_h) == horizon:
-                q = self.q_h.reshape(1, horizon)
+                q = self.q_h.reshape(1, horizon) * self.cfg.q_multiplier
             elif self.q_global is not None:
-                q = np.full((1, horizon), self.q_global)
+                q = np.full((1, horizon), self.q_global * self.cfg.q_multiplier)
             else:
                 raise RuntimeError(
                     f"Conformal horizon {len(self.q_h)} does not match request horizon {horizon}."
@@ -309,7 +324,7 @@ class ConformalInterval:
         else:
             if self.q_global is None:
                 raise RuntimeError("ConformalInterval not calibrated. Call fit_calibration() first.")
-            q = np.full((1, horizon), self.q_global)
+            q = np.full((1, horizon), self.q_global * self.cfg.q_multiplier)
 
         lower = y_pred2 - q
         upper = y_pred2 + q
@@ -323,7 +338,7 @@ class ConformalInterval:
         y_true = np.asarray(y_true)
         return float(np.mean((y_true >= lo) & (y_true <= hi)))
 
-    def predict_interval_cqr(self, q_lo: np.ndarray, q_hi: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def predict_interval_cqr(self, q_lo: np.ndarray, q_hi: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Return CQR-corrected intervals: [q_lo - q_hat, q_hi + q_hat]."""
         q_lo = np.asarray(q_lo)
         q_hi = np.asarray(q_hi)
@@ -339,19 +354,23 @@ class ConformalInterval:
 
         if self.cfg.horizon_wise:
             if self.q_h is None:
-                raise RuntimeError("ConformalInterval not calibrated for CQR. Call fit_calibration_cqr() first.")
+                raise RuntimeError(
+                    "ConformalInterval not calibrated for CQR. Call fit_calibration_cqr() first."
+                )
             if len(self.q_h) == horizon:
-                q_hat = self.q_h.reshape(1, horizon)
+                q_hat = self.q_h.reshape(1, horizon) * self.cfg.q_multiplier
             elif self.q_global is not None:
-                q_hat = np.full((1, horizon), self.q_global)
+                q_hat = np.full((1, horizon), self.q_global * self.cfg.q_multiplier)
             else:
                 raise RuntimeError(
                     f"Conformal horizon {len(self.q_h)} does not match request horizon {horizon} and no global fallback is available."
                 )
         else:
             if self.q_global is None:
-                raise RuntimeError("ConformalInterval not calibrated for CQR. Call fit_calibration_cqr() first.")
-            q_hat = np.full((1, horizon), self.q_global)
+                raise RuntimeError(
+                    "ConformalInterval not calibrated for CQR. Call fit_calibration_cqr() first."
+                )
+            q_hat = np.full((1, horizon), self.q_global * self.cfg.q_multiplier)
 
         lower = q_lo2 - q_hat
         upper = q_hi2 + q_hat
@@ -428,70 +447,67 @@ class ConformalInterval:
     def per_horizon_coverage(self, y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
         """
         Compute PICP (Prediction Interval Coverage Probability) per horizon step.
-        
+
         Returns:
             Dictionary mapping horizon step ("h1", "h2", ...) to coverage probability
         """
         y_true = np.asarray(y_true)
         y_pred = np.asarray(y_pred)
         lo, hi = self.predict_interval(y_pred)
-        
+
         if y_true.ndim == 1:
             y_true = y_true.reshape(-1, 1)
             y_pred = y_pred.reshape(-1, 1)
             lo = lo.reshape(-1, 1)
             hi = hi.reshape(-1, 1)
-        
+
         _, horizon = y_true.shape
         coverage_per_h = {}
-        
+
         for h in range(horizon):
             yt = y_true[:, h]
             yt_lo = lo[:, h]
             yt_hi = hi[:, h]
             coverage = np.mean((yt >= yt_lo) & (yt <= yt_hi))
-            coverage_per_h[f"h{h+1}"] = float(coverage)
-        
+            coverage_per_h[f"h{h + 1}"] = float(coverage)
+
         return coverage_per_h
 
     def per_horizon_width(self, y_pred: np.ndarray) -> dict[str, float]:
         """
         Compute MPIW (Mean Prediction Interval Width) per horizon step.
-        
+
         Returns:
             Dictionary mapping horizon step ("h1", "h2", ...) to mean interval width
         """
         y_pred = np.asarray(y_pred)
         lo, hi = self.predict_interval(y_pred)
-        
+
         if y_pred.ndim == 1:
             y_pred = y_pred.reshape(-1, 1)
             lo = lo.reshape(-1, 1)
             hi = hi.reshape(-1, 1)
-        
+
         _, horizon = y_pred.shape
         width_per_h = {}
-        
+
         for h in range(horizon):
             width = np.mean(hi[:, h] - lo[:, h])
-            width_per_h[f"h{h+1}"] = float(width)
-        
+            width_per_h[f"h{h + 1}"] = float(width)
+
         return width_per_h
 
     def evaluate_intervals(
-        self, 
-        y_true: np.ndarray, 
-        y_pred: np.ndarray,
-        per_horizon: bool = True
+        self, y_true: np.ndarray, y_pred: np.ndarray, per_horizon: bool = True
     ) -> dict[str, Any]:
         """
         Comprehensive interval evaluation: global + per-horizon PICP/MPIW.
-        
+
         Args:
             y_true: True values (n_samples, horizon) or (n_samples,)
             y_pred: Predicted values (same shape as y_true)
             per_horizon: Whether to compute per-horizon metrics
-        
+
         Returns:
             Dictionary with global and per-horizon coverage/width metrics
         """
@@ -508,13 +524,12 @@ class ConformalInterval:
                 upper=hi,
             )
         )
-        
+
         if per_horizon:
             results["per_horizon_picp"] = self.per_horizon_coverage(y_true, y_pred)
             results["per_horizon_mpiw"] = self.per_horizon_width(y_pred)
-        
-        return results
 
+        return results
 
     def evaluate_intervals_cqr(
         self,
@@ -547,12 +562,11 @@ class ConformalInterval:
                 lower = lower.reshape(-1, 1)
                 upper = upper.reshape(-1, 1)
             results["per_horizon_picp"] = {
-                f"h{i+1}": float(np.mean((y_true[:, i] >= lower[:, i]) & (y_true[:, i] <= upper[:, i])))
+                f"h{i + 1}": float(np.mean((y_true[:, i] >= lower[:, i]) & (y_true[:, i] <= upper[:, i])))
                 for i in range(y_true.shape[1])
             }
             results["per_horizon_mpiw"] = {
-                f"h{i+1}": float(np.mean(upper[:, i] - lower[:, i]))
-                for i in range(y_true.shape[1])
+                f"h{i + 1}": float(np.mean(upper[:, i] - lower[:, i])) for i in range(y_true.shape[1])
             }
         return results
 
@@ -565,6 +579,7 @@ class ConformalInterval:
                 "rolling": self.cfg.rolling,
                 "rolling_window": self.cfg.rolling_window,
                 "eps": self.cfg.eps,
+                "q_multiplier": self.cfg.q_multiplier,
             },
             "q_global": self.q_global,
             "q_h": self.q_h.tolist() if self.q_h is not None else None,
@@ -572,7 +587,7 @@ class ConformalInterval:
         }
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "ConformalInterval":
+    def from_dict(cls, payload: dict[str, Any]) -> ConformalInterval:
         cfg = ConformalConfig(**payload.get("config", {}))
         inst = cls(cfg)
         if payload.get("q_global") is not None:
@@ -650,7 +665,9 @@ def build_runtime_interval(
         drift_magnitude=1.0 if bool(drift_flag) else 0.0,
         normalized_residual=float(min(abs_residual / max(base_half_width, 1e-9), 1.0)),
         subgroup_under_coverage_gap=float(stats.under_coverage_gap),
-        adaptation_instability=float(abs(engine.state.adaptive.effective_alpha - engine.state.adaptive.base_alpha)),
+        adaptation_instability=float(
+            abs(engine.state.adaptive.effective_alpha - engine.state.adaptive.base_alpha)
+        ),
         cfg=cfg,
     )
     decision = apply_interval_policy(
@@ -688,6 +705,7 @@ def build_runtime_interval(
 @dataclass
 class SPCIConfig:
     """Configuration for the SPCI-lite online quantile updater."""
+
     alpha: float = 0.10
     spci_lambda: float = 0.05
     max_window: int = 2000
@@ -787,7 +805,7 @@ class SPCIUpdater:
         }
 
 
-def save_conformal(path: str | Path, interval: ConformalInterval, meta: Optional[dict[str, Any]] = None) -> None:
+def save_conformal(path: str | Path, interval: ConformalInterval, meta: dict[str, Any] | None = None) -> None:
     payload = interval.to_dict()
     if meta:
         payload["meta"] = meta

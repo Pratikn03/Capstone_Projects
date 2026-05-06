@@ -1,4 +1,5 @@
 """Run monitoring and retrain only when drift triggers."""
+
 from __future__ import annotations
 
 import argparse
@@ -38,9 +39,10 @@ def main() -> None:
         return
 
     print("[retrain] running pipeline (train + reports)...")
-    subprocess.run([sys.executable, "-m", "orius.pipeline.run", "--steps", "train,reports", "--force"], check=True)
+    subprocess.run(
+        [sys.executable, "-m", "orius.pipeline.run", "--steps", "train,reports", "--force"], check=True
+    )
 
 
 if __name__ == "__main__":
     main()
-

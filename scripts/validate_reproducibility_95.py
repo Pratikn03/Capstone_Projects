@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate the clean-clone reproducibility spine for ORIUS."""
+
 from __future__ import annotations
 
 import argparse
@@ -11,8 +12,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.validate_generated_artifact_policy import validate as validate_artifact_policy  # noqa: E402
-from scripts.cleanup_appledouble import default_exclude_parts, find_sidecars  # noqa: E402
+from scripts.cleanup_appledouble import default_exclude_parts, find_sidecars
+from scripts.validate_generated_artifact_policy import validate as validate_artifact_policy
 
 REQUIRED_PATHS = [
     "requirements.lock.txt",
@@ -20,8 +21,11 @@ REQUIRED_PATHS = [
     "reports/publication/three_domain_ml_benchmark.csv",
     "reports/publication/active_theorem_audit.json",
     "reports/publication/certificate_schema_witnesses.csv",
+    "reports/publication/runtime_release_contract_witnesses.csv",
+    "reports/publication/runtime_release_contract_witnesses.json",
     "scripts/validate_generated_artifact_policy.py",
     "scripts/validate_api_auth_coverage.py",
+    "scripts/validate_runtime_release_contract.py",
 ]
 REQUIRED_PYTEST_MARKERS = {"slow", "integration", "local_data", "artifact_mutation", "load"}
 
@@ -43,13 +47,17 @@ def validate(*, allow_dirty: bool = False) -> tuple[list[str], list[str]]:
     if not allow_dirty:
         status = _git(["status", "--short"])
         if status:
-            findings.append("git working tree is not clean; commit or discard generated outputs before release")
+            findings.append(
+                "git working tree is not clean; commit or discard generated outputs before release"
+            )
 
     for rel in REQUIRED_PATHS:
         if not (REPO_ROOT / rel).exists():
             findings.append(f"required reproducibility path missing: {rel}")
 
-    pytest_ini = (REPO_ROOT / "pytest.ini").read_text(encoding="utf-8") if (REPO_ROOT / "pytest.ini").exists() else ""
+    pytest_ini = (
+        (REPO_ROOT / "pytest.ini").read_text(encoding="utf-8") if (REPO_ROOT / "pytest.ini").exists() else ""
+    )
     for marker in REQUIRED_PYTEST_MARKERS:
         if f"{marker}:" not in pytest_ini:
             findings.append(f"pytest marker missing: {marker}")
@@ -69,7 +77,9 @@ def validate(*, allow_dirty: bool = False) -> tuple[list[str], list[str]]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--allow-dirty", action="store_true", help="Do not fail on current uncommitted source edits")
+    parser.add_argument(
+        "--allow-dirty", action="store_true", help="Do not fail on current uncommitted source edits"
+    )
     args = parser.parse_args()
 
     findings, warnings = validate(allow_dirty=args.allow_dirty)

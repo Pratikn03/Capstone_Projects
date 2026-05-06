@@ -2,10 +2,12 @@
 
 Prototype extension. Outputs to reports/vehicles_prototype/ (isolated from battery).
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -53,9 +55,7 @@ def run_vehicle_episode(
         state = adapter.ingest_telemetry(obs)
         w_t, _ = adapter.compute_oqe(state, history[-1:] if history else None)
         quantile = 0.9
-        uncertainty, _ = adapter.build_uncertainty_set(
-            state, w_t, quantile, cfg=cfg, drift_flag=False
-        )
+        uncertainty, _ = adapter.build_uncertainty_set(state, w_t, quantile, cfg=cfg, drift_flag=False)
         constraints = {
             "speed_limit_mps": true_state.get("speed_limit_mps", 30.0),
             "accel_min_mps2": -5.0,
@@ -65,23 +65,29 @@ def run_vehicle_episode(
         tightened = adapter.tighten_action_set(uncertainty, constraints, cfg=cfg)
         candidate = {"acceleration_mps2": 2.0}
         safe_action, repair_meta = adapter.repair_action(
-            candidate, tightened, state=state, uncertainty=uncertainty,
-            constraints=constraints, cfg=cfg,
+            candidate,
+            tightened,
+            state=state,
+            uncertainty=uncertainty,
+            constraints=constraints,
+            cfg=cfg,
         )
         plant.step(safe_action["acceleration_mps2"])
         violation = plant.check_violation()
         history.append(state)
 
-        results.append(VehicleStepResult(
-            step=t,
-            true_state=dict(plant.state()),
-            observed_state=dict(obs),
-            proposed_action=dict(candidate),
-            safe_action=dict(safe_action),
-            violated=violation["violated"],
-            intervened=bool(repair_meta.get("repaired", False)),
-            w_t=float(w_t),
-        ))
+        results.append(
+            VehicleStepResult(
+                step=t,
+                true_state=dict(plant.state()),
+                observed_state=dict(obs),
+                proposed_action=dict(candidate),
+                safe_action=dict(safe_action),
+                violated=violation["violated"],
+                intervened=bool(repair_meta.get("repaired", False)),
+                w_t=float(w_t),
+            )
+        )
 
     return results
 

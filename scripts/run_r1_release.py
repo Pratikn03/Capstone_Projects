@@ -23,13 +23,14 @@ Usage
     python scripts/run_r1_release.py --stage deployment --release-id R1_20260312
     python scripts/run_r1_release.py --stage promote   --release-id R1_20260312
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -40,14 +41,14 @@ R1_DATASETS = ["DE", "US_MISO", "US_PJM", "US_ERCOT"]
 
 
 def _generate_release_id() -> str:
-    return "R1_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return "R1_" + datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
 
 
 def _run(cmd: list[str], description: str) -> bool:
-    print(f"\n{'─'*60}")
+    print(f"\n{'─' * 60}")
     print(f"  {description}")
     print(f"  cmd: {' '.join(cmd)}")
-    print(f"{'─'*60}")
+    print(f"{'─' * 60}")
     try:
         subprocess.run(cmd, check=True, cwd=str(REPO_ROOT))
         return True
@@ -99,18 +100,22 @@ def _write_manifest_acceptance(manifest_path: Path, *, accepted: bool) -> None:
 
 def stage_diagnostic(release_id: str) -> dict[str, bool]:
     """Stage 1 – GBM-first candidate runs for all R1 datasets."""
-    print(f"\n{'═'*60}")
+    print(f"\n{'═' * 60}")
     print(f"  STAGE 1: DIAGNOSTIC (GBM-first)  release={release_id}")
-    print(f"{'═'*60}\n")
+    print(f"{'═' * 60}\n")
     results: dict[str, bool] = {}
     for ds in R1_DATASETS:
         ok = _run(
             [
-                PYTHON_BIN, "scripts/train_dataset.py",
-                "--dataset", ds,
+                PYTHON_BIN,
+                "scripts/train_dataset.py",
+                "--dataset",
+                ds,
                 "--candidate-run",
-                "--run-id", f"{release_id}_diag",
-                "--models", "gbm",
+                "--run-id",
+                f"{release_id}_diag",
+                "--models",
+                "gbm",
                 "--no-tune",
                 "--no-cv",
             ],
@@ -122,9 +127,9 @@ def stage_diagnostic(release_id: str) -> dict[str, bool]:
 
 def stage_full(release_id: str, profile: str = "standard") -> dict[str, bool]:
     """Stage 2 – Full six-model baseline comparison."""
-    print(f"\n{'═'*60}")
+    print(f"\n{'═' * 60}")
     print(f"  STAGE 2: FULL BASELINE  release={release_id}  profile={profile}")
-    print(f"{'═'*60}\n")
+    print(f"{'═' * 60}\n")
     results: dict[str, bool] = {}
     extra: list[str] = []
     if profile != "standard":
@@ -132,11 +137,15 @@ def stage_full(release_id: str, profile: str = "standard") -> dict[str, bool]:
     for ds in R1_DATASETS:
         ok = _run(
             [
-                PYTHON_BIN, "scripts/train_dataset.py",
-                "--dataset", ds,
+                PYTHON_BIN,
+                "scripts/train_dataset.py",
+                "--dataset",
+                ds,
                 "--candidate-run",
-                "--run-id", release_id,
-                "--models", "gbm,lstm,tcn,nbeats,tft,patchtst",
+                "--run-id",
+                release_id,
+                "--models",
+                "gbm,lstm,tcn,nbeats,tft,patchtst",
                 "--tune",
                 *extra,
             ],
@@ -148,15 +157,18 @@ def stage_full(release_id: str, profile: str = "standard") -> dict[str, bool]:
 
 def stage_cpsbench(release_id: str) -> bool:
     """Stage 3 – Run CPSBench severity sweeps."""
-    print(f"\n{'═'*60}")
+    print(f"\n{'═' * 60}")
     print(f"  STAGE 3: CPSBench severity sweep  release={release_id}")
-    print(f"{'═'*60}\n")
+    print(f"{'═' * 60}\n")
     out_dir = REPO_ROOT / "reports" / "runs" / "cpsbench" / release_id
     return _run(
         [
-            PYTHON_BIN, "scripts/run_cpsbench.py",
-            "--config", "configs/cpsbench_r1_severity.yaml",
-            "--out-dir", str(out_dir),
+            PYTHON_BIN,
+            "scripts/run_cpsbench.py",
+            "--config",
+            "configs/cpsbench_r1_severity.yaml",
+            "--out-dir",
+            str(out_dir),
         ],
         f"CPSBench severity sweep → {out_dir}",
     )
@@ -164,9 +176,9 @@ def stage_cpsbench(release_id: str) -> bool:
 
 def stage_verify(release_id: str) -> dict[str, dict]:
     """Stage 4 – Verify all datasets pass acceptance gates."""
-    print(f"\n{'═'*60}")
+    print(f"\n{'═' * 60}")
     print(f"  STAGE 4: VERIFY  release={release_id}")
-    print(f"{'═'*60}\n")
+    print(f"{'═' * 60}\n")
     verification: dict[str, dict] = {}
     all_pass = True
 
@@ -237,7 +249,12 @@ def stage_verify(release_id: str) -> dict[str, dict]:
             print(f"  ❌ {ds}: {detail['error']}")
             continue
 
-        if not isinstance(targets, list) or not targets or not isinstance(model_types, list) or not model_types:
+        if (
+            not isinstance(targets, list)
+            or not targets
+            or not isinstance(model_types, list)
+            or not model_types
+        ):
             detail["error"] = "Preflight analysis is missing expected_targets or expected_model_types"
             _write_manifest_acceptance(manifest_path, accepted=False)
             verification[ds] = detail
@@ -296,7 +313,7 @@ def stage_verify(release_id: str) -> dict[str, dict]:
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report = {
         "release_id": release_id,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "all_pass": all_pass,
         "datasets": verification,
     }
@@ -312,13 +329,15 @@ def stage_verify(release_id: str) -> dict[str, dict]:
 
 def stage_deployment(release_id: str) -> bool:
     """Stage 5 – Generate deployment evidence artifacts."""
-    print(f"\n{'═'*60}")
+    print(f"\n{'═' * 60}")
     print(f"  STAGE 5: DEPLOYMENT EVIDENCE  release={release_id}")
-    print(f"{'═'*60}\n")
+    print(f"{'═' * 60}\n")
     return _run(
         [
-            PYTHON_BIN, "scripts/generate_deployment_evidence.py",
-            "--release-id", release_id,
+            PYTHON_BIN,
+            "scripts/generate_deployment_evidence.py",
+            "--release-id",
+            release_id,
         ],
         f"Deployment evidence → reports/runs/deployment/{release_id}/",
     )
@@ -326,9 +345,9 @@ def stage_deployment(release_id: str) -> bool:
 
 def stage_promote(release_id: str) -> bool:
     """Stage 6 – Promote verified release into canonical paths."""
-    print(f"\n{'═'*60}")
+    print(f"\n{'═' * 60}")
     print(f"  STAGE 5: PROMOTE  release={release_id}")
-    print(f"{'═'*60}\n")
+    print(f"{'═' * 60}\n")
     verification_path = REPO_ROOT / "reports" / "runs" / f"{release_id}_verification.json"
     if not verification_path.exists():
         print(f"  ❌ Missing verification report: {verification_path}")
@@ -346,10 +365,13 @@ def stage_promote(release_id: str) -> bool:
     for ds in R1_DATASETS:
         ok = _run(
             [
-                PYTHON_BIN, "scripts/train_dataset.py",
-                "--dataset", ds,
+                PYTHON_BIN,
+                "scripts/train_dataset.py",
+                "--dataset",
+                ds,
                 "--candidate-run",
-                "--run-id", release_id,
+                "--run-id",
+                release_id,
                 "--reports-only",
                 "--promote-on-accept",
             ],
@@ -363,7 +385,7 @@ def stage_promote(release_id: str) -> bool:
         manifest_path.parent.mkdir(parents=True, exist_ok=True)
         manifest = {
             "release_id": release_id,
-            "promoted_at": datetime.now(timezone.utc).isoformat(),
+            "promoted_at": datetime.now(UTC).isoformat(),
             "datasets": R1_DATASETS,
             "status": "promoted",
         }

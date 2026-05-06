@@ -9,21 +9,23 @@ DC3S stages in order:
     4. Shield  (L2 projection repair)
     5. Certify (dispatch certificate)
 """
+
 from __future__ import annotations
 
 import uuid
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 import numpy as np
 
-from .quality import compute_reliability
-from .calibration import build_uncertainty_set
-from .drift import PageHinkleyDetector
-from .shield import repair_action
-from .certificate import make_certificate, compute_config_hash
-from .safety_filter_theory import tightened_soc_bounds, reliability_error_bound
 from ..forecasting.uncertainty.conformal import build_runtime_interval
 from ..forecasting.uncertainty.shift_aware import ShiftAwareConfig, ShiftAwareRuntimeEngine
+from .calibration import build_uncertainty_set
+from .certificate import compute_config_hash, make_certificate
+from .drift import PageHinkleyDetector
+from .quality import compute_reliability
+from .safety_filter_theory import reliability_error_bound, tightened_soc_bounds
+from .shield import repair_action
 
 
 def run_dc3s_step(
@@ -96,7 +98,10 @@ def run_dc3s_step(
             drift_flag=drift_flag,
             residual_features={
                 "abs_residual": float(abs(residual)) if residual is not None else 0.0,
-                "covered": bool(residual is None or abs(float(residual)) <= float(np.asarray(q, dtype=float).reshape(-1)[0])),
+                "covered": bool(
+                    residual is None
+                    or abs(float(residual)) <= float(np.asarray(q, dtype=float).reshape(-1)[0])
+                ),
                 "volatility": float(abs(residual)) if residual is not None else 0.0,
             },
             subgroup_context={"timestamp": str(event.get("ts", ""))},
@@ -134,7 +139,7 @@ def run_dc3s_step(
     # cal_meta["q_eff"] may be a scalar float or a 1-D numpy/list array depending
     # on whether the RAC-Cert multiplier was applied before or after the inflation.
     _q_eff_raw = cal_meta.get("q_eff_scalar") or cal_meta.get("q_eff", 0.0)
-    if isinstance(_q_eff_raw, (list, np.ndarray)):
+    if isinstance(_q_eff_raw, list | np.ndarray):
         _q_eff_raw = _q_eff_raw[0] if len(_q_eff_raw) else 0.0
     q_rac_mwh = float(_q_eff_raw)
 
@@ -164,7 +169,9 @@ def run_dc3s_step(
         uncertainty_set["ftit_error_bound_mwh"] = float(err_bound)
         uncertainty_set["ftit_model_error_mwh"] = float(model_error_mwh)
         uncertainty_set["ftit_base_margin_mwh"] = float(q_rac_mwh if q_rac_mwh > 0 else err_bound)
-        uncertainty_set["ftit_absorbed_margin_mwh"] = float((q_rac_mwh if q_rac_mwh > 0 else err_bound) + model_error_mwh)
+        uncertainty_set["ftit_absorbed_margin_mwh"] = float(
+            (q_rac_mwh if q_rac_mwh > 0 else err_bound) + model_error_mwh
+        )
 
     # ── Stage 3 + 4: Constrain + Shield ──────────────────────────────
     safe_action, shield_meta = repair_action(
@@ -196,10 +203,18 @@ def run_dc3s_step(
         drift_flag=drift_flag,
         inflation=inflation,
         validity_score=(runtime_interval_decision.validity_score if runtime_interval_decision else None),
-        adaptive_quantile=(runtime_interval_decision.adaptive_quantile if runtime_interval_decision else None),
-        conditional_coverage_gap=(runtime_interval_decision.under_coverage_gap if runtime_interval_decision else None),
-        runtime_interval_policy=(runtime_interval_decision.applied_policy if runtime_interval_decision else None),
-        coverage_group_key=(runtime_interval_decision.coverage_group_key if runtime_interval_decision else None),
+        adaptive_quantile=(
+            runtime_interval_decision.adaptive_quantile if runtime_interval_decision else None
+        ),
+        conditional_coverage_gap=(
+            runtime_interval_decision.under_coverage_gap if runtime_interval_decision else None
+        ),
+        runtime_interval_policy=(
+            runtime_interval_decision.applied_policy if runtime_interval_decision else None
+        ),
+        coverage_group_key=(
+            runtime_interval_decision.coverage_group_key if runtime_interval_decision else None
+        ),
         shift_alert_flag=(runtime_interval_decision.shift_alert_flag if runtime_interval_decision else None),
         validity_status=(runtime_interval_decision.validity_status if runtime_interval_decision else None),
         assumptions_version=assumptions_version,
@@ -218,5 +233,7 @@ def run_dc3s_step(
         "lower": lower,
         "upper": upper,
         "calibration_meta": cal_meta,
-        "runtime_interval_decision": runtime_interval_decision.to_dict() if runtime_interval_decision else None,
+        "runtime_interval_decision": runtime_interval_decision.to_dict()
+        if runtime_interval_decision
+        else None,
     }

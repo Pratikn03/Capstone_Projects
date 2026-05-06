@@ -1,4 +1,5 @@
 """Regression tests for the runtime detector-lag contract."""
+
 from __future__ import annotations
 
 import math
@@ -10,7 +11,6 @@ import pytest
 pd = pytest.importorskip("pandas")
 
 from orius.dc3s.quality import compute_reliability
-
 
 _CADENCE = 3600.0
 _CFG = {"lambda_delay": 0.002, "spike_beta": 0.25, "ooo_gamma": 0.35, "min_w": 0.05}
@@ -64,4 +64,3 @@ def test_detector_lag_warning_fires_for_dataset_backed_stale_sequence() -> None:
     assert last_flags["stale_max_unchanged_steps"] >= 3
     assert last_flags["detector_lag_warning"] is True
     assert any("Assumption A6 may be violated" in str(w.message) for w in caught)
-

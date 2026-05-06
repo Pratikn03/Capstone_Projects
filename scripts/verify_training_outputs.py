@@ -13,6 +13,7 @@ This script validates that a training run produced all expected outputs:
 Exit code 0 = all checks passed
 Exit code 1 = missing or invalid artifacts
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,9 +23,16 @@ from pathlib import Path
 
 import numpy as np
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from orius.release.artifact_loader import load_pickle_artifact, load_torch_artifact
+
 
 class Colors:
     """ANSI color codes for terminal output."""
+
     GREEN = "\033[92m"
     RED = "\033[91m"
     YELLOW = "\033[93m"
@@ -50,9 +58,9 @@ def print_warn(msg: str) -> None:
 
 def print_section(title: str) -> None:
     """Print section header."""
-    print(f"\n{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.RESET}")
+    print(f"\n{Colors.BOLD}{Colors.BLUE}{'=' * 60}{Colors.RESET}")
     print(f"{Colors.BOLD}{Colors.BLUE}{title}{Colors.RESET}")
-    print(f"{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.RESET}\n")
+    print(f"{Colors.BOLD}{Colors.BLUE}{'=' * 60}{Colors.RESET}\n")
 
 
 _DL_MODEL_KEYS = {"lstm", "tcn", "nbeats", "tft", "patchtst"}
@@ -67,7 +75,7 @@ class ArtifactChecker:
         self.warnings: list[str] = []
         self.checks_passed = 0
         self.checks_failed = 0
-    
+
     def check_file_exists(self, path: Path, description: str) -> bool:
         """Check if a file exists."""
         if path.exists():
@@ -79,7 +87,7 @@ class ArtifactChecker:
             self.errors.append(f"Missing file: {path}")
             self.checks_failed += 1
             return False
-    
+
     def check_directory_exists(self, path: Path, description: str) -> bool:
         """Check if a directory exists."""
         if path.exists() and path.is_dir():
@@ -92,15 +100,15 @@ class ArtifactChecker:
             self.errors.append(f"Missing directory: {path}")
             self.checks_failed += 1
             return False
-    
+
     def check_json_valid(self, path: Path, description: str, required_keys: list[str] | None = None) -> bool:
         """Check if JSON file is valid and contains required keys."""
         if not self.check_file_exists(path, f"{description} (JSON)"):
             return False
-        
+
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-            
+
             if required_keys:
                 missing = [k for k in required_keys if k not in data]
                 if missing:
@@ -109,7 +117,7 @@ class ArtifactChecker:
                 else:
                     if self.verbose:
                         print(f"  All required keys present: {required_keys}")
-            
+
             return True
         except json.JSONDecodeError as e:
             print_fail(f"  Invalid JSON in {path}: {e}")
@@ -162,19 +170,17 @@ class ArtifactChecker:
             print_ok(f"Week 2 metrics cover expected targets/models: {path}")
             self.checks_passed += 1
         return ok
-    
+
     def check_model_bundle(self, path: Path, model_type: str, target: str) -> bool:
         """Check model bundle completeness."""
         if model_type in ("gbm_lightgbm", "gbm_xgboost"):
             # Pickle file for GBM
             if not self.check_file_exists(path, f"GBM model {target}"):
                 return False
-            
+
             try:
-                import pickle
-                with open(path, "rb") as f:
-                    bundle = pickle.load(f)
-                
+                bundle = load_pickle_artifact(path)
+
                 required = ["model", "feature_cols", "target"]
                 missing = [k for k in required if k not in bundle]
                 if missing:
@@ -184,23 +190,22 @@ class ArtifactChecker:
                     if self.verbose:
                         n_features = len(bundle.get("feature_cols", []))
                         print(f"  Features: {n_features}, Target: {bundle.get('target')}")
-                
+
                 return True
             except Exception as e:
                 print_fail(f"  Failed to load pickle: {e}")
                 self.errors.append(f"Invalid pickle: {path}")
                 self.checks_failed += 1
                 return False
-        
+
         elif model_type in ("lstm", "tcn", "nbeats", "tft", "patchtst"):
             # PyTorch checkpoint for DL models
             if not self.check_file_exists(path, f"{model_type.upper()} model {target}"):
                 return False
-            
+
             try:
-                import torch
-                checkpoint = torch.load(path, map_location="cpu")
-                
+                checkpoint = load_torch_artifact(path, map_location="cpu", weights_only=True)
+
                 required = ["state_dict", "x_scaler", "y_scaler", "feature_cols", "target"]
                 missing = [k for k in required if k not in checkpoint]
                 if missing:
@@ -210,16 +215,16 @@ class ArtifactChecker:
                     if self.verbose:
                         n_features = len(checkpoint.get("feature_cols", []))
                         print(f"  Features: {n_features}, Target: {checkpoint.get('target')}")
-                
+
                 return True
             except Exception as e:
                 print_fail(f"  Failed to load checkpoint: {e}")
                 self.errors.append(f"Invalid checkpoint: {path}")
                 self.checks_failed += 1
                 return False
-        
+
         return False
-    
+
     def check_conformal_artifacts(
         self,
         *,
@@ -264,7 +269,9 @@ class ArtifactChecker:
                 if npz_path.exists():
                     try:
                         data = np.load(npz_path)
-                        required = {"y_true", "y_pred"} if "y_pred" in data.files else {"y_true", "q_lo", "q_hi"}
+                        required = (
+                            {"y_true", "y_pred"} if "y_pred" in data.files else {"y_true", "q_lo", "q_hi"}
+                        )
                         if required.issubset(set(data.files)):
                             print_ok(f"GBM {suffix} NPZ {target}: {npz_path}")
                             self.checks_passed += 1
@@ -281,14 +288,17 @@ class ArtifactChecker:
             for model_key in dl_keys:
                 dl_conf = uncertainty_dir / f"{model_key}_{target}_conformal.json"
                 if dl_conf.exists():
-                    self.check_json_valid(dl_conf, f"{model_key.upper()} conformal {target}", ["config", "meta"])
+                    self.check_json_valid(
+                        dl_conf, f"{model_key.upper()} conformal {target}", ["config", "meta"]
+                    )
                     for suffix in ("calibration", "test"):
                         npz_path = backtests_dir / f"{model_key}_{target}_{suffix}.npz"
                         if npz_path.exists():
                             try:
                                 data = np.load(npz_path)
                                 required = (
-                                    {"y_true", "y_pred"} if "y_pred" in data.files
+                                    {"y_true", "y_pred"}
+                                    if "y_pred" in data.files
                                     else {"y_true", "q_lo", "q_hi"}
                                 )
                                 if required.issubset(set(data.files)):
@@ -313,7 +323,6 @@ class ArtifactChecker:
                     )
                     self.warnings.append(f"Missing {model_key} conformal artifact for {target}")
 
-    
     def verify_training_run(
         self,
         models_dir: Path,
@@ -329,7 +338,7 @@ class ArtifactChecker:
     ) -> bool:
         """
         Comprehensive verification of a training run.
-        
+
         Returns:
             True if all critical checks pass, False otherwise
         """
@@ -343,7 +352,7 @@ class ArtifactChecker:
                 elif model_type in ("lstm", "tcn", "nbeats", "tft", "patchtst"):
                     path = models_dir / f"{model_type}_{target}.pt"
                     self.check_model_bundle(path, model_type, target)
-        
+
         # Check metrics
         print_section("Metrics and Reports")
         self.check_week2_metrics(reports_dir / "week2_metrics.json", targets, model_types)
@@ -351,19 +360,19 @@ class ArtifactChecker:
             reports_dir / "ml_vs_dl_comparison.md",
             "ML vs DL comparison",
         )
-        
+
         # Check walk-forward backtest
         wf_path = reports_dir / "walk_forward_report.json"
         if wf_path.exists():
             self.check_json_valid(wf_path, "Walk-forward backtest", ["targets"])
-        
+
         # Check CV results (if enabled)
         if check_cv:
             for target in targets:
                 cv_path = reports_dir / f"{target}_gbm_cv_results.json"
                 if cv_path.exists():
                     self.check_json_valid(cv_path, f"CV results {target}", ["n_splits"])
-        
+
         # Check conformal artifacts (skip for multi-domain when not produced)
         if not skip_conformal_checks:
             self.check_conformal_artifacts(
@@ -372,7 +381,7 @@ class ArtifactChecker:
                 targets=uncertainty_targets,
                 model_types=model_types,
             )
-        
+
         # Check manifests
         print_section("Run Manifests")
         manifest_files = list(artifacts_dir.glob("manifest_*.json"))
@@ -382,7 +391,7 @@ class ArtifactChecker:
         else:
             print_warn("No manifest files found")
             self.warnings.append("Missing run manifests")
-        
+
         # Check figures directory
         print_section("Generated Figures")
         figures_dir = reports_dir / "figures"
@@ -394,23 +403,23 @@ class ArtifactChecker:
         else:
             print_warn(f"Figures directory not found: {figures_dir}")
             self.warnings.append("Missing figures directory")
-        
+
         # Summary
         print_section("Verification Summary")
         print(f"Checks passed: {Colors.GREEN}{self.checks_passed}{Colors.RESET}")
         print(f"Checks failed: {Colors.RED}{self.checks_failed}{Colors.RESET}")
         print(f"Warnings: {Colors.YELLOW}{len(self.warnings)}{Colors.RESET}")
-        
+
         if self.errors:
             print(f"\n{Colors.RED}Critical Errors:{Colors.RESET}")
             for err in self.errors[:10]:  # Limit output
                 print(f"  {Colors.RED}•{Colors.RESET} {err}")
-        
+
         if self.warnings and self.verbose:
             print(f"\n{Colors.YELLOW}Warnings:{Colors.RESET}")
             for warn in self.warnings[:10]:
                 print(f"  {Colors.YELLOW}•{Colors.RESET} {warn}")
-        
+
         return self.checks_failed == 0
 
 
@@ -479,15 +488,16 @@ def main():
         help="Skip conformal/uncertainty artifact checks (for multi-domain when not produced)",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Verbose output",
     )
-    
+
     args = parser.parse_args()
-    
+
     checker = ArtifactChecker(verbose=args.verbose)
-    
+
     success = checker.verify_training_run(
         models_dir=args.models_dir,
         reports_dir=args.reports_dir,
@@ -500,7 +510,7 @@ def main():
         check_cv=args.check_cv,
         skip_conformal_checks=args.skip_conformal_checks,
     )
-    
+
     if success:
         print(f"\n{Colors.GREEN}{Colors.BOLD}✓ All checks PASSED{Colors.RESET}")
         sys.exit(0)

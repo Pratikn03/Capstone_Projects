@@ -30,36 +30,32 @@ Configuration:
     Webhook URLs should be stored securely (environment variables or secrets
     manager), not hardcoded. See configs/monitoring.yaml for alert thresholds.
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Mapping
+from collections.abc import Mapping
 
 from orius.utils.net import get_session
 
 
-def send_webhook(
-    url: str, 
-    payload: Mapping[str, object], 
-    retries: int = 3, 
-    backoff: float = 0.5
-) -> None:
+def send_webhook(url: str, payload: Mapping[str, object], retries: int = 3, backoff: float = 0.5) -> None:
     """
     Send a JSON payload to a webhook endpoint with automatic retries.
-    
+
     This function is designed for alerting purposes where delivery is
     important but not latency-critical. Failed attempts are logged
     and retried with exponential backoff.
-    
+
     Args:
         url: Webhook URL (Slack, Discord, custom endpoint)
         payload: Dictionary to be JSON-encoded and POSTed
         retries: Number of retry attempts (default: 3)
         backoff: Initial backoff delay in seconds (doubles each retry)
-        
+
     Raises:
         requests.HTTPError: If all retry attempts fail
-        
+
     Example:
         >>> send_webhook(
         ...     "https://hooks.slack.com/services/EXAMPLE",
@@ -67,10 +63,10 @@ def send_webhook(
         ... )
     """
     log = logging.getLogger(__name__)
-    
+
     # Get a session with retry configuration
     session = get_session(retries=retries, backoff=backoff)
-    
+
     try:
         resp = session.post(url, json=payload, timeout=15)
         resp.raise_for_status()

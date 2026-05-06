@@ -10,10 +10,12 @@ Computes the seven Paper-4 benchmark metrics across an episode trajectory:
 6. AC    – Audit Completeness
 7. RL    – Recovery Latency (steps to regain valid certificate)
 """
+
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -95,10 +97,7 @@ def compute_oasg(records: Sequence[StepRecord], window: int = 12) -> float:
     the true state is already violating the constraint surface.
     """
     del window
-    comparable = [
-        r for r in records
-        if r.resolved_observed_constraint_satisfied() is not None
-    ]
+    comparable = [r for r in records if r.resolved_observed_constraint_satisfied() is not None]
     if not comparable:
         return 0.0
     gaps = sum(
@@ -114,9 +113,7 @@ def compute_cva(records: Sequence[StepRecord]) -> float:
     certificate prediction matched ground truth."""
     if not records:
         return 1.0
-    correct = sum(
-        1 for r in records if r.certificate_valid == r.certificate_predicted_valid
-    )
+    correct = sum(1 for r in records if r.certificate_valid == r.certificate_predicted_valid)
     return correct / len(records)
 
 
@@ -142,16 +139,16 @@ def compute_gdq(records: Sequence[StepRecord]) -> float:
     if len(fb_steps) < 2:
         descent = 1.0
     else:
+
         def _action_magnitude(action: dict[str, float]) -> float:
             return sum(
-                abs(float(v)) for v in action.values()
-                if isinstance(v, (int, float)) or (hasattr(v, "__float__") and not isinstance(v, bool))
+                abs(float(v))
+                for v in action.values()
+                if isinstance(v, int | float) or (hasattr(v, "__float__") and not isinstance(v, bool))
             )
 
         magnitudes = [_action_magnitude(r.action) for r in fb_steps]
-        monotonic = sum(
-            1 for i in range(1, len(magnitudes)) if magnitudes[i] <= magnitudes[i - 1] + 1e-9
-        )
+        monotonic = sum(1 for i in range(1, len(magnitudes)) if magnitudes[i] <= magnitudes[i - 1] + 1e-9)
         descent = monotonic / (len(magnitudes) - 1)
 
     return float(uw_frac * (1.0 - tsvr) * descent)

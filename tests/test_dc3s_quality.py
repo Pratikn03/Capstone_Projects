@@ -1,4 +1,5 @@
 """Unit tests for DC3S telemetry reliability scoring."""
+
 from __future__ import annotations
 
 from orius.dc3s.quality import compute_reliability

@@ -1,4 +1,5 @@
 """CLI entrypoint to run the streaming ingest consumer from YAML config."""
+
 from __future__ import annotations
 
 import argparse
@@ -81,7 +82,7 @@ def main() -> None:
     try:
         consumer.run_forever(max_messages=args.max_messages)
     except KeyboardInterrupt:
-        pass
+        return
     finally:
         consumer.close()
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Regenerate all publication figures at camera-ready quality (300 DPI, serif fonts)."""
+
 from __future__ import annotations
 
 import json
@@ -11,6 +12,7 @@ from pathlib import Path
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,11 +46,11 @@ RCPARAMS = {
 }
 
 CONTROLLER_STYLE = {
-    "cvar_interval":        {"color": "#1f77b4", "marker": "o"},
-    "dc3s_ftit":            {"color": "#2ca02c", "marker": "D"},
-    "deterministic_lp":     {"color": "#ff7f0e", "marker": "s"},
-    "robust_fixed_interval":{"color": "#d62728", "marker": "^"},
-    "threshold_rule":       {"color": "#9467bd", "marker": "v"},
+    "cvar_interval": {"color": "#1f77b4", "marker": "o"},
+    "dc3s_ftit": {"color": "#2ca02c", "marker": "D"},
+    "deterministic_lp": {"color": "#ff7f0e", "marker": "s"},
+    "robust_fixed_interval": {"color": "#d62728", "marker": "^"},
+    "threshold_rule": {"color": "#9467bd", "marker": "v"},
 }
 
 TARGET_COLORS = {"load_mw": "#1f77b4", "wind_mw": "#2ca02c", "solar_mw": "#ff7f0e"}
@@ -129,14 +131,23 @@ def build_fig03_fig04():
         print("  SKIP fig03/fig04: no dropout/drift_combo rows")
         return
 
-    sev_col = "true_soc_violation_severity_p95_mwh" if "true_soc_violation_severity_p95_mwh" in subset.columns else "true_soc_violation_severity_p95"
+    sev_col = (
+        "true_soc_violation_severity_p95_mwh"
+        if "true_soc_violation_severity_p95_mwh" in subset.columns
+        else "true_soc_violation_severity_p95"
+    )
 
     # --- FIG03: violation rate ---
     fig, ax = plt.subplots(figsize=(8, 5))
     for controller, sub in subset.groupby("controller", sort=True):
         s = _style(controller)
-        ax.plot(sub["seed"], sub["true_soc_violation_rate"],
-                marker=s["marker"], color=s["color"], label=s["label"])
+        ax.plot(
+            sub["seed"],
+            sub["true_soc_violation_rate"],
+            marker=s["marker"],
+            color=s["color"],
+            label=s["label"],
+        )
     ax.set_xlabel("Simulation Seed")
     ax.set_ylabel("True-SOC Violation Rate")
     ax.set_title("True-SOC Violation Rate Under Faulted Telemetry")
@@ -153,8 +164,7 @@ def build_fig03_fig04():
     fig, ax = plt.subplots(figsize=(8, 5))
     for controller, sub in subset.groupby("controller", sort=True):
         s = _style(controller)
-        ax.plot(sub["seed"], sub[sev_col],
-                marker=s["marker"], color=s["color"], label=s["label"])
+        ax.plot(sub["seed"], sub[sev_col], marker=s["marker"], color=s["color"], label=s["label"])
     ax.set_xlabel("Simulation Seed")
     ax.set_ylabel("True-SOC Severity P95 (MWh)")
     ax.set_title("True-SOC Violation Severity (P95) Under Faulted Telemetry")
@@ -181,10 +191,16 @@ def build_fig05():
         p = float(row["picp_90"])
         t = str(row.get("target", "load_mw"))
         g = str(row["group"])
-        ax.scatter(w, p, s=100,
-                   marker=GROUP_MARKERS.get(g, "o"),
-                   color=TARGET_COLORS.get(t, "#555"),
-                   edgecolors="black", linewidths=0.5, zorder=5)
+        ax.scatter(
+            w,
+            p,
+            s=100,
+            marker=GROUP_MARKERS.get(g, "o"),
+            color=TARGET_COLORS.get(t, "#555"),
+            edgecolors="black",
+            linewidths=0.5,
+            zorder=5,
+        )
         ax.annotate(f" {g}", (w, p), fontsize=8, va="center")
     ax.axhline(0.90, color="black", linestyle="--", linewidth=1.0, label="90% target")
     ax.set_xlabel("Mean Interval Width (MW)")
@@ -209,21 +225,32 @@ def build_fig06():
     if plot_df.empty:
         plot_df = df.copy()
 
-    region_colors = {"DE": "#1f77b4", "US": "#ff7f0e", "US_MISO": "#ff7f0e",
-                     "US_PJM": "#2ca02c", "US_ERCOT": "#d62728"}
+    region_colors = {
+        "DE": "#1f77b4",
+        "US": "#ff7f0e",
+        "US_MISO": "#ff7f0e",
+        "US_PJM": "#2ca02c",
+        "US_ERCOT": "#d62728",
+    }
 
     fig, ax = plt.subplots(figsize=(7, 4))
     for region, sub in plot_df.groupby("region", sort=True):
         picp = pd.to_numeric(sub["picp_90_mean"], errors="coerce")
         c = region_colors.get(str(region), "#555")
-        ax.bar(sub["scenario"].astype(str) + f"\n({region})", picp,
-               color=c, alpha=0.85, edgecolor="black", linewidth=0.5,
-               label=str(region))
+        ax.bar(
+            sub["scenario"].astype(str) + f"\n({region})",
+            picp,
+            color=c,
+            alpha=0.85,
+            edgecolor="black",
+            linewidth=0.5,
+            label=str(region),
+        )
     ax.axhline(0.90, color="black", linestyle="--", linewidth=1.0)
     ax.set_ylabel("PICP@90")
     ax.set_title("Transfer Coverage Across Regions")
     handles, labels = ax.get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
+    by_label = dict(zip(labels, handles, strict=False))
     ax.legend(by_label.values(), by_label.keys(), fontsize=8)
     ax.tick_params(axis="x", rotation=0, labelsize=8)
     fig.tight_layout()
@@ -236,30 +263,45 @@ def build_fig06():
 # ═══════════════════════════════════════════════════════════
 def build_fig07():
     df = pd.read_csv(PUB / "dc3s_main_table.csv")
-    sev_col = "true_soc_violation_severity_p95_mwh" if "true_soc_violation_severity_p95_mwh" in df.columns else "true_soc_violation_severity_p95"
+    sev_col = (
+        "true_soc_violation_severity_p95_mwh"
+        if "true_soc_violation_severity_p95_mwh" in df.columns
+        else "true_soc_violation_severity_p95"
+    )
 
     baseline = df[df["controller"] == "robust_fixed_interval"][
         ["scenario", "seed", "true_soc_violation_rate", sev_col, "expected_cost_usd"]
-    ].rename(columns={
-        "true_soc_violation_rate": "baseline_violation_rate",
-        sev_col: "baseline_severity_p95",
-        "expected_cost_usd": "baseline_cost_usd",
-    })
+    ].rename(
+        columns={
+            "true_soc_violation_rate": "baseline_violation_rate",
+            sev_col: "baseline_severity_p95",
+            "expected_cost_usd": "baseline_cost_usd",
+        }
+    )
     merged = df.merge(baseline, on=["scenario", "seed"], how="left")
     merged["violation_reduction_pct"] = 100.0 * (
         (merged["baseline_violation_rate"] - merged["true_soc_violation_rate"])
-        / np.maximum(merged["baseline_violation_rate"], 1e-9))
+        / np.maximum(merged["baseline_violation_rate"], 1e-9)
+    )
     merged["cost_delta_pct"] = 100.0 * (
         (merged["expected_cost_usd"] - merged["baseline_cost_usd"])
-        / np.maximum(merged["baseline_cost_usd"], 1e-9))
+        / np.maximum(merged["baseline_cost_usd"], 1e-9)
+    )
 
     fig, ax = plt.subplots(figsize=(8, 5))
     for controller, sub in merged.groupby("controller", sort=True):
         s = _style(controller)
-        ax.scatter(sub["cost_delta_pct"].to_numpy(dtype=float),
-                   sub["violation_reduction_pct"].to_numpy(dtype=float),
-                   alpha=0.8, marker=s["marker"], color=s["color"],
-                   edgecolors="black", linewidths=0.3, label=s["label"], s=50)
+        ax.scatter(
+            sub["cost_delta_pct"].to_numpy(dtype=float),
+            sub["violation_reduction_pct"].to_numpy(dtype=float),
+            alpha=0.8,
+            marker=s["marker"],
+            color=s["color"],
+            edgecolors="black",
+            linewidths=0.3,
+            label=s["label"],
+            s=50,
+        )
     ax.axhline(10.0, color="black", linestyle="--", linewidth=1.0, label="10% threshold")
     ax.set_xlabel("Cost Delta vs Robust Baseline (%)")
     ax.set_ylabel("Violation Reduction (%)")
@@ -287,9 +329,17 @@ def build_fig08():
         y = pd.to_numeric(sub["adaptive_width_mean"], errors="coerce").to_numpy(float)
         mask = np.isfinite(x) & np.isfinite(y)
         if mask.any():
-            ax.scatter(x[mask], y[mask], alpha=0.8, marker=s["marker"],
-                       color=s["color"], edgecolors="black", linewidths=0.3,
-                       label=s["label"], s=50)
+            ax.scatter(
+                x[mask],
+                y[mask],
+                alpha=0.8,
+                marker=s["marker"],
+                color=s["color"],
+                edgecolors="black",
+                linewidths=0.3,
+                label=s["label"],
+                s=50,
+            )
     ax.set_xlabel("RAC Sensitivity (mean)")
     ax.set_ylabel("Adaptive Width (mean, MW)")
     ax.set_title("RAC Sensitivity vs Interval Width Expansion")
@@ -311,9 +361,9 @@ def build_fig09():
     summary_df = pd.read_csv(summary_csv)
 
     DATASET_META_LOCAL = {
-        "DE":       {"source": "OPSD + SMARD"},
-        "US_MISO":  {"source": "EIA-930 MISO"},
-        "US_PJM":   {"source": "EIA-930 PJM"},
+        "DE": {"source": "OPSD + SMARD"},
+        "US_MISO": {"source": "EIA-930 MISO"},
+        "US_PJM": {"source": "EIA-930 PJM"},
         "US_ERCOT": {"source": "EIA-930 ERCOT"},
     }
 
@@ -321,35 +371,41 @@ def build_fig09():
     for dkey, sub in summary_df.groupby("DatasetKey", sort=True):
         first = sub.iloc[0]
         meta = DATASET_META_LOCAL.get(str(dkey), {})
-        rows.append({
-            "dataset_key": str(dkey),
-            "dataset_label": str(first["Dataset"]),
-            "country": str(first["Country"]),
-            "rows": int(first["Rows"]),
-            "date_start": str(first["Start"]),
-            "date_end": str(first["End"]),
-            "targets": ", ".join(sorted(sub["Signal"].astype(str).unique().tolist())),
-            "min_coverage_pct": float(pd.to_numeric(sub["Coverage%"], errors="coerce").min()),
-            "source": meta.get("source", "n/a"),
-        })
+        rows.append(
+            {
+                "dataset_key": str(dkey),
+                "dataset_label": str(first["Dataset"]),
+                "country": str(first["Country"]),
+                "rows": int(first["Rows"]),
+                "date_start": str(first["Start"]),
+                "date_end": str(first["End"]),
+                "targets": ", ".join(sorted(sub["Signal"].astype(str).unique().tolist())),
+                "min_coverage_pct": float(pd.to_numeric(sub["Coverage%"], errors="coerce").min()),
+                "source": meta.get("source", "n/a"),
+            }
+        )
 
     ncols = 2 if len(rows) > 1 else 1
     nrows = max(1, (len(rows) + ncols - 1) // ncols)
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(13, 3.8 * nrows))
     flat_axes = list(axes.flat) if hasattr(axes, "flat") else [axes]
 
-    for ax, r in zip(flat_axes, rows):
+    for ax, r in zip(flat_axes, rows, strict=False):
         ax.axis("off")
-        ax.set_xlim(0, 1); ax.set_ylim(0, 1)
-        ax.add_patch(plt.Rectangle((0.02, 0.05), 0.96, 0.90,
-                     facecolor="#f7f7f4", edgecolor="#2e3d30", linewidth=1.5))
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.add_patch(
+            plt.Rectangle((0.02, 0.05), 0.96, 0.90, facecolor="#f7f7f4", edgecolor="#2e3d30", linewidth=1.5)
+        )
         ax.text(0.05, 0.88, r["dataset_label"], fontsize=14, fontweight="bold", color="#1f2d1f")
         ax.text(0.05, 0.76, f"Key: {r['dataset_key']}  |  Country: {r['country']}", fontsize=10, color="#334")
-        ax.text(0.05, 0.64, f"Rows: {r['rows']:,}  |  Range: {r['date_start']} to {r['date_end']}", fontsize=11)
+        ax.text(
+            0.05, 0.64, f"Rows: {r['rows']:,}  |  Range: {r['date_start']} to {r['date_end']}", fontsize=11
+        )
         ax.text(0.05, 0.52, f"Targets: {r['targets']}", fontsize=11)
         ax.text(0.05, 0.40, f"Min coverage: {r['min_coverage_pct']:.1f}%", fontsize=11)
         ax.text(0.05, 0.28, f"Source: {r['source']}", fontsize=11)
-    for ax in flat_axes[len(rows):]:
+    for ax in flat_axes[len(rows) :]:
         ax.axis("off")
 
     fig.suptitle("ORIUS Dataset Cards", fontsize=16, fontweight="bold")
@@ -368,25 +424,40 @@ def build_fig10():
     for _, row in cov.iterrows():
         t = str(row.get("target", "load_mw"))
         g = str(row.get("group", "group"))
-        ax.scatter(float(row["mean_width"]), float(row["picp_90"]),
-                   s=100, marker=GROUP_MARKERS.get(g, "o"),
-                   color=TARGET_COLORS.get(t, "#555"),
-                   edgecolors="black", linewidths=0.5, zorder=5)
-        ax.annotate(f" {t.replace('_mw','')}:{g}", (float(row["mean_width"]), float(row["picp_90"])),
-                    fontsize=7, va="center")
+        ax.scatter(
+            float(row["mean_width"]),
+            float(row["picp_90"]),
+            s=100,
+            marker=GROUP_MARKERS.get(g, "o"),
+            color=TARGET_COLORS.get(t, "#555"),
+            edgecolors="black",
+            linewidths=0.5,
+            zorder=5,
+        )
+        ax.annotate(
+            f" {t.replace('_mw', '')}:{g}",
+            (float(row["mean_width"]), float(row["picp_90"])),
+            fontsize=7,
+            va="center",
+        )
     ax.axhline(0.90, color="black", linestyle="--", linewidth=1.0, label="90% target")
     ax.set_xlabel("Mean Interval Width (MW)")
     ax.set_ylabel("PICP@90")
     ax.set_title("Calibration Tradeoff by Target and Volatility Group")
     # custom legend for targets and groups
     from matplotlib.lines import Line2D
+
     legend_elements = []
     for t, c in TARGET_COLORS.items():
-        legend_elements.append(Line2D([0], [0], marker="o", color="w", markerfacecolor=c,
-                                        markersize=8, label=t.replace("_mw", "")))
+        legend_elements.append(
+            Line2D(
+                [0], [0], marker="o", color="w", markerfacecolor=c, markersize=8, label=t.replace("_mw", "")
+            )
+        )
     for g, m in [("low", "o"), ("med", "s"), ("high", "^")]:
-        legend_elements.append(Line2D([0], [0], marker=m, color="w", markerfacecolor="#888",
-                                        markersize=8, label=g))
+        legend_elements.append(
+            Line2D([0], [0], marker=m, color="w", markerfacecolor="#888", markersize=8, label=g)
+        )
     ax.legend(handles=legend_elements, loc="lower right", fontsize=8, ncol=2)
     fig.tight_layout()
     _save_publication_figure(fig, "fig_calibration_tradeoff", "fig10_calibration_tradeoff")
@@ -406,20 +477,35 @@ def build_fig11():
     if plot_df.empty:
         plot_df = df.copy()
 
-    region_colors = {"DE": "#1f77b4", "US": "#ff7f0e", "US_MISO": "#ff7f0e",
-                     "US_PJM": "#2ca02c", "US_ERCOT": "#d62728"}
+    region_colors = {
+        "DE": "#1f77b4",
+        "US": "#ff7f0e",
+        "US_MISO": "#ff7f0e",
+        "US_PJM": "#2ca02c",
+        "US_ERCOT": "#d62728",
+    }
     region_markers = {"DE": "o", "US": "s", "US_MISO": "s", "US_PJM": "^", "US_ERCOT": "v"}
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
     for region, sub in plot_df.groupby("region", sort=True):
         c = region_colors.get(str(region), "#555")
         m = region_markers.get(str(region), "o")
-        axes[0].plot(sub["scenario"].astype(str),
-                     pd.to_numeric(sub["picp_90_mean"], errors="coerce"),
-                     marker=m, color=c, linewidth=1.8, label=str(region))
-        axes[1].plot(sub["scenario"].astype(str),
-                     pd.to_numeric(sub["true_soc_violation_rate_mean"], errors="coerce"),
-                     marker=m, color=c, linewidth=1.8, label=str(region))
+        axes[0].plot(
+            sub["scenario"].astype(str),
+            pd.to_numeric(sub["picp_90_mean"], errors="coerce"),
+            marker=m,
+            color=c,
+            linewidth=1.8,
+            label=str(region),
+        )
+        axes[1].plot(
+            sub["scenario"].astype(str),
+            pd.to_numeric(sub["true_soc_violation_rate_mean"], errors="coerce"),
+            marker=m,
+            color=c,
+            linewidth=1.8,
+            label=str(region),
+        )
 
     axes[0].axhline(0.90, color="black", linestyle="--", linewidth=1.0)
     axes[0].set_title("Transfer Calibration")
@@ -469,7 +555,7 @@ def main():
 
     print()
     _write_lineage_outputs()
-    print(f"All camera-ready figures saved to:")
+    print("All camera-ready figures saved to:")
     print(f"  {PUB}")
     print(f"  {PAPER_FIG}")
     print("Done!")

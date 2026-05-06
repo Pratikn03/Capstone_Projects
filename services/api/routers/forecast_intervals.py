@@ -1,5 +1,5 @@
 """API router: forecast intervals using conformal calibration."""
-from typing import List, Optional
+
 from pathlib import Path
 
 import numpy as np
@@ -9,17 +9,17 @@ from pydantic import BaseModel
 
 from orius.forecasting.predict import predict_next_24h
 from orius.forecasting.uncertainty.conformal import load_conformal
-from services.api.config import load_uncertainty_config, get_conformal_path
-from services.api.routers.forecast import _load_cfg, _resolve_model_path, _cached_bundle
+from services.api.config import get_conformal_path, load_uncertainty_config
+from services.api.routers.forecast import _cached_bundle, _load_cfg, _resolve_model_path
 from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
 
 
 class ForecastResponse(BaseModel):
-    yhat: List[float]
-    pi90_lower: Optional[List[float]] = None
-    pi90_upper: Optional[List[float]] = None
+    yhat: list[float]
+    pi90_lower: list[float] | None = None
+    pi90_upper: list[float] | None = None
 
 
 @router.get("/with-intervals", response_model=ForecastResponse)

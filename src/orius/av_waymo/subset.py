@@ -1,9 +1,10 @@
 """Deterministic subset selection for the Waymo AV dry run."""
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import hashlib
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -67,7 +68,9 @@ def select_dry_run_subset(
     selected_parts: list[pd.DataFrame] = []
     leftovers: list[pd.DataFrame] = []
     for index, shard_id in enumerate(shard_ids):
-        group = shard_groups[shard_id].sort_values(["scenario_hash_rank", "scenario_id"]).reset_index(drop=True)
+        group = (
+            shard_groups[shard_id].sort_values(["scenario_hash_rank", "scenario_id"]).reset_index(drop=True)
+        )
         shard_quota = base_quota + (1 if index < remainder else 0)
         take = min(len(group), shard_quota)
         if take > 0:
@@ -75,7 +78,9 @@ def select_dry_run_subset(
         if take < len(group):
             leftovers.append(group.iloc[take:].copy())
 
-    selected = pd.concat(selected_parts, ignore_index=True) if selected_parts else pd.DataFrame(columns=df.columns)
+    selected = (
+        pd.concat(selected_parts, ignore_index=True) if selected_parts else pd.DataFrame(columns=df.columns)
+    )
     if len(selected) < min(target_count, len(df)) and leftovers:
         needed = min(target_count, len(df)) - len(selected)
         refill = (
@@ -113,17 +118,14 @@ def build_subset_manifest(
     )
     selected = select_dry_run_subset(scenario_index, target_count=target_count)
 
-    used_shards = sorted(set(str(item) for item in selected["shard_id"].tolist()))
-    raw_hashes = {
-        shard_id: _sha256_file(raw_path / shard_id)
-        for shard_id in used_shards
-    }
+    used_shards = sorted({str(item) for item in selected["shard_id"].tolist()})
+    raw_hashes = {shard_id: _sha256_file(raw_path / shard_id) for shard_id in used_shards}
 
     manifest_path = processed_path / "dry_run_subset_manifest.parquet"
     selected.to_parquet(manifest_path, index=False)
 
     manifest_payload = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "raw_dir": str(raw_path),
         "processed_dir": str(processed_path),
         "target_count": int(target_count),

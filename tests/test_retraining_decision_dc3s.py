@@ -1,4 +1,5 @@
 """Tests for retraining decision logic with DC3S health triggers."""
+
 from __future__ import annotations
 
 from orius.monitoring.retraining import retraining_decision

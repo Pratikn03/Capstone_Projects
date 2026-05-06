@@ -1,4 +1,5 @@
 """Tests for the typed universal degraded-observation theory kernel."""
+
 from __future__ import annotations
 
 import pytest
@@ -6,6 +7,7 @@ import pytest
 from orius.adapters.battery import BatteryDomainAdapter
 from orius.adapters.healthcare import HealthcareDomainAdapter
 from orius.adapters.vehicle import VehicleDomainAdapter
+from orius.universal_framework import get_adapter, run_universal_step
 from orius.universal_theory import (
     ContractVerifier,
     ContractViolation,
@@ -18,7 +20,6 @@ from orius.universal_theory import (
     build_safety_spec,
     derive_safe_action_set,
 )
-from orius.universal_framework import get_adapter, run_universal_step
 from orius.universal_theory.risk_bounds import calibration_contract_verify, compute_step_risk_bound
 
 
@@ -69,12 +70,43 @@ def test_run_universal_step_returns_structured_result() -> None:
     assert result["contract_checks"]["contract_passed"] is True
     assert result["certificate"]["semantic_checks"]["contract_passed"] is True
     assert "reliability_range" in result["contract_checks"]["checked_invariants"]
+    assert result["certificate"]["certificate_schema_version"] == "orius.certificate.v1"
+    assert result["certificate"]["issuer"] == "orius.runtime"
+    assert result["certificate"]["domain"] == "zone-0"
+    assert result["certificate"]["action"] == result["safe_action"]
+    assert result["certificate"]["validity_horizon_H_t"] is not None
+    assert "cert_hash" not in result["certificate"]
     assert set(result["theorem_contracts"]) == {"T3a", "T11"}
     assert result["theorem_contracts"]["T3a"]["all_executable_checks_passed"] is True
     assert result["theorem_contracts"]["T11"]["all_executable_checks_passed"] is True
     assert result["theorem_contracts"]["T11"]["forward_only"] is True
     assert result["certificate"]["theorem_contracts"]["T3a"]["status"] == "runtime_linked"
     assert result["certificate"]["theorem_contracts"]["T11"]["status"] == "runtime_linked"
+
+
+def test_safety_certificate_normalizes_legacy_cert_hash_to_canonical_schema() -> None:
+    certificate = build_safety_certificate(
+        payload={
+            "command_id": "legacy-1",
+            "cert_hash": "abc123",
+            "safe_action": {"charge_mw": 0.0},
+            "validity_horizon_H_t": 3,
+            "expires_at_step": 7,
+            "theorem_contracts": {"T11": {"status": "runtime_linked"}},
+        },
+        source_domain="battery",
+        assumption_tags=("A3", "A8"),
+    )
+
+    assert certificate["certificate_hash"] == "abc123"
+    assert certificate["certificate_schema_version"] == "orius.certificate.v1"
+    assert certificate["issuer"] == "orius.runtime"
+    assert certificate["domain"] == "unknown"
+    assert certificate["action"] == {"charge_mw": 0.0}
+    assert certificate["validity_horizon_H_t"] == 3
+    assert certificate["expires_at_step"] == 7
+    assert certificate["theorem_contracts"]["T11"]["status"] == "runtime_linked"
+    assert "cert_hash" not in certificate
 
 
 def test_contract_verifier_rejects_tampered_runtime_certificate() -> None:
@@ -261,15 +293,19 @@ def test_certificate_preserves_causal_payload_and_horizon_metadata() -> None:
 
 # ── PAC Validity Horizon, Conservative Horizon, Assumption Register ─────────
 
-from orius.universal_theory.risk_bounds import pac_validity_horizon_bound
 from orius.dc3s.half_life import compute_conservative_horizon
 from orius.universal_theory.contracts import ASSUMPTION_REGISTER, verify_assumption_coverage
+from orius.universal_theory.risk_bounds import pac_validity_horizon_bound
 
 
 def test_pac_validity_horizon_bound() -> None:
     result = pac_validity_horizon_bound(
-        n_cal=500, alpha=0.1, delta=0.05,
-        sigma_d=10.0, margin=100.0, w_min=0.5,
+        n_cal=500,
+        alpha=0.1,
+        delta=0.05,
+        sigma_d=10.0,
+        margin=100.0,
+        w_min=0.5,
     )
     assert result["pac_holds"] is True
     assert result["H_conservative"] > 0
@@ -323,6 +359,7 @@ def test_calibration_contract_rejects_empty_bins_as_supported_coverage() -> None
 
 def test_conservative_horizon_vs_heuristic() -> None:
     from orius.dc3s.half_life import compute_validity_horizon
+
     conservative = compute_conservative_horizon(margin=100.0, sigma_d=10.0, delta=0.05)
     heuristic = compute_validity_horizon(
         observed_state={"current_soc_mwh": 500.0},

@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 """Validate that Appendix B is the canonical A1-A13 assumption surface."""
+
 from __future__ import annotations
 
 import re
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from orius.universal_theory.contracts import ASSUMPTION_REGISTER  # noqa: E402
-
+from orius.universal_theory.contracts import ASSUMPTION_REGISTER
 
 APPENDIX_B = REPO_ROOT / "appendices" / "app_b_assumptions.tex"
 DEFENDED_MAP = REPO_ROOT / "reports/publication/defended_assumption_map.csv"

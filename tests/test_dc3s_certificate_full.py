@@ -1,10 +1,11 @@
 """Comprehensive tests for DC3S certificate creation and storage."""
+
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 
+import duckdb
 import pytest
 
 from orius.dc3s.certificate import (
@@ -22,33 +23,33 @@ from orius.dc3s.certificate import (
 
 
 def _cert(cmd_id="cmd-1", prev_hash=None, **kw):
-    defaults = dict(
-        command_id=cmd_id,
-        device_id="dev-1",
-        zone_id="DE",
-        controller="dc3s",
-        proposed_action={"charge_mw": 5.0, "discharge_mw": 0.0},
-        safe_action={"charge_mw": 4.0, "discharge_mw": 0.0},
-        uncertainty={"lower": [90.0], "upper": [110.0]},
-        reliability={"w_t": 0.8},
-        drift={"drift": False},
-        model_hash="abc123",
-        config_hash="def456",
-        prev_hash=prev_hash,
-        intervened=True,
-        intervention_reason="projection",
-        reliability_w=0.8,
-        drift_flag=False,
-        inflation=1.3,
-        guarantee_checks_passed=True,
-        guarantee_fail_reasons=[],
-        true_soc_violation_after_apply=False,
-        assumptions_version="v1",
-        gamma_mw=2.0,
-        e_t_mwh=3.0,
-        soc_tube_lower_mwh=15.0,
-        soc_tube_upper_mwh=85.0,
-    )
+    defaults = {
+        "command_id": cmd_id,
+        "device_id": "dev-1",
+        "zone_id": "DE",
+        "controller": "dc3s",
+        "proposed_action": {"charge_mw": 5.0, "discharge_mw": 0.0},
+        "safe_action": {"charge_mw": 4.0, "discharge_mw": 0.0},
+        "uncertainty": {"lower": [90.0], "upper": [110.0]},
+        "reliability": {"w_t": 0.8},
+        "drift": {"drift": False},
+        "model_hash": "abc123",
+        "config_hash": "def456",
+        "prev_hash": prev_hash,
+        "intervened": True,
+        "intervention_reason": "projection",
+        "reliability_w": 0.8,
+        "drift_flag": False,
+        "inflation": 1.3,
+        "guarantee_checks_passed": True,
+        "guarantee_fail_reasons": [],
+        "true_soc_violation_after_apply": False,
+        "assumptions_version": "v1",
+        "gamma_mw": 2.0,
+        "e_t_mwh": 3.0,
+        "soc_tube_lower_mwh": 15.0,
+        "soc_tube_upper_mwh": 85.0,
+    }
     defaults.update(kw)
     return make_certificate(**defaults)
 
@@ -56,9 +57,23 @@ def _cert(cmd_id="cmd-1", prev_hash=None, **kw):
 class TestMakeCertificate:
     def test_returns_all_required_fields(self):
         cert = _cert()
-        required = {"command_id", "certificate_id", "created_at", "certificate_hash",
-                     "device_id", "zone_id", "controller", "proposed_action", "safe_action",
-                     "uncertainty", "reliability", "drift", "model_hash", "config_hash", "prev_hash"}
+        required = {
+            "command_id",
+            "certificate_id",
+            "created_at",
+            "certificate_hash",
+            "device_id",
+            "zone_id",
+            "controller",
+            "proposed_action",
+            "safe_action",
+            "uncertainty",
+            "reliability",
+            "drift",
+            "model_hash",
+            "config_hash",
+            "prev_hash",
+        }
         assert required <= set(cert.keys())
 
     def test_hash_is_string(self):
@@ -80,9 +95,17 @@ class TestMakeCertificate:
 
     def test_optional_fields_none(self):
         cert = make_certificate(
-            command_id="x", device_id="d", zone_id="z", controller="c",
-            proposed_action={}, safe_action={}, uncertainty={}, reliability={},
-            drift={}, model_hash="m", config_hash="c",
+            command_id="x",
+            device_id="d",
+            zone_id="z",
+            controller="c",
+            proposed_action={},
+            safe_action={},
+            uncertainty={},
+            reliability={},
+            drift={},
+            model_hash="m",
+            config_hash="c",
         )
         assert cert["intervened"] is None
         assert cert["gamma_mw"] is None
@@ -237,17 +260,58 @@ class TestStoreAndGet:
         store_certificate(cert, db, "certs")
         assert get_certificate("nonexistent", db, "certs") is None
 
+    def test_append_only_store_is_idempotent_and_rejects_conflicting_overwrite(self, tmp_path):
+        db = str(tmp_path / "test.duckdb")
+        first = _cert(cmd_id="same-command", safe_action={"charge_mw": 4.0, "discharge_mw": 0.0})
+        conflicting = _cert(cmd_id="same-command", safe_action={"charge_mw": 2.0, "discharge_mw": 0.0})
+
+        store_certificate(first, db, "certs")
+        store_certificate(first, db, "certs")
+        with pytest.raises(RuntimeError, match="conflicting certificate overwrite"):
+            store_certificate(conflicting, db, "certs")
+
+        retrieved = get_certificate("same-command", db, "certs")
+        assert retrieved is not None
+        assert retrieved["certificate_hash"] == first["certificate_hash"]
+
+        conn = duckdb.connect(db)
+        try:
+            event_count = conn.execute("SELECT COUNT(*) FROM certs_events").fetchone()[0]
+        finally:
+            conn.close()
+        assert event_count == 1
+
+    def test_signature_verification_uses_certificate_key_id_for_rotation(self, monkeypatch):
+        monkeypatch.setenv(
+            "ORIUS_CERTIFICATE_KEYS",
+            json.dumps(
+                {
+                    "old-key": "old-secret-with-enough-length-123",
+                    "new-key": "new-secret-with-enough-length-456",
+                }
+            ),
+        )
+        monkeypatch.setenv("ORIUS_CERTIFICATE_ACTIVE_KEY_ID", "new-key")
+
+        signed_with_old_key = sign_certificate(_cert(cmd_id="rotated"), key_id="old-key")
+
+        verification = verify_certificate(signed_with_old_key, require_signature=True)
+
+        assert verification["valid"] is True
+        assert verification["signature"]["valid"] is True
+
     def test_get_nonexistent_db_returns_none(self):
         assert get_certificate("x", "/tmp/nonexistent_db_xyz.duckdb", "certs") is None
 
-    def test_overwrite_existing(self, tmp_path):
+    def test_conflicting_overwrite_is_rejected(self, tmp_path):
         db = str(tmp_path / "test.duckdb")
         c1 = _cert(cmd_id="x", inflation=1.0)
         store_certificate(c1, db, "certs")
         c2 = _cert(cmd_id="x", inflation=2.0)
-        store_certificate(c2, db, "certs")
+        with pytest.raises(RuntimeError, match="conflicting certificate overwrite"):
+            store_certificate(c2, db, "certs")
         retrieved = get_certificate("x", db, "certs")
-        assert retrieved["inflation"] == 2.0
+        assert retrieved["inflation"] == 1.0
 
     def test_typed_columns_persisted(self, tmp_path):
         db = str(tmp_path / "test.duckdb")
@@ -266,6 +330,7 @@ class TestStoreAndGet:
         )
         store_certificate(cert, db, "certs")
         import duckdb
+
         conn = duckdb.connect(db)
         try:
             row = conn.execute(

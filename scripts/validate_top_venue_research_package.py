@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate the top-venue ORIUS research package."""
+
 from __future__ import annotations
 
 import csv
@@ -7,7 +8,6 @@ import json
 import re
 import sys
 from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
@@ -22,14 +22,29 @@ UPLIFT_SCORECARD_CSV = PUBLICATION_DIR / "orius_95plus_uplift_scorecard.csv"
 UPLIFT_SCORECARD_JSON = PUBLICATION_DIR / "orius_95plus_uplift_scorecard.json"
 UPLIFT_SCORECARD_MD = PUBLICATION_DIR / "orius_95plus_uplift_scorecard.md"
 
+CANONICAL_ORIUS_FRAMING = (
+    "ORIUS provides a reliability-aware runtime safety layer for physical AI under "
+    "degraded observation, enforcing certificate-backed action release through "
+    "uncertainty coverage, repair, and fallback."
+)
+
 FORBIDDEN_PATTERNS = {
-    "av_full_deployment": re.compile(r"\b(AV|autonomous vehicles?)\b.{0,100}\b(full|complete|unrestricted).{0,60}\b(autonomous-driving|road|deployment|closure)\b", re.I | re.S),
-    "healthcare_live_clinical": re.compile(r"\bhealthcare\b.{0,100}\b(live clinical|clinical deployment|prospective trial|clinical decision support approval)\b", re.I | re.S),
-    "validation_harness_headline": re.compile(r"\bheadline\b.{0,140}\b(validation[-_ ]harness|diagnostic validation harness)\b", re.I | re.S),
+    "av_full_deployment": re.compile(
+        r"\b(AV|autonomous vehicles?)\b.{0,100}\b(full|complete|unrestricted).{0,60}\b(autonomous-driving|road|deployment|closure)\b",
+        re.I | re.S,
+    ),
+    "healthcare_live_clinical": re.compile(
+        r"\bhealthcare\b.{0,100}\b(live clinical|clinical deployment|prospective trial|clinical decision support approval)\b",
+        re.I | re.S,
+    ),
+    "validation_harness_headline": re.compile(
+        r"\bheadline\b.{0,140}\b(validation[-_ ]harness|diagnostic validation harness)\b", re.I | re.S
+    ),
     "completed_freeze_without_manifest": re.compile(r"\b(completed|final|frozen) release\b", re.I),
 }
 
 REQUIRED_PHRASES = (
+    CANONICAL_ORIUS_FRAMING,
     "observation-only mandatory-release controllers face a lower bound",
     "ORIUS achieves an alpha-bounded upper guarantee",
     "safety-optimal under covered observation ambiguity",
@@ -77,7 +92,11 @@ def _artifact_exists(source: str) -> bool:
 
 
 def _freeze_manifest_exists() -> bool:
-    return any((REPO_ROOT / "reports" / "predeployment_freeze").glob("PREDEPLOY*/predeployment_release_manifest.json"))
+    return any(
+        (REPO_ROOT / "reports" / "predeployment_freeze").glob(
+            "PREDEPLOY*/predeployment_release_manifest.json"
+        )
+    )
 
 
 def _is_negative_boundary_context(text: str, start: int, end: int) -> bool:
@@ -156,11 +175,16 @@ def main() -> int:
         if row.get("claim_type") == "headline" and "validation_harness" in source.lower():
             findings.append(f"{claim_id}: headline claim uses validation-harness source")
 
-    if not any(row.get("claim_id") == "H2" and "lower bound" in row.get("allowed_language", "").lower() for row in matrix):
+    if not any(
+        row.get("claim_id") == "H2" and "lower bound" in row.get("allowed_language", "").lower()
+        for row in matrix
+    ):
         findings.append("matrix must include theorem lower-bound / upper-bound distinction")
     if not any(row.get("claim_id") == "F1" and row.get("evidence_status") == "incomplete" for row in matrix):
         if not _freeze_manifest_exists():
-            findings.append("freeze status must be marked incomplete until predeployment release manifest exists")
+            findings.append(
+                "freeze status must be marked incomplete until predeployment release manifest exists"
+            )
 
     required_source_lanes = {
         "runtime_assurance",
@@ -185,7 +209,9 @@ def main() -> int:
         if not url.startswith("https://"):
             findings.append(f"source row {row.get('source_name', 'unknown')} must use an https source URL")
         if not row.get("orius_gap") or not row.get("boundary"):
-            findings.append(f"source row {row.get('source_name', 'unknown')} must state ORIUS gap and boundary")
+            findings.append(
+                f"source row {row.get('source_name', 'unknown')} must state ORIUS gap and boundary"
+            )
 
     required_scorecard_dimensions = {
         "core_idea_novelty",
@@ -203,7 +229,9 @@ def main() -> int:
         if int(float(row.get("target_score", "0"))) < 95:
             findings.append(f"{row.get('dimension', 'unknown')}: target score must be at least 95")
         if row.get("current_status") != "pass" and not row.get("remaining_blocker"):
-            findings.append(f"{row.get('dimension', 'unknown')}: blocked scorecard rows must name the blocker")
+            findings.append(
+                f"{row.get('dimension', 'unknown')}: blocked scorecard rows must name the blocker"
+            )
     if uplift_json.get("achieved") and not all(row.get("current_status") == "pass" for row in scorecard_rows):
         findings.append("uplift JSON cannot mark 95+ achieved while scorecard rows remain blocked")
 
@@ -212,13 +240,18 @@ def main() -> int:
         findings.append(f"JSON status must be {expected_status!r}")
     if package_json.get("freeze_status", {}).get("complete") and not _freeze_manifest_exists():
         findings.append("JSON freeze_status.complete is true but no release manifest exists")
-    if package_json.get("healthcare_boundary") != "retrospective_source_holdout_time_forward_not_live_clinical":
+    if (
+        package_json.get("healthcare_boundary")
+        != "retrospective_source_holdout_time_forward_not_live_clinical"
+    ):
         findings.append("JSON healthcare boundary must reject live clinical deployment")
     if package_json.get("av_boundary") != "nuplan_replay_surrogate_not_carla_or_road_deployment":
         findings.append("JSON AV boundary must reject CARLA/road deployment completion claims")
     if len(package_json.get("source_anchors", [])) < 12:
         findings.append("JSON must include the source-backed novelty anchors")
-    if package_json.get("uplift_95plus_achieved") and not all(row.get("current_status") == "pass" for row in scorecard_rows):
+    if package_json.get("uplift_95plus_achieved") and not all(
+        row.get("current_status") == "pass" for row in scorecard_rows
+    ):
         findings.append("package JSON cannot mark 95+ achieved while scorecard rows remain blocked")
 
     if findings:

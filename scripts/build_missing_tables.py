@@ -7,6 +7,7 @@ All output goes to paper/assets/tables/generated/.
 Usage:
     python scripts/build_missing_tables.py
 """
+
 from __future__ import annotations
 
 import math
@@ -70,7 +71,7 @@ def build_battery_leaderboard() -> None:
         lines.append(
             f"{int(row['rank'])} & {row['controller']} & {viol_str} & "
             f"{float(row['mean_intervention_rate']):.3f} & "
-            f"\\${float(row['mean_cost_usd'])/1e6:.1f}M & "
+            f"\\${float(row['mean_cost_usd']) / 1e6:.1f}M & "
             f"{float(row['mean_picp_90']):.3f} \\\\"
         )
     lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
@@ -143,7 +144,10 @@ def build_fault_stress_subset() -> None:
     ctrl_col = next((c for c in df.columns if c.lower() in ("controller", "Controller")), None)
     if ctrl_col is None:
         # fall back to first column with "controller" substring
-        ctrl_col = next((c for c in df.columns if "controller" in c.lower()), df.columns[2] if len(df.columns) > 2 else None)
+        ctrl_col = next(
+            (c for c in df.columns if "controller" in c.lower()),
+            df.columns[2] if len(df.columns) > 2 else None,
+        )
     keep_controllers = ["dc3s_ftit", "deterministic_lp"]
     df = df[df[ctrl_col].isin(keep_controllers)].copy()
 
@@ -192,8 +196,7 @@ def build_fault_stress_subset() -> None:
         ).reset_index()
 
         col_labels = " & ".join(
-            [c.replace("_", r"\_") for c in group_cols]
-            + [r"DC3S-FTIT TSVR (\%)", r"Det.\ LP TSVR (\%)"]
+            [c.replace("_", r"\_") for c in group_cols] + [r"DC3S-FTIT TSVR (\%)", r"Det.\ LP TSVR (\%)"]
         )
         lines = [
             r"\begin{table}[htbp]",
@@ -235,8 +238,9 @@ def build_sensitivity_ci() -> None:
     # Find key metric columns
     picp_col = next((c for c in df.columns if "picp" in c.lower()), None)
     viol_col = next((c for c in df.columns if "violation" in c.lower() or "tsvr" in c.lower()), None)
-    param_cols = [c for c in ["scenario", "controller", "alpha0", "ph_lambda", "kappa_drift_penalty"]
-                  if c in df.columns][:3]
+    param_cols = [
+        c for c in ["scenario", "controller", "alpha0", "ph_lambda", "kappa_drift_penalty"] if c in df.columns
+    ][:3]
 
     # Pick representative DC3S rows
     dc3s_mask = df.get("controller", pd.Series([""] * len(df))).str.contains("dc3s", case=False, na=False)
@@ -287,8 +291,10 @@ def build_claim_evidence() -> None:
     df = pd.read_csv(src)
     # Shorten claim text and evidence path for display
     id_col = df.columns[0]  # claim_id
-    text_col = next((c for c in df.columns if "text" in c.lower() or "claim" in c.lower()
-                     and c != id_col), df.columns[1] if len(df.columns) > 1 else None)
+    text_col = next(
+        (c for c in df.columns if "text" in c.lower() or ("claim" in c.lower() and c != id_col)),
+        df.columns[1] if len(df.columns) > 1 else None,
+    )
     ev_col = next((c for c in df.columns if "evidence" in c.lower() or "path" in c.lower()), None)
     status_col = next((c for c in df.columns if "status" in c.lower()), None)
     type_col = next((c for c in df.columns if "type" in c.lower()), None)

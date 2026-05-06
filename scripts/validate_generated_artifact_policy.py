@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Fail if generated/local-only artifacts are tracked or visible as new files."""
+
 from __future__ import annotations
 
 import argparse
@@ -11,7 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.classify_repo_artifacts import classify_path  # noqa: E402
+from scripts.classify_repo_artifacts import classify_path
 
 BLOCKED_TRACKED_CATEGORIES = {
     "temporary_ai_codex_artifact",
@@ -62,7 +63,9 @@ def validate(include_deleted: bool = False) -> tuple[list[str], list[str]]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--include-deleted", action="store_true", help="Treat deleted tracked generated artifacts as failures")
+    parser.add_argument(
+        "--include-deleted", action="store_true", help="Treat deleted tracked generated artifacts as failures"
+    )
     args = parser.parse_args()
 
     findings, warnings = validate(include_deleted=args.include_deleted)

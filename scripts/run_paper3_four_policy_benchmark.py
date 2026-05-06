@@ -9,6 +9,7 @@ Canonical outputs:
   reports/paper3/intervention_trace.json
   reports/publication/graceful_four_policy_metrics.csv
 """
+
 from __future__ import annotations
 
 import argparse
@@ -44,9 +45,7 @@ CANONICAL_LAST_ACTION = {"charge_mw": 0.0, "discharge_mw": 100.0}
 CANONICAL_SOC_MWH = 5000.0
 CANONICAL_SIGMA_D = 50.0
 
-spec = importlib.util.spec_from_file_location(
-    "graceful", REPO / "src" / "orius" / "dc3s" / "graceful.py"
-)
+spec = importlib.util.spec_from_file_location("graceful", REPO / "src" / "orius" / "dc3s" / "graceful.py")
 mod = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(mod)
@@ -104,7 +103,9 @@ def collect_policy_surface(
     return rows_compare
 
 
-def summarize_surface(rows_compare: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def summarize_surface(
+    rows_compare: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Aggregate the detailed benchmark into duration-level and promoted summaries."""
     duration_buckets: dict[tuple[str, int], list[dict[str, Any]]] = {}
     for row in rows_compare:
@@ -153,12 +154,8 @@ def summarize_surface(rows_compare: list[dict[str, Any]]) -> tuple[list[dict[str
                 "violation_rate_mean": _round(sum(float(x["violation_rate"]) for x in runs) / n),
                 "severity_mwh_mean": _round(sum(float(x["severity_mwh"]) for x in runs) / n),
                 "violations_mean": _round(sum(float(x["violations_mean"]) for x in runs) / n, 2),
-                "retained_cost_frac_mean": _round(
-                    sum(float(x["retained_cost_frac"]) for x in runs) / n
-                ),
-                "descent_stability_mean": _round(
-                    sum(float(x["descent_stability"]) for x in runs) / n
-                ),
+                "retained_cost_frac_mean": _round(sum(float(x["retained_cost_frac"]) for x in runs) / n),
+                "descent_stability_mean": _round(sum(float(x["descent_stability"]) for x in runs) / n),
                 "max_zero_violation_blackout_h": max(zero_violation_durations, default=0),
             }
         )
@@ -206,7 +203,7 @@ def _write_figure(path: Path, policy_compare_rows: list[dict[str, Any]]) -> None
     ]
 
     fig, axes = plt.subplots(2, 2, figsize=(10, 8))
-    for ax, (metric, ylabel) in zip(axes.flat, metrics):
+    for ax, (metric, ylabel) in zip(axes.flat, metrics, strict=False):
         for policy in POLICY_ORDER:
             series = rows_by_policy.get(policy, [])
             if not series:
@@ -271,9 +268,7 @@ def _build_trace(
         "zero_violation_frontier_h": zero_violation_frontier,
         "surface_rows": len(policy_compare_rows),
     }
-    (paper3_dir / "intervention_trace.json").write_text(
-        json.dumps(trace, indent=2), encoding="utf-8"
-    )
+    (paper3_dir / "intervention_trace.json").write_text(json.dumps(trace, indent=2), encoding="utf-8")
 
 
 def run_benchmark(

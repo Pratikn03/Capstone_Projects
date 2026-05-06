@@ -1,4 +1,5 @@
 """Tests for leakage audit script."""
+
 from __future__ import annotations
 
 import pickle
@@ -25,9 +26,13 @@ def test_leakage_audit_detects_split_overlap_and_forbidden_features(tmp_path, mo
     test.to_parquet(de_splits / "test.parquet", index=False)
 
     # Forbidden exact feature appears in feature store.
-    pd.DataFrame({"timestamp": pd.date_range("2026-01-01", periods=3, freq="h"), "load_mw": [10, 11, 12], "x": [1, 2, 3]}).to_parquet(
-        features_path, index=False
-    )
+    pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2026-01-01", periods=3, freq="h"),
+            "load_mw": [10, 11, 12],
+            "x": [1, 2, 3],
+        }
+    ).to_parquet(features_path, index=False)
 
     # Forbidden model feature also appears in artifact.
     artifact = {"feature_cols": ["x", "future_load_hint"]}
@@ -104,7 +109,9 @@ def test_leakage_audit_detects_healthcare_patient_overlap_regressions(tmp_path, 
     calibration.to_parquet(splits_dir / "calibration.parquet", index=False)
     val.to_parquet(splits_dir / "val.parquet", index=False)
     test.to_parquet(splits_dir / "test.parquet", index=False)
-    pd.DataFrame({"timestamp": pd.date_range("2026-01-01", periods=3, freq="h"), "patient_id": ["p1", "p2", "p3"]}).to_parquet(
+    pd.DataFrame(
+        {"timestamp": pd.date_range("2026-01-01", periods=3, freq="h"), "patient_id": ["p1", "p2", "p3"]}
+    ).to_parquet(
         features_path,
         index=False,
     )

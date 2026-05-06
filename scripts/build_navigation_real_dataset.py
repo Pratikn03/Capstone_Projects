@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Build ORIUS navigation trajectories from repo-local or external KITTI Odometry raw data."""
+
 from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT / "src") not in sys.path:
@@ -23,7 +23,6 @@ from orius.data_pipeline.real_data_contract import (
     summarize_files,
     write_json,
 )
-
 
 DEFAULT_OUT = REPO_ROOT / "data" / "navigation" / "processed" / "navigation_orius.csv"
 RAW_DIR = REPO_ROOT / "data" / "navigation" / "raw"
@@ -80,7 +79,7 @@ def _sequence_frame(sequence_id: str, times: np.ndarray, poses: np.ndarray) -> p
     y = poses[:, 11]
     vx = np.gradient(x, times, edge_order=1)
     vy = np.gradient(y, times, edge_order=1)
-    start = datetime(2011, 9, 26, tzinfo=timezone.utc)
+    start = datetime(2011, 9, 26, tzinfo=UTC)
 
     return pd.DataFrame(
         {
@@ -122,10 +121,7 @@ def build_navigation_dataset(
     root = raw_source.path
     poses_dir = _find_poses_dir(root)
 
-    if sequences:
-        wanted = sequences
-    else:
-        wanted = sorted(path.stem for path in poses_dir.glob("*.txt"))
+    wanted = sequences if sequences else sorted(path.stem for path in poses_dir.glob("*.txt"))
     if not wanted:
         raise FileNotFoundError(f"No KITTI pose files found under {poses_dir}")
 
@@ -179,7 +175,9 @@ def build_navigation_dataset(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build navigation_orius.csv from external KITTI Odometry data")
+    parser = argparse.ArgumentParser(
+        description="Build navigation_orius.csv from external KITTI Odometry data"
+    )
     parser.add_argument("--external-root", type=Path, default=None, help="Override ORIUS_EXTERNAL_DATA_ROOT")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Output navigation CSV")
     parser.add_argument(

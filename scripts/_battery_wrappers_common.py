@@ -10,7 +10,11 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = REPO_ROOT / "scripts"
-PYTHON = str(REPO_ROOT / ".venv" / "bin" / "python3") if (REPO_ROOT / ".venv" / "bin" / "python3").exists() else sys.executable
+PYTHON = (
+    str(REPO_ROOT / ".venv" / "bin" / "python3")
+    if (REPO_ROOT / ".venv" / "bin" / "python3").exists()
+    else sys.executable
+)
 
 
 def ensure_dir(path: Path) -> Path:

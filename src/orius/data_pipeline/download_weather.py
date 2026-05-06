@@ -3,14 +3,16 @@
 Example:
   python -m orius.data_pipeline.download_weather --out data/raw --start 2017-01-01 --end 2020-12-31
 """
+
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterable
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Iterable, List
 
 import pandas as pd
+
 from orius.utils.logging import get_logger
 from orius.utils.net import get_session
 
@@ -30,9 +32,11 @@ DEFAULT_HOURLY = [
     "snow_depth",
 ]
 
+
 def _parse_date(d: str) -> date:
     """Parse a YYYY-MM-DD string into a date."""
     return datetime.strptime(d, "%Y-%m-%d").date()
+
 
 def _chunks(start: date, end: date, chunk_days: int) -> Iterable[tuple[date, date]]:
     """Yield (start, end) date windows to keep API requests small."""
@@ -42,6 +46,7 @@ def _chunks(start: date, end: date, chunk_days: int) -> Iterable[tuple[date, dat
         yield cur, chunk_end
         cur = chunk_end + timedelta(days=1)
 
+
 def _fetch_chunk(
     session,
     base_url: str,
@@ -49,7 +54,7 @@ def _fetch_chunk(
     lon: float,
     start: date,
     end: date,
-    hourly: List[str],
+    hourly: list[str],
     tz: str,
     log,
 ) -> pd.DataFrame:
@@ -80,6 +85,7 @@ def _fetch_chunk(
     rename = {c: f"wx_{c}" for c in df.columns if c != "timestamp"}
     df = df.rename(columns=rename)
     return df
+
 
 def main():
     """CLI entrypoint for weather downloader."""
@@ -143,6 +149,7 @@ Columns are prefixed with `wx_` and timestamps are UTC.
     )
 
     log.info("Saved: %s", out_path)
+
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,9 @@
 """CertOS reachability engine: validity horizon from reachability."""
+
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 
 def compute_validity_horizon(
@@ -16,6 +18,7 @@ def compute_validity_horizon(
     if float(interval_lower_mwh) > float(interval_upper_mwh):
         raise ValueError("interval_lower_mwh must be <= interval_upper_mwh")
     from orius.dc3s.reachability import compute_validity_horizon_from_reachability
+
     result = compute_validity_horizon_from_reachability(
         interval_lower_mwh=interval_lower_mwh,
         interval_upper_mwh=interval_upper_mwh,

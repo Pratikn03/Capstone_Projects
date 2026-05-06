@@ -1,4 +1,5 @@
 """Build features for the navigation domain from ORIUS-format trajectory CSV."""
+
 from __future__ import annotations
 
 import argparse
@@ -7,7 +8,6 @@ from pathlib import Path
 import pandas as pd
 
 from orius.data_pipeline.split_time_series import time_split_with_calibration
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_RAW = REPO_ROOT / "data" / "navigation" / "processed" / "navigation_orius.csv"
@@ -74,10 +74,8 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Output directory")
     args = parser.parse_args()
     if not args.input.exists():
-        print(f"Input not found: {args.input}. Run the navigation raw-data converter first.")
         return 1
     build_features(args.input, args.out)
-    print(f"Navigation features -> {args.out / 'features.parquet'}")
     return 0
 
 

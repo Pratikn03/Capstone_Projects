@@ -6,18 +6,21 @@ This module intentionally keeps the runtime contract narrow:
 - runtime callers may fall back to the heuristic OQE path if the learned model
   is unavailable or explicitly disabled
 """
+
 from __future__ import annotations
 
+import json
+from collections.abc import Mapping, MutableMapping, Sequence
 from dataclasses import asdict, dataclass
 from functools import lru_cache
-import json
 from pathlib import Path
-from typing import Any, Mapping, MutableMapping, Sequence
+from typing import Any
 
 import numpy as np
 import torch
 import torch.nn as nn
 
+from orius.release.artifact_loader import load_torch_artifact
 
 FEATURE_NAMES: tuple[str, ...] = (
     "load_mw",
@@ -227,7 +230,8 @@ def save_model(
 
 @lru_cache(maxsize=8)
 def load_model(path: str) -> tuple[DeepOQEModel, DeepOQEConfig, dict[str, Any]]:
-    payload = torch.load(path, map_location="cpu")
+    model_path = Path(path)
+    payload = load_torch_artifact(model_path, map_location="cpu", weights_only=True)
     cfg = DeepOQEConfig(**dict(payload.get("config", {})))
     model = DeepOQEModel(cfg)
     state_dict = payload.get("state_dict", {})

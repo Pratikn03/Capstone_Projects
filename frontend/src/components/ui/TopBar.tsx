@@ -55,16 +55,16 @@ export function TopBar() {
   const criticalCount = panelNotifications.filter((n) => n.severity === 'critical' || n.severity === 'warn').length;
 
   return (
-    <header className="h-14 flex items-center justify-between px-6 border-b border-white/6 bg-grid-dark/80 backdrop-blur-sm sticky top-0 z-20">
+    <header className="h-14 flex items-center justify-between gap-3 px-3 md:px-6 border-b border-white/6 bg-grid-dark/80 backdrop-blur-sm sticky top-0 z-20">
       {/* Left: Status + Region */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">
+      <div className="flex min-w-0 items-center gap-2 md:gap-4">
+        <div className="flex min-w-0 items-center gap-2 px-2.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">
           <span className="w-2 h-2 rounded-full bg-energy-primary live-dot" />
-          {dashboardConfig.appLabel}
+          <span className="truncate">{dashboardConfig.appLabel}</span>
         </div>
 
         {/* Region Selector */}
-        <div className="relative">
+        <div className="relative hidden sm:block">
           <button
             onClick={() => setShowRegions(!showRegions)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-slate-200 hover:bg-white/10 transition-all"
@@ -100,16 +100,16 @@ export function TopBar() {
         </div>
 
         {/* Model Badge */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-energy-primary-dim border border-energy-primary/20 text-xs text-energy-primary">
-          Shield: DC3S
+        <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-energy-primary-dim border border-energy-primary/20 text-xs text-energy-primary">
+          Verifier: DC3S
         </div>
         <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-xs text-slate-300">
-          Data: Artifact + Live
+          Evidence: Artifact + Live
         </div>
       </div>
 
       {/* Right: Time + Notifications + Profile */}
-      <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center gap-2 md:gap-4">
         <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-400">
           <Clock className="w-3.5 h-3.5" />
           <span className="font-mono">{nowUtc}</span>

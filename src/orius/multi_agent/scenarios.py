@@ -4,20 +4,20 @@ Paper 5: Two batteries each with a local certificate; their combined
 discharge exceeds the shared feeder limit. Demonstrates that local
 certificates do not auto-compose.
 """
+
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
-import numpy as np
-
+from .margin_allocation import allocate_margins_fairness
 from .plant import SharedFeederPlant
 from .protocol import (
-    IndependentLocalProtocol,
     CentralizedCoordinatorProtocol,
     DistributedNegotiationProtocol,
+    IndependentLocalProtocol,
 )
-from .margin_allocation import allocate_margins_fairness
 
 
 def run_transformer_capacity_scenario(
@@ -72,7 +72,11 @@ def run_transformer_capacity_scenario(
     if degradation_per_agent is not None and len(degradation_per_agent) >= len(batteries):
         for i in range(len(batteries)):
             scale = min(1.0, max(1e-6, float(degradation_per_agent[i])))
-            batteries[i] = {**batteries[i], "charge_efficiency": base_eff * scale, "discharge_efficiency": base_eff * scale}
+            batteries[i] = {
+                **batteries[i],
+                "charge_efficiency": base_eff * scale,
+                "discharge_efficiency": base_eff * scale,
+            }
 
     # Each agent proposes 60 MW discharge (individually safe, jointly exceeds feeder)
     base_proposals = [
@@ -84,10 +88,12 @@ def run_transformer_capacity_scenario(
         local_proposals = []
         for i, p in enumerate(base_proposals):
             scale = 1.0 - min(1.0, max(0.0, float(agent_degradation[i])))
-            local_proposals.append({
-                "charge_mw": float(p.get("charge_mw", 0)) * scale,
-                "discharge_mw": float(p.get("discharge_mw", 0)) * scale,
-            })
+            local_proposals.append(
+                {
+                    "charge_mw": float(p.get("charge_mw", 0)) * scale,
+                    "discharge_mw": float(p.get("discharge_mw", 0)) * scale,
+                }
+            )
     else:
         local_proposals = [dict(p) for p in base_proposals]
 
@@ -113,9 +119,7 @@ def run_transformer_capacity_scenario(
 
         for t in range(n_steps):
             state = p.state()
-            actions = protocol.compute_actions(
-                state, local_proposals, feeder_capacity_mw
-            )
+            actions = protocol.compute_actions(state, local_proposals, feeder_capacity_mw)
             joint = p.check_joint_violation(actions)
             if joint["violated"]:
                 joint_violations += 1
@@ -123,24 +127,24 @@ def run_transformer_capacity_scenario(
             executed = getattr(p, "_last_executed", actions)
             if out_dir is not None:
                 socs = state.get("socs_mwh", [])
-                step_log_rows.append({
-                    "step": t,
-                    "protocol": name,
-                    "soc_0_mwh": socs[0] if len(socs) > 0 else 0.0,
-                    "soc_1_mwh": socs[1] if len(socs) > 1 else 0.0,
-                    "joint_violated": 1 if joint["violated"] else 0,
-                    "charge_0_mw": executed[0].get("charge_mw", 0) if len(executed) > 0 else 0,
-                    "discharge_0_mw": executed[0].get("discharge_mw", 0) if len(executed) > 0 else 0,
-                    "charge_1_mw": executed[1].get("charge_mw", 0) if len(executed) > 1 else 0,
-                    "discharge_1_mw": executed[1].get("discharge_mw", 0) if len(executed) > 1 else 0,
-                })
+                step_log_rows.append(
+                    {
+                        "step": t,
+                        "protocol": name,
+                        "soc_0_mwh": socs[0] if len(socs) > 0 else 0.0,
+                        "soc_1_mwh": socs[1] if len(socs) > 1 else 0.0,
+                        "joint_violated": 1 if joint["violated"] else 0,
+                        "charge_0_mw": executed[0].get("charge_mw", 0) if len(executed) > 0 else 0,
+                        "discharge_0_mw": executed[0].get("discharge_mw", 0) if len(executed) > 0 else 0,
+                        "charge_1_mw": executed[1].get("charge_mw", 0) if len(executed) > 1 else 0,
+                        "discharge_1_mw": executed[1].get("discharge_mw", 0) if len(executed) > 1 else 0,
+                    }
+                )
             local = p.check_local_violations()
             for lv in local:
                 if lv["violated"]:
                     local_violations += 1
-            useful_work += sum(
-                float(a.get("discharge_mw", 0)) for a in executed
-            )
+            useful_work += sum(float(a.get("discharge_mw", 0)) for a in executed)
 
         margins = [40.0, 40.0]  # equal allocation
         demands = [60.0, 60.0]
@@ -158,11 +162,23 @@ def run_transformer_capacity_scenario(
 
     if out_dir is not None:
         import csv
+
         out_dir = Path(out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
         csv_path = out_dir / "multi_agent_transformer_scenario.csv"
         with open(csv_path, "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=["protocol", "joint_violations", "local_violations", "useful_work_mwh", "fairness", "margin_quality", "degradation_allocation_quality"])
+            w = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "protocol",
+                    "joint_violations",
+                    "local_violations",
+                    "useful_work_mwh",
+                    "fairness",
+                    "margin_quality",
+                    "degradation_allocation_quality",
+                ],
+            )
             w.writeheader()
             for name, r in results.items():
                 row = {"protocol": name, **r}
@@ -171,29 +187,62 @@ def run_transformer_capacity_scenario(
         with open(step_log_path, "w", newline="") as f:
             w = csv.DictWriter(
                 f,
-                fieldnames=["step", "protocol", "soc_0_mwh", "soc_1_mwh", "joint_violated", "charge_0_mw", "discharge_0_mw", "charge_1_mw", "discharge_1_mw"],
+                fieldnames=[
+                    "step",
+                    "protocol",
+                    "soc_0_mwh",
+                    "soc_1_mwh",
+                    "joint_violated",
+                    "charge_0_mw",
+                    "discharge_0_mw",
+                    "charge_1_mw",
+                    "discharge_1_mw",
+                ],
             )
             w.writeheader()
             w.writerows(step_log_rows)
         protocol_compare_path = out_dir / "protocol_compare.csv"
         with open(protocol_compare_path, "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=["protocol", "joint_violations", "local_violations", "useful_work_mwh", "fairness", "margin_quality", "degradation_allocation_quality"])
+            w = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "protocol",
+                    "joint_violations",
+                    "local_violations",
+                    "useful_work_mwh",
+                    "fairness",
+                    "margin_quality",
+                    "degradation_allocation_quality",
+                ],
+            )
             w.writeheader()
             for name, r in results.items():
                 w.writerow({"protocol": name, **r})
         fairness_metrics_path = out_dir / "fairness_metrics.csv"
         with open(fairness_metrics_path, "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=["protocol", "fairness", "margin_quality", "degradation_allocation_quality", "joint_violations", "useful_work_mwh"])
+            w = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "protocol",
+                    "fairness",
+                    "margin_quality",
+                    "degradation_allocation_quality",
+                    "joint_violations",
+                    "useful_work_mwh",
+                ],
+            )
             w.writeheader()
             for name, r in results.items():
-                w.writerow({
-                    "protocol": name,
-                    "fairness": r["fairness"],
-                    "margin_quality": r["margin_quality"],
-                    "degradation_allocation_quality": r["degradation_allocation_quality"],
-                    "joint_violations": r["joint_violations"],
-                    "useful_work_mwh": r["useful_work_mwh"],
-                })
+                w.writerow(
+                    {
+                        "protocol": name,
+                        "fairness": r["fairness"],
+                        "margin_quality": r["margin_quality"],
+                        "degradation_allocation_quality": r["degradation_allocation_quality"],
+                        "joint_violations": r["joint_violations"],
+                        "useful_work_mwh": r["useful_work_mwh"],
+                    }
+                )
 
     return results
 

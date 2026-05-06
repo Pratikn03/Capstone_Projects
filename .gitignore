@@ -69,6 +69,10 @@ dashboard-overview.png
 dashboard-*.png
 *-smoke.png
 *_smoke.png
+docs/superpowers/
+
+# Lean/Lake local build metadata
+formal/.lake/
 
 # Working documents (not for public)
 paper/FLAGSHIP_IMPLEMENTATION_PLAN.md
@@ -79,6 +83,10 @@ SCRATCH*.md
 # Secrets & credentials
 *.pem
 *.key
+*secrets*.json
+*secrets*.yaml
+*secrets*.yml
+!configs/secrets.example.yaml
 secrets/
 credentials/
 
@@ -214,6 +222,7 @@ reports/publish/logs/
 reports/publish/final_audit_report.json
 reports/publish/final_audit_report.md
 reports/**/*.pdf
+reports/healthcare/figures/demo.gif
 !paper/assets/figures/*.pdf
 !reports/publication/fig_*.pdf
 

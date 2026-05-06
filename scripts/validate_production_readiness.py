@@ -10,7 +10,6 @@ requires production secrets/config to be present.
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import pickle
 import sys
@@ -24,15 +23,14 @@ if str(REPO_ROOT) not in sys.path:
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from orius.dc3s.certificate import (  # noqa: E402
+from orius.dc3s.certificate import (
     CERTIFICATE_SIGNATURE_ALGORITHM,
     make_certificate,
     sign_certificate,
     verify_certificate,
 )
-from orius.forecasting.predict import load_model_bundle  # noqa: E402
-from services.api.config import get_api_keys, is_auth_disabled_for_tests  # noqa: E402
-
+from orius.forecasting.predict import load_model_bundle
+from services.api.config import get_api_keys, is_auth_disabled_for_tests
 
 REQUIRED_RELEASE_SURFACES = [
     "reports/publication/three_domain_ml_benchmark.csv",
@@ -81,7 +79,9 @@ def _check_certificate_signing(strict: bool, findings: list[str], warnings: list
         findings.append("strict mode requires ORIUS_CERTIFICATE_SIGNING_KEY with at least 32 characters")
         return
     if not secret:
-        warnings.append("certificate signing key is not configured; signed release certificates cannot be emitted")
+        warnings.append(
+            "certificate signing key is not configured; signed release certificates cannot be emitted"
+        )
         secret = "local-readiness-smoke-secret-with-32-plus-chars"
 
     cert = _sample_certificate()
@@ -146,7 +146,9 @@ def validate(strict: bool = False) -> tuple[list[str], list[str]]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--strict", action="store_true", help="Require production secrets/config to be present")
+    parser.add_argument(
+        "--strict", action="store_true", help="Require production secrets/config to be present"
+    )
     args = parser.parse_args()
 
     findings, warnings = validate(strict=args.strict)

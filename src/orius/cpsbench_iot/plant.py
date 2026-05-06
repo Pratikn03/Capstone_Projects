@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict
-
 
 
 @dataclass
 class BatteryPlant:
     """Truth plant: evolves SOC using physics. NEVER clamps SOC."""
+
     soc_mwh: float
     min_soc_mwh: float
     max_soc_mwh: float
@@ -27,10 +26,14 @@ class BatteryPlant:
                 d = 0.0
 
         # physics (truth). NO CLAMP.
-        self.soc_mwh = self.soc_mwh + (self.charge_eff * c * self.dt_hours) - (d * self.dt_hours / max(self.discharge_eff, 1e-9))
+        self.soc_mwh = (
+            self.soc_mwh
+            + (self.charge_eff * c * self.dt_hours)
+            - (d * self.dt_hours / max(self.discharge_eff, 1e-9))
+        )
         return float(self.soc_mwh)
 
-    def violation(self) -> Dict[str, float | bool]:
+    def violation(self) -> dict[str, float | bool]:
         below = self.soc_mwh < self.min_soc_mwh
         above = self.soc_mwh > self.max_soc_mwh
         severity = 0.0

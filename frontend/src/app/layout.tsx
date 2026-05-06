@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'ORIUS — Smart Energy Management',
+  title: 'ORIUS Research Console',
   description:
-    'Next-generation energy management system with ML forecasting, battery dispatch optimization, and natural language query interface.',
+    'Research evidence console for ORIUS theorem status, reproducibility, domain gates, runtime safety, and artifact lineage.',
   icons: {
     icon: '/icon.svg',
   },

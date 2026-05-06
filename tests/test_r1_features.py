@@ -3,7 +3,7 @@
 Covers: UQ metrics contract, scenario MPC baseline, paper asset sync,
 severity sweep config, transfer study scaffold.
 """
-import json
+
 from pathlib import Path
 
 import numpy as np
@@ -156,10 +156,8 @@ class TestPaperAssetSync:
         assert isinstance(issues, list)
 
     def test_stale_value_detection(self):
-        from scripts.sync_paper_assets import _check_file_for_stale, REPO_ROOT as SYNC_ROOT
-
-        import tempfile
-        import os
+        from scripts.sync_paper_assets import REPO_ROOT as SYNC_ROOT
+        from scripts.sync_paper_assets import _check_file_for_stale
 
         # Create temp file inside repo root so relative_to works
         tmp_dir = SYNC_ROOT / "data" / "interim"
@@ -263,7 +261,7 @@ class TestR1ReleaseOrchestrator:
             "run_r1_release",
             str(REPO_ROOT / "scripts" / "run_r1_release.py"),
         )
-        mod = importlib.util.module_from_spec(spec)
+        importlib.util.module_from_spec(spec)
         # Don't execute main, just check STAGES exists
         content = (REPO_ROOT / "scripts" / "run_r1_release.py").read_text()
         for stage in ("diagnostic", "full", "cpsbench", "verify", "promote"):

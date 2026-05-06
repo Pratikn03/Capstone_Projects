@@ -1,4 +1,5 @@
 """Comprehensive tests for CPSBench scenario generation."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -115,7 +116,9 @@ class TestFaultOverrides:
 
     def test_seasonal_shift(self):
         obs1, _, _ = generate_episode("nominal", seed=42, horizon=48)
-        obs2, _, _ = generate_episode("nominal", seed=42, horizon=48, fault_overrides={"seasonal_shift_hours": 6})
+        obs2, _, _ = generate_episode(
+            "nominal", seed=42, horizon=48, fault_overrides={"seasonal_shift_hours": 6}
+        )
         assert not np.allclose(obs1["load_mw"].values, obs2["load_mw"].values)
 
 

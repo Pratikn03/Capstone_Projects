@@ -4,6 +4,7 @@
 Runs DC3S with varying packet drop rates and records TSVR, intervention rate.
 Output: reports/publication/fault_performance_packet_drop.csv
 """
+
 from __future__ import annotations
 
 import csv
@@ -16,17 +17,17 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 import numpy as np
 
-from orius.cpsbench_iot.scenarios import generate_episode
+from orius.cpsbench_iot.plant import BatteryPlant
 from orius.cpsbench_iot.runner import (
-    _load_optimization_cfg,
-    _load_dc3s_cfg,
     _battery_constraints,
     _controller_step_dc3s,
-    _to_telemetry_events,
-    _soc_fault_config_for_episode,
     _DC3SLoopState,
+    _load_dc3s_cfg,
+    _load_optimization_cfg,
+    _soc_fault_config_for_episode,
+    _to_telemetry_events,
 )
-from orius.cpsbench_iot.plant import BatteryPlant
+from orius.cpsbench_iot.scenarios import generate_episode
 from orius.cpsbench_iot.telemetry_soc import SOCTelemetryChannel
 
 
@@ -36,9 +37,7 @@ def run_with_packet_drop(
     horizon: int = 48,
 ) -> dict[str, float]:
     """Run DC3S with packet drop; return TSVR, IR, violations."""
-    x_obs, x_true, event_log = generate_episode(
-        scenario="drift_combo", seed=seed, horizon=horizon
-    )
+    x_obs, x_true, event_log = generate_episode(scenario="drift_combo", seed=seed, horizon=horizon)
     opt_cfg = _load_optimization_cfg()
     dc3s_cfg = _load_dc3s_cfg()
     constraints = _battery_constraints(opt_cfg)
@@ -64,6 +63,7 @@ def run_with_packet_drop(
     )
 
     from orius.dc3s.drift import PageHinkleyDetector
+
     dc3s_state = _DC3SLoopState(
         detector=PageHinkleyDetector.from_state(None, cfg=dc3s_cfg.get("drift", {})),
         sigma_sq=float(np.var(np.abs(x_true["load_mw"].to_numpy() - load_obs))),
@@ -86,7 +86,9 @@ def run_with_packet_drop(
             price_window=price[t:n],
             carbon_window=carbon[t:n],
             load_true_t=float(x_true["load_mw"].iloc[t]),
-            observed_soc_mwh=float(observed_soc) if not np.isnan(observed_soc) else 0.5 * constraints["capacity_mwh"],
+            observed_soc_mwh=float(observed_soc)
+            if not np.isnan(observed_soc)
+            else 0.5 * constraints["capacity_mwh"],
             current_true_soc_mwh=true_soc,
             telemetry_event=telemetry_events[t],
             optimization_cfg=opt_cfg,

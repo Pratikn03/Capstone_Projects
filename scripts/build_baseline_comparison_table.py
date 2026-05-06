@@ -13,15 +13,15 @@ This script can run in two modes:
    manifests for DE and US_MISO and rebuilds the table from that single
    release family.
 """
+
 from __future__ import annotations
 
 import argparse
 import csv
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = REPO_ROOT / "reports" / "publication"
@@ -40,15 +40,31 @@ REGION_DEFAULTS = {
 TARGETS = ["load_mw", "wind_mw", "solar_mw"]
 TARGET_LABELS = {"load_mw": "Load", "wind_mw": "Wind", "solar_mw": "Solar"}
 
-MODEL_ORDER = ["gbm", "lstm", "tcn", "nbeats", "tft", "patchtst"]
+MODEL_ORDER = [
+    "gbm",
+    "lstm",
+    "tcn",
+    "nbeats",
+    "tft",
+    "patchtst",
+    "prophet",
+    "nbeats_darts",
+    "ngboost",
+    "flaml",
+]
 MODEL_LABELS = {
     "gbm": "GBM",
     "lstm": "LSTM",
     "tcn": "TCN",
-    "nbeats": "N-BEATS",
+    "nbeats": "N-BEATS (ours)",
     "tft": "TFT",
     "patchtst": "PatchTST",
+    "prophet": "Prophet",
+    "nbeats_darts": "N-BEATS (Oreshkin/Darts)",
+    "ngboost": "NGBoost",
+    "flaml": "FLAML",
 }
+NATIVE_UQ_MODELS = {"gbm", "prophet", "ngboost"}
 
 COLUMNS = [
     "Region",
@@ -108,6 +124,20 @@ def format_value(value: Any, column: str) -> str:
 
 def latex_value(value: Any, column: str) -> str:
     return format_value(value, column).replace("_", r"\_")
+
+
+def _argmin_present(rows: list[dict[str, Any]], column: str) -> int:
+    best_idx = -1
+    best_val = float("inf")
+    for idx, row in enumerate(rows):
+        val = row.get(column)
+        if _is_missing(val):
+            continue
+        v = float(val)
+        if v < best_val:
+            best_val = v
+            best_idx = idx
+    return best_idx
 
 
 def load_conformal(uncertainty_dir: Path, target: str) -> dict[str, float | None]:
@@ -185,8 +215,12 @@ def extract_rows(region: str, metrics_json: Path, uncertainty_dir: Path) -> list
                 width_raw = uncertainty.get("width")
                 row.update(
                     {
-                        "RMSE": float(metrics_payload["rmse"]) if metrics_payload.get("rmse") is not None else None,
-                        "MAE": float(metrics_payload["mae"]) if metrics_payload.get("mae") is not None else None,
+                        "RMSE": float(metrics_payload["rmse"])
+                        if metrics_payload.get("rmse") is not None
+                        else None,
+                        "MAE": float(metrics_payload["mae"])
+                        if metrics_payload.get("mae") is not None
+                        else None,
                         "sMAPE (%)": float(smape_raw) * 100 if smape_raw is not None else None,
                         "R2": float(metrics_payload["r2"]) if metrics_payload.get("r2") is not None else None,
                         "PICP@90 (%)": float(picp_raw) * 100 if picp_raw is not None else None,
@@ -234,9 +268,8 @@ def _region_status(region: str, rows: list[dict[str, Any]]) -> dict[str, Any]:
             uq_complete += 1
         else:
             missing_uq_rows.append(f"{row['Target']}:{row['Model']}")
-        if row["Model"] == "GBM":
-            if uq_ok:
-                gbm_uq_complete += 1
+        if row["Model"] == "GBM" and uq_ok:
+            gbm_uq_complete += 1
     return {
         "region": region,
         "expected_rows": expected_rows,
@@ -299,13 +332,17 @@ def write_latex(rows: list[dict[str, Any]], path: Path, region: str) -> None:
     for target in TARGETS:
         target_label = TARGET_LABELS[target]
         target_rows = [row for row in rows if row["Target"] == target_label]
+        best_rmse_idx = _argmin_present(target_rows, "RMSE")
         for index, row in enumerate(target_rows):
             prefix = rf"\multirow{{{len(target_rows)}}}{{*}}{{{target_label}}}" if index == 0 else ""
-            model = row["Model"]
-            model_str = rf"\textbf{{{model}}}" if model == "GBM" else model
+            model_str = row["Model"]
+            rmse_cell = latex_value(row["RMSE"], "RMSE")
+            if index == best_rmse_idx and not _is_missing(row["RMSE"]):
+                rmse_cell = rf"\textbf{{{rmse_cell}}}"
+                model_str = rf"\textbf{{{model_str}}}"
             lines.append(
                 f"{prefix} & {model_str} & "
-                f"{latex_value(row['RMSE'], 'RMSE')} & "
+                f"{rmse_cell} & "
                 f"{latex_value(row['MAE'], 'MAE')} & "
                 f"{latex_value(row['sMAPE (%)'], 'sMAPE (%)')} & "
                 f"{latex_value(row['R2'], 'R2')} & "
@@ -356,13 +393,7 @@ def _load_release_inputs(release_id: str) -> dict[str, dict[str, Path]]:
     resolved: dict[str, dict[str, Path]] = {}
     for region, dataset_lower in dataset_map.items():
         manifest_path = (
-            REPO_ROOT
-            / "artifacts"
-            / "runs"
-            / dataset_lower
-            / release_id
-            / "registry"
-            / "run_manifest.json"
+            REPO_ROOT / "artifacts" / "runs" / dataset_lower / release_id / "registry" / "run_manifest.json"
         )
         payload = load_json(manifest_path)
         if not payload:
@@ -414,14 +445,15 @@ def build_tables(
 
     status = {
         "release_id": release_id,
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "regions": {
             "DE": _region_status("DE", region_rows["DE"]),
             "US": _region_status("US", region_rows["US"]),
         },
     }
     status["thesis_headline_point_metrics_complete"] = bool(
-        status["regions"]["DE"]["point_metrics_complete"] and status["regions"]["US"]["point_metrics_complete"]
+        status["regions"]["DE"]["point_metrics_complete"]
+        and status["regions"]["US"]["point_metrics_complete"]
     )
     status["all_model_uq_complete"] = bool(
         status["regions"]["DE"]["all_model_uq_complete"] and status["regions"]["US"]["all_model_uq_complete"]
@@ -452,12 +484,22 @@ def build_release_baseline_comparison(*, release_id: str, out_dir: Path = OUT_DI
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build six-model baseline comparison tables.")
-    parser.add_argument("--release-id", default=None, help="Read DE and US_MISO inputs from this accepted release family")
+    parser.add_argument(
+        "--release-id", default=None, help="Read DE and US_MISO inputs from this accepted release family"
+    )
     parser.add_argument("--out-dir", type=Path, default=OUT_DIR)
-    parser.add_argument("--de-dir", type=Path, default=None, help="Directory containing DE week2_metrics.json")
-    parser.add_argument("--us-dir", type=Path, default=None, help="Directory containing US week2_metrics.json")
-    parser.add_argument("--de-uncertainty-dir", type=Path, default=None, help="DE uncertainty artifact directory")
-    parser.add_argument("--us-uncertainty-dir", type=Path, default=None, help="US uncertainty artifact directory")
+    parser.add_argument(
+        "--de-dir", type=Path, default=None, help="Directory containing DE week2_metrics.json"
+    )
+    parser.add_argument(
+        "--us-dir", type=Path, default=None, help="Directory containing US week2_metrics.json"
+    )
+    parser.add_argument(
+        "--de-uncertainty-dir", type=Path, default=None, help="DE uncertainty artifact directory"
+    )
+    parser.add_argument(
+        "--us-uncertainty-dir", type=Path, default=None, help="US uncertainty artifact directory"
+    )
     return parser.parse_args()
 
 
@@ -471,8 +513,12 @@ def main() -> int:
     else:
         status = build_tables(
             out_dir=out_dir,
-            de_metrics_json=(args.de_dir / "week2_metrics.json") if args.de_dir else REGION_DEFAULTS["DE"]["metrics_json"],
-            us_metrics_json=(args.us_dir / "week2_metrics.json") if args.us_dir else REGION_DEFAULTS["US"]["metrics_json"],
+            de_metrics_json=(args.de_dir / "week2_metrics.json")
+            if args.de_dir
+            else REGION_DEFAULTS["DE"]["metrics_json"],
+            us_metrics_json=(args.us_dir / "week2_metrics.json")
+            if args.us_dir
+            else REGION_DEFAULTS["US"]["metrics_json"],
             de_uncertainty_dir=args.de_uncertainty_dir or REGION_DEFAULTS["DE"]["uncertainty_dir"],
             us_uncertainty_dir=args.us_uncertainty_dir or REGION_DEFAULTS["US"]["uncertainty_dir"],
         )

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run the transfer stress experiment and generate tbl04 data."""
+
 from __future__ import annotations
 
 import json
@@ -17,15 +18,17 @@ if str(REPO_ROOT) not in sys.path:
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-import numpy as np
 import pandas as pd
+
 from orius.cpsbench_iot.runner import run_single
 
 
 def run_transfer_stress(
-    seeds: list[int] = [11, 22, 33],
+    seeds: list[int] | None = None,
     horizon: int = 96,
 ) -> pd.DataFrame:
+    if seeds is None:
+        seeds = [11, 22, 33]
     transfer_cases: dict[str, dict[str, float]] = {
         "DE_to_US_no_retrain": {
             "load_scale": 1.18,
@@ -54,14 +57,22 @@ def run_transfer_stress(
     sweep_specs: list[tuple[str, str, float | str, dict[str, Any]]] = []
     sweep_specs.append(("nominal", "nominal", 0.0, {}))
     for p in (0.0, 0.10, 0.20, 0.30):
-        sweep_specs.append(("dropout", "dropout", p, {"dropout_rate": float(p), "soc_dropout_prob": float(p)}))
+        sweep_specs.append(
+            ("dropout", "dropout", p, {"dropout_rate": float(p), "soc_dropout_prob": float(p)})
+        )
     for p in (0.0, 0.10, 0.20):
         sweep_specs.append(("stale", "nominal", p, {"soc_stale_prob": float(p)}))
-    sweep_specs.append(("delay", "delay_jitter", 0, {"delay_seconds": 0.0, "delay_rate": 0.0, "soc_stale_prob": 0.0}))
-    sweep_specs.append(("delay", "delay_jitter", "high", {"delay_seconds": 15.0, "delay_rate": 0.50, "soc_stale_prob": 0.35}))
+    sweep_specs.append(
+        ("delay", "delay_jitter", 0, {"delay_seconds": 0.0, "delay_rate": 0.0, "soc_stale_prob": 0.0})
+    )
+    sweep_specs.append(
+        ("delay", "delay_jitter", "high", {"delay_seconds": 15.0, "delay_rate": 0.50, "soc_stale_prob": 0.35})
+    )
 
     total = len(transfer_cases) * len(sweep_specs) * len(seeds)
-    print(f"Running {total} transfer stress simulations ({len(transfer_cases)} cases × {len(sweep_specs)} sweeps × {len(seeds)} seeds)")
+    print(
+        f"Running {total} transfer stress simulations ({len(transfer_cases)} cases × {len(sweep_specs)} sweeps × {len(seeds)} seeds)"
+    )
 
     rows: list[dict[str, Any]] = []
     done = 0
@@ -74,7 +85,10 @@ def run_transfer_stress(
                 done += 1
                 elapsed = time.time() - t0
                 eta = (elapsed / done) * (total - done) if done > 0 else 0
-                print(f"  [{done}/{total}] case={case_name} sweep={sweep_type}({level}) seed={seed} (ETA {eta:.0f}s)", flush=True)
+                print(
+                    f"  [{done}/{total}] case={case_name} sweep={sweep_type}({level}) seed={seed} (ETA {eta:.0f}s)",
+                    flush=True,
+                )
 
                 payload = run_single(
                     scenario=scenario,
@@ -83,22 +97,24 @@ def run_transfer_stress(
                     fault_overrides=overrides,
                 )
                 for row in payload["main_rows"]:
-                    rows.append({
-                        "transfer_case": case_name,
-                        "sweep_type": sweep_type,
-                        "sweep_value": level,
-                        "scenario": scenario,
-                        "seed": int(seed),
-                        "controller": row.get("controller"),
-                        "picp_90": row.get("picp_90"),
-                        "mean_width": row.get("mean_interval_width"),
-                        "true_soc_violation_rate": row.get("true_soc_violation_rate"),
-                        "true_soc_violation_severity_p95_mwh": row.get(
-                            "true_soc_violation_severity_p95_mwh",
-                            row.get("true_soc_violation_severity_p95"),
-                        ),
-                        "cost_delta_pct": row.get("cost_delta_pct"),
-                    })
+                    rows.append(
+                        {
+                            "transfer_case": case_name,
+                            "sweep_type": sweep_type,
+                            "sweep_value": level,
+                            "scenario": scenario,
+                            "seed": int(seed),
+                            "controller": row.get("controller"),
+                            "picp_90": row.get("picp_90"),
+                            "mean_width": row.get("mean_interval_width"),
+                            "true_soc_violation_rate": row.get("true_soc_violation_rate"),
+                            "true_soc_violation_severity_p95_mwh": row.get(
+                                "true_soc_violation_severity_p95_mwh",
+                                row.get("true_soc_violation_severity_p95"),
+                            ),
+                            "cost_delta_pct": row.get("cost_delta_pct"),
+                        }
+                    )
 
     return pd.DataFrame(rows)
 
@@ -139,18 +155,20 @@ def build_tex(tbl04: pd.DataFrame) -> str:
     for _, row in tbl04.iterrows():
         case = str(row["transfer_case"]).replace("_", r"\_")
         ctrl = str(row["source_artifact"]).replace("_", r"\_")
-        picp = f'{float(row["picp_90"]):.3f}'
-        width = f'{float(row["mean_width"]):.1f}'
-        viol = f'{float(row["true_soc_violation_rate"]):.4f}'
-        sev = f'{float(row["true_soc_violation_severity_p95_mwh"]):.3f}'
-        cost = f'{float(row["cost_delta_pct"]):.3f}'
+        picp = f"{float(row['picp_90']):.3f}"
+        width = f"{float(row['mean_width']):.1f}"
+        viol = f"{float(row['true_soc_violation_rate']):.4f}"
+        sev = f"{float(row['true_soc_violation_severity_p95_mwh']):.3f}"
+        cost = f"{float(row['cost_delta_pct']):.3f}"
         lines.append(f"{case} & {ctrl} & {picp} & {width} & {viol} & {sev} & {cost} \\\\")
-    lines.extend([
-        r"\bottomrule",
-        r"\end{tabular}",
-        r"}",
-        r"\end{table}",
-    ])
+    lines.extend(
+        [
+            r"\bottomrule",
+            r"\end{tabular}",
+            r"}",
+            r"\end{table}",
+        ]
+    )
     return "\n".join(lines)
 
 

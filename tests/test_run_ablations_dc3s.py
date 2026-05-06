@@ -1,4 +1,5 @@
 """Regression tests for DC3S ablation statistics helpers."""
+
 from __future__ import annotations
 
 import json
@@ -109,7 +110,7 @@ secondary_diagnostics:
 
 
 def test_run_dc3s_ablation_matrix_primary_gate_uses_sweep(monkeypatch, tmp_path: Path) -> None:
-    def _stub_run_suite(*, scenarios, seeds, out_dir, horizon):  # noqa: ANN001
+    def _stub_run_suite(*, scenarios, seeds, out_dir, horizon):
         _write_stub_suite_outputs(out_dir, good_primary_gate=True)
         return {"rows": 1, "scenarios": scenarios, "seeds": seeds, "horizon": horizon}
 
@@ -139,7 +140,7 @@ def test_run_dc3s_ablation_matrix_primary_gate_uses_sweep(monkeypatch, tmp_path:
 
 
 def test_run_dc3s_ablation_matrix_enforces_primary_gate(monkeypatch, tmp_path: Path) -> None:
-    def _stub_run_suite(*, scenarios, seeds, out_dir, horizon):  # noqa: ANN001
+    def _stub_run_suite(*, scenarios, seeds, out_dir, horizon):
         _write_stub_suite_outputs(out_dir, good_primary_gate=False)
         return {"rows": 1, "scenarios": scenarios, "seeds": seeds, "horizon": horizon}
 

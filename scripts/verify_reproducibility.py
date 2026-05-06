@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Verify tracked publication artifacts against the release manifest."""
+
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
 from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = REPO_ROOT / "reports" / "publication" / "release_manifest.json"
@@ -69,7 +69,9 @@ def _verify_manifest(manifest_path: Path) -> dict[str, object]:
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Verify publication artifact hashes against the release manifest")
+    parser = argparse.ArgumentParser(
+        description="Verify publication artifact hashes against the release manifest"
+    )
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST, help="Release manifest path")
     parser.add_argument("--out", type=Path, default=None, help="Optional JSON report output path")
     return parser.parse_args()

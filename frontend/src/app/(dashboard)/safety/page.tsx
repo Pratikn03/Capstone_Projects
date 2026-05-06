@@ -15,10 +15,18 @@ import {
   Shield,
   FileCheck,
   TrendingDown,
+  Database,
 } from 'lucide-react';
 import { Panel } from '@/components/ui/Panel';
 import { KPICard } from '@/components/ui/KPICard';
 import { GaugeChart } from '@/components/charts/GaugeChart';
+import { AnomalyTimeline } from '@/components/charts/AnomalyTimeline';
+import { AnomalyList } from '@/components/charts/AnomalyList';
+import { MLOpsMonitor } from '@/components/charts/MLOpsMonitor';
+import { StatusBanner } from '@/components/ui/StatusBanner';
+import { useRegion } from '@/components/ui/RegionContext';
+import { useDatasetData, type DriftPoint } from '@/lib/api/dataset-client';
+import { getDomainOption } from '@/lib/domain-options';
 
 /* ------------------------------------------------------------------ */
 /*  Static Data                                                        */
@@ -355,27 +363,88 @@ function CoreBoundT3() {
 /* ------------------------------------------------------------------ */
 
 export default function SafetyPage() {
+  const { region } = useRegion();
+  const dataset = useDatasetData(region);
+  const regionLabel = getDomainOption(region).label;
+  const anomalies = dataset.anomalies;
+  const activeAnomalyCount = anomalies.filter((item) => item.status === 'active').length;
+  const anomalyZScores = dataset.zscores.map((item) => ({
+    timestamp: item.timestamp,
+    z_score: item.z_score,
+    is_anomaly: item.is_anomaly,
+    residual_mw: item.residual_mw,
+  }));
+  const driftData: DriftPoint[] = dataset.monitoring?.drift_timeline ?? [];
+  const driftDetected = driftData.some((item) => item.is_drift);
+  const statusMessages = [
+    dataset.error ? `Dataset evidence error: ${dataset.error}` : null,
+    ...(dataset.artifact_warnings ?? []),
+    !dataset.loading && !anomalyZScores.length ? `No anomaly timeline artifact is available for ${regionLabel}.` : null,
+    !dataset.loading && !driftData.length ? `No drift timeline artifact is available for ${regionLabel}.` : null,
+  ].filter((message): message is string => Boolean(message));
+
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
           <ShieldCheck className="w-7 h-7 text-energy-primary" />
-          Safety &amp; OASG Analysis
+          Safety / OASG / DC3S
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          DC3S pipeline monitoring, Observed–Actual Safety Gap analysis, and ORIUS-Bench metrics
+          DC3S verifier evidence, Observed-Actual Safety Gap analysis, anomaly events, and drift/runtime monitoring
         </p>
       </div>
+
+      <StatusBanner title="Safety Evidence Status" messages={statusMessages} />
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <KPICard label="Reliability w_t" value="0.92" icon={<Activity className="w-4 h-4" />} color="primary" delay={0} />
         <KPICard label="Inflation" value="1.38×" icon={<Gauge className="w-4 h-4" />} color="warn" delay={0.05} />
-        <KPICard label="Drift Flag" value="Clear" icon={<AlertTriangle className="w-4 h-4" />} color="primary" delay={0.1} />
-        <KPICard label="Actions Repaired" value="3 / 288" icon={<Wrench className="w-4 h-4" />} color="info" delay={0.15} />
+        <KPICard label="Drift Flag" value={driftDetected ? 'Review' : 'Clear'} icon={<AlertTriangle className="w-4 h-4" />} color={driftDetected ? 'warn' : 'primary'} delay={0.1} />
+        <KPICard label="Active Events" value={String(activeAnomalyCount)} icon={<Wrench className="w-4 h-4" />} color={activeAnomalyCount ? 'alert' : 'info'} delay={0.15} />
         <KPICard label="E[V] Bound" value="≤ 1.15" unit="violations" icon={<TrendingDown className="w-4 h-4" />} color="alert" delay={0.2} />
       </div>
+
+      <Panel
+        title="Runtime Evidence"
+        subtitle={`${regionLabel} - anomaly and monitoring artifacts folded into Safety`}
+        badge={dataset.stats ? `${dataset.stats.rows.toLocaleString()} rows` : 'artifact-backed'}
+        badgeColor="info"
+        accentColor="info"
+      >
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          <div className="rounded-lg bg-white/[0.03] p-3">
+            <div className="text-slate-500">Domain</div>
+            <div className="mt-1 font-medium text-white">{regionLabel}</div>
+          </div>
+          <div className="rounded-lg bg-white/[0.03] p-3">
+            <div className="text-slate-500">Anomaly Events</div>
+            <div className="mt-1 font-mono text-white">{anomalies.length}</div>
+          </div>
+          <div className="rounded-lg bg-white/[0.03] p-3">
+            <div className="text-slate-500">Drift Points</div>
+            <div className="mt-1 font-mono text-white">{driftData.length}</div>
+          </div>
+          <div className="rounded-lg bg-white/[0.03] p-3">
+            <div className="text-slate-500">Sources</div>
+            <div className="mt-1 flex items-center gap-1 font-mono text-white">
+              <Database className="h-3.5 w-3.5 text-energy-info" />
+              {dataset.source_artifacts?.length ?? 0}
+            </div>
+          </div>
+        </div>
+        {dataset.source_artifacts && dataset.source_artifacts.length > 0 && (
+          <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-2">
+            {dataset.source_artifacts.slice(0, 4).map((artifact) => (
+              <div key={artifact} className="truncate rounded-lg bg-black/15 px-3 py-2 font-mono text-[11px] text-slate-300" title={artifact}>
+                {artifact}
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
 
       {/* Three-column: OQE Gauge | OASG Diagram | Core Bound */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -485,6 +554,23 @@ export default function SafetyPage() {
           </div>
         </div>
       </Panel>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <AnomalyTimeline data={anomalyZScores} />
+          <Panel
+            title="Anomaly Event Evidence"
+            subtitle="DC3S Detect stage"
+            badge={`${activeAnomalyCount} active`}
+            badgeColor={activeAnomalyCount ? 'alert' : 'primary'}
+            accentColor={activeAnomalyCount ? 'alert' : 'primary'}
+            collapsible
+          >
+            <AnomalyList anomalies={anomalies} />
+          </Panel>
+        </div>
+        <MLOpsMonitor data={driftData} />
+      </div>
     </div>
   );
 }

@@ -1,9 +1,11 @@
 """ORIUS-Bench healthcare track — bounded monitoring and alert release."""
+
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -177,7 +179,9 @@ class HealthcareTrackAdapter(BenchmarkAdapter):
                 "violated": True,
                 "reason": "unevaluable_patient_state",
             }
-        alert = max(0.0, min(1.0, float(state.get("alert_level", state.get("alert_level_executed", 0.0)) or 0.0)))
+        alert = max(
+            0.0, min(1.0, float(state.get("alert_level", state.get("alert_level_executed", 0.0)) or 0.0))
+        )
         certificate_valid = state.get("certificate_valid")
         validity_status = str(state.get("validity_status", "nominal") or "nominal")
         release_requires_max_alert = bool(state.get("release_requires_max_alert", False))
@@ -220,7 +224,9 @@ class HealthcareTrackAdapter(BenchmarkAdapter):
         total = 0.0
         for rec in trajectory:
             if not self.release_contract_status(rec)["violated"]:
-                alert = max(0.0, min(1.0, float(rec.get("alert_level", rec.get("alert_level_executed", 0.0)) or 0.0)))
+                alert = max(
+                    0.0, min(1.0, float(rec.get("alert_level", rec.get("alert_level_executed", 0.0)) or 0.0))
+                )
                 total += 1.0 - alert
         return total
 
@@ -249,7 +255,9 @@ class HealthcareTrackAdapter(BenchmarkAdapter):
             return None
         contract = self.release_contract_status(state)
         if contract["requires_max_alert"]:
-            alert = max(0.0, min(1.0, float(state.get("alert_level", state.get("alert_level_executed", 0.0)) or 0.0)))
+            alert = max(
+                0.0, min(1.0, float(state.get("alert_level", state.get("alert_level_executed", 0.0)) or 0.0))
+            )
             return float(alert - 1.0)
         return min(
             spo2 - self._spo2_min,

@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "run_battery_av_pipeline.py"
 

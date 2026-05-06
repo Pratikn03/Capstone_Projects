@@ -12,6 +12,7 @@ Usage:
 
 If no path is given, finds the latest agent-artifacts-zip_*.zip in the repo root.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -168,7 +169,9 @@ def run_analysis(zip_path: Path, repo_root: Path) -> int:
         print("GAPS FOUND:")
         for g in gaps:
             print(f"  - {g}")
-        print("\nRecommendation: Use repo thesis as source of edits. See orius-plan/SOURCE_OF_TRUTH_POLICY.md")
+        print(
+            "\nRecommendation: Use repo thesis as source of edits. See orius-plan/SOURCE_OF_TRUTH_POLICY.md"
+        )
         return 1
     else:
         print("No critical gaps. Zip theorem set aligns with battery-8 mapping.")

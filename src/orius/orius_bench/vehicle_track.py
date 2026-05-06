@@ -4,11 +4,13 @@ Uses a processed AV replay lane when available and falls back to the older
 synthetic plant only in permissive support-tier mode. Safety: speed limit, TTC
 entry barrier. Fault injection on position/speed.
 """
+
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -65,7 +67,9 @@ class VehicleTrackAdapter(BenchmarkAdapter):
                 for row_idx, row in enumerate(episode):
                     gap_budget = float(row["lead_position_m"]) - float(row["position_m"]) - self._headway
                     closing_speed = float(row["speed_mps"]) - float(row.get("lead_speed_mps", 0.0))
-                    ttc = gap_budget / max(closing_speed, 1.0e-9) if gap_budget > 0.0 and closing_speed > 0.0 else float("inf")
+                    gap_budget / max(
+                        closing_speed, 1.0e-9
+                    ) if gap_budget > 0.0 and closing_speed > 0.0 else float("inf")
                     if gap_budget <= 22.5 and closing_speed >= 1.0:
                         candidates.append((ep_idx, row_idx))
             if not candidates:

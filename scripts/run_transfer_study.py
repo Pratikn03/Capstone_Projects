@@ -10,6 +10,7 @@ Usage:
     python scripts/run_transfer_study.py --all-pairs
     python scripts/run_transfer_study.py --all-pairs --models baseline_gbm dl_lstm
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,7 +27,8 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from orius.utils.metrics import mae, mape, rmse  # noqa: E402
+from orius.release.artifact_loader import load_joblib_artifact, load_torch_artifact
+from orius.utils.metrics import mae, mape, rmse
 
 logger = logging.getLogger(__name__)
 
@@ -83,16 +85,13 @@ def _load_test_split(features_path: Path, test_ratio: float = 0.15) -> pd.DataFr
 
 def _load_model(models_dir: Path, model_name: str):
     """Load a trained model artifact. Returns (model, model_type)."""
-    import joblib
-
     gbm_path = models_dir / f"{model_name}.joblib"
     if gbm_path.exists():
-        return joblib.load(gbm_path), "gbm"
+        return load_joblib_artifact(gbm_path), "gbm"
 
     pt_path = models_dir / f"{model_name}.pt"
     if pt_path.exists():
-        import torch
-        checkpoint = torch.load(pt_path, map_location="cpu", weights_only=False)
+        checkpoint = load_torch_artifact(pt_path, map_location="cpu", weights_only=False)
         return checkpoint, "dl"
 
     raise FileNotFoundError(f"No model artifact found for {model_name} in {models_dir}")
@@ -139,7 +138,7 @@ def evaluate_transfer_pair(
         logger.warning("Target %s missing from one of the datasets", target_col)
         return None
 
-    feature_cols = [c for c in source_test.columns if c not in TARGETS + ["timestamp"]]
+    feature_cols = [c for c in source_test.columns if c not in [*TARGETS, "timestamp"]]
 
     if model_type == "gbm":
         y_native = source_test[target_col].values
@@ -241,10 +240,14 @@ def main() -> int:
 
         # Print summary
         print("\n=== Transfer Study Summary ===\n")
-        summary = df.groupby(["source_region", "target_region"]).agg(
-            mean_degradation_mae=("degradation_mae_pct", "mean"),
-            mean_degradation_rmse=("degradation_rmse_pct", "mean"),
-        ).round(1)
+        summary = (
+            df.groupby(["source_region", "target_region"])
+            .agg(
+                mean_degradation_mae=("degradation_mae_pct", "mean"),
+                mean_degradation_rmse=("degradation_rmse_pct", "mean"),
+            )
+            .round(1)
+        )
         print(summary.to_string())
     else:
         logger.warning("No transfer results produced. Check that models and data exist.")

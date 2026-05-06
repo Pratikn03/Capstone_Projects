@@ -6,7 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -45,7 +44,13 @@ def test_core_three_domain_assets_exist() -> None:
 
 
 def test_removed_domains_and_old_gate_absent_from_core_truth_surfaces() -> None:
-    forbidden = ("industrial", "navigation", "aerospace", "equal_domain_93", "orius_equal_domain_parity_matrix")
+    forbidden = (
+        "industrial",
+        "navigation",
+        "aerospace",
+        "equal_domain_93",
+        "orius_equal_domain_parity_matrix",
+    )
     surfaces = [
         REPO_ROOT / "README.md",
         REPO_ROOT / "ORIUS_REPRODUCIBILITY.md",
@@ -74,8 +79,12 @@ def test_removed_domains_and_old_gate_absent_from_core_truth_surfaces() -> None:
 
 
 def test_scorecard_and_closure_matrix_are_literal_three_domain_surfaces() -> None:
-    scorecard_rows = list(csv.DictReader((REPO_ROOT / "reports" / "publication" / "orius_submission_scorecard.csv").open()))
-    closure_rows = list(csv.DictReader((REPO_ROOT / "reports" / "publication" / "orius_domain_closure_matrix.csv").open()))
+    scorecard_rows = list(
+        csv.DictReader((REPO_ROOT / "reports" / "publication" / "orius_submission_scorecard.csv").open())
+    )
+    closure_rows = list(
+        csv.DictReader((REPO_ROOT / "reports" / "publication" / "orius_domain_closure_matrix.csv").open())
+    )
 
     assert [row["target_tier"] for row in scorecard_rows] == ["three_domain_93_candidate"]
     assert {row["domain"] for row in closure_rows} == {
@@ -86,14 +95,27 @@ def test_scorecard_and_closure_matrix_are_literal_three_domain_surfaces() -> Non
 
 
 def test_defended_theorem_core_is_strict_and_bounded() -> None:
-    defended_core = json.loads((REPO_ROOT / "reports" / "publication" / "defended_theorem_core.json").read_text(encoding="utf-8"))
+    defended_core = json.loads(
+        (REPO_ROOT / "reports" / "publication" / "defended_theorem_core.json").read_text(encoding="utf-8")
+    )
     summary = defended_core["summary"]
     rows = defended_core["rows"]
 
-    assert summary["flagship_defended_ids"] == ["T1", "T2", "T3a", "T4", "T6", "T7", "T11", "T_trajectory_PAC"]
+    assert summary["flagship_defended_ids"] == [
+        "T1",
+        "T2",
+        "T3a",
+        "T4",
+        "T6",
+        "T7",
+        "T11",
+        "T_trajectory_PAC",
+    ]
     assert summary["supporting_defended_ids"] == [
         "T3b",
         "T8",
+        "T9",
+        "T10",
         "T10_T11_ObservationAmbiguitySandwich",
         "T11_AV_BrakeHold",
         "T11_HC_FailSafeRelease",
@@ -141,12 +163,14 @@ def test_canonical_defense_surfaces_use_current_paths_and_strict_core_language()
 
 def test_three_domain_release_summary_is_sanitized_and_mimic_backed() -> None:
     release_summary = json.loads(
-        (REPO_ROOT / "reports" / "battery_av_healthcare" / "overall" / "release_summary.json").read_text(encoding="utf-8")
-    )
-    override = json.loads(
-        (REPO_ROOT / "reports" / "battery_av_healthcare" / "overall" / "publication_closure_override.json").read_text(
+        (REPO_ROOT / "reports" / "battery_av_healthcare" / "overall" / "release_summary.json").read_text(
             encoding="utf-8"
         )
+    )
+    override = json.loads(
+        (
+            REPO_ROOT / "reports" / "battery_av_healthcare" / "overall" / "publication_closure_override.json"
+        ).read_text(encoding="utf-8")
     )
 
     text = json.dumps(release_summary)

@@ -10,19 +10,20 @@ Test structure:
   - TestInvariant{1..5}       : each invariant tested via a deliberately-broken adapter
   - TestContractVerifier       : edge cases (empty sets, scalar vs. array actions)
 """
+
 import numpy as np
 import pytest
 
 from orius.universal.contract import (
     ContractVerifier,
     ContractViolation,
-    TightenedSet,
     RepairResult,
+    TightenedSet,
     UniversalAdapterProtocol,
 )
 
-
 # ── Minimal compliant adapter ──────────────────────────────────────────────────
+
 
 class MinimalCompliantAdapter:
     """A minimal adapter that satisfies all five supporting harness invariants.
@@ -48,7 +49,7 @@ class MinimalCompliantAdapter:
         # At w_t → 0: inflation → ∞, set collapses to empty.
         inflation = q_t / (w_t + 1e-9)
         lower = np.array([-1.0 + inflation])
-        upper = np.array([ 1.0 - inflation])
+        upper = np.array([1.0 - inflation])
         is_empty = bool(np.any(upper < lower))
         if is_empty:
             lower = np.zeros(1)
@@ -70,6 +71,7 @@ class MinimalCompliantAdapter:
 
 
 # ── Test: compliant adapter passes all checks ──────────────────────────────────
+
 
 class TestCompliantAdapter:
     def test_passes_all_five_invariants(self):
@@ -93,15 +95,20 @@ class TestCompliantAdapter:
 
 # ── Broken adapters for invariant violation tests ──────────────────────────────
 
+
 class InvariantBroken_3_ReliabilityRange:
     """Returns w_t > 1 — violates Invariant 3."""
+
     def observe(self, raw):
         return np.array([0.0]), 1.5  # w_t outside [0, 1]
+
     def uncertainty_set(self, z_t, w_t, q_t):
         return TightenedSet(np.array([-0.9]), np.array([0.9]), False)
+
     def repair(self, candidate, safe_set):
         r = np.clip(np.asarray(candidate), safe_set.lower, safe_set.upper)
         return RepairResult(r, False, 0.0)
+
     def fallback(self):
         return np.zeros(1)
 
@@ -113,8 +120,10 @@ class InvariantBroken_4_CalibrationConsistency:
     This adapter returns the same width at w=1 and w=0.5, so the width
     change is 0 instead of the expected ≈ 2*q_t, triggering the check.
     """
+
     def observe(self, raw):
         return np.array([0.0]), 0.8
+
     def uncertainty_set(self, z_t, w_t, q_t):
         if w_t <= 0.0:
             return TightenedSet(np.zeros(1), np.zeros(1), True)
@@ -122,9 +131,11 @@ class InvariantBroken_4_CalibrationConsistency:
         # The correct change should be ≈ 2*q_t.
         constant_half = 0.5
         return TightenedSet(np.array([-constant_half]), np.array([constant_half]), False)
+
     def repair(self, candidate, safe_set):
         r = np.clip(np.asarray(candidate), safe_set.lower, safe_set.upper)
         return RepairResult(r, False, 0.0)
+
     def fallback(self):
         return np.zeros(1)
 
@@ -135,17 +146,21 @@ class InvariantBroken_5_ZeroReliabilityEmpty:
     Passes Invariant 4 (correct width change at w=1 vs w=0.5)
     but fails Invariant 5 (non-empty set at w=0).
     """
+
     def observe(self, raw):
         return np.array([0.0]), 0.8
+
     def uncertainty_set(self, z_t, w_t, q_t):
         # Correctly implement the inflation rule so Invariant 4 passes.
         # Bug: never returns is_empty=True, even at w_t=0.
         margin = q_t / (w_t + 1e-9) if w_t > 0 else q_t / 1e-9
         margin = min(margin, 0.9)  # clamp so set doesn't go empty by accident
         return TightenedSet(np.array([-1.0 + margin]), np.array([1.0 - margin]), False)
+
     def repair(self, candidate, safe_set):
         r = np.clip(np.asarray(candidate), safe_set.lower, safe_set.upper)
         return RepairResult(r, False, 0.0)
+
     def fallback(self):
         return np.zeros(1)
 
@@ -157,14 +172,16 @@ class InvariantBroken_2_TightenedSubset:
     but fails Invariant 2 (tightened lower bound dips below nominal lower bound).
     The set is shifted downward, maintaining correct width but breaking subset property.
     """
+
     def observe(self, raw):
         return np.array([0.0]), 0.8
+
     def uncertainty_set(self, z_t, w_t, q_t):
         if w_t <= 0.0:
             return TightenedSet(np.zeros(1), np.zeros(1), True)
         margin = q_t / (w_t + 1e-9)
         correct_lower = np.array([-1.0 + margin])
-        correct_upper = np.array([ 1.0 - margin])
+        correct_upper = np.array([1.0 - margin])
         if w_t >= 1.0:
             # Nominal at w=1: correct box, no shift
             return TightenedSet(correct_lower, correct_upper, False)
@@ -172,32 +189,39 @@ class InvariantBroken_2_TightenedSubset:
         # This keeps width correct (so Inv 4 passes) but lower < nominal_lower (Inv 2 fails).
         shift = np.array([0.5])
         return TightenedSet(correct_lower - shift, correct_upper - shift, False)
+
     def repair(self, candidate, safe_set):
         r = np.clip(np.asarray(candidate), safe_set.lower, safe_set.upper)
         return RepairResult(r, False, 0.0)
+
     def fallback(self):
         return np.zeros(1)
 
 
 class InvariantBroken_1_RepairMembership:
     """repair() returns an action outside the tightened set — violates Invariant 1."""
+
     def observe(self, raw):
         return np.array([0.0]), 0.8
+
     def uncertainty_set(self, z_t, w_t, q_t):
         if w_t <= 0.0:
             return TightenedSet(np.zeros(1), np.zeros(1), True)
         inflation = q_t / (w_t + 1e-9)
         return TightenedSet(np.array([-1.0 + inflation]), np.array([1.0 - inflation]), False)
+
     def repair(self, candidate, safe_set):
         # Bug: does not clip — returns the raw candidate regardless.
         candidate = np.asarray(candidate, dtype=float)
         dist = 0.0
         return RepairResult(action=candidate, was_repaired=False, repair_distance=dist)
+
     def fallback(self):
         return np.zeros(1)
 
 
 # ── Invariant violation tests ──────────────────────────────────────────────────
+
 
 class TestInvariant3:
     def test_reliability_out_of_range_raises(self):
@@ -236,11 +260,14 @@ class TestInvariant1:
 
 # ── Edge cases ────────────────────────────────────────────────────────────────
 
+
 class TestContractVerifierEdgeCases:
     def test_raises_if_adapter_missing_methods(self):
         """Non-adapter object should fail isinstance check in ContractVerifier."""
+
         class NotAnAdapter:
             pass
+
         with pytest.raises(TypeError, match="UniversalAdapterProtocol"):
             ContractVerifier(NotAnAdapter(), alpha=0.05)  # type: ignore
 

@@ -17,12 +17,10 @@ export async function GET() {
       meta: {
         ...fallback.meta,
         source: fallback.meta.source,
-        warnings: [
-          ...(fallback.meta.warnings ?? []),
-          `FastAPI reports route unavailable; serving local artifacts: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-        ],
+        live_backend: {
+          status: 'unavailable',
+          detail: error instanceof Error ? error.message : String(error),
+        },
       },
     });
   }

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate that production API routes are authenticated unless allowlisted."""
+
 from __future__ import annotations
 
 import sys
@@ -51,8 +52,8 @@ def _validate_app(app, label: str) -> list[str]:
 
 
 def validate() -> list[str]:
-    from services.api.main import app as canonical_app
     from orius.api.app import app as compatibility_app
+    from services.api.main import app as canonical_app
 
     findings = _validate_app(canonical_app, "services.api.main")
     findings.extend(_validate_app(compatibility_app, "orius.api.app"))

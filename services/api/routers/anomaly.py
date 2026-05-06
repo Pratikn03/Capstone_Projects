@@ -1,7 +1,7 @@
 """API router: anomaly."""
+
 from __future__ import annotations
 
-from typing import List, Optional
 from pathlib import Path
 
 import numpy as np
@@ -17,17 +17,17 @@ router = APIRouter()
 
 
 class AnomalyRequest(BaseModel):
-    actual: List[float]
-    forecast: List[float]
-    features: Optional[List[List[float]]] = None
+    actual: list[float]
+    forecast: list[float]
+    features: list[list[float]] | None = None
 
 
 class AnomalyResponse(BaseModel):
-    residual_z: List[bool]
-    iforest: List[bool]
-    combined: List[bool]
-    z_scores: List[float]
-    note: Optional[str] = None
+    residual_z: list[bool]
+    iforest: list[bool]
+    combined: list[bool]
+    z_scores: list[float]
+    note: str | None = None
 
 
 @router.post("", response_model=AnomalyResponse)

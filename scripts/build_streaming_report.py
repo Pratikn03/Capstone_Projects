@@ -1,4 +1,5 @@
 """Generate a streaming ingestion report from DuckDB."""
+
 from __future__ import annotations
 
 import argparse

@@ -78,8 +78,7 @@ def test_bootstrap_ci_script_smoke(tmp_path: Path) -> None:
     }.issubset(summary.columns)
 
     nominal_det = summary[
-        (summary["scenario"] == "nominal")
-        & (summary["controller"] == "deterministic_lp")
+        (summary["scenario"] == "nominal") & (summary["controller"] == "deterministic_lp")
     ].iloc[0]
     expected_picp_mean = sum(0.70 + 0.01 * seed for seed in range(5)) / 5.0
     assert nominal_det["picp_90_mean"] == pytest.approx(expected_picp_mean)

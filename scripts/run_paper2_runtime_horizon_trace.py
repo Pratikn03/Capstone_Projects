@@ -13,6 +13,7 @@ Uses: forward_tube, certificate_validity_horizon, certificate_half_life,
 
 Claim: ch28, theorem_to_evidence_map T5-T6, app_m.
 """
+
 from __future__ import annotations
 
 import csv
@@ -24,10 +25,10 @@ sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "src"))
 
 from orius.dc3s.temporal_theorems import (
-    certificate_validity_horizon,
     certificate_half_life,
-    should_renew_certificate,
+    certificate_validity_horizon,
     should_expire_certificate,
+    should_renew_certificate,
 )
 
 
@@ -88,14 +89,16 @@ def main() -> int:
         exp_reason = expire["expiration_trigger_reason"] or ""
         ren_reason = renew["renewal_trigger_reason"] or ""
 
-        rows.append({
-            "step": step,
-            "tau_t": tau_t,
-            "remaining_certified_time": remaining,
-            "expiration_trigger_reason": exp_reason,
-            "renewal_trigger_reason": ren_reason,
-            "half_life_steps": half_life_result["half_life_steps"],
-        })
+        rows.append(
+            {
+                "step": step,
+                "tau_t": tau_t,
+                "remaining_certified_time": remaining,
+                "expiration_trigger_reason": exp_reason,
+                "renewal_trigger_reason": ren_reason,
+                "half_life_steps": half_life_result["half_life_steps"],
+            }
+        )
 
         steps_since_renewal += 1
 

@@ -51,7 +51,12 @@ def test_bridge_writes_rss_columns_when_lead_gap_cache_exists(tmp_path) -> None:
     trajectories = bridge._translate(replay_loaded)
     trajectories = bridge._augment_with_rss(trajectories, full_corpus / "per_step_lead_gap.parquet")
     features = bridge._add_lag_features(bridge._filter_to_scenarios(trajectories, {scenario_id}))
-    bridge._write_outputs(features, trajectories, {"train": {scenario_id}, "calibration": set(), "val": set(), "test": set()}, processed)
+    bridge._write_outputs(
+        features,
+        trajectories,
+        {"train": {scenario_id}, "calibration": set(), "val": set(), "test": set()},
+        processed,
+    )
 
     csv = pd.read_csv(processed / "av_trajectories_orius.csv")
     features_out = pd.read_parquet(processed / "features.parquet")

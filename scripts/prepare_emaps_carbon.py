@@ -1,4 +1,5 @@
 """Prepare Electricity Maps carbon intensity CSV into signals format."""
+
 from __future__ import annotations
 
 import argparse
@@ -33,8 +34,12 @@ def main() -> None:
     ap.add_argument("--in", dest="in_path", required=True, help="Input CSV/Parquet from Electricity Maps")
     ap.add_argument("--out", dest="out_path", default="data/raw/price_carbon_signals.csv")
     ap.add_argument("--timestamp-col", default=None, help="Timestamp column name (auto-detect if omitted)")
-    ap.add_argument("--carbon-col", default=None, help="Carbon intensity column name (auto-detect if omitted)")
-    ap.add_argument("--unit", default="gco2_kwh", help="Units for carbon column (gco2_kwh, kgco2_mwh, lbs_co2_per_mwh)")
+    ap.add_argument(
+        "--carbon-col", default=None, help="Carbon intensity column name (auto-detect if omitted)"
+    )
+    ap.add_argument(
+        "--unit", default="gco2_kwh", help="Units for carbon column (gco2_kwh, kgco2_mwh, lbs_co2_per_mwh)"
+    )
     ap.add_argument("--zone-col", default=None, help="Optional zone column to filter")
     ap.add_argument("--zone", default=None, help="Zone to filter (e.g., DE-LU)")
     args = ap.parse_args()
@@ -43,10 +48,7 @@ def main() -> None:
     if not in_path.exists():
         raise FileNotFoundError(in_path)
 
-    if in_path.suffix == ".parquet":
-        df = pd.read_parquet(in_path)
-    else:
-        df = pd.read_csv(in_path)
+    df = pd.read_parquet(in_path) if in_path.suffix == ".parquet" else pd.read_csv(in_path)
 
     if args.zone_col and args.zone:
         df = df[df[args.zone_col] == args.zone]

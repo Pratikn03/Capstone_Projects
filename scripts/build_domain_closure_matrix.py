@@ -5,6 +5,7 @@ This builder consumes the active validation/training reports and emits the
 current three-domain closure surface used by the promoted Battery + AV +
 Healthcare lane.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -12,7 +13,6 @@ import csv
 import json
 from pathlib import Path
 from typing import Any
-
 
 DOMAIN_ORDER = ("battery", "healthcare", "vehicle")
 DISPLAY_NAMES = {
@@ -112,9 +112,8 @@ def _domain_validation_pass(validation_report: dict[str, Any], domain: str) -> b
         return False
 
     validated = validation_report.get("validated_domains")
-    if isinstance(validated, list) and validated:
-        if domain == "battery":
-            return domain in set(map(str, validated))
+    if isinstance(validated, list) and validated and domain == "battery":
+        return domain in set(map(str, validated))
 
     if domain == "battery":
         return domain not in failed
@@ -237,7 +236,13 @@ def main() -> int:
         "Three-domain ORIUS closure matrix for the promoted Battery + AV + Healthcare program.",
         "tab:three-domain-closure-matrix",
         closure_rows,
-        ["display_name", "resulting_tier", "baseline_tsvr_mean", "orius_tsvr_mean", "training_surface_status"],
+        [
+            "display_name",
+            "resulting_tier",
+            "baseline_tsvr_mean",
+            "orius_tsvr_mean",
+            "training_surface_status",
+        ],
     )
     _write_tex(
         p5_tex,
@@ -259,9 +264,7 @@ def main() -> int:
         "closure_rows": closure_rows,
         "paper5_rows": p5_rows,
         "paper6_rows": p6_rows,
-        "vehicle_soundness_rows": [
-            row for row in closure_rows if row["domain"] == "vehicle"
-        ],
+        "vehicle_soundness_rows": [row for row in closure_rows if row["domain"] == "vehicle"],
         "paths": {
             "domain_closure_csv": str(closure_csv),
             "paper5_csv": str(p5_csv),

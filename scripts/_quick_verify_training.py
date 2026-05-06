@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Quick verification that training pipelines work for all regions."""
-import yaml
-import pandas as pd
-import numpy as np
-import lightgbm as lgb
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-from pathlib import Path
+
 import sys
+from pathlib import Path
+
+import lightgbm as lgb
+import numpy as np
+import pandas as pd
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 REGIONS = {
     "DE": {
@@ -48,13 +49,12 @@ def verify_region(name, info):
     print(f"  Data: train={len(train):,}, val={len(val):,}, test={len(test):,}")
 
     feature_cols = [
-        c for c in train.columns
-        if c not in info["exclude_cols"]
-        and train[c].dtype in ["float64", "float32", "int64", "int32"]
+        c
+        for c in train.columns
+        if c not in info["exclude_cols"] and train[c].dtype in ["float64", "float32", "int64", "int32"]
     ]
     print(f"  Features: {len(feature_cols)}")
 
-    all_ok = True
     for target in info["targets"]:
         if target not in train.columns:
             print(f"  ⚠️  Target {target} not in data")
@@ -66,8 +66,12 @@ def verify_region(name, info):
         y_te = test[target].values
 
         model = lgb.LGBMRegressor(
-            n_estimators=30, learning_rate=0.1, max_depth=4,
-            num_leaves=16, verbose=-1, n_jobs=1,
+            n_estimators=30,
+            learning_rate=0.1,
+            max_depth=4,
+            num_leaves=16,
+            verbose=-1,
+            n_jobs=1,
         )
         model.fit(X_tr, y_tr)
 
@@ -103,8 +107,13 @@ def main():
         print(f"  {status} {name}")
 
     # Also check existing model artifacts
-    print(f"\n--- Existing Model Artifacts ---")
-    for d in ["artifacts/models", "artifacts/models_eia930", "artifacts/models_eia930_ercot", "artifacts/models_eia930_pjm"]:
+    print("\n--- Existing Model Artifacts ---")
+    for d in [
+        "artifacts/models",
+        "artifacts/models_eia930",
+        "artifacts/models_eia930_ercot",
+        "artifacts/models_eia930_pjm",
+    ]:
         p = Path(d)
         if p.exists():
             models = sorted(p.glob("*.pkl")) + sorted(p.glob("*.pt"))
@@ -115,24 +124,30 @@ def main():
             print(f"  {d}: NOT FOUND")
 
     # Check CPSBench runner
-    print(f"\n--- CPSBench Quick Check ---")
+    print("\n--- CPSBench Quick Check ---")
     try:
-        from orius.cpsbench_iot.runner import run_single
+        import orius.cpsbench_iot.runner as runner
+
+        if not hasattr(runner, "run_single"):
+            raise RuntimeError("orius.cpsbench_iot.runner.run_single is missing")
         print("  ✅ CPSBench runner importable")
     except Exception as e:
         print(f"  ❌ CPSBench import error: {e}")
 
     # Check table builder
-    print(f"\n--- Table Builder Check ---")
+    print("\n--- Table Builder Check ---")
     try:
         import importlib.util
+
         spec = importlib.util.spec_from_file_location("builder", "scripts/build_camera_ready_tables.py")
+        if spec is None:
+            raise RuntimeError("could not load build_camera_ready_tables.py spec")
         print("  ✅ build_camera_ready_tables.py found")
     except Exception as e:
         print(f"  ❌ Table builder error: {e}")
 
     # Check paper table CSVs
-    print(f"\n--- Paper Table CSVs ---")
+    print("\n--- Paper Table CSVs ---")
     csv_dir = Path("paper/assets/tables")
     for csv in sorted(csv_dir.glob("*.csv")):
         df = pd.read_csv(csv)

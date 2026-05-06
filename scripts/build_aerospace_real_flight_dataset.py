@@ -5,6 +5,7 @@ This builder is the canonical aerospace parity-closing runtime path. It is
 separate from the bounded public ADS-B support lane and refuses to use the
 public proxy corpus as an official substitute.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -13,7 +14,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT / "src") not in sys.path:
@@ -29,7 +29,6 @@ from orius.data_pipeline.real_data_contract import (
 )
 from orius.universal_framework import run_universal_step
 from orius.universal_framework.aerospace_adapter import AerospaceDomainAdapter
-
 
 RAW_DIR = REPO_ROOT / "data" / "aerospace" / "raw"
 PROCESSED_DIR = REPO_ROOT / "data" / "aerospace" / "processed"
@@ -107,7 +106,9 @@ def _derive_bank_angle(frame: pd.DataFrame, heading_col: str, speed_col: str, ti
     heading_rad = np.unwrap(
         np.deg2rad(pd.to_numeric(frame[heading_col], errors="coerce").fillna(0.0).to_numpy(dtype=float))
     )
-    timestamps = pd.to_datetime(frame[time_col], errors="coerce", utc=True).astype("int64").to_numpy(dtype=float) / 1e9
+    timestamps = (
+        pd.to_datetime(frame[time_col], errors="coerce", utc=True).astype("int64").to_numpy(dtype=float) / 1e9
+    )
     dt = np.diff(timestamps, prepend=timestamps[0])
     if len(dt) > 1:
         dt[0] = dt[1]
@@ -164,7 +165,9 @@ def _normalize_frame(df: pd.DataFrame, source_name: str) -> tuple[pd.DataFrame, 
 
     out["ts_utc"] = _normalize_timestamp(df[time_col])
     out["source_file"] = source_name
-    out = out.dropna(subset=["flight_id", "step", "altitude_m", "airspeed_kt", "bank_angle_deg", "fuel_remaining_pct"])
+    out = out.dropna(
+        subset=["flight_id", "step", "altitude_m", "airspeed_kt", "bank_angle_deg", "fuel_remaining_pct"]
+    )
     out["step"] = out["step"].astype(int)
     out["bank_angle_deg"] = out["bank_angle_deg"].clip(-MAX_BANK_DEG, MAX_BANK_DEG)
     return out.reset_index(drop=True), {
@@ -206,7 +209,9 @@ def _run_contract_summary(frame: pd.DataFrame) -> dict[str, float | int | str]:
         contract_checks = dict(result.get("contract_checks", {}))
         contract_pass_count += int(bool(contract_checks.get("contract_passed", False)))
         baseline_bank_violations += int(abs(candidate["bank_deg"]) > MAX_BANK_DEG)
-        repaired_bank_violations += int(abs(float(safe_action.get("bank_deg", candidate["bank_deg"]))) > MAX_BANK_DEG)
+        repaired_bank_violations += int(
+            abs(float(safe_action.get("bank_deg", candidate["bank_deg"]))) > MAX_BANK_DEG
+        )
     return {
         "generated_at_utc": utc_now_iso(),
         "lane_type": "official_provider_real_flight_runtime",
@@ -238,7 +243,11 @@ def build_real_flight_runtime(*, external_root: Path | None, out_csv: Path) -> P
     if not frames:
         raise ValueError("No usable provider telemetry rows were found after schema normalization")
 
-    combined = pd.concat(frames, ignore_index=True).sort_values(["flight_id", "step", "ts_utc"]).reset_index(drop=True)
+    combined = (
+        pd.concat(frames, ignore_index=True)
+        .sort_values(["flight_id", "step", "ts_utc"])
+        .reset_index(drop=True)
+    )
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     combined.to_csv(out_csv, index=False)
 
@@ -307,13 +316,15 @@ def build_real_flight_runtime(*, external_root: Path | None, out_csv: Path) -> P
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build aerospace real-flight runtime dataset from provider telemetry")
+    parser = argparse.ArgumentParser(
+        description="Build aerospace real-flight runtime dataset from provider telemetry"
+    )
     parser.add_argument("--external-root", type=Path, default=None, help="Override ORIUS_EXTERNAL_DATA_ROOT")
     parser.add_argument("--out", type=Path, default=PROCESSED_CSV, help="Output processed runtime CSV")
     args = parser.parse_args()
     try:
         output = build_real_flight_runtime(external_root=args.external_root, out_csv=args.out)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(str(exc))
         return 1
     print(f"Aerospace real-flight runtime -> {output}")

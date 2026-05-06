@@ -8,7 +8,7 @@ at each horizon step.
 Why Walk-Forward Backtesting?
     Traditional train/test splits give a single aggregate metric. Walk-forward
     evaluation shows how error grows with forecast horizon - crucial for:
-    
+
     - Understanding model degradation over time
     - Setting horizon-specific confidence intervals
     - Deciding when to trigger re-forecasting
@@ -25,31 +25,32 @@ Usage:
     >>> print(metrics['per_horizon']['1']['rmse'])  # Hour 1 RMSE
     >>> print(metrics['per_horizon']['24']['rmse']) # Hour 24 RMSE
 """
+
 from __future__ import annotations
 
 import numpy as np
 
-from orius.utils.metrics import rmse, mae, mape, smape, daylight_mape
+from orius.utils.metrics import daylight_mape, mae, mape, rmse, smape
 
 
 def walk_forward_horizon_metrics(y_true: np.ndarray, y_pred: np.ndarray, horizon: int, target: str) -> dict:
     """
     Compute per-step metrics for walk-forward forecast evaluation.
-    
+
     This function breaks down forecast performance by horizon step, showing
     how prediction accuracy degrades as we forecast further ahead.
-    
+
     Args:
         y_true: Actual values (flattened across all windows)
         y_pred: Predicted values (same shape as y_true)
         horizon: Forecast horizon length (e.g., 24 for day-ahead)
         target: Target variable name (used for special metrics like daylight_mape)
-        
+
     Returns:
         Dictionary with:
         - per_horizon: Dict mapping step '1', '2', ... to metric dicts
         - horizon: The horizon value for reference
-        
+
     Example:
         >>> metrics = walk_forward_horizon_metrics(y, y_hat, 24, 'load_mw')
         >>> metrics['per_horizon']['1']  # {'rmse': 5.2, 'mae': 4.1, ...}

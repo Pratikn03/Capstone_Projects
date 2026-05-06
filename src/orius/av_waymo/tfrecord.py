@@ -5,15 +5,15 @@ records are stored as serialized ``tf.train.Example`` payloads inside TFRecord
 containers, so this module provides the minimal decode and test-write surface
 needed by the validator and its unit tests.
 """
+
 from __future__ import annotations
 
+import struct
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-import struct
 from typing import Any
 
 from google.protobuf import descriptor_pb2, descriptor_pool, message_factory
-
 
 _LENGTH_STRUCT = struct.Struct("<Q")
 _CRC_STRUCT = struct.Struct("<I")
@@ -171,7 +171,7 @@ def parse_example_bytes(payload: bytes) -> dict[str, list[Any]]:
 
 
 def _normalize_feature_values(values: Any) -> list[Any]:
-    if isinstance(values, (bytes, str, int, float, bool)):
+    if isinstance(values, bytes | str | int | float | bool):
         return [values]
     if isinstance(values, Sequence):
         return list(values)
@@ -192,9 +192,7 @@ def serialize_example_features(features: Mapping[str, Any]) -> bytes:
             feature.bytes_list.value.extend(values)
         elif isinstance(first, str):
             feature.bytes_list.value.extend(item.encode("utf-8") for item in values)
-        elif isinstance(first, bool):
-            feature.int64_list.value.extend(int(item) for item in values)
-        elif isinstance(first, int):
+        elif isinstance(first, bool | int):
             feature.int64_list.value.extend(int(item) for item in values)
         else:
             feature.float_list.value.extend(float(item) for item in values)

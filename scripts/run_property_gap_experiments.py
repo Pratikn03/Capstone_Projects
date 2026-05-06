@@ -17,10 +17,10 @@ from __future__ import annotations
 import json
 import os
 import sys
-import textwrap
-from dataclasses import asdict, dataclass
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -33,7 +33,6 @@ sys.path.insert(0, str(_ROOT / "src"))
 
 # Bypass dc3s/__init__.py which eagerly imports torch-dependent modules.
 # We only need lightweight submodules (no torch required).
-import importlib
 import types
 
 _dc3s_stub = types.ModuleType("orius.dc3s")
@@ -41,25 +40,22 @@ _dc3s_stub.__path__ = [str(_ROOT / "src" / "orius" / "dc3s")]
 _dc3s_stub.__package__ = "orius.dc3s"
 sys.modules.setdefault("orius.dc3s", _dc3s_stub)
 
-from orius.orius_bench.oasg_metrics import compute_oasg_signature
 from orius.dc3s.brownian_half_life import (
     certificate_half_life,
     empirical_half_life,
     validity_probability,
 )
-from orius.universal_theory.no_free_safety import construct_counterexample
-from orius.dc3s.reliability_weighted_cp import calibrate_rwcp, predict_rwcp
 from orius.dc3s.inflation_law_derived import (
-    derived_k_q,
-    derived_inflation,
     inflation_curve,
     verify_heuristic_vs_derived,
 )
 from orius.dc3s.reliability_constraints import (
-    evaluate_constraint,
     constraint_tightening_curve,
-    linear_margin,
+    evaluate_constraint,
 )
+from orius.dc3s.reliability_weighted_cp import calibrate_rwcp, predict_rwcp
+from orius.orius_bench.oasg_metrics import compute_oasg_signature
+from orius.universal_theory.no_free_safety import construct_counterexample
 
 # ---------------------------------------------------------------------------
 # Output paths
@@ -72,18 +68,34 @@ RNG = np.random.default_rng(SEED)
 # ---------------------------------------------------------------------------
 # Config constants (from configs/dc3s*.yaml)
 # ---------------------------------------------------------------------------
-BATTERY_CFG = dict(
-    k_q=0.5, k_d=0.3, alpha=0.10, cadence_s=3600, capacity_mwh=200.0,
-    soc_min=0.1, soc_max=0.9,
-)
-AV_CFG = dict(
-    k_q=0.5, k_d=0.3, alpha=0.10, cadence_s=0.25,
-    speed_limit_mps=15.0, min_headway_m=12.0,
-)
-HC_CFG = dict(
-    k_q=0.60, k_d=0.40, alpha=0.10, cadence_s=1.0,
-    spo2_min=95.0, hr_min=50.0, hr_max=120.0, rr_min=5.0, rr_max=30.0,
-)
+BATTERY_CFG = {
+    "k_q": 0.5,
+    "k_d": 0.3,
+    "alpha": 0.10,
+    "cadence_s": 3600,
+    "capacity_mwh": 200.0,
+    "soc_min": 0.1,
+    "soc_max": 0.9,
+}
+AV_CFG = {
+    "k_q": 0.5,
+    "k_d": 0.3,
+    "alpha": 0.10,
+    "cadence_s": 0.25,
+    "speed_limit_mps": 15.0,
+    "min_headway_m": 12.0,
+}
+HC_CFG = {
+    "k_q": 0.60,
+    "k_d": 0.40,
+    "alpha": 0.10,
+    "cadence_s": 1.0,
+    "spo2_min": 95.0,
+    "hr_min": 50.0,
+    "hr_max": 120.0,
+    "rr_min": 5.0,
+    "rr_max": 30.0,
+}
 
 FAULT_REGIMES = ["clean", "mild_noise", "moderate_noise", "staleness", "adversarial"]
 
@@ -92,13 +104,15 @@ FAULT_REGIMES = ["clean", "mild_noise", "moderate_noise", "staleness", "adversar
 #  DATA LOADING & FAULT INJECTION                                       #
 # ===================================================================== #
 
+
 @dataclass
 class DomainData:
     """Container for domain-specific experiment inputs."""
+
     name: str
-    true_states: np.ndarray       # (T, d)
-    observations: dict[str, np.ndarray]   # fault_name -> (T, d)
-    reliability: dict[str, np.ndarray]    # fault_name -> (T,)
+    true_states: np.ndarray  # (T, d)
+    observations: dict[str, np.ndarray]  # fault_name -> (T, d)
+    reliability: dict[str, np.ndarray]  # fault_name -> (T,)
     safe_set_check: Callable[[np.ndarray], bool]
     distance_to_boundary: Callable[[np.ndarray], float]
     step_sec: float
@@ -226,10 +240,12 @@ def _load_av() -> DomainData:
         # Mix: 7 crash + 3 normal (or whatever is available)
         pick = crash_ids[:7] + normal_ids[:3]
         if len(pick) < 10:
-            pick += [v for v in valid_ids if v not in pick][:10 - len(pick)]
+            pick += [v for v in valid_ids if v not in pick][: 10 - len(pick)]
         valid_ids = pick
-        print(f"  [AV] Crash mix: {len([v for v in valid_ids[:10] if v in crash_ids])} crash + "
-              f"{len([v for v in valid_ids[:10] if v not in crash_ids])} normal")
+        print(
+            f"  [AV] Crash mix: {len([v for v in valid_ids[:10] if v in crash_ids])} crash + "
+            f"{len([v for v in valid_ids[:10] if v not in crash_ids])} normal"
+        )
 
     # Concatenate first 10 valid trajectories (up to ~2000 steps)
     frames = []
@@ -290,8 +306,8 @@ def _load_av() -> DomainData:
         return float(x[0]) < slimit and float(x[1]) > min_gap
 
     def dist_boundary(x: np.ndarray) -> float:
-        d_speed = float(x[0]) - slimit   # positive means overspeeding
-        d_gap = min_gap - float(x[1])    # positive means gap too small
+        d_speed = float(x[0]) - slimit  # positive means overspeeding
+        d_gap = min_gap - float(x[1])  # positive means gap too small
         worst = max(d_speed, d_gap)
         return worst  # positive outside, negative inside
 
@@ -394,11 +410,7 @@ def _load_healthcare() -> DomainData:
     rr_min, rr_max = HC_CFG["rr_min"], HC_CFG["rr_max"]
 
     def safe_set(x: np.ndarray) -> bool:
-        return (
-            float(x[0]) >= spo2_min
-            and hr_min <= float(x[1]) <= hr_max
-            and rr_min <= float(x[2]) <= rr_max
-        )
+        return float(x[0]) >= spo2_min and hr_min <= float(x[1]) <= hr_max and rr_min <= float(x[2]) <= rr_max
 
     def dist_boundary(x: np.ndarray) -> float:
         margins = [
@@ -434,6 +446,7 @@ def _load_healthcare() -> DomainData:
 #  EXPERIMENT 1: OASG SIGNATURE                                         #
 # ===================================================================== #
 
+
 def experiment_oasg(domains: list[DomainData]) -> list[dict[str, Any]]:
     """Compute OASG signatures across all domains and fault regimes."""
     rows: list[dict[str, Any]] = []
@@ -449,25 +462,31 @@ def experiment_oasg(domains: list[DomainData]) -> list[dict[str, Any]]:
                 bootstrap_samples=2000,
                 random_seed=SEED,
             )
-            rows.append(dict(
-                domain=dd.name, fault=fault,
-                sigma_oasg=res.signature,
-                exposure_rate=res.exposure_rate,
-                severity=res.severity,
-                blindness=res.blindness,
-                ci_low=res.bootstrap_ci_95[0],
-                ci_high=res.bootstrap_ci_95[1],
-                n_steps=res.n_steps,
-            ))
-            print(f"  OASG  {dd.name:12s} {fault:18s}  σ={res.signature:.6f}  "
-                  f"exp={res.exposure_rate:.4f}  sev={res.severity:.4f}  "
-                  f"blind={res.blindness:.4f}  CI=[{res.bootstrap_ci_95[0]:.6f}, {res.bootstrap_ci_95[1]:.6f}]")
+            rows.append(
+                {
+                    "domain": dd.name,
+                    "fault": fault,
+                    "sigma_oasg": res.signature,
+                    "exposure_rate": res.exposure_rate,
+                    "severity": res.severity,
+                    "blindness": res.blindness,
+                    "ci_low": res.bootstrap_ci_95[0],
+                    "ci_high": res.bootstrap_ci_95[1],
+                    "n_steps": res.n_steps,
+                }
+            )
+            print(
+                f"  OASG  {dd.name:12s} {fault:18s}  σ={res.signature:.6f}  "
+                f"exp={res.exposure_rate:.4f}  sev={res.severity:.4f}  "
+                f"blind={res.blindness:.4f}  CI=[{res.bootstrap_ci_95[0]:.6f}, {res.bootstrap_ci_95[1]:.6f}]"
+            )
     return rows
 
 
 # ===================================================================== #
 #  EXPERIMENT 2: CERTIFICATE HALF-LIFE                                  #
 # ===================================================================== #
+
 
 def experiment_half_life(domains: list[DomainData]) -> list[dict[str, Any]]:
     """Theoretical and empirical certificate half-life comparison."""
@@ -510,17 +529,21 @@ def experiment_half_life(domains: list[DomainData]) -> list[dict[str, Any]]:
         emp = empirical_half_life(np.array(violation_times if violation_times else [float("inf")]))
 
         ratio = emp / th.half_life_steps if th.half_life_steps > 0 else float("inf")
-        rows.append(dict(
-            domain=dd.name,
-            d_0=d_0,
-            sigma_d=sigma_d,
-            tau_half_theory=th.half_life_steps,
-            tau_half_theory_sec=th.half_life_seconds,
-            tau_half_empirical=emp,
-            ratio=ratio,
-        ))
-        print(f"  HalfLife  {dd.name:12s}  d₀={d_0:.4f}  σ_d={sigma_d:.6f}  "
-              f"τ½_th={th.half_life_steps:.1f} steps  τ½_emp={emp:.1f} steps  ratio={ratio:.2f}")
+        rows.append(
+            {
+                "domain": dd.name,
+                "d_0": d_0,
+                "sigma_d": sigma_d,
+                "tau_half_theory": th.half_life_steps,
+                "tau_half_theory_sec": th.half_life_seconds,
+                "tau_half_empirical": emp,
+                "ratio": ratio,
+            }
+        )
+        print(
+            f"  HalfLife  {dd.name:12s}  d₀={d_0:.4f}  σ_d={sigma_d:.6f}  "
+            f"τ½_th={th.half_life_steps:.1f} steps  τ½_emp={emp:.1f} steps  ratio={ratio:.2f}"
+        )
 
         # Validity decay curves
         t_range = np.arange(1, 1001)
@@ -534,6 +557,7 @@ def experiment_half_life(domains: list[DomainData]) -> list[dict[str, Any]]:
 # ===================================================================== #
 #  EXPERIMENT 3: NO FREE SAFETY COUNTEREXAMPLES                         #
 # ===================================================================== #
+
 
 def experiment_no_free_safety(domains: list[DomainData]) -> list[dict[str, Any]]:
     """Construct counterexamples for quality-ignorant controllers."""
@@ -554,22 +578,27 @@ def experiment_no_free_safety(domains: list[DomainData]) -> list[dict[str, Any]]
             random_seed=SEED,
         )
 
-        divergence = float(np.linalg.norm(
-            np.asarray(result.true_trajectory_faulty[-1])
-            - np.asarray(result.true_trajectory_clean[-1])
-        ))
+        divergence = float(
+            np.linalg.norm(
+                np.asarray(result.true_trajectory_faulty[-1]) - np.asarray(result.true_trajectory_clean[-1])
+            )
+        )
 
-        rows.append(dict(
-            domain=dd.name,
-            safe_clean=result.safety_outcome_clean,
-            safe_stale=result.safety_outcome_faulty,
-            divergence_norm=divergence,
-            x_clean_final=np.asarray(result.true_trajectory_clean[-1]).tolist(),
-            x_stale_final=np.asarray(result.true_trajectory_faulty[-1]).tolist(),
-            conclusion=result.conclusion,
-        ))
-        print(f"  NoFree  {dd.name:12s}  clean={'SAFE' if result.safety_outcome_clean else 'UNSAFE'}  "
-              f"stale={'SAFE' if result.safety_outcome_faulty else 'UNSAFE'}  divergence={divergence:.4f}")
+        rows.append(
+            {
+                "domain": dd.name,
+                "safe_clean": result.safety_outcome_clean,
+                "safe_stale": result.safety_outcome_faulty,
+                "divergence_norm": divergence,
+                "x_clean_final": np.asarray(result.true_trajectory_clean[-1]).tolist(),
+                "x_stale_final": np.asarray(result.true_trajectory_faulty[-1]).tolist(),
+                "conclusion": result.conclusion,
+            }
+        )
+        print(
+            f"  NoFree  {dd.name:12s}  clean={'SAFE' if result.safety_outcome_clean else 'UNSAFE'}  "
+            f"stale={'SAFE' if result.safety_outcome_faulty else 'UNSAFE'}  divergence={divergence:.4f}"
+        )
 
     return rows
 
@@ -577,6 +606,7 @@ def experiment_no_free_safety(domains: list[DomainData]) -> list[dict[str, Any]]
 # ===================================================================== #
 #  EXPERIMENT 4: RWCP vs STANDARD CP                                    #
 # ===================================================================== #
+
 
 def experiment_rwcp(domains: list[DomainData]) -> list[dict[str, Any]]:
     """Compare reliability-weighted vs standard conformal prediction."""
@@ -593,10 +623,10 @@ def experiment_rwcp(domains: list[DomainData]) -> list[dict[str, Any]]:
         cal_end = int(0.6 * T)
         cal_true, test_true = true_1d[:cal_end], true_1d[cal_end:]
         cal_obs, test_obs = obs_1d[:cal_end], obs_1d[cal_end:]
-        cal_w, test_w = w_t[:cal_end], w_t[cal_end:]
+        cal_w, _test_w = w_t[:cal_end], w_t[cal_end:]
 
         cal_scores = np.abs(cal_true - cal_obs)
-        test_scores = np.abs(test_true - test_obs)
+        np.abs(test_true - test_obs)
 
         for alpha in alphas:
             # Standard CP: uniform quantile
@@ -617,18 +647,31 @@ def experiment_rwcp(domains: list[DomainData]) -> list[dict[str, Any]]:
             rwcp_coverage = float(np.mean((test_true >= rwcp_lower) & (test_true <= rwcp_upper)))
             rwcp_width = float(np.mean(rwcp_upper - rwcp_lower))
 
-            rows.append(dict(
-                domain=dd.name, alpha=alpha, method="Standard CP",
-                coverage=std_coverage, width=std_width, ess=float(cal_end),
-            ))
-            rows.append(dict(
-                domain=dd.name, alpha=alpha, method="RWCP",
-                coverage=rwcp_coverage, width=rwcp_width,
-                ess=rwcp_result.effective_sample_size,
-            ))
-            print(f"  RWCP  {dd.name:12s}  α={alpha:.2f}  "
-                  f"StdCP cov={std_coverage:.4f} w={std_width:.4f}  |  "
-                  f"RWCP  cov={rwcp_coverage:.4f} w={rwcp_width:.4f} ESS={rwcp_result.effective_sample_size:.1f}")
+            rows.append(
+                {
+                    "domain": dd.name,
+                    "alpha": alpha,
+                    "method": "Standard CP",
+                    "coverage": std_coverage,
+                    "width": std_width,
+                    "ess": float(cal_end),
+                }
+            )
+            rows.append(
+                {
+                    "domain": dd.name,
+                    "alpha": alpha,
+                    "method": "RWCP",
+                    "coverage": rwcp_coverage,
+                    "width": rwcp_width,
+                    "ess": rwcp_result.effective_sample_size,
+                }
+            )
+            print(
+                f"  RWCP  {dd.name:12s}  α={alpha:.2f}  "
+                f"StdCP cov={std_coverage:.4f} w={std_width:.4f}  |  "
+                f"RWCP  cov={rwcp_coverage:.4f} w={rwcp_width:.4f} ESS={rwcp_result.effective_sample_size:.1f}"
+            )
 
     return rows
 
@@ -636,6 +679,7 @@ def experiment_rwcp(domains: list[DomainData]) -> list[dict[str, Any]]:
 # ===================================================================== #
 #  EXPERIMENT 5: DERIVED INFLATION LAW                                  #
 # ===================================================================== #
+
 
 def experiment_inflation(domains: list[DomainData]) -> list[dict[str, Any]]:
     """Compare derived k_q vs heuristic k_q."""
@@ -678,22 +722,26 @@ def experiment_inflation(domains: list[DomainData]) -> list[dict[str, Any]]:
         deriv_width = q_hat * deriv_gamma
         deriv_cov = float(np.mean(np.abs(test_true - test_obs) <= deriv_width))
 
-        rows.append(dict(
-            domain=dd.name,
-            sigma=sigma,
-            q_hat=q_hat,
-            k_q_heuristic=dd.k_q_heuristic,
-            k_q_derived=comparison["k_q_derived"],
-            relative_dev=comparison["relative_deviation"],
-            coverage_heuristic=heur_cov,
-            coverage_derived=deriv_cov,
-            mean_width_heuristic=float(np.mean(heur_width)),
-            mean_width_derived=float(np.mean(deriv_width)),
-        ))
-        print(f"  Inflation  {dd.name:12s}  σ={sigma:.4f}  q̂={q_hat:.4f}  "
-              f"k_q_h={dd.k_q_heuristic:.3f}  k_q_d={comparison['k_q_derived']:.3f}  "
-              f"reldev={comparison['relative_deviation']:.3f}  "
-              f"cov_h={heur_cov:.4f}  cov_d={deriv_cov:.4f}")
+        rows.append(
+            {
+                "domain": dd.name,
+                "sigma": sigma,
+                "q_hat": q_hat,
+                "k_q_heuristic": dd.k_q_heuristic,
+                "k_q_derived": comparison["k_q_derived"],
+                "relative_dev": comparison["relative_deviation"],
+                "coverage_heuristic": heur_cov,
+                "coverage_derived": deriv_cov,
+                "mean_width_heuristic": float(np.mean(heur_width)),
+                "mean_width_derived": float(np.mean(deriv_width)),
+            }
+        )
+        print(
+            f"  Inflation  {dd.name:12s}  σ={sigma:.4f}  q̂={q_hat:.4f}  "
+            f"k_q_h={dd.k_q_heuristic:.3f}  k_q_d={comparison['k_q_derived']:.3f}  "
+            f"reldev={comparison['relative_deviation']:.3f}  "
+            f"cov_h={heur_cov:.4f}  cov_d={deriv_cov:.4f}"
+        )
 
         # Inflation curve
         w_arr = np.linspace(0, 1, 101)
@@ -707,6 +755,7 @@ def experiment_inflation(domains: list[DomainData]) -> list[dict[str, Any]]:
 # ===================================================================== #
 #  EXPERIMENT 6: RELIABILITY CONSTRAINTS                                #
 # ===================================================================== #
+
 
 def experiment_constraints(domains: list[DomainData]) -> list[dict[str, Any]]:
     """Evaluate reliability-conditioned constraint tightening."""
@@ -740,17 +789,22 @@ def experiment_constraints(domains: list[DomainData]) -> list[dict[str, Any]]:
 
             prevention_rate = early_warnings / max(1, nominal_violations) if nominal_violations > 0 else 0.0
 
-            rows.append(dict(
-                domain=dd.name, k=k,
-                nominal_violations=nominal_violations,
-                effective_violations=effective_violations,
-                early_warnings=early_warnings,
-                prevention_rate=prevention_rate,
-                T=T,
-            ))
-            print(f"  Constraint  {dd.name:12s}  k={k:.1f}  "
-                  f"nom_viol={nominal_violations}  eff_viol={effective_violations}  "
-                  f"early_warn={early_warnings}  prevention={prevention_rate:.3f}")
+            rows.append(
+                {
+                    "domain": dd.name,
+                    "k": k,
+                    "nominal_violations": nominal_violations,
+                    "effective_violations": effective_violations,
+                    "early_warnings": early_warnings,
+                    "prevention_rate": prevention_rate,
+                    "T": T,
+                }
+            )
+            print(
+                f"  Constraint  {dd.name:12s}  k={k:.1f}  "
+                f"nom_viol={nominal_violations}  eff_viol={effective_violations}  "
+                f"early_warn={early_warnings}  prevention={prevention_rate:.3f}"
+            )
 
         # Tightening curves (using median h_nominal)
         h_median = float(np.median(h_nominals[h_nominals > 0])) if np.any(h_nominals > 0) else 1.0
@@ -766,6 +820,7 @@ def experiment_constraints(domains: list[DomainData]) -> list[dict[str, Any]]:
 # ===================================================================== #
 #  LATEX TABLE GENERATION                                               #
 # ===================================================================== #
+
 
 def _latex_escape(s: str) -> str:
     return s.replace("_", r"\_")
@@ -808,8 +863,8 @@ def _build_table2(rows: list[dict]) -> str:
         r"\midrule",
     ]
     for r in rows:
-        emp_str = f"{r['tau_half_empirical']:.1f}" if np.isfinite(r['tau_half_empirical']) else r"$\infty$"
-        ratio_str = f"{r['ratio']:.2f}" if np.isfinite(r['ratio']) else r"$\infty$"
+        emp_str = f"{r['tau_half_empirical']:.1f}" if np.isfinite(r["tau_half_empirical"]) else r"$\infty$"
+        ratio_str = f"{r['ratio']:.2f}" if np.isfinite(r["ratio"]) else r"$\infty$"
         lines.append(
             f"  {_latex_escape(r['domain'])} & {r['d_0']:.4f} & {r['sigma_d']:.6f} & "
             f"{r['tau_half_theory']:.1f} & {emp_str} & {ratio_str} \\\\"
@@ -833,10 +888,7 @@ def _build_table3(rows: list[dict]) -> str:
     for r in rows:
         clean = r"\checkmark" if r["safe_clean"] else r"$\times$"
         stale = r"\checkmark" if r["safe_stale"] else r"$\times$"
-        lines.append(
-            f"  {_latex_escape(r['domain'])} & {clean} & {stale} & "
-            f"{r['divergence_norm']:.4f} \\\\"
-        )
+        lines.append(f"  {_latex_escape(r['domain'])} & {clean} & {stale} & {r['divergence_norm']:.4f} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
     return "\n".join(lines)
 
@@ -912,6 +964,7 @@ def _build_table6(rows: list[dict]) -> str:
 #  CROSS-DOMAIN SUMMARY                                                 #
 # ===================================================================== #
 
+
 def cross_domain_summary(
     oasg_rows: list[dict],
     hl_rows: list[dict],
@@ -935,23 +988,29 @@ def cross_domain_summary(
     # Half-life ratios
     lines.append("\n--- Certificate Half-Life (empirical / theoretical) ---")
     for r in hl_rows:
-        ratio_s = f"{r['ratio']:.2f}" if np.isfinite(r['ratio']) else "∞"
+        ratio_s = f"{r['ratio']:.2f}" if np.isfinite(r["ratio"]) else "∞"
         lines.append(f"  {r['domain']:12s}  ratio = {ratio_s}")
 
     # No Free Safety
     lines.append("\n--- No Free Safety (counterexample divergence) ---")
     for r in nfs_rows:
-        lines.append(f"  {r['domain']:12s}  ‖Δx‖ = {r['divergence_norm']:.4f}  "
-                      f"clean={'safe' if r['safe_clean'] else 'UNSAFE'}  "
-                      f"stale={'safe' if r['safe_stale'] else 'UNSAFE'}")
+        lines.append(
+            f"  {r['domain']:12s}  ‖Δx‖ = {r['divergence_norm']:.4f}  "
+            f"clean={'safe' if r['safe_clean'] else 'UNSAFE'}  "
+            f"stale={'safe' if r['safe_stale'] else 'UNSAFE'}"
+        )
 
     # RWCP improvement at α=0.10
     lines.append("\n--- RWCP Coverage Improvement at α=0.10 ---")
     for domain in ["battery", "av", "healthcare"]:
-        std_rows = [r for r in rwcp_rows
-                    if r["domain"] == domain and r["alpha"] == 0.10 and r["method"] == "Standard CP"]
-        rwcp_r = [r for r in rwcp_rows
-                  if r["domain"] == domain and r["alpha"] == 0.10 and r["method"] == "RWCP"]
+        std_rows = [
+            r
+            for r in rwcp_rows
+            if r["domain"] == domain and r["alpha"] == 0.10 and r["method"] == "Standard CP"
+        ]
+        rwcp_r = [
+            r for r in rwcp_rows if r["domain"] == domain and r["alpha"] == 0.10 and r["method"] == "RWCP"
+        ]
         if std_rows and rwcp_r:
             delta_cov = rwcp_r[0]["coverage"] - std_rows[0]["coverage"]
             delta_w = rwcp_r[0]["width"] - std_rows[0]["width"]
@@ -960,15 +1019,19 @@ def cross_domain_summary(
     # Inflation law deviation
     lines.append("\n--- Inflation Law: k_q heuristic vs derived ---")
     for r in infl_rows:
-        lines.append(f"  {r['domain']:12s}  k_q_h={r['k_q_heuristic']:.3f}  "
-                      f"k_q_d={r['k_q_derived']:.3f}  reldev={r['relative_dev']:.1%}")
+        lines.append(
+            f"  {r['domain']:12s}  k_q_h={r['k_q_heuristic']:.3f}  "
+            f"k_q_d={r['k_q_derived']:.3f}  reldev={r['relative_dev']:.1%}"
+        )
 
     # Constraints at k=2.0
     lines.append("\n--- Constraint Tightening (k=2.0) ---")
     for r in constr_rows:
         if r["k"] == 2.0:
-            lines.append(f"  {r['domain']:12s}  early_warnings={r['early_warnings']}  "
-                          f"prevention_rate={r['prevention_rate']:.3f}")
+            lines.append(
+                f"  {r['domain']:12s}  early_warnings={r['early_warnings']}  "
+                f"prevention_rate={r['prevention_rate']:.3f}"
+            )
 
     lines.append("\n" + "=" * 72)
     return "\n".join(lines)
@@ -977,6 +1040,7 @@ def cross_domain_summary(
 # ===================================================================== #
 #  MAIN                                                                 #
 # ===================================================================== #
+
 
 def main() -> None:
     print("=" * 72)
@@ -990,16 +1054,22 @@ def main() -> None:
     # Phase A: Load data
     print("\n[Phase A] Loading domain data and injecting faults ...")
     battery = _load_battery()
-    print(f"  Battery:    {battery.true_states.shape[0]} steps, SOC range "
-          f"[{battery.true_states.min():.3f}, {battery.true_states.max():.3f}]")
+    print(
+        f"  Battery:    {battery.true_states.shape[0]} steps, SOC range "
+        f"[{battery.true_states.min():.3f}, {battery.true_states.max():.3f}]"
+    )
 
     av = _load_av()
-    print(f"  AV:         {av.true_states.shape[0]} steps, speed range "
-          f"[{av.true_states[:, 0].min():.1f}, {av.true_states[:, 0].max():.1f}] m/s")
+    print(
+        f"  AV:         {av.true_states.shape[0]} steps, speed range "
+        f"[{av.true_states[:, 0].min():.1f}, {av.true_states[:, 0].max():.1f}] m/s"
+    )
 
     hc = _load_healthcare()
-    print(f"  Healthcare: {hc.true_states.shape[0]} steps, SpO2 range "
-          f"[{hc.true_states[:, 0].min():.1f}, {hc.true_states[:, 0].max():.1f}]")
+    print(
+        f"  Healthcare: {hc.true_states.shape[0]} steps, SpO2 range "
+        f"[{hc.true_states[:, 0].min():.1f}, {hc.true_states[:, 0].max():.1f}]"
+    )
 
     domains = [battery, av, hc]
 
@@ -1031,33 +1101,33 @@ def main() -> None:
     print("\n[Phase H] Generating output ...")
 
     # LaTeX tables
-    latex_content = "\n\n".join([
-        r"% Auto-generated by run_property_gap_experiments.py",
-        r"% Date: " + "2026-04-18",
-        r"\usepackage{booktabs}",
-        "",
-        _build_table1(oasg_rows),
-        _build_table2(hl_rows),
-        _build_table3(nfs_rows),
-        _build_table4(rwcp_rows),
-        _build_table5(infl_rows),
-        _build_table6(constr_rows),
-    ])
+    latex_content = "\n\n".join(
+        [
+            r"% Auto-generated by run_property_gap_experiments.py",
+            r"% Date: " + "2026-04-18",
+            r"\usepackage{booktabs}",
+            "",
+            _build_table1(oasg_rows),
+            _build_table2(hl_rows),
+            _build_table3(nfs_rows),
+            _build_table4(rwcp_rows),
+            _build_table5(infl_rows),
+            _build_table6(constr_rows),
+        ]
+    )
     (OUT_DIR / "all_tables.tex").write_text(latex_content, encoding="utf-8")
     print(f"  LaTeX tables → {OUT_DIR / 'all_tables.tex'}")
 
     # JSON results
-    all_results = dict(
-        oasg=oasg_rows,
-        half_life=hl_rows,
-        no_free_safety=nfs_rows,
-        rwcp=rwcp_rows,
-        inflation=infl_rows,
-        constraints=constr_rows,
-    )
-    (OUT_DIR / "results.json").write_text(
-        json.dumps(all_results, indent=2, default=str), encoding="utf-8"
-    )
+    all_results = {
+        "oasg": oasg_rows,
+        "half_life": hl_rows,
+        "no_free_safety": nfs_rows,
+        "rwcp": rwcp_rows,
+        "inflation": infl_rows,
+        "constraints": constr_rows,
+    }
+    (OUT_DIR / "results.json").write_text(json.dumps(all_results, indent=2, default=str), encoding="utf-8")
     print(f"  JSON results → {OUT_DIR / 'results.json'}")
 
     # Summary

@@ -1,12 +1,13 @@
 """Download Electricity Maps carbon intensity via API into signals format."""
+
 from __future__ import annotations
 
 import argparse
 import os
+import sys
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Iterable
-import sys
 
 import pandas as pd
 
@@ -107,7 +108,9 @@ def main() -> None:
                 val_key = k
                 break
     if val_key is None:
-        raise ValueError(f"Could not find carbon intensity column in response. Columns: {list(df.columns)[:20]}")
+        raise ValueError(
+            f"Could not find carbon intensity column in response. Columns: {list(df.columns)[:20]}"
+        )
 
     out = pd.DataFrame(
         {

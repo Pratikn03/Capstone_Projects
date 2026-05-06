@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Audit figure and publication artifact inventory + freshness."""
+
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import hashlib
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -26,8 +26,8 @@ def _parse_utc(raw: str | None) -> datetime | None:
     except ValueError:
         return None
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
+    return dt.astimezone(UTC)
 
 
 def _sha256_file(path: Path) -> str:
@@ -83,7 +83,7 @@ def build_inventory(*, run_start_utc: datetime | None, manifest_lock_utc: dateti
         for path in sorted(p for p in root.rglob("*") if p.is_file()):
             rel_path = str(path.relative_to(REPO_ROOT)).replace("\\", "/")
             stat = path.stat()
-            mtime = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
+            mtime = datetime.fromtimestamp(stat.st_mtime, tz=UTC)
             size_bytes = int(stat.st_size)
             non_empty = size_bytes > 0
             files.append(
@@ -115,16 +115,20 @@ def build_inventory(*, run_start_utc: datetime | None, manifest_lock_utc: dateti
     stale_before_run_start = [
         row["path"]
         for row in files
-        if run_start_utc is not None and isinstance(row.get("fresh_since_run_start"), bool) and not row["fresh_since_run_start"]
+        if run_start_utc is not None
+        and isinstance(row.get("fresh_since_run_start"), bool)
+        and not row["fresh_since_run_start"]
     ]
     newer_than_lock = [
         row["path"]
         for row in files
-        if manifest_lock_utc is not None and isinstance(row.get("newer_than_manifest_lock"), bool) and row["newer_than_manifest_lock"]
+        if manifest_lock_utc is not None
+        and isinstance(row.get("newer_than_manifest_lock"), bool)
+        and row["newer_than_manifest_lock"]
     ]
 
     payload = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "run_start_utc": run_start_utc.isoformat() if run_start_utc else None,
         "manifest_lock_utc": manifest_lock_utc.isoformat() if manifest_lock_utc else None,
         "roots": [str(x.relative_to(REPO_ROOT)).replace("\\", "/") for x in roots],

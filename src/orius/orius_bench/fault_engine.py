@@ -5,11 +5,14 @@ Given a seed, the engine produces a deterministic sequence of fault events
 handle.  The same seed always yields the same fault scenario, enabling
 reproducible leaderboard comparisons.
 """
+
 from __future__ import annotations
 
+import contextlib
 import hashlib
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -120,7 +123,6 @@ def apply_faults(
         rng = np.random.default_rng(42)
 
     # Build a simple history ring-buffer from params for replay fault
-    history: list[dict[str, float]] = []
 
     for f in faults:
         if f.kind == "blackout":
@@ -153,10 +155,8 @@ def apply_faults(
             magnitude = spoof_frac * normal_range
             for key in list(observed.keys()):
                 val = observed[key]
-                try:
+                with contextlib.suppress(TypeError, ValueError):
                     observed[key] = float(val) + magnitude
-                except (TypeError, ValueError):
-                    pass
 
     return observed
 

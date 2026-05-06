@@ -2,10 +2,12 @@
 
 ISSUE, VALIDATE, EXPIRE, RENEW, REVOKE, FALLBACK.
 """
+
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any
 
 
 class LifecycleOp(str, Enum):

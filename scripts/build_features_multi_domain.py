@@ -10,6 +10,7 @@ Requires datasets to exist. Run first:
 For repo-local corpus readiness checks, run:
   python scripts/verify_real_data_preflight.py
 """
+
 from __future__ import annotations
 
 import sys

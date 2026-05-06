@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Build prepared-but-not-completed next-tier validation manifests."""
+
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = REPO_ROOT / "reports" / "predeployment_external_validation"
@@ -68,7 +68,7 @@ def build_next_tier_validation_preparation(*, out_dir: Path = DEFAULT_OUT) -> di
     hc_completed = _all_artifacts_exist(hc_required)
 
     av_manifest = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "domain": "Autonomous Vehicles",
         "status": "completed" if av_completed else "prepared_not_completed",
         "completed_evidence": av_completed,
@@ -99,7 +99,7 @@ def build_next_tier_validation_preparation(*, out_dir: Path = DEFAULT_OUT) -> di
             split_manifest = {}
 
     hc_manifest = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "domain": "Medical and Healthcare Monitoring",
         "status": "completed" if hc_completed else "prepared_not_completed",
         "completed_evidence": hc_completed,
@@ -118,7 +118,7 @@ def build_next_tier_validation_preparation(*, out_dir: Path = DEFAULT_OUT) -> di
     hc_path.write_text(json.dumps(hc_manifest, indent=2) + "\n", encoding="utf-8")
 
     summary = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "status": "prepared_not_completed",
         "claim_boundary": (
             "These manifests prepare next-tier validation only. They do not promote "

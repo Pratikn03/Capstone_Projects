@@ -10,6 +10,7 @@ Outputs:
   reports/paper1/operational_trace.json
   reports/paper1/fig_cost_safety_frontier.png
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,6 +23,7 @@ from pathlib import Path
 
 try:
     import pandas as pd
+
     HAS_PANDAS = True
 except ImportError:
     HAS_PANDAS = False
@@ -74,15 +76,25 @@ def _build_controller_compare(pub_dir: Path, out_dir: Path) -> None:
             cost = sum(float(r.get("expected_cost_usd", 0)) for r in sub) / n
             viol = sum(float(r.get("true_soc_violation_rate", 0)) for r in sub) / n
             interv = sum(float(r.get("intervention_rate", 0)) for r in sub) / n
-            out_rows.append({
-                "controller": ctrl,
-                "expected_cost_usd": round(cost, 6),
-                "true_soc_violation_rate": round(viol, 6),
-                "intervention_rate": round(interv, 6),
-            })
+            out_rows.append(
+                {
+                    "controller": ctrl,
+                    "expected_cost_usd": round(cost, 6),
+                    "true_soc_violation_rate": round(viol, 6),
+                    "intervention_rate": round(interv, 6),
+                }
+            )
         out_dir.mkdir(parents=True, exist_ok=True)
         with open(out_dir / "controller_compare.csv", "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=["controller", "expected_cost_usd", "true_soc_violation_rate", "intervention_rate"])
+            w = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "controller",
+                    "expected_cost_usd",
+                    "true_soc_violation_rate",
+                    "intervention_rate",
+                ],
+            )
             w.writeheader()
             w.writerows(out_rows)
     print(f"Wrote {out_dir / 'controller_compare.csv'}")
@@ -114,23 +126,40 @@ def _build_per_fault_compare(pub_dir: Path, out_dir: Path) -> None:
                 n = len(sub)
                 viol = sum(float(r.get("true_soc_violation_rate_at_fault", 0)) for r in sub) / n
                 cnt = sum(float(r.get("fault_count", 0)) for r in sub) / n
-                out_rows.append({
-                    "scenario": sc, "controller": ctrl, "fault_type": ft,
-                    "true_soc_violation_rate_at_fault": round(viol, 6),
-                    "fault_count": round(cnt, 2),
-                })
+                out_rows.append(
+                    {
+                        "scenario": sc,
+                        "controller": ctrl,
+                        "fault_type": ft,
+                        "true_soc_violation_rate_at_fault": round(viol, 6),
+                        "fault_count": round(cnt, 2),
+                    }
+                )
             out_dir.mkdir(parents=True, exist_ok=True)
             with open(out_dir / "per_fault_compare.csv", "w", newline="", encoding="utf-8") as f:
-                w = csv.DictWriter(f, fieldnames=["scenario", "controller", "fault_type", "true_soc_violation_rate_at_fault", "fault_count"])
+                w = csv.DictWriter(
+                    f,
+                    fieldnames=[
+                        "scenario",
+                        "controller",
+                        "fault_type",
+                        "true_soc_violation_rate_at_fault",
+                        "fault_count",
+                    ],
+                )
                 w.writeheader()
                 w.writerows(out_rows)
     else:
         merged = pd.read_csv(pub_dir / "cpsbench_merged_sweep.csv") if HAS_PANDAS else None
         if merged is not None:
-            agg = merged.groupby(["fault_dimension", "severity", "controller"], as_index=False).agg(
-                true_soc_violation_rate=("true_soc_violation_rate", "mean"),
-                expected_cost_usd=("expected_cost_usd", "mean"),
-            ).round(6)
+            agg = (
+                merged.groupby(["fault_dimension", "severity", "controller"], as_index=False)
+                .agg(
+                    true_soc_violation_rate=("true_soc_violation_rate", "mean"),
+                    expected_cost_usd=("expected_cost_usd", "mean"),
+                )
+                .round(6)
+            )
             out_dir.mkdir(parents=True, exist_ok=True)
             agg.to_csv(out_dir / "per_fault_compare.csv", index=False)
         else:
@@ -144,14 +173,27 @@ def _build_per_fault_compare(pub_dir: Path, out_dir: Path) -> None:
                 n = len(sub)
                 viol = sum(float(r.get("true_soc_violation_rate", 0)) for r in sub) / n
                 cost = sum(float(r.get("expected_cost_usd", 0)) for r in sub) / n
-                out_rows.append({
-                    "fault_dimension": fd, "severity": sev, "controller": ctrl,
-                    "true_soc_violation_rate": round(viol, 6),
-                    "expected_cost_usd": round(cost, 6),
-                })
+                out_rows.append(
+                    {
+                        "fault_dimension": fd,
+                        "severity": sev,
+                        "controller": ctrl,
+                        "true_soc_violation_rate": round(viol, 6),
+                        "expected_cost_usd": round(cost, 6),
+                    }
+                )
             out_dir.mkdir(parents=True, exist_ok=True)
             with open(out_dir / "per_fault_compare.csv", "w", newline="", encoding="utf-8") as f:
-                w = csv.DictWriter(f, fieldnames=["fault_dimension", "severity", "controller", "true_soc_violation_rate", "expected_cost_usd"])
+                w = csv.DictWriter(
+                    f,
+                    fieldnames=[
+                        "fault_dimension",
+                        "severity",
+                        "controller",
+                        "true_soc_violation_rate",
+                        "expected_cost_usd",
+                    ],
+                )
                 w.writeheader()
                 w.writerows(out_rows)
     print(f"Wrote {out_dir / 'per_fault_compare.csv'}")
@@ -213,14 +255,19 @@ def _build_fig_cost_safety_frontier(pub_dir: Path, out_dir: Path) -> None:
     for r in rows:
         by_ctrl[r["controller"]].append(r)
     ctrl_data = [
-        (c, sum(float(x.get("expected_cost_usd", 0)) for x in sub) / len(sub),
-         sum(float(x.get("true_soc_violation_rate", 0)) for x in sub) / len(sub))
+        (
+            c,
+            sum(float(x.get("expected_cost_usd", 0)) for x in sub) / len(sub),
+            sum(float(x.get("true_soc_violation_rate", 0)) for x in sub) / len(sub),
+        )
         for c, sub in sorted(by_ctrl.items())
     ]
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots(figsize=(6, 4))
         for controller, cost, viol in ctrl_data:
             ax.scatter(cost, viol, label=controller, alpha=0.85)
@@ -253,7 +300,7 @@ def _write_svg_frontier(ctrl_data: list[tuple[str, float, float]], out_dir: Path
         x = 20 + (cost - cost_min) / max(cost_max - cost_min, 1e-9) * (w - 80)
         y = h - 50 - min(1, max(0, viol)) * (h - 80)
         lines.append(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="4" fill="{colors[i % len(colors)]}"/>')
-        lines.append(f'<text x="{min(x+5, w-60):.0f}" y="{y:.0f}" font-size="8">{ctrl[:12]}</text>')
+        lines.append(f'<text x="{min(x + 5, w - 60):.0f}" y="{y:.0f}" font-size="8">{ctrl[:12]}</text>')
     lines.append("</svg>")
     out_dir.mkdir(parents=True, exist_ok=True)
     svg_path = out_dir / "fig_cost_safety_frontier.svg"
@@ -281,7 +328,9 @@ def main() -> int:
         default="reports/publication",
         help="Governed publication artifact directory used as the source surface",
     )
-    parser.add_argument("--skip-cpsbench", action="store_true", help="Skip CPSBench run; use existing publication outputs")
+    parser.add_argument(
+        "--skip-cpsbench", action="store_true", help="Skip CPSBench run; use existing publication outputs"
+    )
     args = parser.parse_args()
     out_dir = _resolve_repo_path(args.out)
     pub_dir = _resolve_repo_path(args.publication_dir)

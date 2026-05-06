@@ -1,4 +1,5 @@
 """Reliability-conditioned conformal intervals for grouped coverage analysis."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -39,7 +40,9 @@ class ReliabilityMondrian:
         self.global_q_: float | None = None
         self.n_bins_: int = 0
 
-    def _validate(self, y_true: np.ndarray, y_pred: np.ndarray, reliability: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _validate(
+        self, y_true: np.ndarray, y_pred: np.ndarray, reliability: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         y_true_arr = np.asarray(y_true, dtype=float).reshape(-1)
         y_pred_arr = np.asarray(y_pred, dtype=float).reshape(-1)
         reliability_arr = np.asarray(reliability, dtype=float).reshape(-1)
@@ -71,7 +74,7 @@ class ReliabilityMondrian:
         bin_ids = np.digitize(reliability, self.bin_edges_[1:-1], right=False)
         return np.clip(bin_ids.astype(int), 0, self.n_bins_ - 1)
 
-    def fit(self, y_true: np.ndarray, y_pred: np.ndarray, reliability: np.ndarray) -> "ReliabilityMondrian":
+    def fit(self, y_true: np.ndarray, y_pred: np.ndarray, reliability: np.ndarray) -> ReliabilityMondrian:
         y_true_arr, y_pred_arr, reliability_arr = self._validate(y_true, y_pred, reliability)
         residuals = np.abs(y_true_arr - y_pred_arr)
         self.bin_edges_ = self._compute_edges(reliability_arr)
@@ -96,7 +99,9 @@ class ReliabilityMondrian:
         if y_pred_arr.shape != reliability_arr.shape:
             raise ValueError("y_pred and reliability must have identical 1D shapes")
         bin_ids = self._assign_bins(reliability_arr)
-        widths = np.asarray([self.q_by_bin_.get(int(bin_idx), float(self.global_q_)) for bin_idx in bin_ids], dtype=float)
+        widths = np.asarray(
+            [self.q_by_bin_.get(int(bin_idx), float(self.global_q_)) for bin_idx in bin_ids], dtype=float
+        )
         widths = np.maximum(widths, float(self.config.eps))
         return y_pred_arr - widths, y_pred_arr + widths
 
@@ -125,7 +130,9 @@ class ReliabilityMondrian:
                 picp = float("nan")
                 width = float("nan")
             else:
-                picp = float(np.mean((y_true_arr[mask] >= lower_arr[mask]) & (y_true_arr[mask] <= upper_arr[mask])))
+                picp = float(
+                    np.mean((y_true_arr[mask] >= lower_arr[mask]) & (y_true_arr[mask] <= upper_arr[mask]))
+                )
                 width = float(np.mean(upper_arr[mask] - lower_arr[mask]))
             rows.append(
                 {

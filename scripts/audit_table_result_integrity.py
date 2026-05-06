@@ -6,22 +6,22 @@ looks at report CSV/JSON/TeX surfaces and the local audit DuckDB files.  Numeric
 zero values are reported as warnings only because zero is a valid safety result
 for ORIUS violation/failure metrics.
 """
+
 from __future__ import annotations
 
 import argparse
 import csv
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import json
 import math
-from pathlib import Path
 import re
-import sys
-from typing import Any, Iterable
+from collections.abc import Iterable
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
 
 import duckdb
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -246,7 +246,7 @@ def _scan_csv(path: Path) -> list[Finding]:
 
     for column in df.columns:
         series = df[column].map(lambda value: str(value).strip())
-        missing_mask = series.map(lambda value: _looks_missing(value, column))
+        missing_mask = series.map(lambda value, current_column=column: _looks_missing(value, current_column))
         count = int(missing_mask.sum())
         if count:
             sample_index = str(int(missing_mask[missing_mask].index[0]) + 2)
@@ -487,7 +487,9 @@ def _duckdb_noncanonical_mask(df: pd.DataFrame) -> pd.Series:
     status_like = [
         column
         for column in df.columns
-        if any(marker in str(column).lower() for marker in ("status", "surface", "closure", "tier", "canonical"))
+        if any(
+            marker in str(column).lower() for marker in ("status", "surface", "closure", "tier", "canonical")
+        )
     ]
     for column in status_like:
         values = df[column].astype(str).str.strip().str.lower()
@@ -528,7 +530,7 @@ def run_audit(roots: Iterable[str]) -> tuple[list[Finding], dict[str, Any]]:
     blocking = [finding for finding in findings if finding.blocking]
     warnings = [finding for finding in findings if not finding.blocking]
     summary = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "roots": list(roots),
         "scanned": scanned,
         "finding_count": len(findings),
@@ -597,9 +599,13 @@ def _write_outputs(findings: list[Finding], summary: dict[str, Any], out_dir: Pa
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Audit ORIUS table/result artifact integrity.")
-    parser.add_argument("--root", action="append", default=None, help="Repo-relative root to scan; may be repeated.")
+    parser.add_argument(
+        "--root", action="append", default=None, help="Repo-relative root to scan; may be repeated."
+    )
     parser.add_argument("--out-dir", default="reports/audit")
-    parser.add_argument("--no-fail", action="store_true", help="Write report but do not exit nonzero on blocking findings.")
+    parser.add_argument(
+        "--no-fail", action="store_true", help="Write report but do not exit nonzero on blocking findings."
+    )
     return parser.parse_args()
 
 

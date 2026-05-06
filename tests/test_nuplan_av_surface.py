@@ -1,15 +1,16 @@
 """Tests for the nuPlan-to-ORIUS AV replay bridge."""
+
 from __future__ import annotations
 
 import sqlite3
-from pathlib import Path
 import zipfile
+from pathlib import Path
 
 import pandas as pd
 
+import orius.av_waymo.training as av_training
 from orius.av_nuplan import build_nuplan_replay_surface, resolve_nuplan_train_archives
 from orius.av_waymo import build_feature_tables
-import orius.av_waymo.training as av_training
 
 
 def _token(prefix: str, index: int) -> bytes:
@@ -317,7 +318,11 @@ def test_build_nuplan_replay_surface_can_bound_each_archive(tmp_path: Path) -> N
     assert report["bounds"]["max_scenarios_per_archive"] == 1
     replay = pd.read_parquet(out_dir / "replay_windows.parquet")
     assert replay["scenario_id"].nunique() == 3
-    assert set(replay["source_dataset"].unique()) == {"nuplan_boston", "nuplan_pittsburgh", "nuplan_singapore"}
+    assert set(replay["source_dataset"].unique()) == {
+        "nuplan_boston",
+        "nuplan_pittsburgh",
+        "nuplan_singapore",
+    }
 
 
 def test_feature_tables_can_mark_holdout_surface_as_all_test(tmp_path: Path) -> None:

@@ -1,23 +1,21 @@
-import pytest
-
 from orius.dc3s.state import DC3SStateStore
 
 
 def test_dc3s_state_store_roundtrip(tmp_path):
     db_path = str(tmp_path / "dc3s_state.duckdb")
     store = DC3SStateStore(db_path)
-    
+
     try:
         # 1. State should be empty initially
         res = store.get("Z1", "D1", "T1")
         assert res is None
-        
+
         # 2. Upsert a new state
         drift_state = {"ph": {"cumulative_sum": 5.0, "count": 10}}
         adaptive_state = {"window": [1.0, 2.0]}
         last_event = {"val": 100}
         last_action = {"charge_mw": 50.0}
-        
+
         store.upsert(
             zone_id="Z1",
             device_id="D1",
@@ -32,7 +30,7 @@ def test_dc3s_state_store_roundtrip(tmp_path):
             last_event=last_event,
             last_action=last_action,
         )
-        
+
         # 3. Retrieve and verify
         res = store.get("Z1", "D1", "T1")
         assert res is not None
@@ -45,10 +43,10 @@ def test_dc3s_state_store_roundtrip(tmp_path):
         assert res["last_inflation"] == 1.2
         assert res["last_event"] == last_event
         assert res["last_action"] == last_action
-        
+
         # 4. Verify different device_id is empty
         assert store.get("Z1", "D2", "T1") is None
-        
+
         # 5. Overwrite state (upsert does REPLACE)
         store.upsert(
             zone_id="Z1",
@@ -58,7 +56,7 @@ def test_dc3s_state_store_roundtrip(tmp_path):
         )
         res = store.get("Z1", "D1", "T1")
         assert res["last_inflation"] == 2.5
-        assert res["last_yhat"] is None # It was replaced with None
-        
+        assert res["last_yhat"] is None  # It was replaced with None
+
     finally:
         store.close()

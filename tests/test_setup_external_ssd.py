@@ -4,19 +4,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-from orius.data_pipeline.external_raw import get_strict_external_root
-
+from orius.data_pipeline.external_raw import EXTERNAL_DATASETS, get_strict_external_root
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "scripts" / "setup_external_ssd.py"
 
-DATASET_DIRS = (
-    "waymo_open_motion",
-    "argoverse2_motion",
-    "argoverse2_sensor",
-    "kitti_odometry",
-    "aerospace_flight_telemetry",
-)
+DATASET_DIRS = tuple(spec.directory_name for spec in EXTERNAL_DATASETS.values())
 
 
 def _run(cmd: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:

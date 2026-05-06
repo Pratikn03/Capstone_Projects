@@ -8,7 +8,6 @@ from types import SimpleNamespace
 
 import scripts.run_camera_ready_freeze as freeze
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -77,7 +76,9 @@ def test_verify_paper_manifest_camera_ready_promotes_warnings_to_errors(tmp_path
     assert "camera-ready warning promoted to error" in strict.stderr
 
 
-def test_verify_paper_manifest_skips_unused_legacy_tokens_when_macro_surface_is_inactive(tmp_path: Path) -> None:
+def test_verify_paper_manifest_skips_unused_legacy_tokens_when_macro_surface_is_inactive(
+    tmp_path: Path,
+) -> None:
     (tmp_path / "paper").mkdir()
     (tmp_path / "paper" / "assets" / "data").mkdir(parents=True)
     (tmp_path / "assets").mkdir()
@@ -145,7 +146,9 @@ def test_verify_camera_ready_logs_blocks_duplicate_destinations_even_with_waiver
         encoding="utf-8",
     )
 
-    log_path.write_text(r"Underfull \hbox (badness 10000) in paragraph at lines 1--1" + "\n", encoding="utf-8")
+    log_path.write_text(
+        r"Underfull \hbox (badness 10000) in paragraph at lines 1--1" + "\n", encoding="utf-8"
+    )
     ok = _run(
         [
             sys.executable,

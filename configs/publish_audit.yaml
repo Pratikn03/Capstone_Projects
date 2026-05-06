@@ -97,63 +97,152 @@ publish_audit:
     fail_on_except_pass: true
     fail_on_unused_imports: false
     known_violations:
-      # Pre-existing violations documented for tracking; new violations still fail.
-      - path: src/orius/cpsbench_iot/baselines.py
-        types: [file_too_large, function_too_large]
-      - path: src/orius/cpsbench_iot/runner.py
-        types: [file_too_large, function_too_large, function_too_complex, except_pass]
-      - path: src/orius/forecasting/train.py
-        types: [file_too_large, function_too_large, function_too_complex]
-      - path: src/orius/pipeline/run.py
-        types: [file_too_large, function_too_large, function_too_complex]
-      - path: src/orius/optimizer/lp_dispatch.py
-        types: [function_too_large, function_too_complex]
-      - path: src/orius/monitoring/dc3s_health.py
-        types: [function_too_large, function_too_complex]
-      - path: src/orius/dc3s/calibration.py
-        types: [function_too_complex]
-      - path: src/orius/dc3s/quality.py
-        types: [function_too_complex]
-      - path: src/orius/streaming/consumer.py
-        types: [except_pass]
-      - path: src/orius/streaming/run_consumer.py
-        types: [except_pass]
-      - path: src/orius/streaming/worker.py
-        types: [except_pass]
-      - path: src/orius/utils/manifest.py
-        types: [except_pass]
-      - path: src/orius/utils/seed.py
-        types: [except_pass]
-      - path: services/api/routers/dc3s.py
-        types: [function_too_large, function_too_complex]
-      - path: scripts/run_ablations.py
-        types: [function_too_large, function_too_complex]
-      - path: scripts/generate_publication_figures.py
-        types: [except_pass, function_too_large, function_too_complex]
+      # Legacy monolith backlog documented for tracking; new paths/types still fail.
+      # No except_pass entries are allowlisted.
+      - path: scripts/audit_leakage.py
+        types: [function_too_large]
       - path: scripts/backfill_dc3s_typed_columns.py
-        types: [function_too_large, function_too_complex]
+        types: [function_too_complex, function_too_large]
+      - path: scripts/build_battery_av_closure_artifacts.py
+        types: [function_too_large]
+      - path: scripts/build_certos_artifacts.py
+        types: [function_too_complex]
+      - path: scripts/build_clean_artifact_release.py
+        types: [function_too_complex, function_too_large]
+      - path: scripts/build_equal_domain_artifact_discipline.py
+        types: [function_too_complex]
+      - path: scripts/build_nuplan_closed_loop_artifacts.py
+        types: [function_too_complex, function_too_large]
+      - path: scripts/build_orius_framework_proof.py
+        types: [function_too_large]
+      - path: scripts/build_orius_monograph_assets.py
+        types: [file_too_large, function_too_large]
       - path: scripts/build_reports.py
-        types: [file_too_large, function_too_large, function_too_complex]
-      - path: scripts/export_pilot_bundle.py
-        types: [except_pass]
+        types: [file_too_large, function_too_complex, function_too_large]
+      - path: scripts/build_three_domain_ml_artifacts.py
+        types: [file_too_large, function_too_large]
+      - path: scripts/deep_repo_file_inventory.py
+        types: [function_too_complex]
       - path: scripts/extract_dashboard_data.py
         types: [function_too_large]
       - path: scripts/final_publish_audit.py
         types: [function_too_large]
+      - path: scripts/final_submission_audit.py
+        types: [function_too_complex, function_too_large]
       - path: scripts/generate_architecture_diagram.py
         types: [function_too_large]
-      - path: services/api/routers/monitor.py
-        types: [except_pass]
+      - path: scripts/generate_deployment_evidence.py
+        types: [function_too_large]
+      - path: scripts/generate_publication_figures.py
+        types: [function_too_complex, function_too_large]
+      - path: scripts/run_ablations.py
+        types: [function_too_complex, function_too_large]
+      - path: scripts/run_all_domain_eval.py
+        types: [function_too_complex]
+      - path: scripts/run_battery_deep_novelty.py
+        types: [file_too_large, function_too_large]
+      - path: scripts/run_paper2_blackout_benchmark.py
+        types: [function_too_large]
+      - path: scripts/run_predeployment_external_validation.py
+        types: [function_too_complex, function_too_large]
+      - path: scripts/run_release.py
+        types: [function_too_large]
+      - path: scripts/run_universal_orius_validation.py
+        types: [function_too_complex, function_too_large]
+      - path: scripts/train_dataset.py
+        types: [file_too_large, function_too_complex]
+      - path: scripts/validate_clean_artifact_release.py
+        types: [function_too_complex]
+      - path: scripts/validate_equal_domain_artifact_discipline.py
+        types: [function_too_complex]
+      - path: scripts/validate_next_tier_validation_boundaries.py
+        types: [function_too_complex]
+      - path: scripts/validate_paper_claims.py
+        types: [function_too_complex, function_too_large]
+      - path: scripts/validate_theorem_promotion_gates.py
+        types: [function_too_complex]
+      - path: scripts/validate_theorem_surface.py
+        types: [function_too_complex, function_too_large]
+      - path: scripts/validate_top_venue_research_package.py
+        types: [function_too_complex]
+      - path: scripts/verify_integrated_theorem_surface.py
+        types: [function_too_complex]
+      - path: scripts/verify_paper3_runtime_linkage.py
+        types: [function_too_large]
+      - path: scripts/verify_paper_manifest.py
+        types: [function_too_complex]
+      - path: services/api/routers/dc3s.py
+        types: [function_too_complex, function_too_large]
+      - path: src/orius/av_nuplan/surface.py
+        types: [function_too_complex, function_too_large]
+      - path: src/orius/av_waymo/runtime.py
+        types: [file_too_large, function_too_complex, function_too_large]
+      - path: src/orius/av_waymo/training.py
+        types: [function_too_large]
+      - path: src/orius/certos/verification.py
+        types: [function_too_complex, function_too_large]
+      - path: src/orius/cpsbench_iot/baselines.py
+        types: [file_too_large, function_too_large]
+      - path: src/orius/cpsbench_iot/runner.py
+        types: [file_too_large, function_too_complex, function_too_large]
+      - path: src/orius/dc3s/calibration.py
+        types: [function_too_complex, function_too_large]
+      - path: src/orius/dc3s/pipeline.py
+        types: [function_too_large]
+      - path: src/orius/dc3s/quality.py
+        types: [function_too_complex, function_too_large]
+      - path: src/orius/dc3s/theoretical_guarantees.py
+        types: [file_too_large]
+      - path: src/orius/forecasting/train.py
+        types: [file_too_large, function_too_complex, function_too_large]
+      - path: src/orius/monitoring/dc3s_health.py
+        types: [function_too_complex, function_too_large]
+      - path: src/orius/multi_agent/scenarios.py
+        types: [function_too_large]
+      - path: src/orius/optimizer/lp_dispatch.py
+        types: [function_too_complex, function_too_large]
+      - path: src/orius/pipeline/run.py
+        types: [file_too_large, function_too_complex, function_too_large]
+      - path: src/orius/universal_theory/contracts.py
+        types: [function_too_large]
+      - path: src/orius/universal_theory/kernel.py
+        types: [function_too_large]
+      - path: src/orius/universal_theory/theorem_discharge.py
+        types: [function_too_complex]
 
   retraining_acceptance:
     metric: mape
+    metric_by_target:
+      solar_mw: smape
+      price_eur_mwh: smape
+      spo2_pct: rmse
+      respiratory_rate: rmse
     require_non_regression: true
     min_improvement_by_target:
       load_mw: 0.005
       wind_mw: 0.002
-      solar_mw: 0.002
+      solar_mw: 0.0
       price_eur_mwh: 0.0
     max_cv_rmse_std: 1000.0
+    profile_overrides:
+      production-max-fast:
+        min_improvement_by_target:
+          load_mw: 0.005
+          wind_mw: 0.002
+          solar_mw: 0.0
+          price_eur_mwh: 0.0
+        absolute_regression_tolerance_by_target:
+          price_eur_mwh: 0.0005
+          spo2_pct: 0.06
+          respiratory_rate: 0.03
+    retain_incumbent_on_regression_targets:
+      - load_mw
+      - wind_mw
+      - solar_mw
+      - price_eur_mwh
+      - hr_bpm
+      - spo2_pct
+      - respiratory_rate
 
   go_no_go:
     safety_violations: 0

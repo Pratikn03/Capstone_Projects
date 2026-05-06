@@ -14,17 +14,18 @@ conformal with repair, and two ORIUS/DC3S variants. Separate weighted or
 Mondrian dispatch baselines are not synthesized here because they are not
 present as promoted replay-backed controller rows in the locked artifact set.
 """
+
 from __future__ import annotations
 
 import argparse
-import csv
-from dataclasses import asdict, dataclass
 import hashlib
 import json
 import os
-from pathlib import Path
 import shutil
-from typing import Any, Iterable, Sequence
+from collections.abc import Iterable, Sequence
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
@@ -33,7 +34,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MAIN_TABLE = REPO_ROOT / "reports" / "publication" / "dc3s_main_table.csv"
 DEFAULT_OUT_DIR = REPO_ROOT / "reports" / "publication"
@@ -41,7 +41,9 @@ DEFAULT_TABLE_OUT = DEFAULT_OUT_DIR / "tbl_battery_reliability_baselines.tex"
 DEFAULT_FIGURE_OUT = DEFAULT_OUT_DIR / "fig_battery_reliability_baselines.png"
 DEFAULT_SUMMARY_CSV = DEFAULT_OUT_DIR / "battery_reliability_baselines_summary.csv"
 DEFAULT_SUMMARY_JSON = DEFAULT_OUT_DIR / "battery_reliability_baselines_summary.json"
-DEFAULT_PAPER_TABLE = REPO_ROOT / "paper" / "assets" / "tables" / "generated" / "tbl_battery_reliability_baselines.tex"
+DEFAULT_PAPER_TABLE = (
+    REPO_ROOT / "paper" / "assets" / "tables" / "generated" / "tbl_battery_reliability_baselines.tex"
+)
 DEFAULT_PAPER_FIGURE = REPO_ROOT / "paper" / "assets" / "figures" / "fig59_battery_reliability_baselines.png"
 
 
@@ -153,7 +155,9 @@ def _controller_specs(selected: Iterable[str] | None = None) -> list[ControllerS
     if selected is None:
         return list(DEFAULT_CONTROLLER_SPECS)
     allowed = {item.strip() for item in selected if item.strip()}
-    specs = [spec for spec in DEFAULT_CONTROLLER_SPECS if spec.controller in allowed or spec.method_id in allowed]
+    specs = [
+        spec for spec in DEFAULT_CONTROLLER_SPECS if spec.controller in allowed or spec.method_id in allowed
+    ]
     if not specs:
         raise ValueError("No selected controllers matched the supported locked controller-family specs.")
     return specs
@@ -173,7 +177,9 @@ def summarize_locked_battery_controller_table(
     for spec in specs:
         subset = frame.loc[frame["controller"] == spec.controller].copy()
         if subset.empty:
-            raise ValueError(f"Locked controller table does not contain required controller '{spec.controller}'.")
+            raise ValueError(
+                f"Locked controller table does not contain required controller '{spec.controller}'."
+            )
         true_rate = float(subset["true_soc_violation_rate"].mean())
         observed_rate = float(subset["violation_rate"].mean())
         hidden_gap = float(max(true_rate - observed_rate, 0.0))
@@ -201,12 +207,16 @@ def summarize_locked_battery_controller_table(
     rows = [asdict(item) for item in metrics]
     deltas_vs_reference = {
         row["method_id"]: {
-            "delta_true_state_violation_rate": float(row["true_state_violation_rate"] - reference.true_state_violation_rate),
+            "delta_true_state_violation_rate": float(
+                row["true_state_violation_rate"] - reference.true_state_violation_rate
+            ),
             "delta_observed_state_violation_rate": float(
                 row["observed_state_violation_rate"] - reference.observed_state_violation_rate
             ),
             "delta_coverage_90": float(row["coverage_90"] - reference.coverage_90),
-            "delta_mean_interval_width_mw": float(row["mean_interval_width_mw"] - reference.mean_interval_width_mw),
+            "delta_mean_interval_width_mw": float(
+                row["mean_interval_width_mw"] - reference.mean_interval_width_mw
+            ),
             "delta_repair_rate": float(row["repair_rate"] - reference.repair_rate),
             "delta_expected_cost_usd": float(row["expected_cost_usd"] - reference.expected_cost_usd),
         }
@@ -301,7 +311,9 @@ def _render_figure(summary: dict[str, Any], path: Path) -> None:
         values = [transform(row[key]) for row in rows]
         ax.barh(y, values, color=colors, edgecolor="black", linewidth=0.5)
         ax.set_title(title)
-        ax.set_yticks(y, labels if key in {"true_state_violation_rate", "mean_interval_width_mw"} else [""] * len(y))
+        ax.set_yticks(
+            y, labels if key in {"true_state_violation_rate", "mean_interval_width_mw"} else [""] * len(y)
+        )
         ax.grid(axis="x", alpha=0.3)
         xmax = max(values) if values else 1.0
         if xmax <= 0:
@@ -358,14 +370,24 @@ def build_battery_reliability_baselines(
 
 def _build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--main-table", type=Path, default=DEFAULT_MAIN_TABLE, help="Locked controller-family CSV.")
-    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUT_DIR, help="Publication output directory.")
+    parser.add_argument(
+        "--main-table", type=Path, default=DEFAULT_MAIN_TABLE, help="Locked controller-family CSV."
+    )
+    parser.add_argument(
+        "--output-dir", type=Path, default=DEFAULT_OUT_DIR, help="Publication output directory."
+    )
     parser.add_argument("--summary-csv", type=Path, help="Optional override for summary CSV output.")
     parser.add_argument("--summary-json", type=Path, help="Optional override for summary JSON output.")
-    parser.add_argument("--table-out", type=Path, help="Optional override for publication LaTeX table output.")
+    parser.add_argument(
+        "--table-out", type=Path, help="Optional override for publication LaTeX table output."
+    )
     parser.add_argument("--figure-out", type=Path, help="Optional override for publication figure output.")
-    parser.add_argument("--paper-table", type=Path, default=DEFAULT_PAPER_TABLE, help="Canonical paper table copy.")
-    parser.add_argument("--paper-figure", type=Path, default=DEFAULT_PAPER_FIGURE, help="Canonical paper figure copy.")
+    parser.add_argument(
+        "--paper-table", type=Path, default=DEFAULT_PAPER_TABLE, help="Canonical paper table copy."
+    )
+    parser.add_argument(
+        "--paper-figure", type=Path, default=DEFAULT_PAPER_FIGURE, help="Canonical paper figure copy."
+    )
     parser.add_argument(
         "--controllers",
         nargs="*",

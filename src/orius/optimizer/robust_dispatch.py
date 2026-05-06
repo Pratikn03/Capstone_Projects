@@ -1,4 +1,5 @@
 """Pyomo-based robust battery dispatch optimization."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -43,7 +44,7 @@ class CVaRDispatchConfig(RobustDispatchConfig):
 
 
 def _as_array(x: Any, label: str) -> np.ndarray:
-    if isinstance(x, (list, tuple, np.ndarray)):
+    if isinstance(x, list | tuple | np.ndarray):
         arr = np.asarray(x, dtype=float)
     else:
         arr = np.asarray([x], dtype=float)
@@ -156,7 +157,9 @@ def optimize_robust_dispatch(
     horizon = max(load_lower.size, load_upper.size)
     load_lower = _broadcast(load_lower, horizon, "load_lower_bound")
     load_upper = _broadcast(load_upper, horizon, "load_upper_bound")
-    renewables = _broadcast(_as_array(renewables_forecast, "renewables_forecast"), horizon, "renewables_forecast")
+    renewables = _broadcast(
+        _as_array(renewables_forecast, "renewables_forecast"), horizon, "renewables_forecast"
+    )
 
     if price is None:
         prices = np.full(horizon, cfg.default_price_per_mwh, dtype=float)
@@ -275,8 +278,7 @@ def optimize_robust_dispatch(
     worst_case_cost = max(scenario_cost_lower, scenario_cost_upper)
 
     degradation_cost = float(
-        cfg.degradation_cost_per_mwh
-        * np.sum((battery_charge + battery_discharge) * cfg.time_step_hours)
+        cfg.degradation_cost_per_mwh * np.sum((battery_charge + battery_discharge) * cfg.time_step_hours)
     )
     total_cost = float(worst_case_cost + degradation_cost)
 
@@ -325,11 +327,17 @@ def optimize_cvar_dispatch(
     if s_count != int(cfg.n_scenarios):
         raise ValueError(f"load_scenarios has S={s_count}, expected n_scenarios={cfg.n_scenarios}")
 
-    renewables = _broadcast(_as_array(renewables_forecast, "renewables_forecast"), horizon, "renewables_forecast")
-    prices = np.full(horizon, cfg.default_price_per_mwh, dtype=float) if price is None else _broadcast(
-        _as_array(price, "price"),
-        horizon,
-        "price",
+    renewables = _broadcast(
+        _as_array(renewables_forecast, "renewables_forecast"), horizon, "renewables_forecast"
+    )
+    prices = (
+        np.full(horizon, cfg.default_price_per_mwh, dtype=float)
+        if price is None
+        else _broadcast(
+            _as_array(price, "price"),
+            horizon,
+            "price",
+        )
     )
 
     _ensure_non_negative(renewables, "renewables_forecast")
@@ -474,7 +482,9 @@ def evaluate_dispatch_robustness(
         "dispatch_solution.battery_charge_mw",
     )
     battery_discharge = _broadcast(
-        _as_array(dispatch_solution.get("battery_discharge_mw", []), "dispatch_solution.battery_discharge_mw"),
+        _as_array(
+            dispatch_solution.get("battery_discharge_mw", []), "dispatch_solution.battery_discharge_mw"
+        ),
         horizon,
         "dispatch_solution.battery_discharge_mw",
     )
@@ -506,8 +516,7 @@ def evaluate_dispatch_robustness(
 
     realized_grid_cost = float(np.sum(prices * realized_grid) * cfg.time_step_hours)
     realized_degradation = float(
-        cfg.degradation_cost_per_mwh
-        * np.sum((battery_charge + battery_discharge) * cfg.time_step_hours)
+        cfg.degradation_cost_per_mwh * np.sum((battery_charge + battery_discharge) * cfg.time_step_hours)
     )
     realized_cost = float(realized_grid_cost + realized_degradation)
 

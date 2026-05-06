@@ -1,11 +1,12 @@
 """Replay-surface builders and Waymo-specific benchmark track."""
+
 from __future__ import annotations
 
-from collections import defaultdict
-from collections.abc import Iterable, Mapping
-from datetime import datetime, timedelta, timezone
 import json
 import math
+from collections import defaultdict
+from collections.abc import Iterable, Mapping
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -27,9 +28,8 @@ from .dataset import (
 )
 from .tfrecord import iter_tfrecord_records
 
-
 FAULT_FAMILIES = ("dropout", "stale", "delay_jitter", "out_of_order", "spikes", "drift_combo")
-BASE_TS = datetime(2026, 1, 1, tzinfo=timezone.utc)
+BASE_TS = datetime(2026, 1, 1, tzinfo=UTC)
 
 
 def _slot_fields(prefix: str, slot_count: int = MAX_NEIGHBORS) -> dict[str, Any]:
@@ -167,9 +167,13 @@ def _row_from_scenario(
         "ego_valid": bool(scenario["valid"][ego_index, step_index]),
         "speed_limit_mps": float(speed_limit_mps),
         "neighbor_count": len(neighbor_indices),
-        "object_mix_bin": validation.neighbor_count and (
-            f"n{validation.neighbor_count}_{','.join(str(track_id) for track_id in validation.neighbor_ids)}"
-        ) or "n0",
+        "object_mix_bin": (
+            validation.neighbor_count
+            and (
+                f"n{validation.neighbor_count}_{','.join(str(track_id) for track_id in validation.neighbor_ids)}"
+            )
+        )
+        or "n0",
         **_slot_fields("neighbor_slot_"),
     }
     for slot, actor_index in enumerate(neighbor_indices):
@@ -205,7 +209,9 @@ def _selected_record_map(subset_manifest: pd.DataFrame) -> dict[str, dict[int, d
     return selected
 
 
-def _decode_selected_scenarios(raw_dir: Path, subset_manifest: pd.DataFrame) -> Iterable[tuple[dict[str, Any], Any]]:
+def _decode_selected_scenarios(
+    raw_dir: Path, subset_manifest: pd.DataFrame
+) -> Iterable[tuple[dict[str, Any], Any]]:
     selected = _selected_record_map(subset_manifest)
     for shard_id, record_map in selected.items():
         shard_path = raw_dir / shard_id
@@ -328,7 +334,9 @@ def apply_observation_fault(
             observed["timestamp_us"] = previous.get("timestamp_us", observed.get("timestamp_us"))
             observed["ts_utc"] = previous.get("ts_utc", observed.get("ts_utc"))
     elif fault_kind == "spikes":
-        observed["ego_speed_mps"] = float(observed.get("ego_speed_mps", 0.0) or 0.0) + float(rng.normal(0.0, 6.0))
+        observed["ego_speed_mps"] = float(observed.get("ego_speed_mps", 0.0) or 0.0) + float(
+            rng.normal(0.0, 6.0)
+        )
         if "min_gap_m" in observed and observed["min_gap_m"] is not None:
             observed["min_gap_m"] = float(observed["min_gap_m"]) + float(rng.normal(0.0, 8.0))
     elif fault_kind == "drift_combo":
@@ -356,7 +364,9 @@ class WaymoReplayTrackAdapter(BenchmarkAdapter):
         scenario_id_filter = sorted({str(scenario_id) for scenario_id in scenario_ids or []})
         if scenario_id_filter:
             try:
-                self._df = pd.read_parquet(self._replay_path, filters=[("scenario_id", "in", scenario_id_filter)])
+                self._df = pd.read_parquet(
+                    self._replay_path, filters=[("scenario_id", "in", scenario_id_filter)]
+                )
             except Exception:
                 scenario_id_set = set(scenario_id_filter)
                 frames: list[pd.DataFrame] = []
@@ -430,9 +440,15 @@ class WaymoReplayTrackAdapter(BenchmarkAdapter):
     ) -> Mapping[str, Any]:
         del uncertainty
         speed_limit = float(state.get("speed_limit_mps", 25.0) or 25.0)
-        return {"acceleration_mps2_lower": -6.0, "acceleration_mps2_upper": 3.0, "speed_limit_mps": speed_limit}
+        return {
+            "acceleration_mps2_lower": -6.0,
+            "acceleration_mps2_upper": 3.0,
+            "speed_limit_mps": speed_limit,
+        }
 
-    def _recompute_state(self, reference_row: Mapping[str, Any], *, ego_x_m: float, ego_y_m: float, ego_speed_mps: float) -> dict[str, Any]:
+    def _recompute_state(
+        self, reference_row: Mapping[str, Any], *, ego_x_m: float, ego_y_m: float, ego_speed_mps: float
+    ) -> dict[str, Any]:
         state = dict(reference_row)
         state["ego_x_m"] = float(ego_x_m)
         state["ego_y_m"] = float(ego_y_m)
@@ -466,18 +482,26 @@ class WaymoReplayTrackAdapter(BenchmarkAdapter):
         reference_next = dict(self._episode_rows.iloc[next_index].to_dict())
         dt_s = max(
             0.1,
-            (int(reference_next.get("timestamp_us", current.get("timestamp_us", 0))) - int(current.get("timestamp_us", 0))) / 1_000_000.0,
+            (
+                int(reference_next.get("timestamp_us", current.get("timestamp_us", 0)))
+                - int(current.get("timestamp_us", 0))
+            )
+            / 1_000_000.0,
         )
         accel = float(action.get("acceleration_mps2", 0.0) or 0.0)
         replay_speed = float(reference_next.get("ego_speed_mps", current.get("ego_speed_mps", 0.0)) or 0.0)
         current_speed = float(current.get("ego_speed_mps", 0.0) or 0.0)
         speed_limit = float(current.get("speed_limit_mps", 25.0) or 25.0)
-        next_speed = np.clip(current_speed + accel * dt_s + 0.10 * (replay_speed - current_speed), 0.0, speed_limit)
+        next_speed = np.clip(
+            current_speed + accel * dt_s + 0.10 * (replay_speed - current_speed), 0.0, speed_limit
+        )
         heading = float(current.get("ego_heading_rad", 0.0) or 0.0)
         next_x = float(current.get("ego_x_m", 0.0) or 0.0) + float(next_speed) * dt_s * math.cos(heading)
         next_y = float(current.get("ego_y_m", 0.0) or 0.0) + float(next_speed) * dt_s * math.sin(heading)
         self._episode_idx = next_index
-        self._state = self._recompute_state(reference_next, ego_x_m=next_x, ego_y_m=next_y, ego_speed_mps=float(next_speed))
+        self._state = self._recompute_state(
+            reference_next, ego_x_m=next_x, ego_y_m=next_y, ego_speed_mps=float(next_speed)
+        )
         return self.true_state()
 
     def compute_useful_work(self, trajectory: Iterable[Mapping[str, Any]]) -> float:
@@ -503,7 +527,11 @@ class WaymoReplayTrackAdapter(BenchmarkAdapter):
         return {"violated": bool(metrics["true_constraint_violated"]), "severity": float(severity)}
 
     def observed_constraint_satisfied(self, observed_state: Mapping[str, Any]) -> bool | None:
-        if any(math.isnan(float(observed_state.get(key, 0.0))) for key in ("ego_speed_mps", "min_gap_m") if observed_state.get(key) is not None):
+        if any(
+            math.isnan(float(observed_state.get(key, 0.0)))
+            for key in ("ego_speed_mps", "min_gap_m")
+            if observed_state.get(key) is not None
+        ):
             return None
         metrics = compute_state_safety_metrics(observed_state)
         return not bool(metrics["true_constraint_violated"])

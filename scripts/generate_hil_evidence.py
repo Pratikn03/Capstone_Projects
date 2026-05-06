@@ -7,6 +7,7 @@ Runs the closed-loop IoT simulator under multiple scenarios and produces:
   - reports/hil/fig_hil_soc_trace.png
   - reports/hil/hil_certificate_audit.csv
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,7 +16,7 @@ import math
 import os
 import sys
 from contextlib import ExitStack
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -27,17 +28,18 @@ for p in (REPO_ROOT, REPO_ROOT / "src"):
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from fastapi.testclient import TestClient
 
 from iot.edge_agent.agent import EdgeAgent
 from iot.edge_agent.drivers.sim import SimBatteryDriver
-from services.api.main import app
 from services.api.config import get_api_keys
+from services.api.main import app
 from services.api.routers import dc3s as dc3s_router
-from fastapi.testclient import TestClient
 
 
 def _parse_args() -> argparse.Namespace:
@@ -51,14 +53,15 @@ def _parse_args() -> argparse.Namespace:
 def _synthetic_predictor(seed: int):
     rng = np.random.default_rng(seed)
 
-    def _predict_target(*, target: str, horizon: int, features_df: pd.DataFrame,
-                        forecast_cfg: dict[str, Any], required: bool):
+    def _predict_target(
+        *, target: str, horizon: int, features_df: pd.DataFrame, forecast_cfg: dict[str, Any], required: bool
+    ):
         idx = np.arange(horizon, dtype=float)
         noise = rng.normal(0.0, 5.0, size=horizon)
         if target == "load_mw":
             y = 52.0 + 4.0 * np.sin((2.0 * math.pi * idx / 24.0) - 0.5) + 0.05 * noise
         elif target == "wind_mw":
-            y = 8.0 + 1.8 * np.sin((2.0 * math.pi * (idx + 3.0) / 24.0)) + 0.05 * noise
+            y = 8.0 + 1.8 * np.sin(2.0 * math.pi * (idx + 3.0) / 24.0) + 0.05 * noise
         else:
             y = np.maximum(0.0, 4.0 * np.sin(math.pi * ((idx % 24.0) - 6.0) / 12.0) + 0.03 * noise)
         return np.asarray(y, dtype=float), Path(f"synthetic_{target}.bin")
@@ -69,7 +72,7 @@ def _synthetic_predictor(seed: int):
 def _build_telemetry(step: int, start_ts: datetime, scenario: str) -> dict[str, Any]:
     ts = start_ts + timedelta(hours=step)
     load = 52.0 + 4.0 * math.sin((2.0 * math.pi * step / 24.0) - 0.4)
-    renew = max(0.0, 12.0 + 2.5 * math.sin((2.0 * math.pi * (step + 4.0) / 24.0)))
+    renew = max(0.0, 12.0 + 2.5 * math.sin(2.0 * math.pi * (step + 4.0) / 24.0))
     payload = {
         "ts_utc": ts.isoformat(),
         "load_mw": float(load),
@@ -83,8 +86,12 @@ def _build_telemetry(step: int, start_ts: datetime, scenario: str) -> dict[str, 
 
 
 def run_hil_scenario(
-    *, scenario: str, steps: int, seed: int,
-    device_id: str = "hil-sim-001", zone_id: str = "DE",
+    *,
+    scenario: str,
+    steps: int,
+    seed: int,
+    device_id: str = "hil-sim-001",
+    zone_id: str = "DE",
 ) -> dict[str, Any]:
     api_key = "hil-evidence-key"
     os.environ["ORIUS_API_KEYS"] = json.dumps({api_key: ["read", "write"]})
@@ -93,10 +100,13 @@ def run_hil_scenario(
     client = TestClient(app)
     driver = SimBatteryDriver()
     agent = EdgeAgent(
-        client=client, device_id=device_id,
-        zone_id=zone_id, driver=driver, api_key=api_key,
+        client=client,
+        device_id=device_id,
+        zone_id=zone_id,
+        driver=driver,
+        api_key=api_key,
     )
-    start_ts = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    start_ts = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
     auth_headers = {"X-ORIUS-Key": api_key}
 
     step_log = []
@@ -109,8 +119,12 @@ def run_hil_scenario(
 
     with ExitStack() as stack:
         stack.enter_context(patch.object(dc3s_router, "_load_features_df", return_value=features_df))
-        stack.enter_context(patch.object(dc3s_router, "_predict_target", side_effect=_synthetic_predictor(seed)))
-        stack.enter_context(patch.object(dc3s_router, "_resolve_conformal_q", return_value=np.full(24, 4.0, dtype=float)))
+        stack.enter_context(
+            patch.object(dc3s_router, "_predict_target", side_effect=_synthetic_predictor(seed))
+        )
+        stack.enter_context(
+            patch.object(dc3s_router, "_resolve_conformal_q", return_value=np.full(24, 4.0, dtype=float))
+        )
 
         for step in range(steps):
             telemetry = _build_telemetry(step, start_ts=start_ts, scenario=scenario)
@@ -131,7 +145,7 @@ def run_hil_scenario(
                 "queue_ttl_seconds": 30,
                 "include_certificate": True,
             }
-            resp = client.post("/dc3s/step", json=req)
+            resp = client.post("/dc3s/step", json=req, headers=auth_headers)
             resp.raise_for_status()
             payload = resp.json()
 
@@ -157,7 +171,8 @@ def run_hil_scenario(
 
             ack_status = "nacked" if violated else "acked"
             agent.send_ack(
-                command_id=command_id, status=ack_status,
+                command_id=command_id,
+                status=ack_status,
                 certificate_id=cmd.get("certificate_id"),
                 reason=None if ack_status == "acked" else "safety_violation",
                 payload=applied,
@@ -171,29 +186,33 @@ def run_hil_scenario(
             if cert_complete:
                 certs_ok += 1
 
-            step_log.append({
-                "step": step,
-                "timestamp": telemetry["ts_utc"],
-                "scenario": scenario,
-                "soc_mwh": float(driver.current_soc_mwh),
-                "proposed_charge_mw": float(proposed["charge_mw"]),
-                "proposed_discharge_mw": float(proposed["discharge_mw"]),
-                "safe_charge_mw": float(safe["charge_mw"]),
-                "safe_discharge_mw": float(safe["discharge_mw"]),
-                "intervened": intervened,
-                "violated": violated,
-                "cert_complete": cert_complete,
-                "reliability_w": float(payload.get("reliability", {}).get("w_t", 1.0)),
-            })
+            step_log.append(
+                {
+                    "step": step,
+                    "timestamp": telemetry["ts_utc"],
+                    "scenario": scenario,
+                    "soc_mwh": float(driver.current_soc_mwh),
+                    "proposed_charge_mw": float(proposed["charge_mw"]),
+                    "proposed_discharge_mw": float(proposed["discharge_mw"]),
+                    "safe_charge_mw": float(safe["charge_mw"]),
+                    "safe_discharge_mw": float(safe["discharge_mw"]),
+                    "intervened": intervened,
+                    "violated": violated,
+                    "cert_complete": cert_complete,
+                    "reliability_w": float(payload.get("reliability", {}).get("w_t", 1.0)),
+                }
+            )
 
-            certificates.append({
-                "command_id": command_id,
-                "cert_hash": cert.get("certificate_hash", ""),
-                "has_safe_action": "safe_action" in cert,
-                "has_proposed_action": "proposed_action" in cert,
-                "step": step,
-                "scenario": scenario,
-            })
+            certificates.append(
+                {
+                    "command_id": command_id,
+                    "cert_hash": cert.get("certificate_hash", ""),
+                    "has_safe_action": "safe_action" in cert,
+                    "has_proposed_action": "proposed_action" in cert,
+                    "step": step,
+                    "scenario": scenario,
+                }
+            )
 
     return {
         "scenario": scenario,
@@ -219,19 +238,25 @@ def main() -> None:
     for scenario in scenarios:
         print(f"Running HIL scenario: {scenario} ({args.steps} steps)")
         result = run_hil_scenario(
-            scenario=scenario, steps=args.steps, seed=args.seed,
+            scenario=scenario,
+            steps=args.steps,
+            seed=args.seed,
         )
         all_step_logs.extend(result["step_log"])
         all_certs.extend(result["certificates"])
-        summaries.append({
-            "scenario": result["scenario"],
-            "steps": result["steps"],
-            "violations": result["violations"],
-            "interventions": result["interventions"],
-            "cert_completeness": result["cert_completeness"],
-        })
-        print(f"  Violations: {result['violations']}, Interventions: {result['interventions']}, "
-              f"Cert completeness: {result['cert_completeness']:.2%}")
+        summaries.append(
+            {
+                "scenario": result["scenario"],
+                "steps": result["steps"],
+                "violations": result["violations"],
+                "interventions": result["interventions"],
+                "cert_completeness": result["cert_completeness"],
+            }
+        )
+        print(
+            f"  Violations: {result['violations']}, Interventions: {result['interventions']}, "
+            f"Cert completeness: {result['cert_completeness']:.2%}"
+        )
 
     step_df = pd.DataFrame(all_step_logs)
     step_csv = out_dir / "hil_step_log.csv"
@@ -249,6 +274,9 @@ def main() -> None:
         "total_violations": int(step_df["violated"].sum()),
         "total_interventions": int(step_df["intervened"].sum()),
         "overall_cert_completeness": float(step_df["cert_complete"].mean()),
+        "evidence_type": "software_hil",
+        "physical_hil_completed": False,
+        "claim_boundary": "Software HIL/simulator evidence only; not physical bench or field deployment.",
         "seed": args.seed,
     }
     summary_path = out_dir / "hil_summary.json"
@@ -265,8 +293,14 @@ def main() -> None:
         ax.axhline(9.5, color="red", linewidth=0.8, linestyle=":", label="Max SOC")
         intervened = sub["intervened"].to_numpy(dtype=bool)
         if np.any(intervened):
-            ax.scatter(x[intervened], sub["soc_mwh"].to_numpy()[intervened],
-                       color="orange", zorder=5, s=25, label="Intervention")
+            ax.scatter(
+                x[intervened],
+                sub["soc_mwh"].to_numpy()[intervened],
+                color="orange",
+                zorder=5,
+                s=25,
+                label="Intervention",
+            )
         ax.set_ylabel("SOC (MWh)")
         ax.set_title(f"HIL Closed-Loop: {scenario}")
         ax.legend(loc="upper right", fontsize=8)

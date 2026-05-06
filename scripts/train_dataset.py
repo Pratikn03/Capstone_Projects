@@ -9,13 +9,13 @@ Usage:
     # Train a specific dataset
     python scripts/train_dataset.py --dataset DE
     python scripts/train_dataset.py --dataset US
-    
+
     # Train all registered datasets
     python scripts/train_dataset.py --all
-    
+
     # Train with hyperparameter tuning
     python scripts/train_dataset.py --dataset DE --tune
-    
+
     # Generate reports + conformal coverage
     python scripts/train_dataset.py --dataset DE --reports
 
@@ -26,16 +26,17 @@ Adding New Datasets:
 
 Author: ORIUS Team
 """
+
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import hashlib
 import json
 import os
 import shutil
 import subprocess
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -48,23 +49,36 @@ _scripts_dir = str(Path(__file__).resolve().parent)
 if _scripts_dir not in sys.path:
     sys.path.insert(0, _scripts_dir)
 
-from _dataset_registry import (  # noqa: E402
+from _dataset_registry import (
     AGGRESSIVE_DEFAULTS,
     DATASET_REGISTRY,
-    DatasetConfig,
     MAX_QUALITY_DEFAULTS,
+    PRODUCTION_MAX_FAST_DEFAULTS,
     REPO_ROOT,
+    DatasetConfig,
     RunLayout,
+)
+from _dataset_registry import (
     iter_trainable_dataset_keys as _iter_trainable_dataset_keys,
 )
 
 PYTHON_BIN = sys.executable or "python3"
-TRAINING_PROFILES = ("standard", "aggressive", "max")
+TRAINING_PROFILES = ("standard", "aggressive", "max", "production-max-fast")
+REPORT_THREAD_ENV = {
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "TORCH_NUM_THREADS": "1",
+    "TORCH_NUM_INTEROP_THREADS": "1",
+}
 
 
 # =============================================================================
 # PIPELINE FUNCTIONS
 # =============================================================================
+
 
 def _load_publish_audit_cfg(path: str = "configs/publish_audit.yaml") -> dict:
     cfg_path = Path(path)
@@ -153,7 +167,9 @@ def _configured_model_types(train_cfg: dict[str, Any], requested_models: set[str
     if tft_cfg.get("enabled", False) and (requested_models is None or "tft" in requested_models):
         model_types.append("tft")
 
-    patchtst_cfg = models_cfg.get("dl_patchtst", {}) if isinstance(models_cfg.get("dl_patchtst"), dict) else {}
+    patchtst_cfg = (
+        models_cfg.get("dl_patchtst", {}) if isinstance(models_cfg.get("dl_patchtst"), dict) else {}
+    )
     if patchtst_cfg.get("enabled", False) and (requested_models is None or "patchtst" in requested_models):
         model_types.append("patchtst")
 
@@ -163,7 +179,7 @@ def _configured_model_types(train_cfg: dict[str, Any], requested_models: set[str
 def _resolve_run_layout(cfg: DatasetConfig, *, candidate_run: bool, run_id: str | None) -> RunLayout:
     normalized_dataset = cfg.name.lower()
     if candidate_run:
-        resolved_run_id = run_id or datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        resolved_run_id = run_id or datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         artifacts_root = REPO_ROOT / "artifacts" / "runs" / normalized_dataset / resolved_run_id
         reports_root = REPO_ROOT / "reports" / "runs" / normalized_dataset / resolved_run_id
         return RunLayout(
@@ -209,6 +225,29 @@ def _safe_iso(value: Any) -> str | None:
     return str(value)
 
 
+def _preflight_order_columns(train_cfg: dict[str, Any], frame: pd.DataFrame) -> list[str]:
+    data_cfg = train_cfg.get("data", {}) if isinstance(train_cfg.get("data"), dict) else {}
+    configured_order = data_cfg.get("order_cols")
+    if isinstance(configured_order, list):
+        order_cols = [str(col).strip() for col in configured_order if str(col).strip()]
+        existing = [col for col in order_cols if col in frame.columns]
+        if existing:
+            return existing
+    timestamp_col = str(data_cfg.get("timestamp_col") or "timestamp").strip()
+    if timestamp_col and timestamp_col in frame.columns:
+        return [timestamp_col]
+    if "timestamp" in frame.columns:
+        return ["timestamp"]
+    return []
+
+
+def _sort_preflight_frame(train_cfg: dict[str, Any], frame: pd.DataFrame) -> pd.DataFrame:
+    order_cols = _preflight_order_columns(train_cfg, frame)
+    if not order_cols:
+        return frame.reset_index(drop=True)
+    return frame.sort_values(order_cols).reset_index(drop=True)
+
+
 def _build_preflight_analysis(
     cfg: DatasetConfig,
     run_layout: RunLayout,
@@ -218,9 +257,11 @@ def _build_preflight_analysis(
 ) -> dict[str, Any]:
     train_cfg = _load_training_cfg(cfg)
     features_path = REPO_ROOT / cfg.features_path
-    df = pd.read_parquet(features_path).sort_values("timestamp")
+    df = _sort_preflight_frame(train_cfg, pd.read_parquet(features_path))
     expected_targets = _configured_targets(train_cfg)
-    requested_models = {part.strip().lower() for part in models.split(",") if part.strip()} if models else None
+    requested_models = (
+        {part.strip().lower() for part in models.split(",") if part.strip()} if models else None
+    )
     expected_models = _configured_model_types(train_cfg, requested_models=requested_models)
 
     split_sizes: dict[str, Any] = {}
@@ -254,7 +295,7 @@ def _build_preflight_analysis(
     }
 
     return {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "dataset": cfg.name,
         "profile": profile,
         "features_path": cfg.features_path,
@@ -279,8 +320,7 @@ def _build_preflight_analysis(
             or 0
         ),
         "expected_target_model_matrix": [
-            {"target": target, "models": expected_models}
-            for target in expected_targets
+            {"target": target, "models": expected_models} for target in expected_targets
         ],
         "output_layout": {
             "mode": run_layout.mode,
@@ -318,7 +358,7 @@ def _write_run_context(
     run_layout.registry_dir.mkdir(parents=True, exist_ok=True)
     release_id = _derive_release_id(run_layout.run_id)
     context = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "release_id": release_id,
         "dataset": cfg.name,
         "display_name": cfg.display_name,
@@ -341,7 +381,9 @@ def _write_run_context(
         "preflight_analysis": str(run_layout.reports_dir / "preflight_dataset_analysis.json"),
         "preflight_path": str(run_layout.reports_dir / "preflight_dataset_analysis.json"),
         "feature_manifest_path": str(run_layout.data_manifest_output),
-        "selection_summary_path": str(run_layout.selection_output_dir / f"tuning_summary_{cfg.name.lower()}.json"),
+        "selection_summary_path": str(
+            run_layout.selection_output_dir / f"tuning_summary_{cfg.name.lower()}.json"
+        ),
         "artifacts": {
             "models_dir": str(run_layout.models_dir),
             "reports_dir": str(run_layout.reports_dir),
@@ -427,7 +469,9 @@ def _update_run_manifest(
         },
     )
     payload.setdefault("targets", payload.get("expected_targets", []))
-    payload["selection_summary_path"] = str(run_layout.selection_output_dir / f"tuning_summary_{cfg.name.lower()}.json")
+    payload["selection_summary_path"] = str(
+        run_layout.selection_output_dir / f"tuning_summary_{cfg.name.lower()}.json"
+    )
     if accepted is not None:
         payload["accepted"] = bool(accepted)
     if promoted_at is not None:
@@ -438,28 +482,32 @@ def _update_run_manifest(
 def run_command(cmd: list[str], description: str, timeout_seconds: float | None = None) -> bool:
     """
     Execute a subprocess command with logging.
-    
+
     Args:
         cmd: Command and arguments
         description: Human-readable description
-        
+
     Returns:
         True if successful, False otherwise
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"📌 {description}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"   Command: {' '.join(cmd)}")
     print()
-    
+
     cmd_env = os.environ.copy()
     src_path = str(REPO_ROOT / "src")
     existing_pythonpath = cmd_env.get("PYTHONPATH", "")
-    cmd_env["PYTHONPATH"] = f"{src_path}{os.pathsep}{existing_pythonpath}" if existing_pythonpath else src_path
+    cmd_env["PYTHONPATH"] = (
+        f"{src_path}{os.pathsep}{existing_pythonpath}" if existing_pythonpath else src_path
+    )
     cmd_env.setdefault("MPLBACKEND", "Agg")
     cmd_env.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
     cmd_env.setdefault("XDG_CACHE_HOME", "/tmp/xdg-cache-orius")
     cmd_env.setdefault("LOKY_MAX_CPU_COUNT", str(os.cpu_count() or 1))
+    if "scripts/build_reports.py" in cmd:
+        cmd_env.update(REPORT_THREAD_ENV)
 
     try:
         subprocess.run(
@@ -483,24 +531,23 @@ def run_command(cmd: list[str], description: str, timeout_seconds: float | None 
 def build_features(cfg: DatasetConfig, force: bool = False) -> bool:
     """
     Build engineered features for a dataset.
-    
+
     Args:
         cfg: Dataset configuration
         force: Rebuild even if features exist
-        
+
     Returns:
         True if successful
     """
     features_path = Path(cfg.features_path)
-    
+
     if features_path.exists() and not force:
         print(f"ℹ️  Features already exist: {features_path}")
         return True
-    
-    if (
-        cfg.feature_module == "orius.data_pipeline.build_features_healthcare"
-        and str(cfg.raw_data_path).endswith("mimic3_healthcare_orius.csv")
-    ):
+
+    if cfg.feature_module == "orius.data_pipeline.build_features_healthcare" and str(
+        cfg.raw_data_path
+    ).endswith("mimic3_healthcare_orius.csv"):
         # The promoted healthcare lane uses bridge-schema inputs that must go
         # through the max-input builder instead of the legacy single-source path.
         healthcare_inputs = []
@@ -520,41 +567,51 @@ def build_features(cfg: DatasetConfig, force: bool = False) -> bool:
     else:
         # Build command based on dataset type
         cmd = [
-            PYTHON_BIN, "-m", cfg.feature_module,
-            "--in", cfg.raw_data_path,
-            "--out", str(features_path.parent),
+            PYTHON_BIN,
+            "-m",
+            cfg.feature_module,
+            "--in",
+            cfg.raw_data_path,
+            "--out",
+            str(features_path.parent),
         ]
-    
+
     # Add balancing authority for US data
     if cfg.ba_code:
         cmd.extend(["--ba", cfg.ba_code])
-    
+
     # Add date filters if specified
     if cfg.start_date:
         cmd.extend(["--start", cfg.start_date])
     if cfg.end_date:
         cmd.extend(["--end", cfg.end_date])
-    
+
     return run_command(cmd, f"Building features for {cfg.display_name}")
 
 
 def create_splits(cfg: DatasetConfig, force: bool = False) -> bool:
     """
     Create temporal train/val/test splits.
-    
+
     Args:
-        cfg: Dataset configuration  
+        cfg: Dataset configuration
         force: Recreate even if splits exist
-        
+
     Returns:
         True if successful
     """
     splits_path = Path(cfg.splits_path)
-    
+
+    if cfg.feature_module == "orius.data_pipeline.build_features_healthcare" and splits_path.exists():
+        summary_path = splits_path / "SPLIT_SUMMARY.md"
+        if summary_path.exists():
+            print(f"ℹ️  Healthcare feature builder already produced patient-disjoint splits: {splits_path}")
+            return True
+
     if splits_path.exists() and not force:
         print(f"ℹ️  Splits already exist: {splits_path}")
         return True
-    
+
     split_cfg = {}
     cfg_path = Path(cfg.config_file)
     if cfg_path.exists():
@@ -565,21 +622,31 @@ def create_splits(cfg: DatasetConfig, force: bool = False) -> bool:
                 split_cfg = candidate
 
     cmd = [
-        PYTHON_BIN, "-m", "orius.data_pipeline.split_time_series",
-        "--in", cfg.features_path,
-        "--out", cfg.splits_path,
-        "--train-ratio", str(float(split_cfg.get("train_ratio", 0.70))),
-        "--calibration-ratio", str(float(split_cfg.get("calibration_ratio", 0.0) or 0.0)),
-        "--val-ratio", str(float(split_cfg.get("val_ratio", 0.15))),
-        "--gap-hours", str(int(split_cfg.get("gap_hours", 0) or 0)),
+        PYTHON_BIN,
+        "-m",
+        "orius.data_pipeline.split_time_series",
+        "--in",
+        cfg.features_path,
+        "--out",
+        cfg.splits_path,
+        "--train-ratio",
+        str(float(split_cfg.get("train_ratio", 0.70))),
+        "--calibration-ratio",
+        str(float(split_cfg.get("calibration_ratio", 0.0) or 0.0)),
+        "--val-ratio",
+        str(float(split_cfg.get("val_ratio", 0.15))),
+        "--gap-hours",
+        str(int(split_cfg.get("gap_hours", 0) or 0)),
     ]
-    
+
     return run_command(cmd, f"Creating time series splits for {cfg.display_name}")
 
 
 def validate_features_schema(cfg: DatasetConfig, report_path: Path | None = None) -> bool:
     """Validate processed features schema before training."""
-    target_report = report_path or (REPO_ROOT / "reports" / f"data_quality_report_{cfg.name.lower()}_features.md")
+    target_report = report_path or (
+        REPO_ROOT / "reports" / f"data_quality_report_{cfg.name.lower()}_features.md"
+    )
     target_report.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         PYTHON_BIN,
@@ -595,6 +662,12 @@ def validate_features_schema(cfg: DatasetConfig, report_path: Path | None = None
     targets = _configured_targets(train_cfg)
     if targets and cfg.name in ("AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "NAVIGATION"):
         cmd.extend(["--required-cols", ",".join(targets)])
+    data_cfg = train_cfg.get("data", {}) if isinstance(train_cfg.get("data"), dict) else {}
+    order_cols = data_cfg.get("order_cols")
+    if isinstance(order_cols, list) and order_cols:
+        cmd.extend(["--order-cols", ",".join(str(col).strip() for col in order_cols if str(col).strip())])
+    elif data_cfg.get("timestamp_col"):
+        cmd.extend(["--timestamp-col", str(data_cfg["timestamp_col"])])
     return run_command(cmd, f"Validating features schema for {cfg.display_name}")
 
 
@@ -621,19 +694,26 @@ def train_models(
     no_tune: bool = False,
     no_cv: bool = False,
     ensemble: bool = False,
-    max_seeds: Optional[int] = None,
-    n_trials: Optional[int] = None,
-    top_pct: Optional[float] = None,
+    max_seeds: int | None = None,
+    n_trials: int | None = None,
+    top_pct: float | None = None,
+    tuning_n_jobs: int | None = None,
+    gbm_threads: int | None = None,
+    reuse_best_gbm_from: str | None = None,
+    max_deep_epochs: int | None = None,
+    deep_patience: int | None = None,
+    deep_warmup_epochs: int | None = None,
     profile: str = "standard",
-    max_runtime_hours: Optional[float] = None,
+    max_runtime_hours: float | None = None,
+    target_metrics_file: str | None = None,
 ) -> bool:
     """
     Train forecasting models.
-    
+
     Args:
         cfg: Dataset configuration
         tune: Enable hyperparameter tuning with Optuna
-        
+
     Returns:
         True if successful
     """
@@ -642,12 +722,20 @@ def train_models(
     effective_max_seeds = max_seeds
     effective_n_trials = n_trials
     effective_top_pct = top_pct
+    effective_tuning_n_jobs = tuning_n_jobs
+    effective_gbm_threads = gbm_threads
+    effective_reuse_best_gbm = reuse_best_gbm_from
+    effective_max_deep_epochs = max_deep_epochs
+    effective_deep_patience = deep_patience
+    effective_deep_warmup_epochs = deep_warmup_epochs
 
     profile_defaults = None
     if profile == "aggressive":
         profile_defaults = AGGRESSIVE_DEFAULTS
     elif profile == "max":
         profile_defaults = MAX_QUALITY_DEFAULTS
+    elif profile == "production-max-fast":
+        profile_defaults = PRODUCTION_MAX_FAST_DEFAULTS
 
     if profile_defaults is not None:
         defaults = profile_defaults.get(cfg.name, profile_defaults["DE"])
@@ -659,26 +747,58 @@ def train_models(
             effective_n_trials = int(defaults["n_trials"])
         if effective_top_pct is None:
             effective_top_pct = float(defaults["top_pct"])
+        if effective_tuning_n_jobs is None and "tuning_n_jobs" in defaults:
+            effective_tuning_n_jobs = int(defaults["tuning_n_jobs"])
+        if effective_gbm_threads is None and "gbm_threads" in defaults:
+            effective_gbm_threads = int(defaults["gbm_threads"])
+        if effective_reuse_best_gbm is None and defaults.get("reuse_best_gbm") and target_metrics_file:
+            effective_reuse_best_gbm = target_metrics_file
+        if effective_max_deep_epochs is None and "max_deep_epochs" in defaults:
+            effective_max_deep_epochs = int(defaults["max_deep_epochs"])
+        if effective_deep_patience is None and "deep_patience" in defaults:
+            effective_deep_patience = int(defaults["deep_patience"])
+        if effective_deep_warmup_epochs is None and "deep_warmup_epochs" in defaults:
+            effective_deep_warmup_epochs = int(defaults["deep_warmup_epochs"])
+
+    if (
+        profile == "production-max-fast"
+        and n_trials is not None
+        and int(n_trials) <= 10
+        and max_deep_epochs is None
+    ):
+        effective_max_deep_epochs = 2
+        effective_deep_patience = 1 if deep_patience is None else effective_deep_patience
+        effective_deep_warmup_epochs = 1 if deep_warmup_epochs is None else effective_deep_warmup_epochs
 
     cmd = [
-        PYTHON_BIN, "-m", "orius.forecasting.train",
-        "--config", cfg.config_file,
+        PYTHON_BIN,
+        "-m",
+        "orius.forecasting.train",
+        "--config",
+        cfg.config_file,
     ]
     if models:
         cmd.extend(["--models", models])
     if run_layout is not None:
         cmd.extend(
             [
-                "--artifacts-dir", str(run_layout.models_dir),
-                "--reports-dir", str(run_layout.reports_dir),
-                "--uncertainty-artifacts-dir", str(run_layout.uncertainty_dir),
-                "--backtests-dir", str(run_layout.backtests_dir),
-                "--walk-forward-report", str(run_layout.walk_forward_report),
-                "--validation-report", str(run_layout.validation_report),
-                "--data-manifest-output", str(run_layout.data_manifest_output),
+                "--artifacts-dir",
+                str(run_layout.models_dir),
+                "--reports-dir",
+                str(run_layout.reports_dir),
+                "--uncertainty-artifacts-dir",
+                str(run_layout.uncertainty_dir),
+                "--backtests-dir",
+                str(run_layout.backtests_dir),
+                "--walk-forward-report",
+                str(run_layout.walk_forward_report),
+                "--validation-report",
+                str(run_layout.validation_report),
+                "--data-manifest-output",
+                str(run_layout.data_manifest_output),
             ]
         )
-    
+
     if effective_tune:
         cmd.append("--tune")
     if no_tune:
@@ -693,7 +813,19 @@ def train_models(
         cmd.extend(["--n-trials", str(int(effective_n_trials))])
     if effective_top_pct is not None:
         cmd.extend(["--top-pct", str(float(effective_top_pct))])
-    
+    if effective_tuning_n_jobs is not None and effective_tuning_n_jobs > 0:
+        cmd.extend(["--tuning-n-jobs", str(int(effective_tuning_n_jobs))])
+    if effective_gbm_threads is not None and effective_gbm_threads > 0:
+        cmd.extend(["--gbm-threads", str(int(effective_gbm_threads))])
+    if effective_reuse_best_gbm:
+        cmd.extend(["--reuse-best-gbm-from", str(effective_reuse_best_gbm)])
+    if effective_max_deep_epochs is not None and effective_max_deep_epochs > 0:
+        cmd.extend(["--max-deep-epochs", str(int(effective_max_deep_epochs))])
+    if effective_deep_patience is not None and effective_deep_patience > 0:
+        cmd.extend(["--deep-patience", str(int(effective_deep_patience))])
+    if effective_deep_warmup_epochs is not None and effective_deep_warmup_epochs > 0:
+        cmd.extend(["--deep-warmup-epochs", str(int(effective_deep_warmup_epochs))])
+
     timeout_seconds = None
     if max_runtime_hours is not None and max_runtime_hours > 0:
         timeout_seconds = float(max_runtime_hours) * 3600.0
@@ -704,27 +836,36 @@ def train_models(
 def generate_reports(cfg: DatasetConfig, run_layout: RunLayout | None = None) -> bool:
     """
     Generate evaluation reports including conformal coverage.
-    
+
     Args:
         cfg: Dataset configuration
-        
+
     Returns:
         True if successful
     """
     cmd = [
-        PYTHON_BIN, "scripts/build_reports.py",
-        "--features", cfg.features_path,
-        "--splits", cfg.splits_path,
-        "--models-dir", cfg.models_dir if run_layout is None else str(run_layout.models_dir),
-        "--reports-dir", cfg.reports_dir if run_layout is None else str(run_layout.reports_dir),
+        PYTHON_BIN,
+        "scripts/build_reports.py",
+        "--features",
+        cfg.features_path,
+        "--splits",
+        cfg.splits_path,
+        "--models-dir",
+        cfg.models_dir if run_layout is None else str(run_layout.models_dir),
+        "--reports-dir",
+        cfg.reports_dir if run_layout is None else str(run_layout.reports_dir),
     ]
     if run_layout is not None:
         cmd.extend(
             [
-                "--publication-dir", str(run_layout.publication_dir),
-                "--uncertainty-artifacts-dir", str(run_layout.uncertainty_dir),
-                "--backtests-dir", str(run_layout.backtests_dir),
-                "--current-dataset", cfg.name,
+                "--publication-dir",
+                str(run_layout.publication_dir),
+                "--uncertainty-artifacts-dir",
+                str(run_layout.uncertainty_dir),
+                "--backtests-dir",
+                str(run_layout.backtests_dir),
+                "--current-dataset",
+                cfg.name,
             ]
         )
         if cfg.name in ("AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "NAVIGATION"):
@@ -732,31 +873,33 @@ def generate_reports(cfg: DatasetConfig, run_layout: RunLayout | None = None) ->
             targets = _configured_targets(train_cfg)
             if targets:
                 cmd.extend(["--targets", ",".join(targets)])
-    
+
     return run_command(cmd, f"Generating reports for {cfg.display_name}")
 
 
 def run_conformal_intervals(cfg: DatasetConfig) -> bool:
     """
     Compute conformal prediction intervals for uncertainty quantification.
-    
+
     Args:
         cfg: Dataset configuration
-        
+
     Returns:
         True if successful
     """
     # Check if conformal script exists
     conformal_script = Path("scripts/compute_conformal.py")
     if not conformal_script.exists():
-        print(f"⚠️  Conformal intervals script not found, using build_reports")
+        print("⚠️  Conformal intervals script not found, using build_reports")
         return True  # Reports include conformal if configured
-    
+
     cmd = [
-        PYTHON_BIN, str(conformal_script),
-        "--config", cfg.config_file,
+        PYTHON_BIN,
+        str(conformal_script),
+        "--config",
+        cfg.config_file,
     ]
-    
+
     return run_command(cmd, f"Computing conformal intervals for {cfg.display_name}")
 
 
@@ -765,7 +908,9 @@ def verify_training_outputs(cfg: DatasetConfig, run_layout: RunLayout, *, models
     train_cfg = _load_training_cfg(cfg)
     targets = _configured_targets(train_cfg)
     uncertainty_targets = _resolved_uncertainty_targets(cfg, train_cfg)
-    requested_models = {part.strip().lower() for part in models.split(",") if part.strip()} if models else None
+    requested_models = (
+        {part.strip().lower() for part in models.split(",") if part.strip()} if models else None
+    )
     model_types = _configured_model_types(train_cfg, requested_models=requested_models)
     cmd = [
         PYTHON_BIN,
@@ -824,7 +969,7 @@ def _promote_candidate_run(cfg: DatasetConfig, run_layout: RunLayout, evaluation
 
     publish_dir = REPO_ROOT / "reports" / "publish"
     publish_dir.mkdir(parents=True, exist_ok=True)
-    promoted_at = datetime.now(timezone.utc).isoformat()
+    promoted_at = datetime.now(UTC).isoformat()
     promotion_record = {
         "generated_at_utc": promoted_at,
         "dataset": cfg.name,
@@ -849,7 +994,9 @@ def _promote_candidate_run(cfg: DatasetConfig, run_layout: RunLayout, evaluation
         json.dumps(promotion_record, indent=2),
         encoding="utf-8",
     )
-    _update_run_manifest(cfg, run_layout, accepted=bool(evaluation.get("accepted", False)), promoted_at=promoted_at)
+    _update_run_manifest(
+        cfg, run_layout, accepted=bool(evaluation.get("accepted", False)), promoted_at=promoted_at
+    )
 
 
 def _load_json(path: Path) -> dict:
@@ -873,16 +1020,40 @@ def _evaluate_against_baseline(
     current_metrics = _load_json(reports_dir / "week2_metrics.json")
     baseline_metrics = _load_json(target_metrics_file) if target_metrics_file else {}
 
-    acc_cfg = publish_cfg.get("retraining_acceptance", {}) if isinstance(publish_cfg.get("retraining_acceptance"), dict) else {}
-    metric_name = str(acc_cfg.get("metric", "mape"))
-    require_non_reg = bool(acc_cfg.get("require_non_regression", True))
-    min_impr = acc_cfg.get("min_improvement_by_target", {})
+    acc_cfg = (
+        publish_cfg.get("retraining_acceptance", {})
+        if isinstance(publish_cfg.get("retraining_acceptance"), dict)
+        else {}
+    )
+    profile_overrides = acc_cfg.get("profile_overrides", {})
+    profile_cfg = profile_overrides.get(profile, {}) if isinstance(profile_overrides, dict) else {}
+    if not isinstance(profile_cfg, dict):
+        profile_cfg = {}
+    merged_acc_cfg = {**acc_cfg, **profile_cfg}
+    metric_name = str(merged_acc_cfg.get("metric", acc_cfg.get("metric", "mape")))
+    metric_by_target = merged_acc_cfg.get("metric_by_target", acc_cfg.get("metric_by_target", {}))
+    if not isinstance(metric_by_target, dict):
+        metric_by_target = {}
+    require_non_reg = bool(
+        merged_acc_cfg.get("require_non_regression", acc_cfg.get("require_non_regression", True))
+    )
+    min_impr = merged_acc_cfg.get("min_improvement_by_target", acc_cfg.get("min_improvement_by_target", {}))
     if not isinstance(min_impr, dict):
         min_impr = {}
-    max_cv_std = float(acc_cfg.get("max_cv_rmse_std", 1e9))
+    abs_tolerance = merged_acc_cfg.get(
+        "absolute_regression_tolerance_by_target",
+        acc_cfg.get("absolute_regression_tolerance_by_target", {}),
+    )
+    if not isinstance(abs_tolerance, dict):
+        abs_tolerance = {}
+    max_cv_std = float(merged_acc_cfg.get("max_cv_rmse_std", acc_cfg.get("max_cv_rmse_std", 1e9)))
 
-    current_targets = current_metrics.get("targets", {}) if isinstance(current_metrics.get("targets"), dict) else {}
-    baseline_targets = baseline_metrics.get("targets", {}) if isinstance(baseline_metrics.get("targets"), dict) else {}
+    current_targets = (
+        current_metrics.get("targets", {}) if isinstance(current_metrics.get("targets"), dict) else {}
+    )
+    baseline_targets = (
+        baseline_metrics.get("targets", {}) if isinstance(baseline_metrics.get("targets"), dict) else {}
+    )
 
     target_rows: list[dict] = []
     overall_pass = True
@@ -890,29 +1061,41 @@ def _evaluate_against_baseline(
         if not isinstance(target_payload, dict):
             continue
         cur_gbm = target_payload.get("gbm", {}) if isinstance(target_payload.get("gbm"), dict) else {}
-        cur_metric = cur_gbm.get(metric_name)
-        baseline_payload = baseline_targets.get(target, {}) if isinstance(baseline_targets.get(target), dict) else {}
+        target_metric_name = str(metric_by_target.get(target, metric_name))
+        cur_metric = cur_gbm.get(target_metric_name)
+        baseline_payload = (
+            baseline_targets.get(target, {}) if isinstance(baseline_targets.get(target), dict) else {}
+        )
         base_gbm = baseline_payload.get("gbm", {}) if isinstance(baseline_payload.get("gbm"), dict) else {}
-        base_metric = base_gbm.get(metric_name)
+        base_metric = base_gbm.get(target_metric_name)
 
         improvement = None
-        if isinstance(base_metric, (int, float)) and isinstance(cur_metric, (int, float)) and base_metric != 0:
+        regression_delta = None
+        if isinstance(base_metric, int | float) and isinstance(cur_metric, int | float) and base_metric != 0:
             improvement = (float(base_metric) - float(cur_metric)) / abs(float(base_metric))
+            regression_delta = float(cur_metric) - float(base_metric)
 
         min_req = float(min_impr.get(target, 0.0))
+        abs_tol = max(0.0, float(abs_tolerance.get(target, 0.0)))
         non_regression_pass = True
-        if require_non_reg and isinstance(base_metric, (int, float)) and isinstance(cur_metric, (int, float)):
-            non_regression_pass = float(cur_metric) <= float(base_metric)
+        if require_non_reg and isinstance(base_metric, int | float) and isinstance(cur_metric, int | float):
+            non_regression_pass = float(cur_metric) <= float(base_metric) + abs_tol
         improvement_pass = True
         if improvement is not None:
             improvement_pass = float(improvement) >= min_req
+            if not improvement_pass and min_req <= 0.0 and regression_delta is not None:
+                improvement_pass = float(regression_delta) <= abs_tol
 
         cv_std = None
         if isinstance(cur_gbm.get("cv_results"), dict):
             cv_std = cur_gbm["cv_results"].get("rmse_std")
         cv_std_pass = True
-        if isinstance(cv_std, (int, float)):
+        if isinstance(cv_std, int | float):
             cv_std_pass = float(cv_std) <= max_cv_std
+
+        retained_incumbent = target_payload.get("retention_decision") == "retained_incumbent"
+        if retained_incumbent and non_regression_pass:
+            improvement_pass = True
 
         row_pass = bool(non_regression_pass and improvement_pass and cv_std_pass)
         if not row_pass:
@@ -921,16 +1104,19 @@ def _evaluate_against_baseline(
         target_rows.append(
             {
                 "target": target,
-                "metric": metric_name,
+                "metric": target_metric_name,
                 "current_metric": cur_metric,
                 "baseline_metric": base_metric,
                 "improvement": improvement,
                 "min_improvement_required": min_req,
+                "absolute_regression_tolerance": abs_tol,
+                "regression_delta": regression_delta,
                 "non_regression_pass": non_regression_pass,
                 "improvement_pass": improvement_pass,
                 "cv_rmse_std": cv_std,
                 "cv_std_pass": cv_std_pass,
                 "accepted": row_pass,
+                "decision": target_payload.get("retention_decision", "candidate"),
             }
         )
 
@@ -938,14 +1124,147 @@ def _evaluate_against_baseline(
         overall_pass = False
 
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "dataset": dataset_name,
         "profile": profile,
         "metric": metric_name,
+        "metric_by_target": metric_by_target,
         "target_metrics_file": str(target_metrics_file) if target_metrics_file else None,
         "targets": target_rows,
         "accepted": overall_pass,
     }
+
+
+def _configured_retention_targets(publish_cfg: dict[str, Any]) -> set[str]:
+    acc_cfg = (
+        publish_cfg.get("retraining_acceptance", {})
+        if isinstance(publish_cfg.get("retraining_acceptance"), dict)
+        else {}
+    )
+    raw = acc_cfg.get("retain_incumbent_on_regression_targets", [])
+    if isinstance(raw, str):
+        raw = [raw]
+    if not isinstance(raw, list):
+        return set()
+    return {str(target).strip() for target in raw if str(target).strip()}
+
+
+def _copy_target_artifacts(src_dir: Path, dst_dir: Path, target: str) -> list[str]:
+    copied: list[str] = []
+    if not src_dir.exists():
+        return copied
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    for item in src_dir.iterdir():
+        if item.name.startswith("._") or target not in item.name:
+            continue
+        dst = dst_dir / item.name
+        if item.is_dir():
+            shutil.copytree(item, dst, dirs_exist_ok=True)
+        else:
+            shutil.copy2(item, dst)
+        copied.append(str(dst))
+    return copied
+
+
+def _copy_target_report_card(src_reports_dir: Path, dst_reports_dir: Path, target: str) -> str | None:
+    src = src_reports_dir / "model_cards" / f"{target}.md"
+    if not src.exists():
+        return None
+    dst = dst_reports_dir / "model_cards" / src.name
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dst)
+    return str(dst)
+
+
+def _apply_incumbent_retention(
+    *,
+    cfg: DatasetConfig,
+    run_layout: RunLayout,
+    evaluation: dict[str, Any],
+    publish_cfg: dict[str, Any],
+    baseline_metrics_file: Path | None,
+    canonical_models_dir: Path | None = None,
+    canonical_uncertainty_dir: Path | None = None,
+    canonical_backtests_dir: Path | None = None,
+    canonical_reports_dir: Path | None = None,
+) -> list[str]:
+    """Replace configured failed target outputs with the current incumbent."""
+    retention_targets = _configured_retention_targets(publish_cfg)
+    if not retention_targets or baseline_metrics_file is None or not baseline_metrics_file.exists():
+        return []
+
+    candidate_metrics_path = run_layout.reports_dir / "week2_metrics.json"
+    candidate_metrics = _load_json(candidate_metrics_path)
+    baseline_metrics = _load_json(baseline_metrics_file)
+    candidate_targets = (
+        candidate_metrics.get("targets", {}) if isinstance(candidate_metrics.get("targets"), dict) else {}
+    )
+    baseline_targets = (
+        baseline_metrics.get("targets", {}) if isinstance(baseline_metrics.get("targets"), dict) else {}
+    )
+
+    canonical_models_dir = canonical_models_dir or (REPO_ROOT / cfg.models_dir)
+    canonical_uncertainty_dir = canonical_uncertainty_dir or (REPO_ROOT / cfg.uncertainty_dir)
+    canonical_backtests_dir = canonical_backtests_dir or (REPO_ROOT / cfg.backtests_dir)
+    canonical_reports_dir = canonical_reports_dir or (REPO_ROOT / cfg.reports_dir)
+
+    retained: list[str] = []
+    records: list[dict[str, Any]] = []
+    for row in evaluation.get("targets", []):
+        if not isinstance(row, dict):
+            continue
+        target = str(row.get("target", "")).strip()
+        regression_delta = row.get("regression_delta")
+        regressed = bool(row.get("non_regression_pass") is False)
+        if isinstance(regression_delta, int | float):
+            regressed = regressed or float(regression_delta) > 0.0
+        failed_acceptance = row.get("accepted") is False
+        if not failed_acceptance:
+            failed_acceptance = any(
+                row.get(flag) is False for flag in ("non_regression_pass", "improvement_pass", "cv_std_pass")
+            )
+        if target not in retention_targets or not failed_acceptance:
+            continue
+        baseline_target = baseline_targets.get(target)
+        if not isinstance(baseline_target, dict):
+            continue
+
+        reason = "challenger_regressed_against_baseline" if regressed else "challenger_missed_acceptance_gate"
+        replacement = dict(baseline_target)
+        replacement["retention_decision"] = "retained_incumbent"
+        replacement["retention_reason"] = reason
+        replacement["challenger_metrics"] = candidate_targets.get(target, {})
+        candidate_targets[target] = replacement
+
+        copied = []
+        copied.extend(_copy_target_artifacts(canonical_models_dir, run_layout.models_dir, target))
+        copied.extend(_copy_target_artifacts(canonical_uncertainty_dir, run_layout.uncertainty_dir, target))
+        copied.extend(_copy_target_artifacts(canonical_backtests_dir, run_layout.backtests_dir, target))
+        copied_card = _copy_target_report_card(canonical_reports_dir, run_layout.reports_dir, target)
+        if copied_card is not None:
+            copied.append(copied_card)
+
+        retained.append(target)
+        records.append(
+            {
+                "target": target,
+                "reason": reason,
+                "baseline_metrics_file": str(baseline_metrics_file),
+                "copied_artifacts": copied,
+            }
+        )
+
+    if not retained:
+        return []
+
+    candidate_metrics["targets"] = candidate_targets
+    candidate_metrics_path.write_text(json.dumps(candidate_metrics, indent=2), encoding="utf-8")
+    run_layout.registry_dir.mkdir(parents=True, exist_ok=True)
+    (run_layout.registry_dir / "incumbent_retention.json").write_text(
+        json.dumps({"retained_targets": records}, indent=2),
+        encoding="utf-8",
+    )
+    return retained
 
 
 def _persist_selection_artifacts(
@@ -963,7 +1282,7 @@ def _persist_selection_artifacts(
     if decision_path.exists():
         lines.append(decision_path.read_text(encoding="utf-8").rstrip())
         lines.append("")
-    lines.append(f"## {cfg.name} - {datetime.now(timezone.utc).isoformat()}")
+    lines.append(f"## {cfg.name} - {datetime.now(UTC).isoformat()}")
     lines.append(f"- Accepted: **{evaluation.get('accepted')}**")
     lines.append(f"- Profile: `{evaluation.get('profile')}`")
     lines.append("")
@@ -981,36 +1300,43 @@ def _persist_selection_artifacts(
 # MAIN PIPELINE
 # =============================================================================
 
+
 def train_dataset(
     dataset_name: str,
-    models: Optional[str] = None,
+    models: str | None = None,
     tune: bool = False,
     no_tune: bool = False,
     no_cv: bool = False,
     ensemble: bool = False,
-    max_seeds: Optional[int] = None,
-    n_trials: Optional[int] = None,
-    top_pct: Optional[float] = None,
+    max_seeds: int | None = None,
+    n_trials: int | None = None,
+    top_pct: float | None = None,
+    tuning_n_jobs: int | None = None,
+    gbm_threads: int | None = None,
+    reuse_best_gbm_from: str | None = None,
+    max_deep_epochs: int | None = None,
+    deep_patience: int | None = None,
+    deep_warmup_epochs: int | None = None,
     profile: str = "standard",
-    max_runtime_hours: Optional[float] = None,
-    target_metrics_file: Optional[str] = None,
+    max_runtime_hours: float | None = None,
+    target_metrics_file: str | None = None,
     reports: bool = True,
     rebuild_features: bool = False,
     skip_training: bool = False,
     candidate_run: bool = False,
-    run_id: Optional[str] = None,
+    run_id: str | None = None,
     promote_on_accept: bool = False,
 ) -> bool:
     """
     Full training pipeline for a single dataset.
-    
+
     Args:
         dataset_name: Dataset key from DATASET_REGISTRY (DE, US, etc.)
         tune: Enable hyperparameter tuning
         reports: Generate evaluation reports
         rebuild_features: Force rebuild features
         skip_training: Skip model training (for reports only)
-        
+
     Returns:
         True if all steps successful
     """
@@ -1018,20 +1344,20 @@ def train_dataset(
         print(f"❌ Unknown dataset: {dataset_name}")
         print(f"   Available datasets: {list(DATASET_REGISTRY.keys())}")
         return False
-    
+
     cfg = DATASET_REGISTRY[dataset_name]
     run_layout = _resolve_run_layout(cfg, candidate_run=candidate_run, run_id=run_id)
-    
-    print(f"\n{'#'*60}")
+
+    print(f"\n{'#' * 60}")
     print(f"#  TRAINING PIPELINE: {cfg.display_name}")
     print(f"#  Config: {cfg.config_file}")
     print(f"#  Output mode: {run_layout.mode} ({run_layout.run_id})")
-    print(f"{'#'*60}")
-    
+    print(f"{'#' * 60}")
+
     # Step 1: Build features
     if not build_features(cfg, force=rebuild_features):
         return False
-    
+
     # Step 2: Create splits
     if not create_splits(cfg, force=rebuild_features):
         return False
@@ -1044,32 +1370,39 @@ def train_dataset(
 
     preflight = _write_preflight_analysis(cfg, run_layout, profile=profile, models=models)
     _write_run_context(cfg=cfg, run_layout=run_layout, preflight=preflight, profile=profile, models=models)
-    
+
     # Step 3: Train models
-    if not skip_training:
-        if not train_models(
-            cfg,
-            run_layout=run_layout,
-            models=models,
-            tune=tune,
-            no_tune=no_tune,
-            no_cv=no_cv,
-            ensemble=ensemble,
-            max_seeds=max_seeds,
-            n_trials=n_trials,
-            top_pct=top_pct,
-            profile=profile,
-            max_runtime_hours=max_runtime_hours,
-        ):
-            return False
-    
+    if not skip_training and not train_models(
+        cfg,
+        run_layout=run_layout,
+        models=models,
+        tune=tune,
+        no_tune=no_tune,
+        no_cv=no_cv,
+        ensemble=ensemble,
+        max_seeds=max_seeds,
+        n_trials=n_trials,
+        top_pct=top_pct,
+        tuning_n_jobs=tuning_n_jobs,
+        gbm_threads=gbm_threads,
+        reuse_best_gbm_from=reuse_best_gbm_from,
+        max_deep_epochs=max_deep_epochs,
+        deep_patience=deep_patience,
+        deep_warmup_epochs=deep_warmup_epochs,
+        profile=profile,
+        max_runtime_hours=max_runtime_hours,
+        target_metrics_file=target_metrics_file,
+    ):
+        return False
+
     # Step 4: Generate reports (includes conformal coverage)
-    if reports:
-        if not generate_reports(cfg, run_layout=run_layout):
-            print("⚠️  Reports generation failed, continuing...")
+    if reports and not generate_reports(cfg, run_layout=run_layout):
+        print("⚠️  Reports generation failed, continuing...")
 
     if not verify_training_outputs(cfg, run_layout, models=models):
-        print(f"❌ Verification failed for {cfg.display_name}. Candidate outputs kept at {run_layout.reports_dir}.")
+        print(
+            f"❌ Verification failed for {cfg.display_name}. Candidate outputs kept at {run_layout.reports_dir}."
+        )
         return False
 
     publish_cfg = _load_publish_audit_cfg()
@@ -1081,6 +1414,22 @@ def train_dataset(
         publish_cfg=publish_cfg,
         profile=profile,
     )
+    retained_targets = _apply_incumbent_retention(
+        cfg=cfg,
+        run_layout=run_layout,
+        evaluation=evaluation,
+        publish_cfg=publish_cfg,
+        baseline_metrics_file=target_metrics_path,
+    )
+    if retained_targets:
+        evaluation = _evaluate_against_baseline(
+            dataset_name=cfg.name,
+            reports_dir=run_layout.reports_dir,
+            target_metrics_file=target_metrics_path,
+            publish_cfg=publish_cfg,
+            profile=profile,
+        )
+        evaluation["retained_incumbent_targets"] = retained_targets
     _persist_selection_artifacts(
         cfg=cfg,
         evaluation=evaluation,
@@ -1100,22 +1449,22 @@ def train_dataset(
 def train_all_datasets(**kwargs) -> bool:
     """Train all registered datasets with the same settings."""
     trainable_keys = _iter_trainable_dataset_keys()
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  TRAINING ALL DATASETS: {trainable_keys}")
-    print(f"{'='*60}")
-    
+    print(f"{'=' * 60}")
+
     results = {}
     for name in trainable_keys:
         results[name] = train_dataset(name, **kwargs)
-    
+
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("  SUMMARY")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     for name, success in results.items():
         status = "✅" if success else "❌"
         print(f"   {status} {name}: {DATASET_REGISTRY[name].display_name}")
-    
+
     return all(results.values())
 
 
@@ -1147,48 +1496,102 @@ Examples:
   python scripts/train_dataset.py --list              # Show available datasets
         """,
     )
-    parser.add_argument("--dataset", "-d", choices=list(DATASET_REGISTRY.keys()) + ["ALL"], help="Dataset to train (DE, US, etc.)")
+    parser.add_argument(
+        "--dataset",
+        "-d",
+        choices=[*list(DATASET_REGISTRY.keys()), "ALL"],
+        help="Dataset to train (DE, US, etc.)",
+    )
     parser.add_argument("--all", "-a", action="store_true", help="Train all registered datasets")
     parser.add_argument("--list", "-l", action="store_true", help="List available datasets")
     parser.add_argument("--tune", "-t", action="store_true", help="Enable Optuna hyperparameter tuning")
-    parser.add_argument("--models", default=None, help="Optional comma-separated model filter, e.g. gbm or gbm,lstm")
-    parser.add_argument("--no-tune", action="store_true", help="Disable tuning even if YAML has tuning.enabled=true")
-    parser.add_argument("--no-cv", action="store_true", help="Disable cross-validation even if YAML enables it")
-    parser.add_argument("--ensemble", action="store_true", help="Train multi-seed GBM ensembles using config.seeds")
+    parser.add_argument(
+        "--models", default=None, help="Optional comma-separated model filter, e.g. gbm or gbm,lstm"
+    )
+    parser.add_argument(
+        "--no-tune", action="store_true", help="Disable tuning even if YAML has tuning.enabled=true"
+    )
+    parser.add_argument(
+        "--no-cv", action="store_true", help="Disable cross-validation even if YAML enables it"
+    )
+    parser.add_argument(
+        "--ensemble", action="store_true", help="Train multi-seed GBM ensembles using config.seeds"
+    )
     parser.add_argument("--max-seeds", type=int, default=None, help="Optional cap for ensemble seed count")
     parser.add_argument("--n-trials", type=int, default=None, help="Override Optuna trial count for this run")
-    parser.add_argument("--top-pct", type=float, default=None, help="Use top percent of trials for param aggregation")
-    parser.add_argument("--profile", choices=list(TRAINING_PROFILES), default="standard", help="Training profile")
-    parser.add_argument("--max-runtime-hours", type=float, default=None, help="Optional timeout for each training invocation")
-    parser.add_argument("--target-metrics-file", default=None, help="Optional baseline metrics JSON for acceptance comparison")
-    parser.add_argument("--reports", "-r", action="store_true", default=True, help="Generate evaluation reports (default: True)")
+    parser.add_argument(
+        "--top-pct", type=float, default=None, help="Use top percent of trials for param aggregation"
+    )
+    parser.add_argument(
+        "--tuning-n-jobs", type=int, default=None, help="Parallel Optuna trials for GBM tuning"
+    )
+    parser.add_argument("--gbm-threads", type=int, default=None, help="Threads per LightGBM model/trial")
+    parser.add_argument(
+        "--reuse-best-gbm-from",
+        default=None,
+        help="Seed Optuna with tuned GBM params from a prior metrics JSON",
+    )
+    parser.add_argument("--max-deep-epochs", type=int, default=None, help="Cap epochs for deep models")
+    parser.add_argument(
+        "--deep-patience", type=int, default=None, help="Cap early-stopping patience for deep models"
+    )
+    parser.add_argument(
+        "--deep-warmup-epochs",
+        type=int,
+        default=None,
+        help="Cap learning-rate warmup epochs for deep models",
+    )
+    parser.add_argument(
+        "--profile", choices=list(TRAINING_PROFILES), default="standard", help="Training profile"
+    )
+    parser.add_argument(
+        "--max-runtime-hours", type=float, default=None, help="Optional timeout for each training invocation"
+    )
+    parser.add_argument(
+        "--target-metrics-file", default=None, help="Optional baseline metrics JSON for acceptance comparison"
+    )
+    parser.add_argument(
+        "--reports",
+        "-r",
+        action="store_true",
+        default=True,
+        help="Generate evaluation reports (default: True)",
+    )
     parser.add_argument("--no-reports", action="store_true", help="Skip report generation")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild features even if they exist")
     parser.add_argument("--reports-only", action="store_true", help="Only generate reports (skip training)")
-    parser.add_argument("--candidate-run", action="store_true", help="Write outputs into isolated artifacts/runs/... and reports/runs/... directories")
+    parser.add_argument(
+        "--candidate-run",
+        action="store_true",
+        help="Write outputs into isolated artifacts/runs/... and reports/runs/... directories",
+    )
     parser.add_argument("--run-id", default=None, help="Optional run identifier for candidate outputs")
-    parser.add_argument("--promote-on-accept", action="store_true", help="Promote candidate outputs into canonical paths only after acceptance gates pass")
+    parser.add_argument(
+        "--promote-on-accept",
+        action="store_true",
+        help="Promote candidate outputs into canonical paths only after acceptance gates pass",
+    )
     return parser
 
 
 def main() -> int:
     """Main entry point."""
     args = _build_parser().parse_args()
-    
+
     # Handle --list
     if args.list:
         list_datasets()
         return 0
-    
+
     # Handle --no-reports
     reports = args.reports and not args.no_reports
-    
+
     # Require either --dataset or --all
     if not args.dataset and not args.all:
         _build_parser().print_help()
         print("\n❌ Error: Specify --dataset <NAME> or --all")
         return 1
-    
+
     # Run training
     run_all = bool(args.all or args.dataset == "ALL")
     if run_all:
@@ -1201,6 +1604,12 @@ def main() -> int:
             max_seeds=args.max_seeds,
             n_trials=args.n_trials,
             top_pct=args.top_pct,
+            tuning_n_jobs=args.tuning_n_jobs,
+            gbm_threads=args.gbm_threads,
+            reuse_best_gbm_from=args.reuse_best_gbm_from,
+            max_deep_epochs=args.max_deep_epochs,
+            deep_patience=args.deep_patience,
+            deep_warmup_epochs=args.deep_warmup_epochs,
             profile=args.profile,
             max_runtime_hours=args.max_runtime_hours,
             target_metrics_file=args.target_metrics_file,
@@ -1222,6 +1631,12 @@ def main() -> int:
             max_seeds=args.max_seeds,
             n_trials=args.n_trials,
             top_pct=args.top_pct,
+            tuning_n_jobs=args.tuning_n_jobs,
+            gbm_threads=args.gbm_threads,
+            reuse_best_gbm_from=args.reuse_best_gbm_from,
+            max_deep_epochs=args.max_deep_epochs,
+            deep_patience=args.deep_patience,
+            deep_warmup_epochs=args.deep_warmup_epochs,
             profile=args.profile,
             max_runtime_hours=args.max_runtime_hours,
             target_metrics_file=args.target_metrics_file,
@@ -1232,7 +1647,7 @@ def main() -> int:
             run_id=args.run_id,
             promote_on_accept=args.promote_on_accept,
         )
-    
+
     return 0 if success else 1
 
 

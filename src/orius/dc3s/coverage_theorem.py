@@ -1,7 +1,9 @@
 """Backward-compatible access to universal degraded-observation bounds."""
+
 from __future__ import annotations
 
 import numpy as np
+
 from orius.universal_theory.risk_bounds import (
     assert_coverage_guarantee,
     compute_empirical_coverage,
@@ -55,13 +57,11 @@ def get_core_bound_assumptions() -> tuple[str, ...]:
     return risk_envelope_assumptions()
 
 
-
-
 def mondrian_group_coverage(
-    y_true: "np.ndarray | list[float]",
-    lower: "np.ndarray | list[float]",
-    upper: "np.ndarray | list[float]",
-    reliability_w: "np.ndarray | list[float]",
+    y_true: np.ndarray | list[float],
+    lower: np.ndarray | list[float],
+    upper: np.ndarray | list[float],
+    reliability_w: np.ndarray | list[float],
     *,
     n_bins: int = 3,
     alpha: float = 0.10,
@@ -93,10 +93,10 @@ def mondrian_group_coverage(
             overall_picp:  Coverage pooled across all groups.
             all_pass:      True if every group meets 1 - alpha - 0.02.
     """
-    yt = _as_flat_float_array(y_true,       name="y_true")
-    lo = _as_flat_float_array(lower,         name="lower")
-    hi = _as_flat_float_array(upper,         name="upper")
-    w  = _as_flat_float_array(reliability_w, name="reliability_w")
+    yt = _as_flat_float_array(y_true, name="y_true")
+    lo = _as_flat_float_array(lower, name="lower")
+    hi = _as_flat_float_array(upper, name="upper")
+    w = _as_flat_float_array(reliability_w, name="reliability_w")
     N = len(yt)
     if not (len(lo) == len(hi) == len(w) == N):
         raise ValueError("All arrays must have the same length.")
@@ -124,15 +124,17 @@ def mondrian_group_coverage(
         else:
             picp_k = float(np.mean(covered_all[mask]))
             passed_k = picp_k >= target - tolerance
-        groups.append({
-            "bin_index": k,
-            "w_lo": lo_edge,
-            "w_hi": min(hi_edge, 1.0),
-            "n": n_k,
-            "picp": picp_k,
-            "target": target,
-            "passed": passed_k,
-        })
+        groups.append(
+            {
+                "bin_index": k,
+                "w_lo": lo_edge,
+                "w_hi": min(hi_edge, 1.0),
+                "n": n_k,
+                "picp": picp_k,
+                "target": target,
+                "passed": passed_k,
+            }
+        )
 
     overall_picp = float(np.mean(covered_all))
     all_pass = empty_bins == 0 and all(bool(g["passed"]) for g in groups)
@@ -186,8 +188,8 @@ def hoeffding_violation_bound(
         raise ValueError("epsilon must be positive.")
 
     expectation_bound = float(alpha) * (1.0 - float(w_bar))
-    high_prob_bound   = expectation_bound + float(epsilon)
-    tail_probability  = float(np.exp(-2.0 * int(T) * float(epsilon) ** 2))
+    high_prob_bound = expectation_bound + float(epsilon)
+    tail_probability = float(np.exp(-2.0 * int(T) * float(epsilon) ** 2))
     return {
         "expectation_bound": expectation_bound,
         "high_prob_bound": high_prob_bound,
@@ -223,23 +225,23 @@ def evaluate_group_conditional_coverage(
         if key not in records[0]:
             raise KeyError(f"Each record must contain key '{key}'.")
 
-    y_true = np.array([r["y_true"]       for r in records], dtype=float)
-    lower  = np.array([r["lower"]         for r in records], dtype=float)
-    upper  = np.array([r["upper"]         for r in records], dtype=float)
-    w      = np.array([r["reliability_w"] for r in records], dtype=float)
+    y_true = np.array([r["y_true"] for r in records], dtype=float)
+    lower = np.array([r["lower"] for r in records], dtype=float)
+    upper = np.array([r["upper"] for r in records], dtype=float)
+    w = np.array([r["reliability_w"] for r in records], dtype=float)
 
     return mondrian_group_coverage(y_true, lower, upper, w, n_bins=n_bins, alpha=alpha)
 
 
 __all__ = [
-    "verify_inflation_geq_one",
-    "compute_empirical_coverage",
     "assert_coverage_guarantee",
-    "inflation_lower_bound",
+    "compute_empirical_coverage",
     "compute_expected_violation_bound",
-    "get_core_bound_assumptions",
     "evaluate_empirical_core_bound",
-    "mondrian_group_coverage",
-    "hoeffding_violation_bound",
     "evaluate_group_conditional_coverage",
+    "get_core_bound_assumptions",
+    "hoeffding_violation_bound",
+    "inflation_lower_bound",
+    "mondrian_group_coverage",
+    "verify_inflation_geq_one",
 ]

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate the clean ORIUS three-domain artifact release folder."""
+
 from __future__ import annotations
 
 import argparse
@@ -83,7 +84,8 @@ def _scan_text_for_stale_claims(path: Path) -> list[str]:
             continue
         if marker == "full autonomous-driving field closure claimed" and (
             "no road deployment or full autonomous-driving field closure claimed" in text
-            or "not completed carla simulation, road deployment, or full autonomous-driving field closure" in text
+            or "not completed carla simulation, road deployment, or full autonomous-driving field closure"
+            in text
         ):
             continue
         findings.append(marker)
@@ -134,7 +136,14 @@ def validate_release(bundle_dir: str | Path) -> dict[str, Any]:
         raise ValueError("manifest.json must contain a list field named 'files'")
 
     entry_by_rel: dict[str, dict[str, Any]] = {}
-    required_entry_fields = {"relative_path", "source_path", "category", "claim_scope", "size_bytes", "sha256"}
+    required_entry_fields = {
+        "relative_path",
+        "source_path",
+        "category",
+        "claim_scope",
+        "size_bytes",
+        "sha256",
+    }
     for entry in entries:
         if not isinstance(entry, dict):
             raise ValueError("manifest files entries must be objects")
@@ -143,7 +152,9 @@ def validate_release(bundle_dir: str | Path) -> dict[str, Any]:
             raise ValueError(f"manifest file entry is missing fields {missing}: {entry}")
         rel = str(entry["relative_path"])
         if rel in {"manifest.json", "MANIFEST.sha256"}:
-            raise ValueError("manifest.json and MANIFEST.sha256 are tracked by MANIFEST.sha256, not manifest files")
+            raise ValueError(
+                "manifest.json and MANIFEST.sha256 are tracked by MANIFEST.sha256, not manifest files"
+            )
         if rel in entry_by_rel:
             raise ValueError(f"Duplicate manifest file entry: {rel}")
         source_path = str(entry["source_path"])

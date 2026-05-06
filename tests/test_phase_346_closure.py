@@ -5,7 +5,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "verify_phase_346_closure.py"
 STATUS_JSON = REPO_ROOT / "reports" / "publication" / "phase_3_4_6_closure_status.json"

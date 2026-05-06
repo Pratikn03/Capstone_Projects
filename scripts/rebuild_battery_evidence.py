@@ -7,6 +7,7 @@ dispatch certificates and shield intervention statistics.
 Usage:
     python scripts/rebuild_battery_evidence.py [--steps 200] [--seed 42]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,16 +20,18 @@ import numpy as np
 # Ensure the project root is on the path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from orius.dc3s.drift import AdaptivePageHinkleyDetector
 from orius.dc3s.pipeline import run_dc3s_step
-from orius.dc3s.drift import PageHinkleyDetector, AdaptivePageHinkleyDetector
 from orius.dc3s.rac_cert import RACCertConfig, RACCertModel
 from orius.utils.config import load_config
 
 
 def _make_synthetic_state(soc: float, capacity: float):
     """Create a minimal state object with the required attributes."""
+
     class _State:
         pass
+
     s = _State()
     s.current_soc_mwh = soc
     s.last_net_mw = 0.0
@@ -42,8 +45,9 @@ def main():
     parser = argparse.ArgumentParser(description="Rebuild battery evidence")
     parser.add_argument("--steps", type=int, default=200, help="Simulation steps")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--output-dir", type=str, default="artifacts/runs",
-                        help="Directory for evidence artifacts")
+    parser.add_argument(
+        "--output-dir", type=str, default="artifacts/runs", help="Directory for evidence artifacts"
+    )
     args = parser.parse_args()
 
     rng = np.random.default_rng(args.seed)
@@ -71,11 +75,10 @@ def main():
 
     # Simple domain adapter (lightweight mock)
     from orius.dc3s import BatteryDomainAdapter
+
     adapter = BatteryDomainAdapter()
 
-    drift_detector = AdaptivePageHinkleyDetector.from_state(
-        None, dc3s_cfg.get("drift", {})
-    )
+    drift_detector = AdaptivePageHinkleyDetector.from_state(None, dc3s_cfg.get("drift", {}))
 
     soc = capacity * 0.5
     certificates = []
@@ -141,17 +144,19 @@ def main():
             stats["soc_violations"] += 1
 
         cert = result["certificate"]
-        certificates.append({
-            "step": t,
-            "command_id": cert["command_id"],
-            "reliability_w": result["reliability_w"],
-            "drift_flag": result["drift_flag"],
-            "inflation": result["inflation"],
-            "repaired": result["shield_meta"].get("repaired", False),
-            "soc_mwh": float(soc),
-            "charge_mw": safe["charge_mw"],
-            "discharge_mw": safe["discharge_mw"],
-        })
+        certificates.append(
+            {
+                "step": t,
+                "command_id": cert["command_id"],
+                "reliability_w": result["reliability_w"],
+                "drift_flag": result["drift_flag"],
+                "inflation": result["inflation"],
+                "repaired": result["shield_meta"].get("repaired", False),
+                "soc_mwh": float(soc),
+                "charge_mw": safe["charge_mw"],
+                "discharge_mw": safe["discharge_mw"],
+            }
+        )
 
         prev_event = event
         prev_cert_hash = cert.get("certificate_hash")
@@ -160,20 +165,28 @@ def main():
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     evidence_path = out_dir / "battery_evidence.json"
-    evidence_path.write_text(json.dumps({
-        "stats": stats,
-        "certificates": certificates,
-    }, indent=2, default=str))
+    evidence_path.write_text(
+        json.dumps(
+            {
+                "stats": stats,
+                "certificates": certificates,
+            },
+            indent=2,
+            default=str,
+        )
+    )
 
-    print(f"\n{'='*60}")
-    print(f"Battery Evidence Rebuild Complete")
-    print(f"{'='*60}")
+    print(f"\n{'=' * 60}")
+    print("Battery Evidence Rebuild Complete")
+    print(f"{'=' * 60}")
     print(f"  Steps:        {stats['total_steps']}")
-    print(f"  Interventions: {stats['interventions']} ({100*stats['interventions']/max(1,stats['total_steps']):.1f}%)")
+    print(
+        f"  Interventions: {stats['interventions']} ({100 * stats['interventions'] / max(1, stats['total_steps']):.1f}%)"
+    )
     print(f"  Drift events:  {stats['drift_events']}")
     print(f"  SOC violations:{stats['soc_violations']}")
     print(f"  Output:        {evidence_path}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     return 0 if stats["soc_violations"] == 0 else 1
 

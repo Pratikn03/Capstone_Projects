@@ -4,6 +4,7 @@
 Usage:
     python scripts/build_half_life_figures.py
 """
+
 from __future__ import annotations
 
 import os
@@ -15,6 +16,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -32,10 +34,12 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     df = pd.read_csv(in_path)
-    agg = df.groupby("blackout_hours", as_index=False).agg({
-        "tsvr_pct": "mean",
-        "coverage_pct": "mean",
-    })
+    agg = df.groupby("blackout_hours", as_index=False).agg(
+        {
+            "tsvr_pct": "mean",
+            "coverage_pct": "mean",
+        }
+    )
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
     x = agg["blackout_hours"]

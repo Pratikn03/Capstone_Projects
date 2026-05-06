@@ -1,9 +1,10 @@
 """Backfill typed DC3S certificate columns from payload_json."""
+
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +29,7 @@ def _safe_bool(value: Any) -> bool | None:
         return None
     if isinstance(value, bool):
         return value
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return bool(value)
     if isinstance(value, str):
         low = value.strip().lower()
@@ -61,7 +62,9 @@ def _load_payload(payload_json: Any) -> dict[str, Any]:
 def _derive_fields(payload: dict[str, Any]) -> dict[str, Any]:
     uncertainty = payload.get("uncertainty", {}) if isinstance(payload.get("uncertainty"), dict) else {}
     meta = uncertainty.get("meta", {}) if isinstance(uncertainty.get("meta"), dict) else {}
-    shield = uncertainty.get("shield_repair", {}) if isinstance(uncertainty.get("shield_repair"), dict) else {}
+    shield = (
+        uncertainty.get("shield_repair", {}) if isinstance(uncertainty.get("shield_repair"), dict) else {}
+    )
     reliability = payload.get("reliability", {}) if isinstance(payload.get("reliability"), dict) else {}
     drift = payload.get("drift", {}) if isinstance(payload.get("drift"), dict) else {}
 
@@ -140,7 +143,7 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
     db = Path(duckdb_path)
     if not db.exists():
         return {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "duckdb_path": duckdb_path,
             "table_name": table_name,
             "exists": False,
@@ -208,7 +211,9 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
             payload = _load_payload(payload_json)
             derived = _derive_fields(payload)
             next_intervened = intervened if intervened is not None else derived["intervened"]
-            next_reason = intervention_reason if intervention_reason is not None else derived["intervention_reason"]
+            next_reason = (
+                intervention_reason if intervention_reason is not None else derived["intervention_reason"]
+            )
             next_reliability_w = reliability_w if reliability_w is not None else derived["reliability_w"]
             next_drift_flag = drift_flag if drift_flag is not None else derived["drift_flag"]
             next_inflation = inflation if inflation is not None else derived["inflation"]
@@ -228,9 +233,7 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                 else derived["true_soc_violation_after_apply"]
             )
             next_assumptions_version = (
-                assumptions_version
-                if assumptions_version is not None
-                else derived["assumptions_version"]
+                assumptions_version if assumptions_version is not None else derived["assumptions_version"]
             )
             next_gamma_mw = gamma_mw if gamma_mw is not None else derived["gamma_mw"]
             next_e_t_mwh = e_t_mwh if e_t_mwh is not None else derived["e_t_mwh"]
@@ -315,7 +318,7 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
         conn.close()
 
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "duckdb_path": duckdb_path,
         "table_name": table_name,
         "exists": True,

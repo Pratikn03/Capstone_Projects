@@ -13,10 +13,12 @@ runtime adapters:
 Concrete domains (battery, vehicles, HVAC, etc.) should subclass
 DomainAdapter and implement these methods with domain-specific logic.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 
 class DomainAdapter(ABC):

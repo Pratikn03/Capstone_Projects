@@ -1,4 +1,5 @@
 """Tests for Pyomo-based robust dispatch optimization."""
+
 from __future__ import annotations
 
 import numpy as np

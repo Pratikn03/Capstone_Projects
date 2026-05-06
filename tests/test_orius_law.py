@@ -1,4 +1,5 @@
 """Tests for the ORIUS Rate-Distortion Safety Laws (L1-L4)."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -19,7 +20,6 @@ from orius.universal_theory.orius_law import (
 
 
 class TestL1RateDistortionSafetyLaw:
-
     def test_positive_loss_below_capacity(self) -> None:
         result = rate_distortion_safety_law(channel_capacity=0.5, H_entropy=1.0, alpha=0.10)
         assert result["D_star_lower"] > 0.0
@@ -45,7 +45,6 @@ class TestL1RateDistortionSafetyLaw:
 
 
 class TestL2CapacityBridge:
-
     def test_bounded_by_one(self) -> None:
         result = capacity_bridge(w_bar=0.8, kappa_d=1.0, H_X=1.0, channel_capacity=2.0)
         assert result["w_upper_bound"] <= 1.0
@@ -65,7 +64,6 @@ class TestL2CapacityBridge:
 
 
 class TestL3CriticalCapacity:
-
     def test_critical_capacity_exists(self) -> None:
         result = critical_capacity(alpha=0.10, kappa_d=1.0, H_X=1.0)
         assert result["C_star_d"] > 0.0
@@ -85,7 +83,6 @@ class TestL3CriticalCapacity:
 
 
 class TestL4AchievabilityConverseSandwich:
-
     def test_bounds_consistent(self) -> None:
         result = achievability_converse_sandwich(w_bar=0.7, alpha=0.10)
         assert result["lower_bound"] <= result["upper_bound"]
@@ -107,7 +104,6 @@ class TestL4AchievabilityConverseSandwich:
 
 
 class TestLawRegister:
-
     def test_all_four_laws_present(self) -> None:
         assert "L1" in LAW_REGISTER
         assert "L2" in LAW_REGISTER
@@ -129,11 +125,14 @@ class TestLawRegister:
 
 
 class TestGrandUnification:
-
     def test_assembles_all_paths(self) -> None:
         result = orius_grand_unification(
-            [0.7] * 100, alpha=0.10, n_cal=500, delta=0.05,
-            margin=5.0, sigma_d=0.1,
+            [0.7] * 100,
+            alpha=0.10,
+            n_cal=500,
+            delta=0.05,
+            margin=5.0,
+            sigma_d=0.1,
         )
         assert result["gap_closed"] is False
         assert "path_a_rate_distortion" in result
@@ -145,14 +144,16 @@ class TestGrandUnification:
 
     def test_degraded_reliability_still_closes(self) -> None:
         result = orius_grand_unification(
-            [0.4] * 50, alpha=0.10, n_cal=500, delta=0.05,
+            [0.4] * 50,
+            alpha=0.10,
+            n_cal=500,
+            delta=0.05,
         )
         assert result["gap_closed"] is False
         assert result["path_d_sandwich"]["lower_bound"] > 0.0
 
 
 class TestCapacityBridgeProof:
-
     def test_consistent_with_fault_channel_model(self) -> None:
         ch = FaultChannelModel(erasure_prob=0.1, noise_std=0.5)
         result = capacity_bridge_proof(ch, H_X=1.0, kappa_d=1.0)
@@ -173,7 +174,6 @@ class TestCapacityBridgeProof:
 
 
 class TestCapacityBridgeVerify:
-
     def test_bootstrap_ci_contains_point_estimate(self) -> None:
         rng = np.random.default_rng(42)
         w_seq = rng.uniform(0.3, 0.8, size=200)
@@ -193,7 +193,6 @@ class TestCapacityBridgeVerify:
 
 
 class TestFanoBinaryCorollary:
-
     def test_positive_error_below_capacity(self) -> None:
         result = fano_binary_corollary(channel_capacity=0.5, H_binary=1.0, alpha=0.10)
         assert result["P_e_lower"] > 0.0
@@ -212,20 +211,22 @@ class TestFanoBinaryCorollary:
 
 
 class TestWtAsCapacityProxy:
-
     def test_roundtrip_with_capacity_bridge(self) -> None:
         from orius.dc3s.quality import w_t_as_capacity_proxy
+
         result = w_t_as_capacity_proxy(w_t=0.6, kappa_d=1.0, H_X=1.0)
         bridge = capacity_bridge(w_bar=0.6, kappa_d=1.0, H_X=1.0, channel_capacity=result["C_implied"])
         assert bridge["consistent"] is True
 
     def test_zero_w_gives_zero_capacity(self) -> None:
         from orius.dc3s.quality import w_t_as_capacity_proxy
+
         result = w_t_as_capacity_proxy(w_t=0.0)
         assert result["C_implied"] == pytest.approx(0.0)
         assert result["above_critical"] is False
 
     def test_high_w_above_critical(self) -> None:
         from orius.dc3s.quality import w_t_as_capacity_proxy
+
         result = w_t_as_capacity_proxy(w_t=0.9, kappa_d=1.0, H_X=1.0)
         assert result["above_critical"] is True

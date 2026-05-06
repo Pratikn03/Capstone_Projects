@@ -8,6 +8,7 @@ Usage
 -----
     python scripts/benchmark_latency.py [--n N] [--out DIR]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -18,6 +19,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
+
+import contextlib
 
 import numpy as np
 
@@ -80,7 +83,7 @@ def benchmark_domain(
 
     # Warm-up (5 steps, not measured)
     for _ in range(5):
-        try:
+        with contextlib.suppress(Exception):
             run_universal_step(
                 domain_adapter=adapter,
                 raw_telemetry=state,
@@ -88,13 +91,11 @@ def benchmark_domain(
                 candidate_action=action,
                 constraints=constraints,
             )
-        except Exception:
-            pass
 
     # Measured steps
     for _ in range(n_steps):
         t0 = time.perf_counter()
-        try:
+        with contextlib.suppress(Exception):
             run_universal_step(
                 domain_adapter=adapter,
                 raw_telemetry=state,
@@ -102,8 +103,6 @@ def benchmark_domain(
                 candidate_action=action,
                 constraints=constraints,
             )
-        except Exception:
-            pass
         t1 = time.perf_counter()
         latencies_ms.append((t1 - t0) * 1000.0)
 
@@ -144,8 +143,10 @@ def main() -> int:
         r = benchmark_domain(registry_id, state, action, constraints, args.n)
         results.append(r)
         status = "PASS" if r["passed"] else "FAIL"
-        print(f"  [{status}] {registry_id:12s}:  p50={r['p50_ms']:6.2f}ms"
-              f"  p95={r['p95_ms']:6.2f}ms  p99={r['p99_ms']:6.2f}ms")
+        print(
+            f"  [{status}] {registry_id:12s}:  p50={r['p50_ms']:6.2f}ms"
+            f"  p95={r['p95_ms']:6.2f}ms  p99={r['p99_ms']:6.2f}ms"
+        )
         if not r["passed"]:
             all_pass = False
 

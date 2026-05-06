@@ -1,15 +1,15 @@
 """Run the default CPSBench-IoT suite and verify publication artifacts."""
+
 from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 
 repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
@@ -18,7 +18,6 @@ if str(repo_root / "src") not in sys.path:
 from orius.cpsbench_iot.runner import REQUIRED_OUTPUTS, run_suite
 from orius.cpsbench_iot.scenarios import DEFAULT_SCENARIOS
 
-
 DEFAULT_SEEDS = [11, 22, 33, 44, 55]
 
 
@@ -26,7 +25,9 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run CPSBench-IoT default benchmark suite")
     parser.add_argument("--out-dir", default="reports/publication")
     parser.add_argument("--horizon", type=int, default=168)
-    parser.add_argument("--seeds", nargs="*", type=int, default=None, help="Override seeds, e.g. --seeds 0 1 2")
+    parser.add_argument(
+        "--seeds", nargs="*", type=int, default=None, help="Override seeds, e.g. --seeds 0 1 2"
+    )
     parser.add_argument("--scenarios", nargs="*", default=None, help="Override scenarios list")
     return parser.parse_args()
 
@@ -41,7 +42,9 @@ def _verify_artifacts(out_dir: Path) -> None:
         raise SystemExit(f"Missing required CPSBench artifacts: {missing}")
 
 
-def _bootstrap_ci_mean(values: np.ndarray, n_bootstrap: int = 4000, alpha: float = 0.05) -> tuple[float, float]:
+def _bootstrap_ci_mean(
+    values: np.ndarray, n_bootstrap: int = 4000, alpha: float = 0.05
+) -> tuple[float, float]:
     vals = np.asarray(values, dtype=float)
     vals = vals[np.isfinite(vals)]
     if vals.size == 0:
@@ -73,7 +76,9 @@ def _build_table1_and_coverage_fig(out_dir: Path) -> None:
                 "intervention_rate_mean": float(sub["intervention_rate"].mean()),
                 "intervention_rate_ci_low": int_lo,
                 "intervention_rate_ci_high": int_hi,
-                "cost_delta_pct_mean": float(pd.to_numeric(sub.get("cost_delta_pct"), errors="coerce").mean()),
+                "cost_delta_pct_mean": float(
+                    pd.to_numeric(sub.get("cost_delta_pct"), errors="coerce").mean()
+                ),
             }
         )
     table1 = pd.DataFrame(rows).sort_values("controller").reset_index(drop=True)
@@ -136,7 +141,11 @@ def _run_wilcoxon_tests(out_dir: Path) -> dict:
     dc3s = df[df["controller"] == "dc3s_wrapped"].sort_values(["scenario", "seed"]).reset_index(drop=True)
     # Use deterministic_lp as the reference baseline (the standard LP controller without DC³S safety shield)
     for reference_controller in ["deterministic_lp", "naive_safe_clip", "robust_fixed_interval"]:
-        naive = df[df["controller"] == reference_controller].sort_values(["scenario", "seed"]).reset_index(drop=True)
+        naive = (
+            df[df["controller"] == reference_controller]
+            .sort_values(["scenario", "seed"])
+            .reset_index(drop=True)
+        )
         if not naive.empty:
             break
 
@@ -153,10 +162,10 @@ def _run_wilcoxon_tests(out_dir: Path) -> dict:
     )
 
     metrics = [
-        ("true_soc_violation_rate", "less"),         # DC³S should be lower
-        ("intervention_rate",       "less"),          # DC³S should need fewer interventions
-        ("mean_interval_width",     "two-sided"),     # Width comparison (no direction prior)
-        ("picp_90",                 "greater"),       # DC³S should have higher PICP
+        ("true_soc_violation_rate", "less"),  # DC³S should be lower
+        ("intervention_rate", "less"),  # DC³S should need fewer interventions
+        ("mean_interval_width", "two-sided"),  # Width comparison (no direction prior)
+        ("picp_90", "greater"),  # DC³S should have higher PICP
     ]
 
     results = {}
@@ -168,7 +177,7 @@ def _run_wilcoxon_tests(out_dir: Path) -> dict:
     print("-" * 72)
 
     for metric, alternative in metrics:
-        col_dc3s  = f"{metric}_dc3s"
+        col_dc3s = f"{metric}_dc3s"
         col_naive = f"{metric}_naive"
         if col_dc3s not in merged.columns or col_naive not in merged.columns:
             continue
@@ -183,10 +192,15 @@ def _run_wilcoxon_tests(out_dir: Path) -> dict:
         diff = x - y
         if np.all(np.abs(diff) < 1e-12):
             results[metric] = {
-                "statistic": 0.0, "p_value": 1.0, "n_pairs": int(len(x)),
-                "alternative": alternative, "significant_at_0.05": False,
-                "significant_at_0.01": False, "dc3s_mean": float(np.mean(x)),
-                "naive_mean": float(np.mean(y)), "mean_diff": 0.0,
+                "statistic": 0.0,
+                "p_value": 1.0,
+                "n_pairs": int(len(x)),
+                "alternative": alternative,
+                "significant_at_0.05": False,
+                "significant_at_0.01": False,
+                "dc3s_mean": float(np.mean(x)),
+                "naive_mean": float(np.mean(y)),
+                "mean_diff": 0.0,
                 "note": "all_differences_zero_distributions_identical",
             }
             print(f"  {metric:<33} {'—':>10} {'1.0000':>12} {'ns':>8}   (identical distributions)")
@@ -194,7 +208,9 @@ def _run_wilcoxon_tests(out_dir: Path) -> dict:
 
         stat, pval = scipy_stats.wilcoxon(x, y, alternative=alternative, zero_method="wilcox")
         sig = "***" if pval < 0.001 else "**" if pval < 0.01 else "*" if pval < 0.05 else "ns"
-        direction_label = f"DC³S {'<' if alternative == 'less' else '>' if alternative == 'greater' else '≠'} baseline"
+        direction_label = (
+            f"DC³S {'<' if alternative == 'less' else '>' if alternative == 'greater' else '≠'} baseline"
+        )
         results[metric] = {
             "statistic": float(stat),
             "p_value": float(pval),
@@ -235,4 +251,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

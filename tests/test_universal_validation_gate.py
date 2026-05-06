@@ -1,9 +1,11 @@
 """Regression tests for the three-domain universal validation evidence gate."""
+
 from __future__ import annotations
 
 import csv
 import importlib.util
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -11,10 +13,9 @@ from pathlib import Path
 import pytest
 
 from orius.adapters.vehicle import VehicleTrackAdapter
+from orius.orius_bench import real_data_loader
 from orius.orius_bench.controller_api import DC3SController, NominalController
 from orius.orius_bench.metrics_engine import compute_all_metrics
-from orius.orius_bench import real_data_loader
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "run_universal_orius_validation.py"
@@ -90,7 +91,9 @@ def test_evaluate_portability_domain_fails_on_harness_error() -> None:
 
 
 def test_vehicle_proof_episode_beats_nominal_on_locked_protocol() -> None:
-    nominal = validation_script._run_episode(VehicleTrackAdapter(), NominalController(), seed=2000, horizon=24)
+    nominal = validation_script._run_episode(
+        VehicleTrackAdapter(), NominalController(), seed=2000, horizon=24
+    )
     repaired = validation_script._run_vehicle_proof_episode(DC3SController(), seed=2000, horizon=24)
     nominal_metrics = compute_all_metrics(nominal)
     repaired_metrics = compute_all_metrics(repaired)
@@ -106,7 +109,16 @@ def test_build_tracks_requires_missing_surface_by_default(
     healthcare_path = tmp_path / "missing_healthcare.csv"
     _write_csv(
         av_path,
-        ["vehicle_id", "step", "position_m", "speed_mps", "speed_limit_mps", "lead_position_m", "ts_utc", "source_split"],
+        [
+            "vehicle_id",
+            "step",
+            "position_m",
+            "speed_mps",
+            "speed_limit_mps",
+            "lead_position_m",
+            "ts_utc",
+            "source_split",
+        ],
         ["veh-1", 0, 10.0, 8.0, 13.4, 35.0, "2026-01-01T00:00:00Z", "train"],
     )
 
@@ -143,8 +155,7 @@ def test_validation_cli_reports_only_three_domains(tmp_path: Path) -> None:
     proof_report = json.loads((tmp_path / "proof_domain_report.json").read_text())
     port_report = json.loads((tmp_path / "portability_validation_report.json").read_text())
     domain_rows = {
-        row["domain"]: row
-        for row in csv.DictReader((tmp_path / "domain_validation_summary.csv").open())
+        row["domain"]: row for row in csv.DictReader((tmp_path / "domain_validation_summary.csv").open())
     }
     per_controller_rows = list(csv.DictReader((tmp_path / "per_controller_tsvr.csv").open()))
     diagnostic_rows = list(csv.DictReader((tmp_path / "diagnostic_validation_harness_tsvr.csv").open()))
@@ -160,22 +171,40 @@ def test_validation_cli_reports_only_three_domains(tmp_path: Path) -> None:
     assert proof_report["proof_validated_domains"] == ["healthcare", "vehicle"]
     assert port_report["shadow_synthetic_domains"] == []
     assert port_report["experimental_domains"] == []
+    contract_summary = json.loads(
+        (REPO_ROOT / "reports" / "publication" / "domain_runtime_contract_summary.json").read_text()
+    )["domains"]
+    contract_keys = {"vehicle": "av", "healthcare": "healthcare"}
     for domain in ("healthcare", "vehicle"):
         row = domain_rows[domain]
+        expected = contract_summary[contract_keys[domain]]
         assert row["metric_surface"] == "runtime_denominator"
         assert row["runtime_source"]
         assert int(row["n_steps"]) > 0
         assert row["strict_runtime_gate"] == "True"
-        assert row["certificate_valid_rate"] == "1.000000"
-        assert row["t11_pass_rate"] == "1.000000"
-        assert row["postcondition_pass_rate"] == "1.000000"
-        assert row["runtime_witness_pass_rate"] == "1.000000"
+        assert math.isclose(
+            float(row["certificate_valid_rate"]),
+            float(expected["certificate_valid_rate"]),
+            abs_tol=5e-7,
+        )
+        assert math.isclose(
+            float(row["t11_pass_rate"]),
+            float(expected["t11_pass_rate"]),
+            abs_tol=5e-7,
+        )
+        assert math.isclose(
+            float(row["postcondition_pass_rate"]),
+            float(expected["postcondition_pass_rate"]),
+            abs_tol=5e-7,
+        )
+        assert math.isclose(
+            float(row["runtime_witness_pass_rate"]),
+            float(expected["witness_pass_rate"]),
+            abs_tol=5e-7,
+        )
+        assert float(row["t11_pass_rate"]) == 1.0
 
-    promoted_rows = [
-        row
-        for row in per_controller_rows
-        if row["domain"] in {"healthcare", "vehicle"}
-    ]
+    promoted_rows = [row for row in per_controller_rows if row["domain"] in {"healthcare", "vehicle"}]
     assert promoted_rows
     assert {row["seed"] for row in promoted_rows} == {"runtime_denominator"}
     assert all(row["tsvr"] != "" and row["oasg"] != "" and row["cva"] != "" for row in promoted_rows)

@@ -6,11 +6,12 @@ Run: python scripts/run_orius_full_check.py [--quick] [--skip-cpsbench]
 --quick: Skip CPSBench (faster, ~10s)
 --skip-cpsbench: Same as --quick
 """
+
 from __future__ import annotations
 
 import argparse
-import json
 import sys
+from datetime import UTC
 from pathlib import Path
 
 repo_root = Path(__file__).resolve().parents[1]
@@ -33,22 +34,12 @@ def _step(name: str, fn, *args, **kwargs):
 
 def check_imports():
     """Verify all core ORIUS imports."""
+
     def _do():
         from orius.adapters.battery import BatteryDomainAdapter
         from orius.adapters.healthcare import HealthcareDomainAdapter
         from orius.adapters.vehicle import VehicleDomainAdapter
-        from orius.dc3s import (
-            compute_reliability,
-            repair_action,
-            make_certificate,
-            build_uncertainty_set,
-            PageHinkleyDetector,
-        )
-        from orius.forecasting.ml_gbm import train_gbm, predict_gbm
-        from orius.optimizer import optimize_dispatch
-        from orius.cpsbench_iot.runner import run_suite
-        from orius.cpsbench_iot.plant import BatteryPlant
-        from orius.cpsbench_iot.scenarios import generate_episode
+
         assert BatteryDomainAdapter is not None
         assert VehicleDomainAdapter is not None
         assert HealthcareDomainAdapter is not None
@@ -59,8 +50,10 @@ def check_imports():
 
 def check_config():
     """Verify configs load."""
+
     def _do():
         import yaml
+
         cfg = yaml.safe_load((repo_root / "configs/dc3s.yaml").read_text())
         assert "dc3s" in cfg
         dc3s = cfg["dc3s"]
@@ -73,10 +66,12 @@ def check_config():
 
 def check_dc3s_demo():
     """Run DC3S demo via FastAPI TestClient."""
+
     def _do():
         from contextlib import ExitStack
-        from datetime import datetime, timezone
+        from datetime import datetime
         from unittest.mock import patch
+
         import numpy as np
         import pandas as pd
         from fastapi.testclient import TestClient
@@ -92,14 +87,16 @@ def check_dc3s_demo():
         with ExitStack() as stack:
             stack.enter_context(patch.object(dc3s_router, "_load_features_df", return_value=features_df))
             stack.enter_context(patch.object(dc3s_router, "_predict_target", side_effect=_predict))
-            stack.enter_context(patch.object(dc3s_router, "_resolve_conformal_q", return_value=np.full(24, 4.0, dtype=float)))
+            stack.enter_context(
+                patch.object(dc3s_router, "_resolve_conformal_q", return_value=np.full(24, 4.0, dtype=float))
+            )
 
             payload = {
                 "device_id": "check-device",
                 "zone_id": "DE",
                 "current_soc_mwh": 1.0,
                 "telemetry_event": {
-                    "ts_utc": datetime.now(timezone.utc).isoformat(),
+                    "ts_utc": datetime.now(UTC).isoformat(),
                     "load_mw": 52.0,
                     "renewables_mw": 12.0,
                 },
@@ -121,9 +118,11 @@ def check_dc3s_demo():
 
 def check_cpsbench_quick():
     """Run a minimal CPSBench (1 scenario, 1 seed, short horizon)."""
+
     def _do():
-        from orius.cpsbench_iot.runner import run_suite
         import tempfile
+
+        from orius.cpsbench_iot.runner import run_suite
 
         with tempfile.TemporaryDirectory() as tmp:
             out_dir = Path(tmp)
@@ -144,8 +143,9 @@ def check_cpsbench_quick():
 
 def check_universal_framework():
     """Run universal framework across all registered runtime domains."""
+
     def _do():
-        from orius.universal_framework import run_universal_step, get_adapter, list_domains
+        from orius.universal_framework import get_adapter, list_domains, run_universal_step
 
         domains = list_domains()
         assert "energy" in domains
@@ -156,15 +156,38 @@ def check_universal_framework():
         for domain_id in ["energy", "av", "healthcare"]:
             adapter = get_adapter(domain_id, {})
             if domain_id == "energy":
-                telemetry = {"load_mw": 45.0, "renewables_mw": 80.0, "current_soc_mwh": 100.0, "capacity_mwh": 200.0, "yhat_load": 48.0, "ts_utc": "2026-01-01T00:00:00Z"}
+                telemetry = {
+                    "load_mw": 45.0,
+                    "renewables_mw": 80.0,
+                    "current_soc_mwh": 100.0,
+                    "capacity_mwh": 200.0,
+                    "yhat_load": 48.0,
+                    "ts_utc": "2026-01-01T00:00:00Z",
+                }
                 candidate = {"charge_mw": 20.0, "discharge_mw": 0.0}
-                constraints = {"min_soc_mwh": 20.0, "max_soc_mwh": 180.0, "capacity_mwh": 200.0, "max_power_mw": 100.0}
+                constraints = {
+                    "min_soc_mwh": 20.0,
+                    "max_soc_mwh": 180.0,
+                    "capacity_mwh": 200.0,
+                    "max_power_mw": 100.0,
+                }
             elif domain_id == "av":
-                telemetry = {"position_m": 100.0, "speed_mps": 8.0, "speed_limit_mps": 15.0, "lead_position_m": 150.0, "ts_utc": "2026-01-01T00:00:00Z"}
+                telemetry = {
+                    "position_m": 100.0,
+                    "speed_mps": 8.0,
+                    "speed_limit_mps": 15.0,
+                    "lead_position_m": 150.0,
+                    "ts_utc": "2026-01-01T00:00:00Z",
+                }
                 candidate = {"acceleration_mps2": 0.5}
                 constraints = {"speed_max_mps": 15.0}
             elif domain_id == "healthcare":
-                telemetry = {"hr_bpm": 72.0, "spo2_pct": 97.0, "respiratory_rate": 14.0, "ts_utc": "2026-01-01T00:00:00Z"}
+                telemetry = {
+                    "hr_bpm": 72.0,
+                    "spo2_pct": 97.0,
+                    "respiratory_rate": 14.0,
+                    "ts_utc": "2026-01-01T00:00:00Z",
+                }
                 candidate = {"alert_level": 0.2}
                 constraints = {"spo2_min_pct": 90.0}
             else:
@@ -206,7 +229,9 @@ def check_locked_evidence():
 
 def main():
     ap = argparse.ArgumentParser(description="ORIUS full pipeline check")
-    ap.add_argument("--quick", "--skip-cpsbench", dest="skip_cpsbench", action="store_true", help="Skip CPSBench")
+    ap.add_argument(
+        "--quick", "--skip-cpsbench", dest="skip_cpsbench", action="store_true", help="Skip CPSBench"
+    )
     args = ap.parse_args()
 
     print("ORIUS full check\n")

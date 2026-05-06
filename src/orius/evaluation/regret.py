@@ -4,6 +4,7 @@ Regret analysis for dispatch optimization.
 Computes regret as the cost difference between a dispatch policy
 and the oracle (perfect foresight) policy.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,7 +15,7 @@ import pandas as pd
 
 
 def _as_array(x: Any, label: str) -> np.ndarray:
-    if isinstance(x, (list, tuple, np.ndarray)):
+    if isinstance(x, list | tuple | np.ndarray):
         arr = np.asarray(x, dtype=float)
     else:
         arr = np.asarray([x], dtype=float)
@@ -135,8 +136,8 @@ def _deterministic_operational_params(
 
 
 def _robust_operational_params(robust_config: Any) -> tuple[float, float, float, float, float, float]:
-    max_grid_import = float(getattr(robust_config, "max_grid_import_mw"))
-    degradation_cost = float(getattr(robust_config, "degradation_cost_per_mwh"))
+    max_grid_import = float(robust_config.max_grid_import_mw)
+    degradation_cost = float(robust_config.degradation_cost_per_mwh)
     time_step_hours = float(getattr(robust_config, "time_step_hours", 1.0))
     initial_soc = float(getattr(robust_config, "battery_initial_soc_mwh", 50.0))
     charge_eff = float(getattr(robust_config, "battery_charge_efficiency", 0.95))
@@ -190,7 +191,7 @@ def _default_price(
     if "price_usd_per_mwh" in grid_cfg:
         return np.full(horizon, float(grid_cfg["price_usd_per_mwh"]), dtype=float)
     if robust_config is not None and hasattr(robust_config, "default_price_per_mwh"):
-        return np.full(horizon, float(getattr(robust_config, "default_price_per_mwh")), dtype=float)
+        return np.full(horizon, float(robust_config.default_price_per_mwh), dtype=float)
     return np.full(horizon, 50.0, dtype=float)
 
 
@@ -217,12 +218,8 @@ def _evaluate_realized_cost(
     throughput = np.maximum(charge, 0.0) + np.maximum(discharge, 0.0)
 
     grid_cost = float(np.sum(price * grid_import) * time_step_hours)
-    degradation_cost = float(
-        degradation_cost_per_mwh * np.sum(throughput) * time_step_hours
-    )
-    unmet_penalty_cost = float(
-        unmet_load_penalty_per_mwh * np.sum(unmet) * time_step_hours
-    )
+    degradation_cost = float(degradation_cost_per_mwh * np.sum(throughput) * time_step_hours)
+    unmet_penalty_cost = float(unmet_load_penalty_per_mwh * np.sum(unmet) * time_step_hours)
     terminal_penalty_cost = 0.0
     if (
         initial_soc_mwh is not None
@@ -232,11 +229,8 @@ def _evaluate_realized_cost(
         eta_ch = max(float(charge_efficiency), 1e-9)
         eta_dis = max(float(discharge_efficiency), 1e-9)
         soc = float(initial_soc_mwh)
-        for ch, dis in zip(charge, discharge):
-            soc += (
-                eta_ch * max(float(ch), 0.0)
-                - (max(float(dis), 0.0) / eta_dis)
-            ) * time_step_hours
+        for ch, dis in zip(charge, discharge, strict=False):
+            soc += (eta_ch * max(float(ch), 0.0) - (max(float(dis), 0.0) / eta_dis)) * time_step_hours
         shortfall = max(float(terminal_soc_target_mwh) - soc, 0.0)
         terminal_penalty_cost = float(terminal_soc_penalty_per_mwh * shortfall)
 
@@ -258,12 +252,12 @@ def compute_regret(
 ) -> dict[str, float]:
     """
     Compute regret metrics.
-    
+
     Args:
         actual_cost: Cost achieved by policy with forecasts
         oracle_cost: Cost with perfect foresight (oracle)
         normalize: Whether to compute percentage regret
-    
+
     Returns:
         Dictionary with:
         - absolute_regret: Cost difference (EUR)
@@ -273,7 +267,7 @@ def compute_regret(
     """
     regret_abs = actual_cost - oracle_cost
     regret_rel = 100 * regret_abs / max(oracle_cost, 1e-6)
-    
+
     return {
         "absolute_regret": float(regret_abs),
         "relative_regret": float(regret_rel),
@@ -288,21 +282,21 @@ def compute_multi_scenario_regret(
 ) -> dict[str, Any]:
     """
     Compute regret statistics across multiple scenarios.
-    
+
     Args:
         scenario_costs: Costs for each scenario (n_scenarios,)
         oracle_costs: Oracle costs for each scenario
-    
+
     Returns:
         Dictionary with aggregated regret metrics
     """
     regrets = []
-    for actual, oracle in zip(scenario_costs, oracle_costs):
+    for actual, oracle in zip(scenario_costs, oracle_costs, strict=False):
         r = compute_regret(actual, oracle)
         regrets.append(r["relative_regret"])
-    
+
     regrets = np.array(regrets)
-    
+
     return {
         "mean_regret": float(np.mean(regrets)),
         "std_regret": float(np.std(regrets)),
@@ -369,8 +363,12 @@ def calculate_evpi(
     _ensure_non_negative(price_arr, "price")
 
     if actual_model == "robust":
-        lb_raw = load_forecast_arr if load_lower_bound is None else _as_array(load_lower_bound, "load_lower_bound")
-        ub_raw = load_forecast_arr if load_upper_bound is None else _as_array(load_upper_bound, "load_upper_bound")
+        lb_raw = (
+            load_forecast_arr if load_lower_bound is None else _as_array(load_lower_bound, "load_lower_bound")
+        )
+        ub_raw = (
+            load_forecast_arr if load_upper_bound is None else _as_array(load_upper_bound, "load_upper_bound")
+        )
         load_lower_arr = _require_horizon(lb_raw, horizon, "load_lower_bound")
         load_upper_arr = _require_horizon(ub_raw, horizon, "load_upper_bound")
 
@@ -514,8 +512,12 @@ def calculate_vss(
         horizon,
         "renewables_forecast",
     )
-    load_lower_arr = _require_horizon(_as_array(load_lower_bound, "load_lower_bound"), horizon, "load_lower_bound")
-    load_upper_arr = _require_horizon(_as_array(load_upper_bound, "load_upper_bound"), horizon, "load_upper_bound")
+    load_lower_arr = _require_horizon(
+        _as_array(load_lower_bound, "load_lower_bound"), horizon, "load_lower_bound"
+    )
+    load_upper_arr = _require_horizon(
+        _as_array(load_upper_bound, "load_upper_bound"), horizon, "load_upper_bound"
+    )
 
     _ensure_non_negative(load_true_arr, "load_true")
     _ensure_non_negative(renewables_true_arr, "renewables_true")

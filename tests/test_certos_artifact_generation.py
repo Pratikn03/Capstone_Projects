@@ -3,6 +3,7 @@
 Validates that `scripts/build_certos_artifacts.py` produces runtime-derived
 artifacts with the expected schema and content, rather than self-declared text.
 """
+
 from __future__ import annotations
 
 import json

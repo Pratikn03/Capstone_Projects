@@ -1,15 +1,15 @@
 """DC3S audit health metrics and sustained trigger evaluation."""
+
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
 import json
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import duckdb
 import numpy as np
 import yaml
-
 
 DEFAULT_DC3S_HEALTH = {
     "enabled": True,
@@ -38,7 +38,7 @@ def _safe_bool(value: Any) -> bool | None:
         return None
     if isinstance(value, bool):
         return value
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return bool(value)
     if isinstance(value, str):
         lower = value.strip().lower()
@@ -63,7 +63,11 @@ def _extract_intervened(payload: dict[str, Any]) -> bool | None:
     top = _safe_bool(payload.get("intervened"))
     if top is not None:
         return top
-    shield = payload.get("uncertainty", {}).get("shield_repair", {}) if isinstance(payload.get("uncertainty"), dict) else {}
+    shield = (
+        payload.get("uncertainty", {}).get("shield_repair", {})
+        if isinstance(payload.get("uncertainty"), dict)
+        else {}
+    )
     if isinstance(shield, dict):
         return _safe_bool(shield.get("repaired"))
     return None
@@ -73,7 +77,11 @@ def _extract_intervention_reason(payload: dict[str, Any]) -> str | None:
     reason = payload.get("intervention_reason")
     if isinstance(reason, str) and reason:
         return reason
-    shield = payload.get("uncertainty", {}).get("shield_repair", {}) if isinstance(payload.get("uncertainty"), dict) else {}
+    shield = (
+        payload.get("uncertainty", {}).get("shield_repair", {})
+        if isinstance(payload.get("uncertainty"), dict)
+        else {}
+    )
     if isinstance(shield, dict):
         robust_meta = shield.get("robust_meta")
         if isinstance(robust_meta, dict):
@@ -180,17 +188,14 @@ def _apply_sustained_windows(
 
     for flag in known_flags:
         prev = int(counters.get(flag, 0) or 0)
-        if flag in raw_flags:
-            cur = prev + 1
-        else:
-            cur = 0
+        cur = prev + 1 if flag in raw_flags else 0
         next_counters[flag] = cur
         if cur >= sustained_windows and flag in raw_flags:
             triggered.append(flag)
 
     if update_state:
         root["consecutive_breaches"] = next_counters
-        root["updated_at"] = datetime.now(timezone.utc).isoformat()
+        root["updated_at"] = datetime.now(UTC).isoformat()
         state["dc3s_health"] = root
         _save_state(state_path, state)
 
@@ -226,7 +231,7 @@ def compute_dc3s_health(
     if not db_path.exists():
         return output
 
-    since_ts = datetime.now(timezone.utc) - timedelta(hours=float(window_hours))
+    since_ts = datetime.now(UTC) - timedelta(hours=float(window_hours))
     conn = duckdb.connect(str(db_path))
     try:
         table_exists = conn.execute(
@@ -240,10 +245,7 @@ def compute_dc3s_health(
         if not table_exists or int(table_exists[0]) == 0:
             return output
 
-        table_cols = {
-            str(row[1])
-            for row in conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()
-        }
+        table_cols = {str(row[1]) for row in conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()}
         intervened_col = "intervened" if "intervened" in table_cols else "NULL AS intervened"
         intervention_reason_col = (
             "intervention_reason" if "intervention_reason" in table_cols else "NULL AS intervention_reason"
@@ -311,7 +313,11 @@ def compute_dc3s_health(
         if i:
             intervention_count += 1
 
-        reason = intervention_reason if isinstance(intervention_reason, str) else _extract_intervention_reason(payload)
+        reason = (
+            intervention_reason
+            if isinstance(intervention_reason, str)
+            else _extract_intervention_reason(payload)
+        )
         if isinstance(reason, str) and reason:
             reasons.append(reason)
 

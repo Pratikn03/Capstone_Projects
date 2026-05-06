@@ -12,23 +12,29 @@ Requires:
   artifacts/backtests/{domain}/gbm_{target}_calibration.npz
   reports/{domain}/multi_horizon_backtest.json
 """
+
 from __future__ import annotations
 
 import json
+import sys
 import warnings
 from pathlib import Path
 
-import joblib
 import matplotlib
+
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 warnings.filterwarnings("ignore")
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from orius.release.artifact_loader import load_joblib_artifact
 
 DOMAINS: dict[str, dict] = {
     "av": {
@@ -64,20 +70,21 @@ DOMAINS: dict[str, dict] = {
     # per-domain training evidence profiles.
 }
 
-FAULT_COLOR = "#d62728"   # red for fault windows
-BAND_COLOR  = "#aec7e8"   # light blue for conformal band
-PRED_COLOR  = "#1f77b4"   # blue for predicted
-ACT_COLOR   = "#ff7f0e"   # orange for actual
-REL_COLOR   = "#2ca02c"   # green for reliability
+FAULT_COLOR = "#d62728"  # red for fault windows
+BAND_COLOR = "#aec7e8"  # light blue for conformal band
+PRED_COLOR = "#1f77b4"  # blue for predicted
+ACT_COLOR = "#ff7f0e"  # orange for actual
+REL_COLOR = "#2ca02c"  # green for reliability
 
 
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
 
+
 def _load_model(domain: str, target: str):
     path = REPO_ROOT / f"artifacts/models_{domain}/gbm_lightgbm_{target}.pkl"
-    return joblib.load(path)
+    return load_joblib_artifact(path)
 
 
 def _load_test(domain: str) -> pd.DataFrame:
@@ -87,7 +94,7 @@ def _load_test(domain: str) -> pd.DataFrame:
 def _load_cal(domain: str, target: str) -> dict:
     path = REPO_ROOT / f"artifacts/backtests/{domain}/gbm_{target}_calibration.npz"
     arr = np.load(path)
-    return {k: arr[k].ravel() for k in arr.keys()}
+    return {k: arr[k].ravel() for k in arr}
 
 
 def _load_backtest(domain: str) -> dict:
@@ -112,13 +119,14 @@ def _conformal_quantile(residuals: np.ndarray, alpha: float = 0.10) -> float:
 # Figure 1: forecast_sample
 # ---------------------------------------------------------------------------
 
+
 def fig_forecast_sample(domain: str, cfg: dict) -> None:
     target = cfg["target"]
-    units  = cfg["units"]
+    units = cfg["units"]
     display = cfg["display"]
 
     mdl = _load_model(domain, target)
-    df  = _load_test(domain)
+    df = _load_test(domain)
     cal = _load_cal(domain, target)
 
     # conformal quantile from calibration residuals
@@ -133,22 +141,22 @@ def fig_forecast_sample(domain: str, cfg: dict) -> None:
 
     # use first 120 steps for readability
     n = min(120, len(df))
-    xs  = np.arange(n)
-    yt  = y_true[:n]
-    yp  = y_pred[:n]
-    lo  = yp - q_conf
-    hi  = yp + q_conf
+    xs = np.arange(n)
+    yt = y_true[:n]
+    yp = y_pred[:n]
+    lo = yp - q_conf
+    hi = yp + q_conf
 
     fig, ax = plt.subplots(figsize=(9, 3.5))
     ax.fill_between(xs, lo, hi, alpha=0.35, color=BAND_COLOR, label="90% conformal band")
     ax.plot(xs, yp, color=PRED_COLOR, lw=1.5, label="GBM forecast")
-    ax.plot(xs, yt,  color=ACT_COLOR,  lw=1.0, alpha=0.85, label="Observed")
+    ax.plot(xs, yt, color=ACT_COLOR, lw=1.0, alpha=0.85, label="Observed")
 
     # constraint lines
     lo_c = cfg.get("constraint_lo")
     hi_c = cfg.get("constraint_hi")
     if lo_c is not None:
-        ax.axhline(lo_c, color="black", ls="--", lw=0.8, alpha=0.6, label=f"Safety bounds")
+        ax.axhline(lo_c, color="black", ls="--", lw=0.8, alpha=0.6, label="Safety bounds")
     if hi_c is not None:
         ax.axhline(hi_c, color="black", ls="--", lw=0.8, alpha=0.6)
 
@@ -167,8 +175,9 @@ def fig_forecast_sample(domain: str, cfg: dict) -> None:
 # Figure 2: model_comparison  (persistence vs GBM)
 # ---------------------------------------------------------------------------
 
+
 def fig_model_comparison(domain: str, cfg: dict) -> None:
-    target  = cfg["target"]
+    target = cfg["target"]
     display = cfg["display"]
     bt = _load_backtest(domain)
     targets_data = bt.get("targets", {})
@@ -189,13 +198,19 @@ def fig_model_comparison(domain: str, cfg: dict) -> None:
 
     fig, axes = plt.subplots(1, 3, figsize=(9, 3.5))
     metric_labels = {"rmse": "RMSE", "mae": "MAE", "smape": "sMAPE"}
-    for ax, met in zip(axes, metrics_order):
+    for ax, met in zip(axes, metrics_order, strict=False):
         vals = [results.get(m, {}).get(met, 0.0) for m in models]
         bars = ax.bar(labels, vals, color=colors, edgecolor="black", linewidth=0.6)
         # annotate values
-        for bar, v in zip(bars, vals):
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() * 1.01,
-                    f"{v:.3f}", ha="center", va="bottom", fontsize=7)
+        for bar, v in zip(bars, vals, strict=False):
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_height() * 1.01,
+                f"{v:.3f}",
+                ha="center",
+                va="bottom",
+                fontsize=7,
+            )
         ax.set_title(metric_labels[met])
         ax.set_ylabel(f"{target} ({metric_labels[met]})")
         ax.tick_params(axis="x", labelsize=8)
@@ -212,8 +227,10 @@ def fig_model_comparison(domain: str, cfg: dict) -> None:
 # Figure 3: drift_sample (reliability w_t under fault injection)
 # ---------------------------------------------------------------------------
 
-def _compute_wt(signal: np.ndarray, dropout_p: float = 0.15,
-                spike_p: float = 0.08, window: int = 10) -> tuple[np.ndarray, np.ndarray]:
+
+def _compute_wt(
+    signal: np.ndarray, dropout_p: float = 0.15, spike_p: float = 0.08, window: int = 10
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Simple OQE proxy: inject faults into signal, compute rolling fraction of clean steps.
     Returns (faulted_signal, w_t).
@@ -241,38 +258,34 @@ def _compute_wt(signal: np.ndarray, dropout_p: float = 0.15,
 
     # w_t = rolling fraction of clean steps
     clean = (~fault_mask).astype(float)
-    w_t = np.array([
-        clean[max(0, i - window):i + 1].mean()
-        for i in range(n)
-    ])
+    w_t = np.array([clean[max(0, i - window) : i + 1].mean() for i in range(n)])
     return faulted, w_t, fault_mask
 
 
 def fig_drift_sample(domain: str, cfg: dict) -> None:
-    target  = cfg["target"]
-    units   = cfg["units"]
+    target = cfg["target"]
+    units = cfg["units"]
     display = cfg["display"]
 
-    df  = _load_test(domain)
+    df = _load_test(domain)
     sig = df[target].values
-    n   = min(200, len(sig))
+    n = min(200, len(sig))
     sig = sig[:n]
 
     faulted, w_t, fault_mask = _compute_wt(sig)
     xs = np.arange(n)
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 4.5), sharex=True,
-                                    gridspec_kw={"height_ratios": [2, 1]})
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 4.5), sharex=True, gridspec_kw={"height_ratios": [2, 1]})
 
     # top: signal with fault shading
-    ax1.plot(xs, sig,    color=ACT_COLOR,  lw=1.2, label="Clean signal")
+    ax1.plot(xs, sig, color=ACT_COLOR, lw=1.2, label="Clean signal")
     ax1.plot(xs, faulted, color=FAULT_COLOR, lw=0.8, alpha=0.6, label="Faulted signal")
     # shade fault windows
     in_fault = False
-    f_start  = 0
+    f_start = 0
     for i in range(n):
         if fault_mask[i] and not in_fault:
-            f_start  = i
+            f_start = i
             in_fault = True
         elif not fault_mask[i] and in_fault:
             ax1.axvspan(f_start, i, alpha=0.15, color=FAULT_COLOR)
@@ -294,11 +307,17 @@ def fig_drift_sample(domain: str, cfg: dict) -> None:
     ax2.legend(fontsize=7, loc="lower right")
 
     fault_patch = mpatches.Patch(color=FAULT_COLOR, alpha=0.3, label="Fault window")
-    ax1.add_artist(ax1.legend(handles=[
-        plt.Line2D([0], [0], color=ACT_COLOR, lw=1.2, label="Clean signal"),
-        plt.Line2D([0], [0], color=FAULT_COLOR, lw=0.8, alpha=0.8, label="Faulted signal"),
-        fault_patch,
-    ], fontsize=8, loc="upper right"))
+    ax1.add_artist(
+        ax1.legend(
+            handles=[
+                plt.Line2D([0], [0], color=ACT_COLOR, lw=1.2, label="Clean signal"),
+                plt.Line2D([0], [0], color=FAULT_COLOR, lw=0.8, alpha=0.8, label="Faulted signal"),
+                fault_patch,
+            ],
+            fontsize=8,
+            loc="upper right",
+        )
+    )
 
     plt.tight_layout()
     out = _out_dir(domain) / "drift_sample.png"
@@ -311,8 +330,9 @@ def fig_drift_sample(domain: str, cfg: dict) -> None:
 # Figure 4: multi_horizon_backtest
 # ---------------------------------------------------------------------------
 
+
 def fig_multi_horizon_backtest(domain: str, cfg: dict) -> None:
-    target  = cfg["target"]
+    target = cfg["target"]
     display = cfg["display"]
     bt = _load_backtest(domain)
     horizons = bt.get("horizons", [1, 3, 6, 12, 24])
@@ -320,11 +340,10 @@ def fig_multi_horizon_backtest(domain: str, cfg: dict) -> None:
 
     metrics = ["rmse", "mae", "smape"]
     metric_labels = {"rmse": "RMSE", "mae": "MAE", "smape": "sMAPE"}
-    models = [("persistence", "Persistence", "#aec7e8", "--"),
-              ("gbm",         "DC3S GBM",    PRED_COLOR, "-")]
+    models = [("persistence", "Persistence", "#aec7e8", "--"), ("gbm", "DC3S GBM", PRED_COLOR, "-")]
 
     fig, axes = plt.subplots(1, 3, figsize=(10, 3.5))
-    for ax, met in zip(axes, metrics):
+    for ax, met in zip(axes, metrics, strict=False):
         for mdl_key, mdl_label, color, ls in models:
             ys = []
             xs = []
@@ -351,6 +370,7 @@ def fig_multi_horizon_backtest(domain: str, cfg: dict) -> None:
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     for domain, cfg in DOMAINS.items():

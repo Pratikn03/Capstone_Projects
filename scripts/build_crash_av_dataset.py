@@ -16,12 +16,12 @@ Usage:
     python scripts/build_crash_av_dataset.py
     python scripts/build_crash_av_dataset.py --out-dir data/orius_av/crash/processed
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -31,15 +31,15 @@ DEFAULT_WAYMO_CSV = REPO_ROOT / "data" / "orius_av" / "av" / "processed" / "av_t
 DEFAULT_OUT_DIR = REPO_ROOT / "data" / "orius_av" / "crash" / "processed"
 
 # Thresholds
-HARD_BRAKE_MS2 = 4.0           # |deceleration| threshold
-CLOSE_GAP_M = 5.0              # near-collision gap threshold
-CRITICAL_GAP_M = 2.0           # critical gap (certain collision)
-SPEED_DROP_RATIO = 0.5         # speed drops by >50% in one step → hard brake
+HARD_BRAKE_MS2 = 4.0  # |deceleration| threshold
+CLOSE_GAP_M = 5.0  # near-collision gap threshold
+CRITICAL_GAP_M = 2.0  # critical gap (certain collision)
+SPEED_DROP_RATIO = 0.5  # speed drops by >50% in one step → hard brake
 
 # Synthetic scenario params
-N_SYNTHETIC_LEAD_BRAKE = 30    # lead-vehicle emergency brake scenarios
+N_SYNTHETIC_LEAD_BRAKE = 30  # lead-vehicle emergency brake scenarios
 N_SYNTHETIC_GAP_COLLAPSE = 30  # gap collapse scenarios
-N_SYNTHETIC_SPEED_SPIKE = 20   # ego speed overshoot (sensor spoof) scenarios
+N_SYNTHETIC_SPEED_SPIKE = 20  # ego speed overshoot (sensor spoof) scenarios
 RNG_SEED = 42
 
 
@@ -91,20 +91,24 @@ def mine_real_crashes(df: pd.DataFrame) -> tuple[pd.DataFrame, list[dict]]:
             tagged["has_rss_violation"] = has_rss
             crash_rows.append(tagged)
 
-            manifest_entries.append({
-                "vehicle_id": vid,
-                "crash_type": "real_mined",
-                "n_steps": len(vdf),
-                "has_hard_brake": bool(has_hard_brake),
-                "has_close_gap": bool(has_close_gap),
-                "has_critical_gap": bool(has_critical_gap),
-                "has_rss_violation": bool(has_rss),
-                "hard_brake_steps": int(hard_brake_mask.sum()),
-                "close_gap_steps": int(close_gap_mask.sum()),
-                "min_gap_m": float(vdf["lead_rel_x_m"].min()) if "lead_rel_x_m" in vdf.columns and vdf["lead_rel_x_m"].notna().any() else None,
-                "max_decel_mps2": float(accel.min()),
-                "speed_range_mps": [float(vdf["speed_mps"].min()), float(vdf["speed_mps"].max())],
-            })
+            manifest_entries.append(
+                {
+                    "vehicle_id": vid,
+                    "crash_type": "real_mined",
+                    "n_steps": len(vdf),
+                    "has_hard_brake": bool(has_hard_brake),
+                    "has_close_gap": bool(has_close_gap),
+                    "has_critical_gap": bool(has_critical_gap),
+                    "has_rss_violation": bool(has_rss),
+                    "hard_brake_steps": int(hard_brake_mask.sum()),
+                    "close_gap_steps": int(close_gap_mask.sum()),
+                    "min_gap_m": float(vdf["lead_rel_x_m"].min())
+                    if "lead_rel_x_m" in vdf.columns and vdf["lead_rel_x_m"].notna().any()
+                    else None,
+                    "max_decel_mps2": float(accel.min()),
+                    "speed_range_mps": [float(vdf["speed_mps"].min()), float(vdf["speed_mps"].max())],
+                }
+            )
 
     crash_df = pd.concat(crash_rows, ignore_index=True) if crash_rows else pd.DataFrame()
     return crash_df, manifest_entries
@@ -112,7 +116,11 @@ def mine_real_crashes(df: pd.DataFrame) -> tuple[pd.DataFrame, list[dict]]:
 
 def _pick_random_trajectories(df: pd.DataFrame, n: int, rng: np.random.Generator) -> list[str]:
     """Pick n random vehicle_ids that have lead_present data."""
-    candidates = df.loc[df.get("lead_present", pd.Series(True, index=df.index)) == True, "vehicle_id"].unique()
+    lead_present = df.get("lead_present")
+    mask = (
+        pd.Series(True, index=df.index) if lead_present is None else lead_present.fillna(False).astype(bool)
+    )
+    candidates = df.loc[mask, "vehicle_id"].unique()
     if len(candidates) == 0:
         candidates = df["vehicle_id"].unique()
     n = min(n, len(candidates))
@@ -150,7 +158,9 @@ def synth_lead_brake(df: pd.DataFrame, rng: np.random.Generator) -> tuple[list[p
             lead_rel = vdf["lead_rel_x_m"].fillna(50.0).values.copy()
 
             for j in range(inject_step, n):
-                lead_speed[j] = max(0, lead_speed[j - 1] - brake_decel * dt) if j > inject_step else lead_speed[j]
+                lead_speed[j] = (
+                    max(0, lead_speed[j - 1] - brake_decel * dt) if j > inject_step else lead_speed[j]
+                )
                 # Gap shrinks because ego maintains speed but lead slows
                 ego_speed = vdf.iloc[j]["speed_mps"]
                 gap_change = (ego_speed - lead_speed[j]) * dt
@@ -173,15 +183,17 @@ def synth_lead_brake(df: pd.DataFrame, rng: np.random.Generator) -> tuple[list[p
         vdf["accel_mps2"] = _compute_accel(vdf).values
 
         results.append(vdf)
-        manifest.append({
-            "vehicle_id": new_vid,
-            "crash_type": "synth_lead_brake",
-            "base_vehicle": vid,
-            "inject_step": inject_step,
-            "brake_decel_mps2": float(brake_decel),
-            "min_gap_m": min_gap,
-            "n_steps": len(vdf),
-        })
+        manifest.append(
+            {
+                "vehicle_id": new_vid,
+                "crash_type": "synth_lead_brake",
+                "base_vehicle": vid,
+                "inject_step": inject_step,
+                "brake_decel_mps2": float(brake_decel),
+                "min_gap_m": min_gap,
+                "n_steps": len(vdf),
+            }
+        )
 
     return results, manifest
 
@@ -237,15 +249,17 @@ def synth_gap_collapse(df: pd.DataFrame, rng: np.random.Generator) -> tuple[list
         vdf["accel_mps2"] = _compute_accel(vdf).values
 
         results.append(vdf)
-        manifest.append({
-            "vehicle_id": new_vid,
-            "crash_type": "synth_gap_collapse",
-            "base_vehicle": vid,
-            "inject_step": inject_step,
-            "accel_boost_mps2": float(accel_boost),
-            "min_gap_m": min_gap,
-            "n_steps": len(vdf),
-        })
+        manifest.append(
+            {
+                "vehicle_id": new_vid,
+                "crash_type": "synth_gap_collapse",
+                "base_vehicle": vid,
+                "inject_step": inject_step,
+                "accel_boost_mps2": float(accel_boost),
+                "min_gap_m": min_gap,
+                "n_steps": len(vdf),
+            }
+        )
 
     return results, manifest
 
@@ -266,7 +280,6 @@ def synth_speed_spike(df: pd.DataFrame, rng: np.random.Generator) -> tuple[list[
         spike_start = int(rng.integers(int(n * 0.3), int(n * 0.6)))
         spike_duration = int(rng.integers(5, 15))
         spike_magnitude = rng.uniform(5, 15)  # m/s added
-        dt = 0.1
 
         vdf = vdf.copy()
         vdf["vehicle_id"] = new_vid
@@ -285,16 +298,18 @@ def synth_speed_spike(df: pd.DataFrame, rng: np.random.Generator) -> tuple[list[
         vdf["accel_mps2"] = _compute_accel(vdf).values
 
         results.append(vdf)
-        manifest.append({
-            "vehicle_id": new_vid,
-            "crash_type": "synth_speed_spike",
-            "base_vehicle": vid,
-            "spike_start": spike_start,
-            "spike_duration": spike_duration,
-            "spike_magnitude_mps": float(spike_magnitude),
-            "max_speed_mps": float(speeds.max()),
-            "n_steps": len(vdf),
-        })
+        manifest.append(
+            {
+                "vehicle_id": new_vid,
+                "crash_type": "synth_speed_spike",
+                "base_vehicle": vid,
+                "spike_start": spike_start,
+                "spike_duration": spike_duration,
+                "spike_magnitude_mps": float(spike_magnitude),
+                "max_speed_mps": float(speeds.max()),
+                "n_steps": len(vdf),
+            }
+        )
 
     return results, manifest
 
@@ -321,8 +336,10 @@ def build_crash_dataset(
         n_cg = sum(1 for m in real_manifest if m["has_close_gap"])
         n_cr = sum(1 for m in real_manifest if m["has_critical_gap"])
         n_rss = sum(1 for m in real_manifest if m["has_rss_violation"])
-        print(f"    Hard brake: {n_hb}, Close gap (<{CLOSE_GAP_M}m): {n_cg}, "
-              f"Critical gap (<{CRITICAL_GAP_M}m): {n_cr}, RSS violations: {n_rss}")
+        print(
+            f"    Hard brake: {n_hb}, Close gap (<{CLOSE_GAP_M}m): {n_cg}, "
+            f"Critical gap (<{CRITICAL_GAP_M}m): {n_cr}, RSS violations: {n_rss}"
+        )
 
     # 2. Synthetic lead-brake scenarios
     print("\n--- Generating synthetic lead-brake scenarios ---")
@@ -340,7 +357,7 @@ def build_crash_dataset(
     print(f"  Generated {len(ss_manifest)} speed-spike scenarios")
 
     # Combine all crash data
-    all_dfs = [real_crash_df] + lb_dfs + gc_dfs + ss_dfs
+    all_dfs = [real_crash_df, *lb_dfs, *gc_dfs, *ss_dfs]
     all_dfs = [d for d in all_dfs if len(d) > 0]
 
     if not all_dfs:
@@ -375,12 +392,26 @@ def build_crash_dataset(
 
     # Ensure ORIUS contract columns
     orius_cols = [
-        "vehicle_id", "step", "position_m", "speed_mps", "speed_limit_mps",
-        "lead_position_m", "ts_utc", "source_split",
+        "vehicle_id",
+        "step",
+        "position_m",
+        "speed_mps",
+        "speed_limit_mps",
+        "lead_position_m",
+        "ts_utc",
+        "source_split",
         # Extended columns
-        "is_crash_scenario", "crash_type", "accel_mps2",
-        "lead_rel_x_m", "lead_speed_mps", "rss_safe_gap_m", "rss_violation_true",
-        "has_hard_brake", "has_close_gap", "has_critical_gap", "has_rss_violation",
+        "is_crash_scenario",
+        "crash_type",
+        "accel_mps2",
+        "lead_rel_x_m",
+        "lead_speed_mps",
+        "rss_safe_gap_m",
+        "rss_violation_true",
+        "has_hard_brake",
+        "has_close_gap",
+        "has_critical_gap",
+        "has_rss_violation",
     ]
     # Add source_split if missing
     if "source_split" not in full_dataset.columns:
@@ -418,10 +449,8 @@ def build_crash_dataset(
     manifest_path.write_text(json.dumps(manifest_data, indent=2, default=str) + "\n")
 
     # Summary
-    n_crash = len(all_manifest)
-    n_total = n_crash + n_normal
     print(f"\n{'=' * 70}")
-    print(f"Crash AV Dataset Complete")
+    print("Crash AV Dataset Complete")
     print(f"{'=' * 70}")
     print(f"  Real mined:     {len(real_manifest)} scenarios")
     print(f"  Synth lead-brake:  {len(lb_manifest)} scenarios")

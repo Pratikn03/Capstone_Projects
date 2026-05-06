@@ -1,18 +1,19 @@
 """Waymo AV runtime adapter and dry-run evaluation."""
+
 from __future__ import annotations
 
-from collections import defaultdict
-from dataclasses import dataclass
 import gc
 import hashlib
 import importlib.util
 import json
 import math
-from pathlib import Path
 import shutil
 import sys
 import time
-from typing import Any, Mapping
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -26,9 +27,8 @@ from orius.certos.verification import (
     formal_validity_predicate,
     missing_required_certificate_fields,
 )
-from orius.dc3s.certificate import recompute_certificate_hash, store_certificates_batch
+from orius.dc3s.certificate import make_certificate, recompute_certificate_hash, store_certificates_batch
 from orius.dc3s.domain_adapter import DomainAdapter
-from orius.dc3s.certificate import make_certificate
 from orius.forecasting.uncertainty.shift_aware import (
     ShiftAwareConfig,
     ShiftAwareRuntimeEngine,
@@ -38,17 +38,21 @@ from orius.forecasting.uncertainty.shift_aware import (
 )
 from orius.forecasting.uncertainty.shift_aware.state import GroupCoverageStats
 from orius.orius_bench.metrics_engine import StepRecord
+from orius.universal_framework.pipeline import run_universal_step
+from orius.universal_framework.reliability_runtime import assess_domain_reliability
 from orius.universal_theory.domain_runtime_contracts import (
     AV_BRAKE_HOLD_CONTRACT_ID,
     witness_trace_fields_from_result,
 )
 from orius.universal_theory.domain_validity import domain_certificate_validity_semantics
-from orius.universal_framework.pipeline import run_universal_step
-from orius.universal_framework.reliability_runtime import assess_domain_reliability
 
 from .replay import FAULT_FAMILIES, WaymoReplayTrackAdapter, compute_state_safety_metrics
-from .training import default_shift_aware_config, estimate_shift_score, load_model_bundle, predict_interval_from_bundle, widen_bounds
-
+from .training import (
+    default_shift_aware_config,
+    estimate_shift_score,
+    load_model_bundle,
+    predict_interval_from_bundle,
+)
 
 RUNTIME_PREDICTION_BATCH_ROWS = 50_000
 RUNTIME_PREDICTION_COLUMNS = (
@@ -62,12 +66,16 @@ RUNTIME_PREDICTION_COLUMNS = (
 )
 
 
-def _runtime_test_scenarios_from_anchors(step_features_path: Path, max_scenarios: int | None) -> list[str] | None:
+def _runtime_test_scenarios_from_anchors(
+    step_features_path: Path, max_scenarios: int | None
+) -> list[str] | None:
     anchor_path = step_features_path.parent / "anchor_features.parquet"
     if not anchor_path.exists():
         return None
     try:
-        anchors = pd.read_parquet(anchor_path, columns=["scenario_id", "split"], filters=[("split", "==", "test")])
+        anchors = pd.read_parquet(
+            anchor_path, columns=["scenario_id", "split"], filters=[("split", "==", "test")]
+        )
     except Exception:
         anchors = pd.read_parquet(anchor_path, columns=["scenario_id", "split"])
         anchors = anchors[anchors["split"] == "test"].copy()
@@ -106,15 +114,14 @@ def _load_runtime_test_step_features(
         frame = frame[frame["scenario_id"].isin(selected_set)]
         if not frame.empty:
             chunks.append(frame)
-    if chunks:
-        step_features = pd.concat(chunks, ignore_index=True)
-    else:
-        step_features = pd.DataFrame()
+    step_features = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
     return step_features, selected_scenarios
 
 
 def _write_equal_domain_artifacts(domain_key: str, out_dir: Path) -> dict[str, str]:
-    script_path = Path(__file__).resolve().parents[3] / "scripts" / "build_equal_domain_artifact_discipline.py"
+    script_path = (
+        Path(__file__).resolve().parents[3] / "scripts" / "build_equal_domain_artifact_discipline.py"
+    )
     spec = importlib.util.spec_from_file_location("build_equal_domain_artifact_discipline", script_path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Unable to load equal-domain artifact builder from {script_path}")
@@ -213,7 +220,9 @@ def _validity_rank(status: str) -> int:
 
 def _remap_path_prefix(value: Any, source_prefix: Path, target_prefix: Path) -> Any:
     if isinstance(value, dict):
-        return {key: _remap_path_prefix(nested, source_prefix, target_prefix) for key, nested in value.items()}
+        return {
+            key: _remap_path_prefix(nested, source_prefix, target_prefix) for key, nested in value.items()
+        }
     if isinstance(value, list):
         return [_remap_path_prefix(item, source_prefix, target_prefix) for item in value]
     if not isinstance(value, str):
@@ -225,7 +234,7 @@ def _remap_path_prefix(value: Any, source_prefix: Path, target_prefix: Path) -> 
         source_text = str(source_prefix)
         candidate_text = str(value)
     if candidate_text == source_text or candidate_text.startswith(source_text + "/"):
-        suffix = candidate_text[len(source_text):].lstrip("/")
+        suffix = candidate_text[len(source_text) :].lstrip("/")
         return str(target_prefix / suffix) if suffix else str(target_prefix)
     return value
 
@@ -266,7 +275,9 @@ def _runtime_aligned_longitudinal_controller(
         np.clip(_f(policy_config.get("near_failsafe_accel_mps2"), accel_min + 0.10), accel_min, accel_max)
     )
     entry_projection_accel = float(
-        np.clip(_f(policy_config.get("entry_projection_accel_mps2"), near_failsafe_accel), accel_min, accel_max)
+        np.clip(
+            _f(policy_config.get("entry_projection_accel_mps2"), near_failsafe_accel), accel_min, accel_max
+        )
     )
 
     current_gap = _f(state.get("min_gap_m"), 30.0)
@@ -274,27 +285,35 @@ def _runtime_aligned_longitudinal_controller(
     ego_speed = _f(state.get("ego_speed_mps"), 0.0)
     lead_speed = _f(state.get("lead_speed_mps"), ego_speed)
     closing_speed = max(0.0, ego_speed - lead_speed)
-    predicted_ttc_s = float("inf") if closing_speed <= 1e-9 else predicted_gap_lower / max(closing_speed, 1e-9)
+    predicted_ttc_s = (
+        float("inf") if closing_speed <= 1e-9 else predicted_gap_lower / max(closing_speed, 1e-9)
+    )
     current_ttc_s = _f(state.get("ttc_s"), predicted_ttc_s)
     ttc_probe_s = min(predicted_ttc_s, current_ttc_s) if math.isfinite(current_ttc_s) else predicted_ttc_s
 
-    hard_projection_region = (
-        predicted_gap_lower <= hard_headway_m + margin_m
-        or (math.isfinite(ttc_probe_s) and ttc_probe_s <= hard_ttc_s + margin_ttc_s)
+    hard_projection_region = predicted_gap_lower <= hard_headway_m + margin_m or (
+        math.isfinite(ttc_probe_s) and ttc_probe_s <= hard_ttc_s + margin_ttc_s
     )
-    critical_region = current_gap <= 1.0 or (math.isfinite(current_ttc_s) and current_ttc_s <= 0.0 and current_gap <= 1.0)
+    critical_region = current_gap <= 1.0 or (
+        math.isfinite(current_ttc_s) and current_ttc_s <= 0.0 and current_gap <= 1.0
+    )
     if hard_projection_region:
-        return {"acceleration_mps2": float(np.clip(min(base_accel, near_failsafe_accel), accel_min, accel_max))}
+        return {
+            "acceleration_mps2": float(np.clip(min(base_accel, near_failsafe_accel), accel_min, accel_max))
+        }
     if critical_region:
         return {"acceleration_mps2": float(np.clip(min(base_accel, accel_min), accel_min, accel_max))}
 
     if _bool_cfg(policy_config, "align_nominal_entry_projection", False):
-        entry_projection_region = (
-            predicted_gap_lower <= entry_headway_m + margin_m
-            or (math.isfinite(ttc_probe_s) and ttc_probe_s <= entry_ttc_s + margin_ttc_s)
+        entry_projection_region = predicted_gap_lower <= entry_headway_m + margin_m or (
+            math.isfinite(ttc_probe_s) and ttc_probe_s <= entry_ttc_s + margin_ttc_s
         )
         if entry_projection_region:
-            return {"acceleration_mps2": float(np.clip(min(base_accel, entry_projection_accel), accel_min, accel_max))}
+            return {
+                "acceleration_mps2": float(
+                    np.clip(min(base_accel, entry_projection_accel), accel_min, accel_max)
+                )
+            }
 
     return {"acceleration_mps2": float(np.clip(base_accel, accel_min, accel_max))}
 
@@ -303,7 +322,9 @@ def _is_full_brake(action: Mapping[str, Any], brake_accel_mps2: float) -> bool:
     return _f(action.get("acceleration_mps2"), 0.0) <= float(brake_accel_mps2) + 1e-9
 
 
-def _contract_margin(min_gap_m: float, ttc_s: float, headway_threshold_m: float, ttc_threshold_s: float) -> float:
+def _contract_margin(
+    min_gap_m: float, ttc_s: float, headway_threshold_m: float, ttc_threshold_s: float
+) -> float:
     ttc_margin = 1e6 if not math.isfinite(ttc_s) else float(ttc_s - ttc_threshold_s)
     return float(min(min_gap_m - headway_threshold_m, ttc_margin))
 
@@ -365,7 +386,9 @@ def _brake_hold_contract_status(
     )
     return {
         "true_constraint_violated": bool(true_requires_fallback and not full_brake_equivalent),
-        "observed_constraint_satisfied": (None if observed_requires_fallback is None else not observed_requires_fallback),
+        "observed_constraint_satisfied": (
+            None if observed_requires_fallback is None else not observed_requires_fallback
+        ),
         "true_margin": true_margin,
         "observed_margin": observed_margin,
         "release_requires_fallback": true_requires_fallback,
@@ -409,12 +432,24 @@ class WaymoAVDomainAdapter(DomainAdapter):
             "hard_projection_requires_observed_confirmation",
             False,
         )
-        self._hard_projection_current_gap_buffer_m = _f(policy_cfg.get("hard_projection_current_gap_buffer_m"), 0.0)
-        self._hard_projection_current_ttc_buffer_s = _f(policy_cfg.get("hard_projection_current_ttc_buffer_s"), 0.0)
-        self._entry_projection_uses_current_state = _bool_cfg(policy_cfg, "entry_projection_uses_current_state", False)
-        self._near_failsafe_projection_epsilon_mps2 = _f(policy_cfg.get("near_failsafe_projection_epsilon_mps2"), 0.25)
-        self._near_failsafe_accel_mps2 = _f(policy_cfg.get("near_failsafe_accel_mps2"), self._accel_min + 0.10)
-        self._entry_projection_accel_mps2 = _f(policy_cfg.get("entry_projection_accel_mps2"), self._near_failsafe_accel_mps2)
+        self._hard_projection_current_gap_buffer_m = _f(
+            policy_cfg.get("hard_projection_current_gap_buffer_m"), 0.0
+        )
+        self._hard_projection_current_ttc_buffer_s = _f(
+            policy_cfg.get("hard_projection_current_ttc_buffer_s"), 0.0
+        )
+        self._entry_projection_uses_current_state = _bool_cfg(
+            policy_cfg, "entry_projection_uses_current_state", False
+        )
+        self._near_failsafe_projection_epsilon_mps2 = _f(
+            policy_cfg.get("near_failsafe_projection_epsilon_mps2"), 0.25
+        )
+        self._near_failsafe_accel_mps2 = _f(
+            policy_cfg.get("near_failsafe_accel_mps2"), self._accel_min + 0.10
+        )
+        self._entry_projection_accel_mps2 = _f(
+            policy_cfg.get("entry_projection_accel_mps2"), self._near_failsafe_accel_mps2
+        )
         self._degraded_projection_accel_mps2 = _f(
             policy_cfg.get("degraded_projection_accel_mps2"),
             self._near_failsafe_accel_mps2,
@@ -431,7 +466,9 @@ class WaymoAVDomainAdapter(DomainAdapter):
                 state_path = None
                 if shift_dir:
                     state_path = str(Path(str(shift_dir)) / f"{target_name}_runtime_state.json")
-                self._shift_engines[target_name] = ShiftAwareRuntimeEngine(cfg=self._shift_cfg, state_path=state_path)
+                self._shift_engines[target_name] = ShiftAwareRuntimeEngine(
+                    cfg=self._shift_cfg, state_path=state_path
+                )
 
     def _policy_cfg(self) -> dict[str, Any]:
         policy = self._cfg.get("runtime_policy", {})
@@ -447,7 +484,7 @@ class WaymoAVDomainAdapter(DomainAdapter):
         }
 
     def ingest_telemetry(self, raw_packet: dict[str, Any]) -> dict[str, Any]:
-        hold = dict(raw_packet)
+        dict(raw_packet)
         fields = (
             "ego_speed_mps",
             "speed_limit_mps",
@@ -474,8 +511,14 @@ class WaymoAVDomainAdapter(DomainAdapter):
         missing_fields: list[str] = []
         for field in fields:
             value = raw_packet.get(field)
-            numeric = _finite_float_or_none(value) if isinstance(value, (float, int, np.floating, np.integer)) else value
-            if value is None or (isinstance(value, (float, int, np.floating, np.integer)) and numeric is None):
+            numeric = (
+                _finite_float_or_none(value)
+                if isinstance(value, float | int | np.floating | np.integer)
+                else value
+            )
+            if value is None or (
+                isinstance(value, float | int | np.floating | np.integer) and numeric is None
+            ):
                 if field in {"pred_ego_speed_center_mps", "target_ego_speed_mps_1s"}:
                     state[field] = _f(raw_packet.get("ego_speed_mps"), 0.0)
                     continue
@@ -534,7 +577,9 @@ class WaymoAVDomainAdapter(DomainAdapter):
     ) -> tuple[tuple[float, float], dict[str, Any]]:
         base_half_width = max(0.5 * max(upper - lower, 0.0), 1e-6)
         max_inflation = float(max(self._shift_cfg.max_inflation_multiplier, 1.0))
-        planned_factor = float(np.clip(1.0 + 0.7 * (1.0 - float(reliability_w)) + 0.5 * shift_score, 1.0, max_inflation))
+        planned_factor = float(
+            np.clip(1.0 + 0.7 * (1.0 - float(reliability_w)) + 0.5 * shift_score, 1.0, max_inflation)
+        )
         widened_half_width = base_half_width * planned_factor
         if not self._shift_cfg.enabled:
             return (center - widened_half_width, center + widened_half_width), {
@@ -551,14 +596,19 @@ class WaymoAVDomainAdapter(DomainAdapter):
             }
 
         engine = self._shift_engines[target_name]
-        target_key = "target_ego_speed_mps_1s" if target_name == "ego_speed_mps" else "target_relative_gap_m_1s"
+        target_key = (
+            "target_ego_speed_mps_1s" if target_name == "ego_speed_mps" else "target_relative_gap_m_1s"
+        )
         target_true_val = _finite_float_or_none(state.get(target_key))
-        if target_true_val is None:
-            abs_residual = 0.0
-        else:
-            abs_residual = abs(target_true_val - center)
-        volatility_raw = abs(_f(state.get("ego_accel_mps2"), 0.0)) if target_name == "ego_speed_mps" else abs(_f(state.get("lead_rel_speed_mps"), 0.0))
-        volatility = float(np.clip(volatility_raw / (8.0 if target_name == "ego_speed_mps" else 10.0), 0.0, 1.0))
+        abs_residual = 0.0 if target_true_val is None else abs(target_true_val - center)
+        volatility_raw = (
+            abs(_f(state.get("ego_accel_mps2"), 0.0))
+            if target_name == "ego_speed_mps"
+            else abs(_f(state.get("lead_rel_speed_mps"), 0.0))
+        )
+        volatility = float(
+            np.clip(volatility_raw / (8.0 if target_name == "ego_speed_mps" else 10.0), 0.0, 1.0)
+        )
         group_key = engine.state.tracker.build_group_key(
             reliability_score=float(reliability_w),
             volatility=volatility,
@@ -600,7 +650,9 @@ class WaymoAVDomainAdapter(DomainAdapter):
         if target_true_val is None:
             covered = True
         else:
-            covered = (target_true_val >= center - final_half_width) and (target_true_val <= center + final_half_width)
+            covered = (target_true_val >= center - final_half_width) and (
+                target_true_val <= center + final_half_width
+            )
         if update_runtime_state:
             stats = engine.state.tracker.update(
                 group_key=group_key,
@@ -623,7 +675,9 @@ class WaymoAVDomainAdapter(DomainAdapter):
             "runtime_interval_policy": str(decision.applied_policy),
         }
 
-    def compute_oqe(self, state: dict[str, Any], history: list[dict[str, Any]] | None = None) -> tuple[float, dict[str, Any]]:
+    def compute_oqe(
+        self, state: dict[str, Any], history: list[dict[str, Any]] | None = None
+    ) -> tuple[float, dict[str, Any]]:
         base_w, flags = assess_domain_reliability(
             domain_id=self.domain_id,
             state=state,
@@ -645,7 +699,18 @@ class WaymoAVDomainAdapter(DomainAdapter):
         accel_penalty = 0.5 if abs(_f(state.get("ego_accel_mps2"), 0.0)) > 8.0 else 1.0
         jerk_penalty = 0.6 if abs(_f(state.get("ego_jerk_mps3"), 0.0)) > 15.0 else 1.0
         missing_penalty = 0.05 if int(_f(state.get("telemetry_missing_count"), 0.0)) > 0 else 1.0
-        w_t = float(np.clip(base_w * valid_ratio * (1.0 - 0.5 * instability) * accel_penalty * jerk_penalty * missing_penalty, 0.05, 1.0))
+        w_t = float(
+            np.clip(
+                base_w
+                * valid_ratio
+                * (1.0 - 0.5 * instability)
+                * accel_penalty
+                * jerk_penalty
+                * missing_penalty,
+                0.05,
+                1.0,
+            )
+        )
         flags["actor_validity_ratio"] = valid_ratio
         flags["neighbor_instability"] = instability
         flags["impossible_acceleration"] = abs(_f(state.get("ego_accel_mps2"), 0.0)) > 8.0
@@ -673,12 +738,18 @@ class WaymoAVDomainAdapter(DomainAdapter):
         gap_upper = _f(state.get("pred_relative_gap_upper_m"), gap_center + quantile)
         shift_score = float(np.clip(_f(state.get("shift_score"), 0.0), 0.0, 1.0))
         drift_enabled = bool(drift_flag)
-        planned_contract_factor = float(np.clip(1.0 + 0.7 * (1.0 - float(reliability_w)) + 0.5 * shift_score, 1.0, 3.0))
+        planned_contract_factor = float(
+            np.clip(1.0 + 0.7 * (1.0 - float(reliability_w)) + 0.5 * shift_score, 1.0, 3.0)
+        )
         update_runtime_state = bool(cfg.get("record_shift_runtime", False))
         telemetry_missing_count = int(_f(state.get("telemetry_missing_count"), 0.0))
         prediction_backed_telemetry = bool(self._prediction_backed_telemetry and telemetry_missing_count > 0)
-        current_speed_estimate = speed_center if prediction_backed_telemetry else _f(state.get("ego_speed_mps"), speed_center)
-        current_gap_estimate = gap_center if prediction_backed_telemetry else _f(state.get("min_gap_m"), gap_center)
+        current_speed_estimate = (
+            speed_center if prediction_backed_telemetry else _f(state.get("ego_speed_mps"), speed_center)
+        )
+        current_gap_estimate = (
+            gap_center if prediction_backed_telemetry else _f(state.get("min_gap_m"), gap_center)
+        )
         (speed_lower_final, speed_upper_final), speed_meta = self._shift_aware_interval(
             target_name="ego_speed_mps",
             center=speed_center,
@@ -701,7 +772,10 @@ class WaymoAVDomainAdapter(DomainAdapter):
             drift_flag=drift_enabled,
             update_runtime_state=update_runtime_state,
         )
-        worst_meta = min((speed_meta, gap_meta), key=lambda meta: (meta["validity_score"], -_validity_rank(meta["validity_status"])))
+        worst_meta = min(
+            (speed_meta, gap_meta),
+            key=lambda meta: (meta["validity_score"], -_validity_rank(meta["validity_status"])),
+        )
         actual_final_factor = float(max(speed_meta["final_factor"], gap_meta["final_factor"]))
         validity_status = str(worst_meta["validity_status"])
         if telemetry_missing_count > 0 and not prediction_backed_telemetry:
@@ -728,7 +802,9 @@ class WaymoAVDomainAdapter(DomainAdapter):
                 gap_lower_final = min(gap_lower_final, float(ref_gap_lo))
             if ref_gap_hi is not None:
                 gap_upper_final = max(gap_upper_final, float(ref_gap_hi))
-            prev_meta_payload = prev_meta.get("meta", {}) if isinstance(prev_meta.get("meta", {}), Mapping) else {}
+            prev_meta_payload = (
+                prev_meta.get("meta", {}) if isinstance(prev_meta.get("meta", {}), Mapping) else {}
+            )
             prev_status = str(prev_meta_payload.get("validity_status", "nominal"))
             if _validity_rank(prev_status) > _validity_rank(validity_status):
                 validity_status = prev_status
@@ -759,9 +835,13 @@ class WaymoAVDomainAdapter(DomainAdapter):
                 "drift_flag": bool(drift_enabled or cfg.get("drift_flag", False)),
                 "validity_score": float(worst_meta["validity_score"]),
                 "validity_status": validity_status,
-                "conditional_coverage_gap": float(max(speed_meta["under_coverage_gap"], gap_meta["under_coverage_gap"])),
+                "conditional_coverage_gap": float(
+                    max(speed_meta["under_coverage_gap"], gap_meta["under_coverage_gap"])
+                ),
                 "coverage_group_key": str(worst_meta["coverage_group_key"]),
-                "adaptive_quantile": float(max(speed_meta["adaptive_quantile"], gap_meta["adaptive_quantile"])),
+                "adaptive_quantile": float(
+                    max(speed_meta["adaptive_quantile"], gap_meta["adaptive_quantile"])
+                ),
                 "runtime_interval_policy": str(worst_meta["runtime_interval_policy"]),
                 "shift_alert_flag": bool(shift_alert_flag),
                 "telemetry_missing_count": telemetry_missing_count,
@@ -802,10 +882,22 @@ class WaymoAVDomainAdapter(DomainAdapter):
                     "target": target_name,
                     "steps": int(engine.state.step),
                     "num_groups": int(len(rows)),
-                    "max_under_coverage_gap": float(max((row.get("under_coverage_gap", 0.0) for row in rows), default=0.0)),
-                    "final_validity_score": float(engine.state.last_validity.validity_score if engine.state.last_validity else 1.0),
-                    "final_validity_status": str(engine.state.last_validity.validity_status if engine.state.last_validity else "nominal"),
-                    "shift_alert_rate": float(np.mean([row.get("shift_alert_flag", False) for row in engine.state.validity_trace])) if engine.state.validity_trace else 0.0,
+                    "max_under_coverage_gap": float(
+                        max((row.get("under_coverage_gap", 0.0) for row in rows), default=0.0)
+                    ),
+                    "final_validity_score": float(
+                        engine.state.last_validity.validity_score if engine.state.last_validity else 1.0
+                    ),
+                    "final_validity_status": str(
+                        engine.state.last_validity.validity_status
+                        if engine.state.last_validity
+                        else "nominal"
+                    ),
+                    "shift_alert_rate": float(
+                        np.mean([row.get("shift_alert_flag", False) for row in engine.state.validity_trace])
+                    )
+                    if engine.state.validity_trace
+                    else 0.0,
                 }
             )
         summary_path = base_dir / "shift_aware_runtime_summary.csv"
@@ -855,7 +947,9 @@ class WaymoAVDomainAdapter(DomainAdapter):
         )
         return {"ego_speed_mps": speed_meta, "relative_gap_m": gap_meta}
 
-    def tighten_action_set(self, uncertainty: dict[str, Any], constraints: dict[str, Any], *, cfg: dict[str, Any]) -> dict[str, Any]:
+    def tighten_action_set(
+        self, uncertainty: dict[str, Any], constraints: dict[str, Any], *, cfg: dict[str, Any]
+    ) -> dict[str, Any]:
         del cfg
         current_speed = _f(uncertainty.get("current_speed_mps"), 0.0)
         speed_limit = _f(constraints.get("speed_limit_mps"), uncertainty.get("speed_limit_mps", 25.0))
@@ -885,7 +979,9 @@ class WaymoAVDomainAdapter(DomainAdapter):
         shift_alert_flag = bool(uncertainty.get("meta", {}).get("shift_alert_flag", False))
         shift_score = float(np.clip(_f(uncertainty.get("meta", {}).get("shift_score"), 0.0), 0.0, 1.0))
         telemetry_missing_count = int(_f(uncertainty.get("meta", {}).get("telemetry_missing_count"), 0.0))
-        prediction_backed_telemetry = bool(uncertainty.get("meta", {}).get("prediction_backed_telemetry", False))
+        prediction_backed_telemetry = bool(
+            uncertainty.get("meta", {}).get("prediction_backed_telemetry", False)
+        )
         monotonicity_probe = bool(uncertainty.get("meta", {}).get("monotonicity_probe", False))
         fallback_reason = ""
         fallback_region = "hold_region"
@@ -908,8 +1004,7 @@ class WaymoAVDomainAdapter(DomainAdapter):
 
         hard_projection_observed_confirmed = (
             monotonicity_probe
-            or
-            not self._hard_projection_requires_observed_confirmation
+            or not self._hard_projection_requires_observed_confirmation
             or current_gap <= hard_headway_m + max(self._hard_projection_current_gap_buffer_m, 0.0)
             or (
                 math.isfinite(current_ttc_s)
@@ -933,7 +1028,7 @@ class WaymoAVDomainAdapter(DomainAdapter):
 
         # --- CBF longitudinal barrier ---
         cbf_alpha = 0.5
-        d_safe = current_speed ** 2 / 12.0 + 0.2 * current_speed + 0.5
+        d_safe = current_speed**2 / 12.0 + 0.2 * current_speed + 0.5
         h_value = effective_gap_lower - d_safe
         denom = 0.166 * current_speed + 0.2 + 1e-9
         cbf_a_upper = (lead_speed - current_speed + cbf_alpha * h_value) / denom
@@ -979,15 +1074,25 @@ class WaymoAVDomainAdapter(DomainAdapter):
             fallback_region = "hard_headway_projection"
             allow_near_failsafe_projected_validity = True
             a_lower = a_upper = near_failsafe_accel
-            projected_release_margin = max(1e-6, fallback_action["acceleration_mps2"] + near_failsafe_projection_epsilon - near_failsafe_accel)
+            projected_release_margin = max(
+                1e-6,
+                fallback_action["acceleration_mps2"] + near_failsafe_projection_epsilon - near_failsafe_accel,
+            )
             active.append("hard_headway_near_failsafe_projection")
-        elif math.isfinite(predicted_ttc_lower_s) and predicted_ttc_lower_s <= hard_ttc_s and hard_projection_observed_confirmed:
+        elif (
+            math.isfinite(predicted_ttc_lower_s)
+            and predicted_ttc_lower_s <= hard_ttc_s
+            and hard_projection_observed_confirmed
+        ):
             projected_release = True
             projection_reason = "hard_ttc_near_failsafe_projection"
             fallback_region = "hard_ttc_projection"
             allow_near_failsafe_projected_validity = True
             a_lower = a_upper = near_failsafe_accel
-            projected_release_margin = max(1e-6, fallback_action["acceleration_mps2"] + near_failsafe_projection_epsilon - near_failsafe_accel)
+            projected_release_margin = max(
+                1e-6,
+                fallback_action["acceleration_mps2"] + near_failsafe_projection_epsilon - near_failsafe_accel,
+            )
             active.append("hard_ttc_near_failsafe_projection")
         elif validity_status == "degraded" or shift_alert_flag:
             projected_release = True
@@ -995,7 +1100,12 @@ class WaymoAVDomainAdapter(DomainAdapter):
             fallback_region = "certificate_degraded_projection"
             allow_near_failsafe_projected_validity = True
             a_lower = a_upper = degraded_projection_accel
-            projected_release_margin = max(1e-6, fallback_action["acceleration_mps2"] + near_failsafe_projection_epsilon - degraded_projection_accel)
+            projected_release_margin = max(
+                1e-6,
+                fallback_action["acceleration_mps2"]
+                + near_failsafe_projection_epsilon
+                - degraded_projection_accel,
+            )
             active.append("certificate_degraded_projection")
         elif entry_gap_metric <= entry_headway_m:
             projected_release = True
@@ -1003,7 +1113,12 @@ class WaymoAVDomainAdapter(DomainAdapter):
             fallback_region = "tight_headway_projection"
             allow_near_failsafe_projected_validity = True
             a_lower = a_upper = entry_projection_accel
-            projected_release_margin = max(1e-6, fallback_action["acceleration_mps2"] + near_failsafe_projection_epsilon - entry_projection_accel)
+            projected_release_margin = max(
+                1e-6,
+                fallback_action["acceleration_mps2"]
+                + near_failsafe_projection_epsilon
+                - entry_projection_accel,
+            )
             active.append("headway_predictive_entry_barrier")
         elif math.isfinite(entry_ttc_metric) and entry_ttc_metric <= entry_ttc_s:
             projected_release = True
@@ -1011,7 +1126,12 @@ class WaymoAVDomainAdapter(DomainAdapter):
             fallback_region = "low_ttc_projection"
             allow_near_failsafe_projected_validity = True
             a_lower = a_upper = entry_projection_accel
-            projected_release_margin = max(1e-6, fallback_action["acceleration_mps2"] + near_failsafe_projection_epsilon - entry_projection_accel)
+            projected_release_margin = max(
+                1e-6,
+                fallback_action["acceleration_mps2"]
+                + near_failsafe_projection_epsilon
+                - entry_projection_accel,
+            )
             active.append("ttc_predictive_entry_barrier")
 
         if fallback_required:
@@ -1043,7 +1163,9 @@ class WaymoAVDomainAdapter(DomainAdapter):
             "projected_release": bool(projected_release and not fallback_required),
             "projection_reason": projection_reason,
             "projected_release_margin": float(projected_release_margin),
-            "allow_near_failsafe_projected_validity": bool(allow_near_failsafe_projected_validity and not fallback_required),
+            "allow_near_failsafe_projected_validity": bool(
+                allow_near_failsafe_projected_validity and not fallback_required
+            ),
             "near_failsafe_projection_epsilon_mps2": float(near_failsafe_projection_epsilon),
             "entry_barrier_triggered": "headway_predictive_entry_barrier" in active,
             "widening_factor": float(uncertainty.get("meta", {}).get("widening_factor", 1.0)),
@@ -1065,8 +1187,12 @@ class WaymoAVDomainAdapter(DomainAdapter):
     ) -> tuple[dict[str, float], dict[str, Any]]:
         del state, uncertainty, constraints, cfg
         if bool(tightened_set.get("fallback_required", False)) or tightened_set.get("viable") is False:
-            fallback_action = dict(tightened_set.get("fallback_action", {"acceleration_mps2": self._accel_min}))
-            return {"acceleration_mps2": float(_f(fallback_action.get("acceleration_mps2"), self._accel_min))}, {
+            fallback_action = dict(
+                tightened_set.get("fallback_action", {"acceleration_mps2": self._accel_min})
+            )
+            return {
+                "acceleration_mps2": float(_f(fallback_action.get("acceleration_mps2"), self._accel_min))
+            }, {
                 "repaired": True,
                 "mode": "fallback",
                 "intervention_reason": str(tightened_set.get("fallback_reason", "full_brake")),
@@ -1109,8 +1235,12 @@ class WaymoAVDomainAdapter(DomainAdapter):
             "theorem_contract": str(tightened_set.get("theorem_contract", "av_brake_hold_release")),
             "projected_release": bool(tightened_set.get("projected_release", False)),
             "allow_single_step_projected_validity": bool(tightened_set.get("projected_release", False)),
-            "allow_near_failsafe_projected_validity": bool(tightened_set.get("allow_near_failsafe_projected_validity", False)),
-            "near_failsafe_projection_epsilon_mps2": float(tightened_set.get("near_failsafe_projection_epsilon_mps2", 0.25)),
+            "allow_near_failsafe_projected_validity": bool(
+                tightened_set.get("allow_near_failsafe_projected_validity", False)
+            ),
+            "near_failsafe_projection_epsilon_mps2": float(
+                tightened_set.get("near_failsafe_projection_epsilon_mps2", 0.25)
+            ),
             "projected_release_margin": float(tightened_set.get("projected_release_margin", 0.0)),
         }
 
@@ -1160,7 +1290,9 @@ class WaymoAVDomainAdapter(DomainAdapter):
             prev_hash=prev_hash,
             dispatch_plan=dict(dispatch_plan or {}),
             intervened=bool(repair_meta.get("repaired")) if isinstance(repair_meta, Mapping) else None,
-            intervention_reason=repair_meta.get("intervention_reason") if isinstance(repair_meta, Mapping) else None,
+            intervention_reason=repair_meta.get("intervention_reason")
+            if isinstance(repair_meta, Mapping)
+            else None,
             reliability_w=reliability_w,
             drift_flag=bool(drift.get("drift", False)),
             inflation=_f(uncertainty.get("meta", {}).get("widening_factor"), 1.0),
@@ -1202,8 +1334,12 @@ class WaymoAVDomainAdapter(DomainAdapter):
             if isinstance(repair_meta, Mapping) and repair_meta.get("mode") == "projection"
             else "hold"
         )
-        cert["fallback_region"] = repair_meta.get("fallback_region") if isinstance(repair_meta, Mapping) else None
-        cert["fallback_required"] = bool(repair_meta.get("fallback_required", False)) if isinstance(repair_meta, Mapping) else False
+        cert["fallback_region"] = (
+            repair_meta.get("fallback_region") if isinstance(repair_meta, Mapping) else None
+        )
+        cert["fallback_required"] = (
+            bool(repair_meta.get("fallback_required", False)) if isinstance(repair_meta, Mapping) else False
+        )
         cert["theorem_contract"] = (
             repair_meta.get("theorem_contract", "av_brake_hold_release")
             if isinstance(repair_meta, Mapping)
@@ -1212,15 +1348,19 @@ class WaymoAVDomainAdapter(DomainAdapter):
         cert["validity_scope"] = validity.validity_scope
         cert["validity_theorem_id"] = validity.validity_theorem_id
         cert["validity_theorem_contract"] = validity.validity_theorem_contract
-        cert["projected_release"] = bool(repair_meta.get("projected_release", False)) if isinstance(repair_meta, Mapping) else False
+        cert["projected_release"] = (
+            bool(repair_meta.get("projected_release", False)) if isinstance(repair_meta, Mapping) else False
+        )
         cert["projected_release_margin"] = (
-            float(repair_meta.get("projected_release_margin", 0.0)) if isinstance(repair_meta, Mapping) else 0.0
+            float(repair_meta.get("projected_release_margin", 0.0))
+            if isinstance(repair_meta, Mapping)
+            else 0.0
         )
         # CBF barrier metadata
         gap_val = _f(uncertainty.get("gap_lower_m"), 30.0)
         speed_val = _f(uncertainty.get("current_speed_mps"), 0.0)
         lead_speed_val = _f(uncertainty.get("lead_speed_mps"), speed_val)
-        d_safe_val = speed_val ** 2 / 12.0 + 0.2 * speed_val + 0.5
+        d_safe_val = speed_val**2 / 12.0 + 0.2 * speed_val + 0.5
         h_val = gap_val - d_safe_val
         cbf_alpha = 0.5
         h_dot_val = (lead_speed_val - speed_val) + cbf_alpha * h_val
@@ -1239,17 +1379,14 @@ def load_runtime_bundles(models_dir: str | Path, *, artifact_prefix: str = "waym
 
 
 def _build_runtime_lookup(step_features: pd.DataFrame) -> dict[tuple[str, int], pd.Series]:
-    return {
-        (str(row["scenario_id"]), int(row["step_index"])): row
-        for _, row in step_features.iterrows()
-    }
+    return {(str(row["scenario_id"]), int(row["step_index"])): row for _, row in step_features.iterrows()}
 
 
 def _action_magnitude(action: Mapping[str, Any]) -> float:
     return sum(
         abs(float(value))
         for value in action.values()
-        if isinstance(value, (int, float)) or (hasattr(value, "__float__") and not isinstance(value, bool))
+        if isinstance(value, int | float) or (hasattr(value, "__float__") and not isinstance(value, bool))
     )
 
 
@@ -1291,7 +1428,10 @@ class _RuntimeMetricAccumulator:
             if record.resolved_fallback_used():
                 self.fallback_count += 1
                 magnitude = _action_magnitude(record.action)
-                if self.previous_fallback_magnitude is not None and magnitude <= self.previous_fallback_magnitude + 1e-9:
+                if (
+                    self.previous_fallback_magnitude is not None
+                    and magnitude <= self.previous_fallback_magnitude + 1e-9
+                ):
                     self.fallback_monotonic_count += 1
                 self.previous_fallback_magnitude = magnitude
                 self.fallback_magnitude_count += 1
@@ -1356,7 +1496,12 @@ def _update_runtime_coverage(
         fault_family = str(row.get("fault_family", ""))
         for target_name, lower_col, upper_col, true_col in (
             ("ego_speed_mps", "pred_ego_speed_lower_mps", "pred_ego_speed_upper_mps", "target_ego_speed_1s"),
-            ("relative_gap_m", "pred_relative_gap_lower_m", "pred_relative_gap_upper_m", "target_relative_gap_1s"),
+            (
+                "relative_gap_m",
+                "pred_relative_gap_lower_m",
+                "pred_relative_gap_upper_m",
+                "target_relative_gap_1s",
+            ),
         ):
             y_true = _finite_float_or_none(row.get(true_col))
             lower = _finite_float_or_none(row.get(lower_col))
@@ -1378,7 +1523,12 @@ def _predict_runtime_telemetry(feature_row: pd.Series, bundles: dict[str, Any]) 
     gap_bundle = bundles["relative_gap_m_1s"]
     speed_center, speed_lower, speed_upper = predict_interval_from_bundle(speed_bundle, feature_frame)
     gap_center, gap_lower, gap_upper = predict_interval_from_bundle(gap_bundle, feature_frame)
-    shift_score = float(max(estimate_shift_score(speed_bundle, feature_frame)[0], estimate_shift_score(gap_bundle, feature_frame)[0]))
+    shift_score = float(
+        max(
+            estimate_shift_score(speed_bundle, feature_frame)[0],
+            estimate_shift_score(gap_bundle, feature_frame)[0],
+        )
+    )
     return {
         "pred_ego_speed_center_mps": float(speed_center[0]),
         "pred_ego_speed_lower_mps": float(speed_lower[0]),
@@ -1399,7 +1549,9 @@ def _attach_runtime_predictions(step_features: pd.DataFrame, bundles: dict[str, 
     total_rows = int(len(predicted))
     for start in range(0, total_rows, RUNTIME_PREDICTION_BATCH_ROWS):
         stop = min(start + RUNTIME_PREDICTION_BATCH_ROWS, total_rows)
-        feature_frame = predicted.iloc[start:stop].drop(columns=list(RUNTIME_PREDICTION_COLUMNS), errors="ignore").copy()
+        feature_frame = (
+            predicted.iloc[start:stop].drop(columns=list(RUNTIME_PREDICTION_COLUMNS), errors="ignore").copy()
+        )
         speed_center, speed_lower, speed_upper = predict_interval_from_bundle(speed_bundle, feature_frame)
         gap_center, gap_lower, gap_upper = predict_interval_from_bundle(gap_bundle, feature_frame)
         speed_shift = estimate_shift_score(speed_bundle, feature_frame)
@@ -1412,18 +1564,6 @@ def _attach_runtime_predictions(step_features: pd.DataFrame, bundles: dict[str, 
         predicted.loc[row_index, "pred_relative_gap_lower_m"] = gap_lower
         predicted.loc[row_index, "pred_relative_gap_upper_m"] = gap_upper
         predicted.loc[row_index, "shift_score"] = np.maximum(speed_shift, gap_shift)
-        print(
-            json.dumps(
-                {
-                    "event": "av_runtime_prediction_progress",
-                    "rows": int(stop),
-                    "total_rows": total_rows,
-                },
-                sort_keys=True,
-            ),
-            file=sys.stderr,
-            flush=True,
-        )
     return predicted
 
 
@@ -1462,8 +1602,10 @@ def _av_runtime_policy_action(
         elif gap <= 10.0 or (math.isfinite(ttc) and ttc <= 4.0):
             safe = min(proposal, -2.0)
         else:
-            d_safe = current_speed ** 2 / 12.0 + 0.2 * current_speed + 0.5
-            cbf_upper = (lead_speed - current_speed + 0.5 * (gap - d_safe)) / (0.166 * current_speed + 0.2 + 1e-9)
+            d_safe = current_speed**2 / 12.0 + 0.2 * current_speed + 0.5
+            cbf_upper = (lead_speed - current_speed + 0.5 * (gap - d_safe)) / (
+                0.166 * current_speed + 0.2 + 1e-9
+            )
             safe = min(proposal, cbf_upper)
         safe = float(np.clip(safe, accel_min, accel_max))
         family = "rss_cbf_filter"
@@ -1548,7 +1690,9 @@ def _run_episode(
         jerk = 0.0 if previous_accel is None else (accel - previous_accel) / 0.1
         observed["ego_accel_mps2"] = accel
         observed["ego_jerk_mps3"] = jerk
-        observed["neighbor_instability"] = float(max(0.0, abs(int(feature_row["neighbor_count"]) - int(true_state.get("neighbor_count", 0)))) / 8.0)
+        observed["neighbor_instability"] = float(
+            max(0.0, abs(int(feature_row["neighbor_count"]) - int(true_state.get("neighbor_count", 0)))) / 8.0
+        )
         observed["observed_margin"] = _observed_margin_from_state(observed)
         constraints = {
             "speed_limit_mps": _f(true_state.get("speed_limit_mps"), 25.0),
@@ -1563,7 +1707,14 @@ def _run_episode(
         constraint_overrides = policy_config.get("constraints", {})
         if isinstance(constraint_overrides, Mapping):
             constraints.update(dict(constraint_overrides))
-        for key in ("min_headway_m", "ttc_min_s", "entry_headway_m", "entry_ttc_s", "hard_headway_m", "hard_ttc_s"):
+        for key in (
+            "min_headway_m",
+            "ttc_min_s",
+            "entry_headway_m",
+            "entry_ttc_s",
+            "hard_headway_m",
+            "hard_ttc_s",
+        ):
             if key in policy_config:
                 constraints[key] = policy_config[key]
         if always_brake:
@@ -1653,7 +1804,9 @@ def _run_episode(
             if always_brake:
                 safe_action = dict(candidate_action)
             else:
-                safe_action, repair_meta = _av_runtime_policy_action(controller_mode, observed, candidate_action, constraints)
+                safe_action, repair_meta = _av_runtime_policy_action(
+                    controller_mode, observed, candidate_action, constraints
+                )
                 intervened = bool(repair_meta.get("repaired", False))
                 fallback_used = False
             uncertainty_meta = {
@@ -1677,9 +1830,12 @@ def _run_episode(
         next_true = dict(track.step(safe_action))
 
         true_metrics = compute_state_safety_metrics(next_true)
-        observed_metrics = compute_state_safety_metrics(observed) if observed.get("min_gap_m") is not None and not (
-            isinstance(observed.get("min_gap_m"), float) and math.isnan(observed.get("min_gap_m"))
-        ) else None
+        observed_metrics = (
+            compute_state_safety_metrics(observed)
+            if observed.get("min_gap_m") is not None
+            and not (isinstance(observed.get("min_gap_m"), float) and math.isnan(observed.get("min_gap_m")))
+            else None
+        )
         contract_status = _brake_hold_contract_status(
             true_metrics=true_metrics,
             observed_metrics=observed_metrics,
@@ -1772,7 +1928,9 @@ def _run_episode(
                 "min_gap_m": float(true_metrics["min_gap_m"]),
                 "ttc_s": float(true_metrics["ttc_s"]),
                 "latency_us": float(latency_us),
-                "reliability_w": float(result["reliability_w"]) if use_orius else float(np.clip(observed["reliability_proxy"], 0.05, 1.0)),
+                "reliability_w": float(result["reliability_w"])
+                if use_orius
+                else float(np.clip(observed["reliability_proxy"], 0.05, 1.0)),
                 "neighbor_count": int(true_state.get("neighbor_count", 0) or 0),
                 "ego_speed_mps": float(true_state.get("ego_speed_mps", 0.0) or 0.0),
                 "target_ego_speed_1s": float(feature_row["target_ego_speed_mps__1s"]),
@@ -1789,16 +1947,30 @@ def _run_episode(
                 "widening_factor": float(uncertainty_meta.get("widening_factor", 1.0)),
                 "validity_score": float(uncertainty_meta.get("validity_score", 1.0)),
                 "validity_status": str(uncertainty_meta.get("validity_status", "nominal")),
-                "certificate_schema_version": str(certificate.get("certificate_schema_version", "")) if certificate is not None else "",
-                "certificate_hash": str(certificate.get("certificate_hash", "")) if certificate is not None else "",
+                "certificate_schema_version": str(certificate.get("certificate_schema_version", ""))
+                if certificate is not None
+                else "",
+                "certificate_hash": str(certificate.get("certificate_hash", ""))
+                if certificate is not None
+                else "",
                 "prev_hash": str(certificate.get("prev_hash", "") or "") if certificate is not None else "",
                 "issuer": str(certificate.get("issuer", "")) if certificate is not None else "",
                 "domain": str(certificate.get("domain", "")) if certificate is not None else "",
-                "action": json.dumps(certificate.get("action", {}), sort_keys=True) if certificate is not None else "",
-                "theorem_contracts": json.dumps(certificate.get("theorem_contracts", {}), sort_keys=True) if certificate is not None else "",
-                "validity_scope": str(certificate.get("validity_scope", "not_certified")) if certificate is not None else "not_certified",
-                "validity_theorem_id": str(certificate.get("validity_theorem_id", "")) if certificate is not None else "",
-                "validity_theorem_contract": str(certificate.get("validity_theorem_contract", "")) if certificate is not None else "",
+                "action": json.dumps(certificate.get("action", {}), sort_keys=True)
+                if certificate is not None
+                else "",
+                "theorem_contracts": json.dumps(certificate.get("theorem_contracts", {}), sort_keys=True)
+                if certificate is not None
+                else "",
+                "validity_scope": str(certificate.get("validity_scope", "not_certified"))
+                if certificate is not None
+                else "not_certified",
+                "validity_theorem_id": str(certificate.get("validity_theorem_id", ""))
+                if certificate is not None
+                else "",
+                "validity_theorem_contract": str(certificate.get("validity_theorem_contract", ""))
+                if certificate is not None
+                else "",
                 "coverage_group_key": str(uncertainty_meta.get("coverage_group_key", "global")),
                 "shift_alert_flag": bool(uncertainty_meta.get("shift_alert_flag", False)),
                 **theorem_trace_fields,
@@ -1822,17 +1994,6 @@ def run_runtime_dry_run(
     runtime_policy_config: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     replay_path = Path(replay_windows_path)
-    print(
-        json.dumps(
-            {
-                "event": "av_runtime_load_start",
-                "step_features_path": str(step_features_path),
-            },
-            sort_keys=True,
-        ),
-        file=sys.stderr,
-        flush=True,
-    )
     step_features, test_scenarios = _load_runtime_test_step_features(
         step_features_path,
         max_scenarios=max_scenarios,
@@ -1840,18 +2001,6 @@ def run_runtime_dry_run(
     if step_features.empty:
         raise ValueError("No test step features were available for AV runtime dry run.")
     bundles = load_runtime_bundles(models_dir, artifact_prefix=artifact_prefix)
-    print(
-        json.dumps(
-            {
-                "event": "av_runtime_prediction_start",
-                "feature_rows": int(len(step_features)),
-                "test_scenarios": int(len(test_scenarios)),
-            },
-            sort_keys=True,
-        ),
-        file=sys.stderr,
-        flush=True,
-    )
     step_features = _attach_runtime_predictions(step_features, bundles)
     # Avoid a full-frame sort on uncapped nuPlan holdouts. Episodes sort their
     # own step indices, so global ordering is not part of the runtime contract.
@@ -1870,7 +2019,9 @@ def run_runtime_dry_run(
         shift_cfg = default_shift_aware_config(publication_dir=str(shift_out_dir)).to_dict()
     shift_cfg["publication_dir"] = str(shift_out_dir)
     policy_config = dict(runtime_policy_config or {})
-    (out_path / "runtime_policy_config.json").write_text(json.dumps(policy_config, indent=2), encoding="utf-8")
+    (out_path / "runtime_policy_config.json").write_text(
+        json.dumps(policy_config, indent=2), encoding="utf-8"
+    )
     orius_adapter_cfg = {
         "expected_cadence_s": 0.1,
         "shift_aware_uncertainty": shift_cfg,
@@ -1902,29 +2053,7 @@ def run_runtime_dry_run(
     previous_orius_certificate: dict[str, Any] | None = None
     # Pre-load only the runtime test scenarios once; full replay parquet is too
     # large to materialize for uncapped nuPlan runs.
-    print(
-        json.dumps(
-            {
-                "event": "av_runtime_track_load_start",
-                "test_scenarios": int(len(test_scenarios)),
-            },
-            sort_keys=True,
-        ),
-        file=sys.stderr,
-        flush=True,
-    )
     baseline_track = WaymoReplayTrackAdapter(replay_path, scenario_ids=test_scenarios)
-    print(
-        json.dumps(
-            {
-                "event": "av_runtime_track_load_done",
-                "test_scenarios": int(len(test_scenarios)),
-            },
-            sort_keys=True,
-        ),
-        file=sys.stderr,
-        flush=True,
-    )
     orius_track = baseline_track
     gc_was_enabled = gc.isenabled()
     if gc_was_enabled:
@@ -1958,7 +2087,10 @@ def run_runtime_dry_run(
     try:
         for scenario_id, scenario_features in step_features.groupby("scenario_id", sort=False):
             fault_family = _scenario_fault_family(str(scenario_id))
-            policy_outputs: dict[str, tuple[list[StepRecord], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any] | None]] = {}
+            policy_outputs: dict[
+                str,
+                tuple[list[StepRecord], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any] | None],
+            ] = {}
             for controller_mode in controller_modes:
                 if controller_mode == "orius":
                     continue
@@ -1970,7 +2102,7 @@ def run_runtime_dry_run(
                     controller_mode=controller_mode,
                 )
             orius_records, orius_traces, orius_certs, previous_orius_certificate = _run_episode(
-                track=orius_track,  # noqa: reuse pre-loaded adapter
+                track=orius_track,  # reuse pre-loaded adapter
                 scenario_id=str(scenario_id),
                 step_features=scenario_features,
                 fault_family=fault_family,
@@ -1995,19 +2127,7 @@ def run_runtime_dry_run(
                     flush_certificate_buffer()
             processed_scenarios += 1
             if processed_scenarios == 1 or processed_scenarios % 1_000 == 0:
-                print(
-                    json.dumps(
-                        {
-                            "event": "av_runtime_progress",
-                            "scenarios": int(processed_scenarios),
-                            "test_scenarios": int(len(test_scenarios)),
-                            "certificate_count": int(certificate_count),
-                        },
-                        sort_keys=True,
-                    ),
-                    file=sys.stderr,
-                    flush=True,
-                )
+                pass
         flush_trace_buffer()
         flush_certificate_buffer()
     finally:
@@ -2018,7 +2138,10 @@ def run_runtime_dry_run(
     if not trace_path.exists():
         pd.DataFrame().to_csv(trace_path, index=False)
 
-    summary_rows = [metric_accumulators[controller_name].summary_row(controller_name) for controller_name in controller_modes]
+    summary_rows = [
+        metric_accumulators[controller_name].summary_row(controller_name)
+        for controller_name in controller_modes
+    ]
     summary_df = pd.DataFrame(summary_rows)
     summary_path = stage_dir / "runtime_summary.csv"
     summary_df.to_csv(summary_path, index=False)
@@ -2036,7 +2159,9 @@ def run_runtime_dry_run(
             }
         )
     coverage_path = stage_dir / "fault_family_coverage.csv"
-    pd.DataFrame(coverage_rows, columns=["controller", "fault_family", "target", "coverage", "mean_width"]).to_csv(coverage_path, index=False)
+    pd.DataFrame(
+        coverage_rows, columns=["controller", "fault_family", "target", "coverage", "mean_width"]
+    ).to_csv(coverage_path, index=False)
     shift_artifacts = orius_adapter.write_shift_aware_outputs(shift_out_dir)
 
     final_trace_path = out_path / "runtime_traces.csv"

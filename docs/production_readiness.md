@@ -9,8 +9,9 @@ Project: ORIUS
 - **Health/Readiness probes**: `/health` and `/ready` endpoints for API; compose + k8s probes wire in.  
 - **Retries for downloads**: OPSD/SMARD/Open‑Meteo/ElectricityMaps/WattTime use shared retryable HTTP sessions.  
 - **Deployment gate**: `scripts/validate_production_readiness.py --strict` fails closed unless API keys, model-hash enforcement, signed certificate provenance, and promoted runtime surfaces are available.
-- **Certificate provenance**: DC3S certificates support `HMAC-SHA256` signatures via `ORIUS_CERTIFICATE_SIGNING_KEY`; unsigned certificates remain acceptable only for bounded research/offline validation.
+- **Certificate provenance**: DC3S certificates support rotated `HMAC-SHA256` signatures through `ORIUS_CERTIFICATE_KEYS` and append-only certificate events. Unsigned certificates remain acceptable only for bounded research/offline validation.
 - **Model provenance**: production/staging model loading refuses pickle bundles without a sha256 sidecar or manifest before deserialization.
+- **Device identity**: IoT telemetry, command polling, and ACK paths support per-device HMAC identity with timestamp-skew and nonce-replay checks.
 
 ## Phase 2 — Operations
 - **Monitoring + alerting**: `scripts/run_monitoring.py` writes `reports/monitoring_summary.json` and can alert via `ORIUS_ALERT_WEBHOOK`.  
@@ -38,7 +39,34 @@ Project: ORIUS
 - Signals: OPSD day‑ahead price + **SMARD hourly carbon intensity** (`data/raw/carbon_signals.csv`)  
 - Artifacts: `artifacts/runs/<run_id>` with `manifest.json` + `pip_freeze.txt`  
 
+## Local Mac / Server Security Profile
+Set these variables for a local server-style deployment:
+
+```bash
+export ORIUS_ENV=production
+export ORIUS_SECRETS_FILE=/absolute/path/outside/git/orius-secrets.yaml
+export ORIUS_CERTIFICATE_ACTIVE_KEY_ID=orius-cert-2026-01
+export ORIUS_REQUIRE_CERT_SIGNATURE=1
+export ORIUS_REQUIRE_DEVICE_SIGNATURE=1
+export ORIUS_REQUIRE_ARTIFACT_MANIFEST=1
+export ORIUS_REQUIRE_MODEL_HASH=1
+```
+
+Use `configs/secrets.example.yaml` only as a template. The real `ORIUS_SECRETS_FILE` must stay outside Git and should define `certificate_keys`, `device_keys`, and operator API keys. For environment-only deployment, `ORIUS_CERTIFICATE_KEYS` and `ORIUS_DEVICE_KEYS` may also be JSON mappings.
+
+Required gates before calling this profile production-ready:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_deployment_security.py
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_runtime_release_contract.py
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_api_auth_coverage.py
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_certificate_schema.py
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_paper_claims.py
+```
+
+This profile is fail-closed for certificate signing and device identity. If keys are missing in `production` or `staging`, release paths should fail instead of emitting unsigned evidence.
+
 ## Notes
 - External tokens are not stored; use `.env` or environment variables.  
 - Robust dispatch uses quantile heuristics; scenario methods are optional future upgrades.  
-- Deployment-ready claims still require external environment controls, key rotation, signed model manifests, device attestation for IoT paths, and domain-specific field/HIL validation beyond the current predeployment evidence.
+- Deployment-ready claims still require external environment controls, operational key rotation procedures, cloud/KMS or equivalent secret management, and domain-specific field/HIL validation beyond the current predeployment evidence.

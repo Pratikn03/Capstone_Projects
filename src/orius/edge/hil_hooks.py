@@ -1,8 +1,10 @@
 """HIL-ready hooks: hardware abstraction, replay-to-hardware bridge, fault injector."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any
 
 
 class HardwareAbstraction(ABC):
@@ -26,6 +28,7 @@ class FaultInjector:
 
     def __init__(self, drop_rate: float = 0.0, seed: int = 42):
         import numpy as np
+
         self._rng = np.random.default_rng(seed)
         self._drop_rate = max(0.0, min(1.0, drop_rate))
 
@@ -62,7 +65,7 @@ class ReplayToHardwareBridge:
         record = self._trace[step]
         if self._hardware is not None:
             for ch, val in record.items():
-                if isinstance(val, (int, float)):
+                if isinstance(val, int | float):
                     self._hardware.write_actuator(str(ch), float(val))
         if self._on_step is not None:
             self._on_step(step, record)

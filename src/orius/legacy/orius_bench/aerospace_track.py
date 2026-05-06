@@ -3,11 +3,13 @@
 Airspeed, altitude, bank. Safety: airspeed in [v_min, v_max].
 Fault injection: bias, noise, stuck_sensor on airspeed_kt.
 """
+
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -53,7 +55,8 @@ class AerospaceTrackAdapter(BenchmarkAdapter):
         if self._episodes:
             episode = self._episodes[int(self._rng.integers(0, len(self._episodes)))]
             near_limit = [
-                idx for idx, row in enumerate(episode)
+                idx
+                for idx, row in enumerate(episode)
                 if abs(float(row.get("bank_angle_deg", 0.0))) >= self._max_bank * 0.75
                 or float(row.get("airspeed_kt", self._v_min)) <= self._v_min + 15.0
                 or float(row.get("airspeed_kt", self._v_max)) >= self._v_max - 15.0

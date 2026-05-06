@@ -7,11 +7,13 @@ demonstrates that the ORIUS metrics generalise beyond batteries. When a
 processed KITTI row is supplied, the closed-loop surrogate is anchored to the
 next real row instead of the synthetic support-tier trace.
 """
+
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -60,7 +62,8 @@ class NavigationTrackAdapter(BenchmarkAdapter):
         if self._episodes:
             episode = self._episodes[int(self._rng.integers(0, len(self._episodes)))]
             near_limit = [
-                idx for idx, row in enumerate(episode)
+                idx
+                for idx, row in enumerate(episode)
                 if float(row.get("x", 0.0)) >= self._arena * 0.75
                 or float(row.get("y", 0.0)) >= self._arena * 0.75
             ]
@@ -139,8 +142,10 @@ class NavigationTrackAdapter(BenchmarkAdapter):
             real_next = self._episode[min(self._episode_idx + 1, len(self._episode) - 1)]
             next_vel = self._vel + np.array([ax, ay]) * self._dt
             next_vel += 0.20 * (np.array([float(real_next["vx"]), float(real_next["vy"])]) - self._vel)
-            self._pos = self._pos + next_vel * self._dt + 0.10 * (
-                np.array([float(real_next["x"]), float(real_next["y"])]) - self._pos
+            self._pos = (
+                self._pos
+                + next_vel * self._dt
+                + 0.10 * (np.array([float(real_next["x"]), float(real_next["y"])]) - self._pos)
             )
             self._vel = next_vel
             self._episode_idx = min(self._episode_idx + 1, len(self._episode) - 1)

@@ -1,7 +1,6 @@
 """Tests for git delta audit script."""
-from __future__ import annotations
 
-from pathlib import Path
+from __future__ import annotations
 
 import scripts.audit_git_delta as git_delta
 

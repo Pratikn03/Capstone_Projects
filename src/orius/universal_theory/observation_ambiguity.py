@@ -4,11 +4,11 @@ The helpers in this module intentionally implement the corrected theorem
 surface: differing safe sets are not enough for an impossibility claim.  The
 relevant object is the common safe core of an observation ambiguity class.
 """
+
 from __future__ import annotations
 
-from collections.abc import Hashable, Iterable, Mapping, Sequence
+from collections.abc import Hashable, Iterable, Mapping
 from typing import Any
-
 
 State = Hashable
 Action = Hashable
@@ -212,8 +212,8 @@ def build_observation_ambiguity_contract_summary(
 
 
 __all__ = [
+    "build_observation_ambiguity_contract_summary",
     "common_safe_core",
     "observation_only_bayes_lower_bound",
     "verify_covered_orius_release",
-    "build_observation_ambiguity_contract_summary",
 ]

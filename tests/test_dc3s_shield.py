@@ -1,4 +1,5 @@
 """Unit tests for DC3S safety shield repair behavior."""
+
 from __future__ import annotations
 
 from orius.dc3s.shield import repair_action

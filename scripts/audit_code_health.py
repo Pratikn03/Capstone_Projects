@@ -1,17 +1,17 @@
 """Static code-health audit for publish gating."""
+
 from __future__ import annotations
 
 import argparse
 import ast
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import json
-from pathlib import Path
 import sys
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -47,6 +47,8 @@ def _iter_py_paths(globs: list[str]) -> list[Path]:
     seen: set[str] = set()
     for pattern in globs:
         for path in sorted(REPO_ROOT.glob(pattern)):
+            if any(part.startswith("._") for part in path.parts):
+                continue
             if path.is_file():
                 key = str(path)
                 if key not in seen:
@@ -68,7 +70,7 @@ def _cyclomatic_estimate(node: ast.AST) -> int:
     )
     match_type = getattr(ast, "Match", None)
     if match_type is not None:
-        branch_types = branch_types + (match_type,)
+        branch_types = (*branch_types, match_type)
 
     score = 1
     for child in ast.walk(node):
@@ -80,7 +82,7 @@ def _cyclomatic_estimate(node: ast.AST) -> int:
 def _collect_functions(tree: ast.AST, source_lines: list[str]) -> list[FunctionHealth]:
     out: list[FunctionHealth] = []
     for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             start = int(getattr(node, "lineno", 0) or 0)
             end = int(getattr(node, "end_lineno", start) or start)
             if end < start:
@@ -117,7 +119,13 @@ def _collect_unused_imports(tree: ast.AST) -> list[str]:
     for node in ast.walk(tree):
         if isinstance(node, ast.Name):
             used.add(str(node.id))
-    unused = sorted([imported_name for imported_name in imported if imported_name not in used and not imported_name.startswith("_")])
+    unused = sorted(
+        [
+            imported_name
+            for imported_name in imported
+            if imported_name not in used and not imported_name.startswith("_")
+        ]
+    )
     return unused
 
 
@@ -140,7 +148,14 @@ def run_code_health_audit(*, config_path: Path, include_globs: list[str] | None 
         source_lines = source.splitlines()
         file_row = {"path": str(path), "line_count": len(source_lines), "parse_ok": True}
         if len(source_lines) > max_file_lines:
-            violations.append({"type": "file_too_large", "path": str(path), "line_count": len(source_lines), "max": max_file_lines})
+            violations.append(
+                {
+                    "type": "file_too_large",
+                    "path": str(path),
+                    "line_count": len(source_lines),
+                    "max": max_file_lines,
+                }
+            )
 
         try:
             tree = ast.parse(source)
@@ -207,7 +222,7 @@ def run_code_health_audit(*, config_path: Path, include_globs: list[str] | None 
         summary_files.append(file_row)
 
     payload = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "config": {
             "max_function_lines": max_function_lines,
             "max_cyclomatic_estimate": max_cyclomatic,
@@ -232,7 +247,11 @@ def run_code_health_audit(*, config_path: Path, include_globs: list[str] | None 
     new_violations = []
     known_violations = []
     for v in violations:
-        rel_path = str(Path(v.get("path", "")).relative_to(REPO_ROOT)) if v.get("path", "").startswith(str(REPO_ROOT)) else v.get("path", "")
+        rel_path = (
+            str(Path(v.get("path", "")).relative_to(REPO_ROOT))
+            if v.get("path", "").startswith(str(REPO_ROOT))
+            else v.get("path", "")
+        )
         if (rel_path, v.get("type", "")) in known_set:
             known_violations.append(v)
         else:

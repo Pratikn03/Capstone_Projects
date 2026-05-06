@@ -4,6 +4,7 @@
 The historical script name is kept for compatibility with existing tests and
 automation, but the active publication lane is the all-zip grouped nuPlan run.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -20,7 +21,6 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PROCESSED = REPO_ROOT / "data" / "orius_av" / "av" / "processed_full_1k"
@@ -231,7 +231,9 @@ def _summary_payload(
             pd.to_numeric(
                 runtime_df.loc[runtime_df["controller"] == canonical_controller, "n_steps"],
                 errors="coerce",
-            ).fillna(0).sum()
+            )
+            .fillna(0)
+            .sum()
         )
     return {
         "runtime": best_runtime,
@@ -240,8 +242,7 @@ def _summary_payload(
         "runtime_rows_canonical_controller": int(canonical_rows),
         "runtime_trace_rows": int(canonical_rows),
         "split_counts": {
-            str(row["split"]): int(row["scenario_count"])
-            for row in split_counts_df.to_dict(orient="records")
+            str(row["split"]): int(row["scenario_count"]) for row in split_counts_df.to_dict(orient="records")
         },
         "mean_widening_factor": float(training_df["mean_widening_factor"].mean()),
         "max_widened_coverage": float(training_df["widened_coverage"].max()),
@@ -281,15 +282,21 @@ def build_report(
     subgroup_df = _load_csv(subgroup_coverage_path)
     runtime_df = _load_csv(runtime_summary_path)
     fault_df = _load_csv(fault_coverage_path)
-    shift_df = pd.read_csv(shift_runtime_summary_path) if shift_runtime_summary_path.exists() else pd.DataFrame()
+    shift_df = (
+        pd.read_csv(shift_runtime_summary_path) if shift_runtime_summary_path.exists() else pd.DataFrame()
+    )
     split_counts_df = _split_counts(anchor_features_path)
     runtime_trace_count = _runtime_trace_count(
         runtime_summary_path=runtime_summary_path,
         runtime_report_path=runtime_report_path,
         runtime_traces_path=runtime_traces_path,
     )
-    subset_manifest = json.loads(subset_manifest_path.read_text(encoding="utf-8")) if subset_manifest_path.exists() else {}
-    raw_file_hashes = dict(subset_manifest.get("raw_file_hashes", {})) if isinstance(subset_manifest, dict) else {}
+    subset_manifest = (
+        json.loads(subset_manifest_path.read_text(encoding="utf-8")) if subset_manifest_path.exists() else {}
+    )
+    raw_file_hashes = (
+        dict(subset_manifest.get("raw_file_hashes", {})) if isinstance(subset_manifest, dict) else {}
+    )
 
     table_artifacts = {
         "training_summary": _write_table(training_df, tables_dir / "training_summary_table.csv"),
@@ -301,12 +308,20 @@ def build_report(
 
     figure_artifacts = {
         "runtime_metrics": _make_runtime_figure(runtime_df, figures_dir / "runtime_metrics.png"),
-        "training_widths": _make_training_width_figure(training_df, figures_dir / "training_interval_widths.png"),
-        "fault_family_coverage": _make_fault_coverage_figure(fault_df, figures_dir / "fault_family_coverage.png"),
+        "training_widths": _make_training_width_figure(
+            training_df, figures_dir / "training_interval_widths.png"
+        ),
+        "fault_family_coverage": _make_fault_coverage_figure(
+            fault_df, figures_dir / "fault_family_coverage.png"
+        ),
     }
     if shift_runtime_summary_path.exists():
-        table_artifacts["shift_aware_runtime"] = _write_table(shift_df, tables_dir / "shift_aware_runtime_table.csv")
-        figure_artifacts["shift_aware_runtime"] = _make_shift_aware_figure(shift_df, figures_dir / "shift_aware_runtime.png")
+        table_artifacts["shift_aware_runtime"] = _write_table(
+            shift_df, tables_dir / "shift_aware_runtime_table.csv"
+        )
+        figure_artifacts["shift_aware_runtime"] = _make_shift_aware_figure(
+            shift_df, figures_dir / "shift_aware_runtime.png"
+        )
 
     summary = _summary_payload(
         runtime_df=runtime_df,
@@ -330,7 +345,9 @@ def build_report(
         *[Path(path) for path in figure_artifacts.values()],
     ]
     manifest_paths.extend(sorted(path for path in models_dir.glob("*.pkl") if not _is_appledouble(path)))
-    manifest_paths.extend(sorted(path for path in uncertainty_dir.glob("*.json") if not _is_appledouble(path)))
+    manifest_paths.extend(
+        sorted(path for path in uncertainty_dir.glob("*.json") if not _is_appledouble(path))
+    )
 
     manifest = {
         "processed_dir": str(processed_dir),

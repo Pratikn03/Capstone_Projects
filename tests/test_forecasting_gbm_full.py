@@ -1,4 +1,5 @@
 """Comprehensive tests for GBM forecaster."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -41,8 +42,9 @@ class TestTrainGBM:
 
     def test_pipeline_mode(self):
         X, y = _data()
-        kind, model = train_gbm(X, y, params={"backend": "sklearn_hgbrt"},
-                                  use_pipeline=True, preprocessing="standard")
+        kind, model = train_gbm(
+            X, y, params={"backend": "sklearn_hgbrt"}, use_pipeline=True, preprocessing="standard"
+        )
         assert kind == "sklearn_hgbrt"
         preds = predict_gbm(model, X[:5])
         assert preds.shape == (5,)
@@ -51,8 +53,9 @@ class TestTrainGBM:
 class TestExtractBaseModel:
     def test_extract_from_pipeline(self):
         X, y = _data()
-        _, model = train_gbm(X, y, params={"backend": "sklearn_hgbrt"},
-                              use_pipeline=True, preprocessing="standard")
+        _, model = train_gbm(
+            X, y, params={"backend": "sklearn_hgbrt"}, use_pipeline=True, preprocessing="standard"
+        )
         base = extract_base_model(model)
         assert not hasattr(base, "named_steps")
 
@@ -64,7 +67,8 @@ class TestExtractBaseModel:
 
     def test_pipeline_predict_matches_base(self):
         X, y = _data()
-        _, pipeline = train_gbm(X, y, params={"backend": "sklearn_hgbrt"},
-                                  use_pipeline=True, preprocessing="standard")
+        _, pipeline = train_gbm(
+            X, y, params={"backend": "sklearn_hgbrt"}, use_pipeline=True, preprocessing="standard"
+        )
         p1 = predict_gbm(pipeline, X[:5])
         assert p1.shape == (5,)

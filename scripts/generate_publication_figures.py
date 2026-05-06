@@ -7,6 +7,7 @@ Generates all 19 publication-level figures (PNG >=300 DPI) and
 
 Usage:  python scripts/generate_publication_figures.py
 """
+
 from __future__ import annotations
 
 import copy
@@ -19,6 +20,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,24 +31,26 @@ REPO = Path(__file__).resolve().parents[1]
 if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
-from orius.forecasting.baselines import persistence_24h
-from orius.forecasting.predict import load_model_bundle
-from orius.forecasting.dl_lstm import LSTMForecaster
-from orius.forecasting.dl_tcn import TCNForecaster
-from orius.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
-from orius.forecasting.uncertainty.conformal import (
-    ConformalConfig, ConformalInterval, save_conformal,
-)
-from orius.optimizer.lp_dispatch import optimize_dispatch
-from orius.optimizer.baselines import grid_only_dispatch, naive_battery_dispatch
-from orius.optimizer.impact import impact_summary
-from orius.anomaly.detect import detect_anomalies
-from orius.monitoring.retraining import load_monitoring_config, compute_data_drift
-from orius.utils.metrics import rmse, mae, mape, smape, daylight_mape
-from orius.utils.scaler import StandardScaler
-
 import torch
 from torch.utils.data import DataLoader
+
+from orius.anomaly.detect import detect_anomalies
+from orius.forecasting.baselines import persistence_24h
+from orius.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
+from orius.forecasting.dl_lstm import LSTMForecaster
+from orius.forecasting.dl_tcn import TCNForecaster
+from orius.forecasting.predict import load_model_bundle
+from orius.forecasting.uncertainty.conformal import (
+    ConformalConfig,
+    ConformalInterval,
+    save_conformal,
+)
+from orius.monitoring.retraining import compute_data_drift, load_monitoring_config
+from orius.optimizer.baselines import grid_only_dispatch, naive_battery_dispatch
+from orius.optimizer.impact import impact_summary
+from orius.optimizer.lp_dispatch import optimize_dispatch
+from orius.utils.metrics import daylight_mape, mae, mape, rmse, smape
+from orius.utils.scaler import StandardScaler
 
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -54,17 +58,29 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 STYLE = {
     "font.family": "serif",
     "font.serif": ["Times New Roman", "DejaVu Serif"],
-    "font.size": 12, "axes.titlesize": 14, "axes.labelsize": 12,
-    "xtick.labelsize": 10, "ytick.labelsize": 10, "legend.fontsize": 10,
-    "figure.dpi": 300, "savefig.dpi": 300, "savefig.bbox": "tight",
+    "font.size": 12,
+    "axes.titlesize": 14,
+    "axes.labelsize": 12,
+    "xtick.labelsize": 10,
+    "ytick.labelsize": 10,
+    "legend.fontsize": 10,
+    "figure.dpi": 300,
+    "savefig.dpi": 300,
+    "savefig.bbox": "tight",
     "lines.linewidth": 1.5,
 }
 plt.rcParams.update(STYLE)
 DPI = 300
 C = {
-    "actual": "#1f77b4", "forecast": "#ff7f0e", "baseline": "#7f7f7f",
-    "optimized": "#2ca02c", "anomaly": "#d62728", "band": "#aec7e8",
-    "solar": "#ffbb78", "wind": "#98df8a", "load": "#1f77b4",
+    "actual": "#1f77b4",
+    "forecast": "#ff7f0e",
+    "baseline": "#7f7f7f",
+    "optimized": "#2ca02c",
+    "anomaly": "#d62728",
+    "band": "#aec7e8",
+    "solar": "#ffbb78",
+    "wind": "#98df8a",
+    "load": "#1f77b4",
 }
 
 
@@ -87,10 +103,14 @@ def _ensure(p: Path):
 def make_ctx() -> Ctx:
     r = REPO
     ctx = Ctx(
-        root=r, features=r / "data" / "processed" / "features.parquet",
-        splits=r / "data" / "processed" / "splits", models=r / "artifacts" / "models",
-        reports=r / "reports", figures=r / "reports" / "figures",
-        tables=r / "reports" / "tables", metrics_dir=r / "reports" / "metrics",
+        root=r,
+        features=r / "data" / "processed" / "features.parquet",
+        splits=r / "data" / "processed" / "splits",
+        models=r / "artifacts" / "models",
+        reports=r / "reports",
+        figures=r / "reports" / "figures",
+        tables=r / "reports" / "tables",
+        metrics_dir=r / "reports" / "metrics",
     )
     _ensure(ctx.figures)
     _ensure(ctx.tables)
@@ -131,8 +151,10 @@ def _load_yaml(name):
 
 def _metrics(yt, yp, target=""):
     m = {
-        "rmse": rmse(yt, yp), "mae": mae(yt, yp),
-        "mape": mape(yt, yp), "smape": smape(yt, yp),
+        "rmse": rmse(yt, yp),
+        "mae": mae(yt, yp),
+        "mape": mape(yt, yp),
+        "smape": smape(yt, yp),
     }
     if target == "solar_mw":
         m["daylight_mape"] = daylight_mape(yt, yp)
@@ -240,11 +262,16 @@ def gen_tables(ctx, df_full, train_df, test_df):
         if t not in df_full.columns:
             continue
         nn = int(df_full[t].notna().sum())
-        rows.append({
-            "target": t, "start": str(ts.iloc[0]), "end": str(ts.iloc[-1]),
-            "total_rows": len(df_full), "non_null": nn,
-            "coverage_pct": round(nn / len(df_full) * 100, 2),
-        })
+        rows.append(
+            {
+                "target": t,
+                "start": str(ts.iloc[0]),
+                "end": str(ts.iloc[-1]),
+                "total_rows": len(df_full),
+                "non_null": nn,
+                "coverage_pct": round(nn / len(df_full) * 100, 2),
+            }
+        )
     pd.DataFrame(rows).to_csv(ctx.tables / "data_coverage.csv", index=False)
     print("  [OK] data_coverage.csv")
 
@@ -252,9 +279,7 @@ def gen_tables(ctx, df_full, train_df, test_df):
     miss = df_full.isnull().sum().reset_index()
     miss.columns = ["column", "missing_count"]
     miss["missing_pct"] = round(miss["missing_count"] / len(df_full) * 100, 4)
-    miss.sort_values("missing_pct", ascending=False).to_csv(
-        ctx.tables / "missingness.csv", index=False
-    )
+    miss.sort_values("missing_pct", ascending=False).to_csv(ctx.tables / "missingness.csv", index=False)
     print("  [OK] missingness.csv")
 
     # 3. forecast_point_metrics
@@ -331,10 +356,15 @@ def gen_tables(ctx, df_full, train_df, test_df):
         ci.fit_calibration(yt2[:cn], yp2[:cn])
         cov = ci.coverage(yt2[cn:], yp2[cn:])
         wid = ci.mean_width(yp2[cn:])
-        int_rows.append({
-            "target": target, "alpha": 0.10, "picp": round(cov, 4),
-            "mpiw": round(wid, 4), "n_test": len(yt2) - cn,
-        })
+        int_rows.append(
+            {
+                "target": target,
+                "alpha": 0.10,
+                "picp": round(cov, 4),
+                "mpiw": round(wid, 4),
+                "n_test": len(yt2) - cn,
+            }
+        )
         ad = REPO / "artifacts" / "uncertainty"
         _ensure(ad)
         save_conformal(ad / f"{target}_conformal.json", ci, {"target": target})
@@ -361,15 +391,18 @@ def gen_tables(ctx, df_full, train_df, test_df):
         op = optimize_dispatch(load, renew, cfg, forecast_price=price, forecast_carbon_kg=carb)
         bl_g = bl.get("grid_mw")
         op_g = op.get("grid_mw")
-        rows.append({
-            "day": d, "date": str(pd.to_datetime(day["timestamp"].iloc[0]).date()),
-            "baseline_cost": _safe(bl.get("expected_cost_usd")),
-            "optimized_cost": _safe(op.get("expected_cost_usd")),
-            "baseline_carbon": _safe(bl.get("carbon_kg")),
-            "optimized_carbon": _safe(op.get("carbon_kg")),
-            "baseline_peak": _safe(float(np.max(bl_g))) if bl_g is not None else None,
-            "optimized_peak": _safe(float(np.max(op_g))) if op_g is not None else None,
-        })
+        rows.append(
+            {
+                "day": d,
+                "date": str(pd.to_datetime(day["timestamp"].iloc[0]).date()),
+                "baseline_cost": _safe(bl.get("expected_cost_usd")),
+                "optimized_cost": _safe(op.get("expected_cost_usd")),
+                "baseline_carbon": _safe(bl.get("carbon_kg")),
+                "optimized_carbon": _safe(op.get("carbon_kg")),
+                "baseline_peak": _safe(float(np.max(bl_g))) if bl_g is not None else None,
+                "optimized_peak": _safe(float(np.max(op_g))) if op_g is not None else None,
+            }
+        )
     pd.DataFrame(rows).to_csv(ctx.tables / "dispatch_kpis_by_day.csv", index=False)
     print("  [OK] dispatch_kpis_by_day.csv")
 
@@ -392,10 +425,13 @@ def gen_tables(ctx, df_full, train_df, test_df):
     for p in sorted(ctx.models.glob("*")):
         if p.suffix in (".pkl", ".pt"):
             st = os.stat(p)
-            rows.append({
-                "model_file": p.name, "size_mb": round(st.st_size / 1e6, 2),
-                "modified": time.ctime(st.st_mtime),
-            })
+            rows.append(
+                {
+                    "model_file": p.name,
+                    "size_mb": round(st.st_size / 1e6, 2),
+                    "modified": time.ctime(st.st_mtime),
+                }
+            )
     pd.DataFrame(rows).to_csv(ctx.metrics_dir / "runtime.csv", index=False)
     print("  [OK] runtime.csv")
 
@@ -429,13 +465,17 @@ def gen_tables(ctx, df_full, train_df, test_df):
             except Exception:
                 inf_c += 1
         reg = [(c - oc) for c in costs] if oc else costs
-        rows.append({
-            "perturbation_pct": pct * 100, "n_trials": nt, "infeasible_count": inf_c,
-            "infeasible_rate": inf_c / nt,
-            "mean_cost": _safe(float(np.mean(costs))) if costs else None,
-            "mean_regret": _safe(float(np.mean(reg))) if reg else None,
-            "p95_regret": _safe(float(np.percentile(reg, 95))) if len(reg) > 1 else None,
-        })
+        rows.append(
+            {
+                "perturbation_pct": pct * 100,
+                "n_trials": nt,
+                "infeasible_count": inf_c,
+                "infeasible_rate": inf_c / nt,
+                "mean_cost": _safe(float(np.mean(costs))) if costs else None,
+                "mean_regret": _safe(float(np.mean(reg))) if reg else None,
+                "p95_regret": _safe(float(np.percentile(reg, 95))) if len(reg) > 1 else None,
+            }
+        )
     rob_df = pd.DataFrame(rows)
     rob_df.to_csv(ctx.metrics_dir / "robustness_summary.csv", index=False)
     print("  [OK] robustness_summary.csv")
@@ -457,8 +497,7 @@ def _fig_fva(ctx, test_df, target, num, label, color):
     ax.plot(yt, color=C["actual"], label="Actual")
     ax.plot(yp, color=C["forecast"], label="Forecast", alpha=0.85)
     ax.fill_between(range(n), yt, yp, alpha=0.15, color=C["forecast"])
-    ax.set(xlabel="Hour", ylabel=f"{label} (MW)",
-           title=f"Fig {num}. Forecast vs Actual - {label}")
+    ax.set(xlabel="Hour", ylabel=f"{label} (MW)", title=f"Fig {num}. Forecast vs Actual - {label}")
     ax.legend()
     ax.grid(alpha=0.3)
     fname = f"forecast_vs_actual_{target.replace('_mw', '')}.png"
@@ -532,9 +571,14 @@ def fig05(ctx, test_df):
         axes[i].set(title=target.replace("_mw", "").title(), xlabel="Residual (MW)", ylabel="Freq")
         mu, sig = float(np.mean(res)), float(np.std(res))
         axes[i].text(
-            0.95, 0.95, f"mu={mu:.1f}\nsig={sig:.1f}",
-            transform=axes[i].transAxes, ha="right", va="top", fontsize=9,
-            bbox=dict(boxstyle="round", fc="wheat", alpha=0.5),
+            0.95,
+            0.95,
+            f"mu={mu:.1f}\nsig={sig:.1f}",
+            transform=axes[i].transAxes,
+            ha="right",
+            va="top",
+            fontsize=9,
+            bbox={"boxstyle": "round", "fc": "wheat", "alpha": 0.5},
         )
     fig.suptitle("Fig 5. Residual Distribution", fontsize=13)
     plt.tight_layout()
@@ -585,8 +629,7 @@ def fig07(ctx, test_df):
     ax.plot(x, yt3[-n:], color=C["actual"], label="Actual")
     ax.plot(x, yp3[-n:], color=C["forecast"], label="Forecast")
     ax.fill_between(x, lo[-n:], hi[-n:], alpha=0.25, color=C["band"], label="90% PI (Conformal)")
-    ax.set(xlabel="Hour", ylabel="Load (MW)",
-           title="Fig 7. Prediction Intervals - Load (90% Conformal)")
+    ax.set(xlabel="Hour", ylabel="Load (MW)", title="Fig 7. Prediction Intervals - Load (90% Conformal)")
     ax.legend()
     ax.grid(alpha=0.3)
     fig.savefig(ctx.figures / "prediction_intervals_load.png", dpi=DPI)
@@ -609,7 +652,7 @@ def fig08(ctx, test_df):
         yt3, yp3 = yt2[cn:], yp2[cn:]
         covs = []
         for h in horizons:
-            cs = [ci.coverage(yt3[s:s + h], yp3[s:s + h]) for s in range(0, len(yt3) - h + 1, h)]
+            cs = [ci.coverage(yt3[s : s + h], yp3[s : s + h]) for s in range(0, len(yt3) - h + 1, h)]
             covs.append(float(np.mean(cs)) if cs else float("nan"))
         ax.plot(horizons, covs, marker="o", label=target.replace("_mw", "").title())
     ax.axhline(0.90, color="red", linestyle="--", label="Target (90%)")
@@ -637,7 +680,7 @@ def fig09(ctx, test_df):
         yp3 = yp2[cn:]
         wids = []
         for h in horizons:
-            ws = [ci.mean_width(yp3[s:s + h]) for s in range(0, len(yp3) - h + 1, h)]
+            ws = [ci.mean_width(yp3[s : s + h]) for s in range(0, len(yp3) - h + 1, h)]
             wids.append(float(np.mean(ws)) if ws else float("nan"))
         ax.plot(horizons, wids, marker="s", label=target.replace("_mw", "").title())
     ax.set(xlabel="Horizon (hours)", ylabel="MPIW (MW)", title="Fig 9. Interval Width by Horizon")
@@ -786,10 +829,15 @@ def fig14(ctx, test_df):
     colors = ["#1f77b4", "#2ca02c", "#ff7f0e"]
     fig, ax = plt.subplots(figsize=(7, 4.5))
     bars = ax.bar(labels, vals, color=colors, width=0.6)
-    for b, v in zip(bars, vals):
+    for b, v in zip(bars, vals, strict=False):
         ax.text(
-            b.get_x() + b.get_width() / 2, b.get_height() + 0.3,
-            f"{v:.1f}%", ha="center", va="bottom", fontsize=11, fontweight="bold",
+            b.get_x() + b.get_width() / 2,
+            b.get_height() + 0.3,
+            f"{v:.1f}%",
+            ha="center",
+            va="bottom",
+            fontsize=11,
+            fontweight="bold",
         )
     ax.set(ylabel="Improvement (%)", title="Fig 14. Impact Savings - ORIUS vs Baseline")
     ax.grid(axis="y", alpha=0.3)
@@ -825,11 +873,13 @@ def fig15(ctx, test_df):
     for i, cw in enumerate(cws):
         if np.isfinite(costs[i]):
             ax.annotate(
-                f"w={cw}", (costs[i], carbons[i]),
-                textcoords="offset points", xytext=(5, 5), fontsize=8,
+                f"w={cw}",
+                (costs[i], carbons[i]),
+                textcoords="offset points",
+                xytext=(5, 5),
+                fontsize=8,
             )
-    ax.set(xlabel="Cost (USD)", ylabel="Carbon (kg CO2)",
-           title="Fig 15. Cost vs Carbon Trade-Off Sweep")
+    ax.set(xlabel="Cost (USD)", ylabel="Carbon (kg CO2)", title="Fig 15. Cost vs Carbon Trade-Off Sweep")
     ax.grid(alpha=0.3)
     fig.savefig(ctx.figures / "cost_vs_carbon_tradeoff.png", dpi=DPI)
     plt.close(fig)
@@ -840,10 +890,12 @@ def fig16(ctx, rob_df):
     fig, ax = plt.subplots(figsize=(8, 4.5))
     ax.bar(
         rob_df["perturbation_pct"].astype(str),
-        rob_df["infeasible_rate"] * 100, color=C["anomaly"],
+        rob_df["infeasible_rate"] * 100,
+        color=C["anomaly"],
     )
-    ax.set(xlabel="Perturbation (%)", ylabel="Infeasible Rate (%)",
-           title="Fig 16. Robustness - Infeasible Rate")
+    ax.set(
+        xlabel="Perturbation (%)", ylabel="Infeasible Rate (%)", title="Fig 16. Robustness - Infeasible Rate"
+    )
     ax.grid(axis="y", alpha=0.3)
     fig.savefig(ctx.figures / "robustness_infeasible_rate.png", dpi=DPI)
     plt.close(fig)
@@ -876,19 +928,23 @@ def fig17(ctx, test_df):
                 if c is not None:
                     regs.append(float(c) - oc)
             except Exception:
-                pass
+                continue
         all_reg[f"{int(pct * 100)}%"] = regs
     fig, ax = plt.subplots(figsize=(8, 5))
-    data = [v for v in all_reg.values()]
+    data = list(all_reg.values())
     tick_labels = list(all_reg.keys())
     ax.boxplot(
-        data, patch_artist=True,
-        boxprops=dict(facecolor=C["band"], alpha=0.7),
-        medianprops=dict(color="red", linewidth=2),
+        data,
+        patch_artist=True,
+        boxprops={"facecolor": C["band"], "alpha": 0.7},
+        medianprops={"color": "red", "linewidth": 2},
     )
     ax.set_xticklabels(tick_labels)
-    ax.set(xlabel="Perturbation", ylabel="Regret vs Oracle (USD)",
-           title="Fig 17. Robustness - Regret Distribution")
+    ax.set(
+        xlabel="Perturbation",
+        ylabel="Regret vs Oracle (USD)",
+        title="Fig 17. Robustness - Regret Distribution",
+    )
     ax.grid(axis="y", alpha=0.3)
     fig.savefig(ctx.figures / "robustness_regret_boxplot.png", dpi=DPI)
     plt.close(fig)
@@ -908,7 +964,7 @@ def fig18(ctx, train_df, test_df):
     weeks = []
     drift_fracs = []
     for start in range(0, len(df) - window + 1, stride):
-        current = df.iloc[start:start + window]
+        current = df.iloc[start : start + window]
         drift = compute_data_drift(train_df, current, fcols, thr)
         nd = sum(1 for c in drift.get("columns", {}).values() if c.get("p_value", 1.0) < thr)
         drift_fracs.append(nd / max(len(fcols), 1) * 100)
@@ -916,8 +972,7 @@ def fig18(ctx, train_df, test_df):
     fig, ax = plt.subplots(figsize=(10, 4))
     ax.plot(weeks, drift_fracs, marker="o", color=C["actual"])
     ax.axhline(50, color="red", linestyle="--", label="50% threshold")
-    ax.set(xlabel="Week", ylabel="Features Drifted (%)",
-           title="Fig 18. Data Drift (KS Test) Over Time")
+    ax.set(xlabel="Week", ylabel="Features Drifted (%)", title="Fig 18. Data Drift (KS Test) Over Time")
     ax.legend(fontsize=9)
     ax.grid(alpha=0.3)
     fig.savefig(ctx.figures / "data_drift_ks_over_time.png", dpi=DPI)
@@ -982,7 +1037,8 @@ def build_reports(ctx, test_df, interval_df, rob_df):
     except ImportError:
         rob_md = rob_df.to_string(index=False)
     lines = [
-        "# Decision Robustness Report\n\n", rob_md,
+        "# Decision Robustness Report\n\n",
+        rob_md,
         "\n\n![](figures/robustness_infeasible_rate.png)\n\n",
         "![](figures/robustness_regret_boxplot.png)\n",
     ]
@@ -994,7 +1050,8 @@ def build_reports(ctx, test_df, interval_df, rob_df):
     except ImportError:
         int_md = interval_df.to_string(index=False)
     lines = [
-        "# Forecast Interval Report\n\n", int_md,
+        "# Forecast Interval Report\n\n",
+        int_md,
         "\n\n![](figures/prediction_intervals_load.png)\n\n",
         "![](figures/coverage_by_horizon.png)\n\n",
         "![](figures/interval_width_by_horizon.png)\n",
@@ -1045,21 +1102,35 @@ def main():
     print("CHECKLIST")
     print("=" * 60)
     figs = [
-        "forecast_vs_actual_load.png", "forecast_vs_actual_wind.png",
-        "forecast_vs_actual_solar.png", "rolling_backtest_rmse_by_week.png",
-        "error_distribution_residuals.png", "seasonality_error_heatmap.png",
-        "prediction_intervals_load.png", "coverage_by_horizon.png",
-        "interval_width_by_horizon.png", "anomaly_timeline.png",
-        "residual_zscore_timeline.png", "dispatch_compare.png", "soc_trajectory.png",
-        "impact_savings.png", "cost_vs_carbon_tradeoff.png",
-        "robustness_infeasible_rate.png", "robustness_regret_boxplot.png",
-        "data_drift_ks_over_time.png", "model_drift_metric_over_time.png",
+        "forecast_vs_actual_load.png",
+        "forecast_vs_actual_wind.png",
+        "forecast_vs_actual_solar.png",
+        "rolling_backtest_rmse_by_week.png",
+        "error_distribution_residuals.png",
+        "seasonality_error_heatmap.png",
+        "prediction_intervals_load.png",
+        "coverage_by_horizon.png",
+        "interval_width_by_horizon.png",
+        "anomaly_timeline.png",
+        "residual_zscore_timeline.png",
+        "dispatch_compare.png",
+        "soc_trajectory.png",
+        "impact_savings.png",
+        "cost_vs_carbon_tradeoff.png",
+        "robustness_infeasible_rate.png",
+        "robustness_regret_boxplot.png",
+        "data_drift_ks_over_time.png",
+        "model_drift_metric_over_time.png",
     ]
     tbls = [
-        "tables/data_coverage.csv", "tables/missingness.csv",
-        "metrics/forecast_point_metrics.csv", "metrics/forecast_window_metrics.csv",
-        "metrics/forecast_intervals.csv", "impact_summary.csv",
-        "tables/dispatch_kpis_by_day.csv", "metrics/runtime.csv",
+        "tables/data_coverage.csv",
+        "tables/missingness.csv",
+        "metrics/forecast_point_metrics.csv",
+        "metrics/forecast_window_metrics.csv",
+        "metrics/forecast_intervals.csv",
+        "impact_summary.csv",
+        "tables/dispatch_kpis_by_day.csv",
+        "metrics/runtime.csv",
         "metrics/robustness_summary.csv",
     ]
     ok = True

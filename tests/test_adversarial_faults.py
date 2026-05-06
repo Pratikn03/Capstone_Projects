@@ -5,22 +5,22 @@ Phase 3 of ORIUS gap-closing plan:
   - coordinated_spoof fault: systematic small bias
   - compute_reliability_robust: MAD spike detection + trimmed mean + consistency check
 """
+
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
+from orius.dc3s.quality import compute_reliability_robust
 from orius.orius_bench.fault_engine import (
     FaultEvent,
     apply_faults,
-    generate_fault_schedule,
 )
-from orius.dc3s.quality import compute_reliability_robust
-
 
 # ---------------------------------------------------------------------------
 # Replay fault
 # ---------------------------------------------------------------------------
+
 
 class TestReplayFault:
     def test_replay_returns_stale_reading(self):
@@ -43,7 +43,8 @@ class TestReplayFault:
         """replay with empty history returns original state."""
         true_state = {"soc": 0.80}
         fault = FaultEvent(
-            step=0, kind="replay",
+            step=0,
+            kind="replay",
             params={"k_steps_ago": 5, "history": []},
         )
         observed = apply_faults(true_state, [fault])
@@ -54,7 +55,8 @@ class TestReplayFault:
         history = [{"soc": 0.5}]
         true_state = {"soc": 0.90}
         fault = FaultEvent(
-            step=0, kind="replay",
+            step=0,
+            kind="replay",
             params={"k_steps_ago": 10, "history": history},
         )
         observed = apply_faults(true_state, [fault])
@@ -66,7 +68,8 @@ class TestReplayFault:
         true_state = {"soc": 0.80}
         original_soc = true_state["soc"]
         fault = FaultEvent(
-            step=0, kind="replay",
+            step=0,
+            kind="replay",
             params={"k_steps_ago": 1, "history": history},
         )
         apply_faults(true_state, [fault])
@@ -76,7 +79,8 @@ class TestReplayFault:
         history = [{"soc": 0.11}, {"soc": 0.22}, {"soc": 0.33}]
         true_state = {"soc": 0.99}
         fault = FaultEvent(
-            step=0, kind="replay",
+            step=0,
+            kind="replay",
             params={"k_steps_ago": 1, "history": history},
         )
         observed = apply_faults(true_state, [fault])
@@ -87,23 +91,26 @@ class TestReplayFault:
 # coordinated_spoof fault
 # ---------------------------------------------------------------------------
 
+
 class TestCoordinatedSpoofFault:
     def test_spoof_applies_small_systematic_bias(self):
         """coordinated_spoof should add spoof_fraction * normal_range to all numeric fields."""
         true_state = {"soc": 0.50, "power": 100.0}
         fault = FaultEvent(
-            step=0, kind="coordinated_spoof",
+            step=0,
+            kind="coordinated_spoof",
             params={"spoof_fraction": 0.05, "normal_range": 1.0},
         )
         observed = apply_faults(true_state, [fault])
-        assert observed["soc"]   == pytest.approx(0.55)
+        assert observed["soc"] == pytest.approx(0.55)
         assert observed["power"] == pytest.approx(100.05)
 
     def test_spoof_magnitude_le_10pct(self):
         """Default spoof should produce < 10% shift."""
         true_state = {"soc": 0.50}
         fault = FaultEvent(
-            step=0, kind="coordinated_spoof",
+            step=0,
+            kind="coordinated_spoof",
             params={"spoof_fraction": 0.10, "normal_range": 1.0},
         )
         observed = apply_faults(true_state, [fault])
@@ -113,7 +120,8 @@ class TestCoordinatedSpoofFault:
     def test_spoof_does_not_mutate_original(self):
         true_state = {"soc": 0.50}
         fault = FaultEvent(
-            step=0, kind="coordinated_spoof",
+            step=0,
+            kind="coordinated_spoof",
             params={"spoof_fraction": 0.05, "normal_range": 1.0},
         )
         apply_faults(true_state, [fault])
@@ -122,7 +130,8 @@ class TestCoordinatedSpoofFault:
     def test_spoof_affects_all_numeric_fields(self):
         true_state = {"a": 1.0, "b": 2.0, "c": 3.0}
         fault = FaultEvent(
-            step=0, kind="coordinated_spoof",
+            step=0,
+            kind="coordinated_spoof",
             params={"spoof_fraction": 0.10, "normal_range": 10.0},
         )
         observed = apply_faults(true_state, [fault])
@@ -134,6 +143,7 @@ class TestCoordinatedSpoofFault:
 # ---------------------------------------------------------------------------
 # compute_reliability_robust
 # ---------------------------------------------------------------------------
+
 
 class TestComputeReliabilityRobust:
     def test_clean_signal_gives_high_reliability(self):
@@ -158,7 +168,8 @@ class TestComputeReliabilityRobust:
         # |median - mean| / std > 0.5 triggers the adversarial_suspected flag.
         signal = [1.0] * 15 + [10.0] * 5  # n=20
         _, flags = compute_reliability_robust(
-            signal, consistency_threshold=0.5  # calibrated threshold for test
+            signal,
+            consistency_threshold=0.5,  # calibrated threshold for test
         )
         assert flags["adversarial_suspected"] is True
 
@@ -193,9 +204,19 @@ class TestComputeReliabilityRobust:
         """Flags dict contains all required keys."""
         signal = list(range(10))
         _, flags = compute_reliability_robust(signal)
-        for key in ("robust", "n", "spike_detected", "adversarial_suspected",
-                    "mad_z", "consistency_ratio", "trimmed_mean", "full_mean",
-                    "median", "mad", "trim_frac"):
+        for key in (
+            "robust",
+            "n",
+            "spike_detected",
+            "adversarial_suspected",
+            "mad_z",
+            "consistency_ratio",
+            "trimmed_mean",
+            "full_mean",
+            "median",
+            "mad",
+            "trim_frac",
+        ):
             assert key in flags
 
     def test_empty_signal_returns_min_w(self):
@@ -220,10 +241,11 @@ class TestComputeReliabilityRobust:
 # Integration: adversarial fault schedule with apply_faults
 # ---------------------------------------------------------------------------
 
+
 class TestAdversarialScheduleIntegration:
     def test_adversarial_faults_do_not_crash(self):
         """Adversarial fault schedule runs end-to-end without errors."""
-        rng = np.random.default_rng(0)
+        np.random.default_rng(0)
         true_state = {"soc": 0.7, "power": 450.0}
         history = []
 
@@ -234,12 +256,14 @@ class TestAdversarialScheduleIntegration:
 
             if t % 3 == 0:
                 fault = FaultEvent(
-                    step=t, kind="replay",
+                    step=t,
+                    kind="replay",
                     params={"k_steps_ago": 2, "history": list(history)},
                 )
             else:
                 fault = FaultEvent(
-                    step=t, kind="coordinated_spoof",
+                    step=t,
+                    kind="coordinated_spoof",
                     params={"spoof_fraction": 0.05, "normal_range": 1.0},
                 )
             observed = apply_faults(dict(true_state), [fault])

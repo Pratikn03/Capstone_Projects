@@ -3,6 +3,7 @@
 POST /step — Execute one DC3S safety step for any supported domain.
 GET  /health — Liveness check.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -11,10 +12,10 @@ from fastapi import FastAPI, HTTPException, Security
 
 from orius.universal_framework.domain_registry import get_adapter
 from orius.universal_framework.pipeline import run_universal_step
+from services.api.security import get_api_key, verify_scope
 
 from .models import StepRequest, StepResponse
 from .serialization import api_jsonable
-from services.api.security import get_api_key, verify_scope
 
 app = FastAPI(
     title="ORIUS DC3S API",
@@ -29,10 +30,10 @@ app = FastAPI(
 
 # Maps user-facing domain names to domain registry IDs
 _DOMAIN_MAP: dict[str, str] = {
-    "battery":    "energy",
-    "energy":     "energy",
-    "vehicle":    "av",
-    "av":         "av",
+    "battery": "energy",
+    "energy": "energy",
+    "vehicle": "av",
+    "av": "av",
     "healthcare": "healthcare",
 }
 _SUPPORTED_DOMAINS = frozenset(_DOMAIN_MAP.keys())
@@ -62,8 +63,7 @@ def step(request: StepRequest, api_key: str = Security(get_api_key)) -> StepResp
     if domain not in _SUPPORTED_DOMAINS:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported domain '{domain}'. "
-                   f"Supported: {sorted(_SUPPORTED_DOMAINS)}",
+            detail=f"Unsupported domain '{domain}'. Supported: {sorted(_SUPPORTED_DOMAINS)}",
         )
 
     registry_id = _DOMAIN_MAP[domain]

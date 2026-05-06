@@ -10,18 +10,17 @@ Numeric/date/boolean result fields are never filled with synthetic constants.
 If a typed result cannot be derived from tracked runtime/training artifacts, it
 stays missing so the integrity audit can block or classify it as noncanonical.
 """
+
 from __future__ import annotations
 
-import csv
 import json
 import math
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import Any
 
 import duckdb
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -263,7 +262,9 @@ def sync_transfer_tables() -> bool:
                 "global_coverage": row.get("picp_90", "not_applicable"),
                 "global_mean_width": row.get("mean_width", "not_applicable"),
                 "true_soc_violation_rate": row.get("true_soc_violation_rate", "not_applicable"),
-                "true_soc_violation_severity_p95_mwh": row.get("true_soc_violation_severity_p95_mwh", "not_applicable"),
+                "true_soc_violation_severity_p95_mwh": row.get(
+                    "true_soc_violation_severity_p95_mwh", "not_applicable"
+                ),
                 "cost_delta_pct": row.get("cost_delta_pct", "not_applicable"),
             }
         )
@@ -289,7 +290,9 @@ def sync_baseline_tables() -> bool:
     pub_dir.mkdir(parents=True, exist_ok=True)
     if "Region" in df.columns:
         for region in ("DE", "US"):
-            df[df["Region"] == region].to_csv(pub_dir / f"baseline_comparison_{region.lower()}.csv", index=False)
+            df[df["Region"] == region].to_csv(
+                pub_dir / f"baseline_comparison_{region.lower()}.csv", index=False
+            )
     df.to_csv(pub_dir / "baseline_comparison_all.csv", index=False)
 
     point_cols = ["RMSE", "MAE", "sMAPE (%)", "R2"]
@@ -298,15 +301,23 @@ def sync_baseline_tables() -> bool:
         "release_id": "no_release_id",
         "generated_by": "scripts/repair_table_result_integrity.py",
         "thesis_headline_point_metrics_complete": bool(
-            all(col in df.columns and not df[col].map(lambda value, col=col: looks_missing(value, col)).any() for col in point_cols)
+            all(
+                col in df.columns and not df[col].map(lambda value, col=col: looks_missing(value, col)).any()
+                for col in point_cols
+            )
         ),
         "all_model_uq_complete": bool(
-            all(col in df.columns and not df[col].map(lambda value, col=col: looks_missing(value, col)).any() for col in uq_cols)
+            all(
+                col in df.columns and not df[col].map(lambda value, col=col: looks_missing(value, col)).any()
+                for col in uq_cols
+            )
         ),
         "gbm_uq_complete": bool(
             all(
                 col in df.columns
-                and not df[df.get("Model", "") == "GBM"][col].map(lambda value, col=col: looks_missing(value, col)).any()
+                and not df[df.get("Model", "") == "GBM"][col]
+                .map(lambda value, col=col: looks_missing(value, col))
+                .any()
                 for col in uq_cols
             )
         ),
@@ -316,7 +327,9 @@ def sync_baseline_tables() -> bool:
             if any(str(row.get(col, "")).strip().lower() == "not_applicable" for col in uq_cols)
         ],
     }
-    (pub_dir / "baseline_comparison_status.json").write_text(json.dumps(status, indent=2) + "\n", encoding="utf-8")
+    (pub_dir / "baseline_comparison_status.json").write_text(
+        json.dumps(status, indent=2) + "\n", encoding="utf-8"
+    )
     return True
 
 
@@ -430,11 +443,24 @@ def normalize_duckdb(path: Path) -> bool:
                         [replacement],
                     )
                     changed = True
-                elif "BOOL" in dtype:
-                    continue
-                elif any(token in dtype for token in ("INT", "DOUBLE", "FLOAT", "DECIMAL", "REAL", "HUGEINT", "UBIGINT", "BIGINT")):
-                    continue
-                elif "DATE" in dtype or "TIME" in dtype:
+                elif (
+                    "BOOL" in dtype
+                    or any(
+                        token in dtype
+                        for token in (
+                            "INT",
+                            "DOUBLE",
+                            "FLOAT",
+                            "DECIMAL",
+                            "REAL",
+                            "HUGEINT",
+                            "UBIGINT",
+                            "BIGINT",
+                        )
+                    )
+                    or "DATE" in dtype
+                    or "TIME" in dtype
+                ):
                     continue
     finally:
         con.close()
@@ -455,9 +481,9 @@ def remove_synthetic_duckdb_fixed_values(path: Path) -> bool:
                 col = str(row[1])
                 dtype = str(row[2]).upper()
                 col_q = quote_ident(col)
-                if (
-                    col.lower() in SYNTHETIC_NUMERIC_COLUMNS
-                    and any(token in dtype for token in ("INT", "DOUBLE", "FLOAT", "DECIMAL", "REAL", "HUGEINT", "UBIGINT", "BIGINT"))
+                if col.lower() in SYNTHETIC_NUMERIC_COLUMNS and any(
+                    token in dtype
+                    for token in ("INT", "DOUBLE", "FLOAT", "DECIMAL", "REAL", "HUGEINT", "UBIGINT", "BIGINT")
                 ):
                     con.execute(f"UPDATE {table_q} SET {col_q} = NULL WHERE {col_q} = -1")
                     changed = True

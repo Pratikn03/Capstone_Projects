@@ -4,23 +4,24 @@ Prometheus Metrics Integration for ORIUS API.
 This module provides comprehensive metrics collection for monitoring
 the ORIUS energy forecasting and optimization platform.
 """
+
 from __future__ import annotations
 
-import time
-from functools import wraps
 import inspect
-from typing import Callable, Optional
+import time
+from collections.abc import Callable
+from functools import wraps
 
 from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    REGISTRY,
+    CollectorRegistry,
     Counter,
     Gauge,
     Histogram,
     Info,
     generate_latest,
-    CONTENT_TYPE_LATEST,
-    CollectorRegistry,
     multiprocess,
-    REGISTRY,
 )
 
 # =============================================================================
@@ -247,12 +248,15 @@ SERVICE_INFO = Info(
 # MIDDLEWARE & DECORATORS
 # =============================================================================
 
+
 def track_request_metrics(endpoint: str):
     """Decorator to track request metrics for an endpoint."""
+
     def decorator(func: Callable):
         method = "POST"  # Default, could be extracted from request
 
         if inspect.iscoroutinefunction(func):
+
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
                 REQUESTS_IN_PROGRESS.labels(endpoint=endpoint).inc()
@@ -260,17 +264,11 @@ def track_request_metrics(endpoint: str):
 
                 try:
                     result = await func(*args, **kwargs)
-                    REQUESTS_TOTAL.labels(
-                        endpoint=endpoint, method=method, status="success"
-                    ).inc()
+                    REQUESTS_TOTAL.labels(endpoint=endpoint, method=method, status="success").inc()
                     return result
                 except Exception as e:
-                    REQUESTS_TOTAL.labels(
-                        endpoint=endpoint, method=method, status="error"
-                    ).inc()
-                    REQUEST_ERRORS.labels(
-                        endpoint=endpoint, method=method, error_type=type(e).__name__
-                    ).inc()
+                    REQUESTS_TOTAL.labels(endpoint=endpoint, method=method, status="error").inc()
+                    REQUEST_ERRORS.labels(endpoint=endpoint, method=method, error_type=type(e).__name__).inc()
                     raise
                 finally:
                     duration = time.perf_counter() - start_time
@@ -286,17 +284,11 @@ def track_request_metrics(endpoint: str):
 
             try:
                 result = func(*args, **kwargs)
-                REQUESTS_TOTAL.labels(
-                    endpoint=endpoint, method=method, status="success"
-                ).inc()
+                REQUESTS_TOTAL.labels(endpoint=endpoint, method=method, status="success").inc()
                 return result
             except Exception as e:
-                REQUESTS_TOTAL.labels(
-                    endpoint=endpoint, method=method, status="error"
-                ).inc()
-                REQUEST_ERRORS.labels(
-                    endpoint=endpoint, method=method, error_type=type(e).__name__
-                ).inc()
+                REQUESTS_TOTAL.labels(endpoint=endpoint, method=method, status="error").inc()
+                REQUEST_ERRORS.labels(endpoint=endpoint, method=method, error_type=type(e).__name__).inc()
                 raise
             finally:
                 duration = time.perf_counter() - start_time
@@ -310,32 +302,33 @@ def track_request_metrics(endpoint: str):
 
 def track_forecast_metrics(model: str, target: str, region: str = "DE"):
     """Decorator to track forecast generation metrics."""
+
     def decorator(func: Callable):
         @wraps(func)
         def wrapper(*args, **kwargs):
             start_time = time.perf_counter()
-            
+
             try:
                 result = func(*args, **kwargs)
                 duration = time.perf_counter() - start_time
-                FORECAST_DURATION.labels(
-                    model=model, target=target, region=region
-                ).observe(duration)
+                FORECAST_DURATION.labels(model=model, target=target, region=region).observe(duration)
                 return result
             except Exception:
                 raise
-        
+
         return wrapper
+
     return decorator
 
 
 def track_optimization_metrics(mode: str, solver: str = "highs"):
     """Decorator to track optimization metrics."""
+
     def decorator(func: Callable):
         @wraps(func)
         def wrapper(*args, **kwargs):
             start_time = time.perf_counter()
-            
+
             try:
                 result = func(*args, **kwargs)
                 duration = time.perf_counter() - start_time
@@ -343,8 +336,9 @@ def track_optimization_metrics(mode: str, solver: str = "highs"):
                 return result
             except Exception:
                 raise
-        
+
         return wrapper
+
     return decorator
 
 
@@ -352,26 +346,27 @@ def track_optimization_metrics(mode: str, solver: str = "highs"):
 # METRIC UPDATE FUNCTIONS
 # =============================================================================
 
+
 def update_forecast_metrics(
     model: str,
     target: str,
     region: str,
     mape: float,
     rmse: float,
-    forecast_value: Optional[float] = None,
-    actual_value: Optional[float] = None,
-    drift_score: Optional[float] = None,
+    forecast_value: float | None = None,
+    actual_value: float | None = None,
+    drift_score: float | None = None,
 ):
     """Update forecast-related metrics."""
     FORECAST_MAPE.labels(model=model, target=target, region=region).set(mape)
     FORECAST_RMSE.labels(model=model, target=target, region=region).set(rmse)
-    
+
     if forecast_value is not None:
         FORECAST_VALUE.labels(target=target, region=region, horizon="1h").set(forecast_value)
-    
+
     if actual_value is not None:
         ACTUAL_VALUE.labels(target=target, region=region).set(actual_value)
-    
+
     if drift_score is not None:
         FORECAST_DRIFT_SCORE.labels(model=model, target=target).set(drift_score)
 
@@ -403,10 +398,10 @@ def update_battery_metrics(
 
 def update_streaming_metrics(
     topic: str,
-    consumer_lag: Optional[int] = None,
+    consumer_lag: int | None = None,
     processing_delay: float = 0.0,
     partition: int | str = 0,
-    lag: Optional[int] = None,
+    lag: int | None = None,
 ):
     """Update streaming-related metrics.
 
@@ -458,7 +453,6 @@ def update_drift_metrics(
     DRIFT_SCORE.labels(feature=feature).set(float(drift_score))
 
 
-
 def record_safety_violation(violation_type: str):
     """Record a safety violation."""
     SAFETY_VIOLATIONS.labels(violation_type=violation_type).inc()
@@ -471,21 +465,24 @@ def update_watchdog_heartbeat():
 
 def set_service_info(version: str, region: str, environment: str):
     """Set service information."""
-    SERVICE_INFO.info({
-        "version": version,
-        "region": region,
-        "environment": environment,
-    })
+    SERVICE_INFO.info(
+        {
+            "version": version,
+            "region": region,
+            "environment": environment,
+        }
+    )
 
 
 # =============================================================================
 # METRICS ENDPOINT
 # =============================================================================
 
+
 def get_metrics() -> bytes:
     """
     Generate latest metrics in Prometheus format.
-    
+
     Returns:
         Bytes of metrics in Prometheus exposition format
     """
@@ -501,16 +498,18 @@ def get_metrics_content_type() -> str:
 # MULTIPROCESS MODE (for Gunicorn)
 # =============================================================================
 
+
 def setup_multiprocess_metrics(prometheus_multiproc_dir: str):
     """
     Setup metrics for multiprocess mode (Gunicorn workers).
-    
+
     Args:
         prometheus_multiproc_dir: Directory for multiprocess metric files
     """
     import os
-    os.environ["prometheus_multiproc_dir"] = prometheus_multiproc_dir
-    
+
+    os.environ["PROMETHEUS_MULTIPROC_DIR"] = prometheus_multiproc_dir
+
     registry = CollectorRegistry()
     multiprocess.MultiProcessCollector(registry)
     return registry

@@ -6,14 +6,15 @@ Verifies that CBFAsORIUS and RobustMPCAsORIUS:
   2. Reproduce the expected behaviour of the underlying prior frameworks
   3. Demonstrate the limitation (constant / fixed w_t) that ORIUS generalises
 """
+
 import numpy as np
 import pytest
 
 from orius.universal.contract import ContractVerifier, UniversalAdapterProtocol
 from orius.universal.unification import CBFAsORIUS, RobustMPCAsORIUS
 
-
 # ── Barrier function fixture ───────────────────────────────────────────────────
+
 
 def barrier_h(x: np.ndarray) -> float:
     """Simple 1-D barrier: h(x) = 1 − |x[0]|.  Safe set: |x| ≤ 1."""
@@ -22,13 +23,13 @@ def barrier_h(x: np.ndarray) -> float:
 
 # ── CBFAsORIUS tests ───────────────────────────────────────────────────────────
 
-class TestCBFAsORIUS:
 
+class TestCBFAsORIUS:
     def setup_method(self):
         self.adapter = CBFAsORIUS(h_fn=barrier_h, gamma=1.0, action_dim=1)
         self.verifier = ContractVerifier(self.adapter, alpha=0.05, epsilon=1e-6)
-        self.z_safe = np.array([0.3])    # h = 0.7 > 0 → inside safe set
-        self.z_unsafe = np.array([0.98]) # h = 0.02 → near boundary
+        self.z_safe = np.array([0.3])  # h = 0.7 > 0 → inside safe set
+        self.z_unsafe = np.array([0.98])  # h = 0.02 → near boundary
         self.q_t = 0.05
 
     def test_passes_all_five_invariants_safe_state(self):
@@ -65,9 +66,9 @@ class TestCBFAsORIUS:
     def test_unification_argument_w_t_never_drops_below_one(self):
         """Demonstrate the CBF limitation: w_t is always 1.0 regardless of fault."""
         for fault_scenario in [
-            {"state": [0.5]},                          # normal telemetry
-            {"state": [0.5], "dropout": True},         # dropout fault
-            {"state": [0.5], "stale": True, "age": 5}, # stale measurement
+            {"state": [0.5]},  # normal telemetry
+            {"state": [0.5], "dropout": True},  # dropout fault
+            {"state": [0.5], "stale": True, "age": 5},  # stale measurement
         ]:
             _, w_t = self.adapter.observe(fault_scenario)
             assert w_t == 1.0, (
@@ -82,8 +83,8 @@ class TestCBFAsORIUS:
 
 # ── RobustMPCAsORIUS tests ────────────────────────────────────────────────────
 
-class TestRobustMPCAsORIUS:
 
+class TestRobustMPCAsORIUS:
     def setup_method(self):
         self.adapter = RobustMPCAsORIUS(
             tube_radius=0.1,
@@ -124,8 +125,7 @@ class TestRobustMPCAsORIUS:
             assert np.all(operating.upper <= nominal.upper + 1e-9)
 
     def test_repair_clips_to_tightened_set(self):
-        safe_set = self.adapter.uncertainty_set(self.z_t, w_t=self.adapter.constant_w,
-                                               q_t=self.q_t)
+        safe_set = self.adapter.uncertainty_set(self.z_t, w_t=self.adapter.constant_w, q_t=self.q_t)
         if not safe_set.is_empty:
             outside = safe_set.upper + 5.0
             result = self.adapter.repair(outside, safe_set)
@@ -153,16 +153,15 @@ class TestRobustMPCAsORIUS:
 
     def test_invalid_tube_radius_raises(self):
         with pytest.raises(ValueError):
-            RobustMPCAsORIUS(tube_radius=-0.1, max_radius=1.0,
-                             action_lower=-1.0, action_upper=1.0)
+            RobustMPCAsORIUS(tube_radius=-0.1, max_radius=1.0, action_lower=-1.0, action_upper=1.0)
 
     def test_tube_exceeds_max_raises(self):
         with pytest.raises(ValueError):
-            RobustMPCAsORIUS(tube_radius=1.5, max_radius=1.0,
-                             action_lower=-1.0, action_upper=1.0)
+            RobustMPCAsORIUS(tube_radius=1.5, max_radius=1.0, action_lower=-1.0, action_upper=1.0)
 
 
 # ── Cross-framework unification check ─────────────────────────────────────────
+
 
 class TestUnificationInterpretation:
     """Verify the formal unification claim at the level of ContractVerifier."""

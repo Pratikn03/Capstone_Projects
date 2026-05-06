@@ -2,13 +2,15 @@
 
 Prototype extension. Not part of locked battery thesis claims.
 """
+
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
-from orius.dc3s.domain_adapter import DomainAdapter
 from orius.dc3s.certificate import make_certificate
+from orius.dc3s.domain_adapter import DomainAdapter
 from orius.universal_framework.reliability_runtime import assess_domain_reliability
 from orius.universal_framework.runtime_evidence import resolve_runtime_evidence
 
@@ -73,8 +75,7 @@ class VehicleDomainAdapter(DomainAdapter):
         if "ts_utc" not in out and "timestamp" in raw_packet:
             out["ts_utc"] = str(raw_packet["timestamp"])
         # Pass through RSS fields when present (Path B)
-        for k in ("lead_present", "lead_rel_x_m", "lead_speed_mps",
-                   "rss_safe_gap_m", "rss_violation_true"):
+        for k in ("lead_present", "lead_rel_x_m", "lead_speed_mps", "rss_safe_gap_m", "rss_violation_true"):
             if k in raw_packet:
                 out[k] = raw_packet[k]
         return out
@@ -85,6 +86,7 @@ class VehicleDomainAdapter(DomainAdapter):
         history: Sequence[Mapping[str, Any]] | None = None,
     ) -> tuple[float, Mapping[str, Any]]:
         """Compute reliability from AV-native telemetry signals."""
+
         def _lead_gap(payload: Mapping[str, Any]) -> float | None:
             lead_position = payload.get("lead_position_m")
             if lead_position is None:
@@ -237,7 +239,7 @@ class VehicleDomainAdapter(DomainAdapter):
                 cfg=cfg,
             )
         a = _f(candidate_action.get("acceleration_mps2"), 0.0)
-        unc = tightened_set.get("uncertainty", uncertainty)
+        tightened_set.get("uncertainty", uncertainty)
         cstr = tightened_set.get("constraints", constraints)
         a_min = _f(cstr.get("accel_min_mps2"), self._accel_min)
         a_lower = _f(tightened_set.get("acceleration_mps2_lower"), a_min)
@@ -302,7 +304,9 @@ class VehicleDomainAdapter(DomainAdapter):
         model_hash = str(cfg.get("model_hash", ""))
         config_hash = str(cfg.get("config_hash", ""))
         intervened = bool(repair_meta.get("repaired")) if isinstance(repair_meta, Mapping) else None
-        intervention_reason = repair_meta.get("intervention_reason") if isinstance(repair_meta, Mapping) else None
+        intervention_reason = (
+            repair_meta.get("intervention_reason") if isinstance(repair_meta, Mapping) else None
+        )
         reliability_w = float(reliability.get("w_t", reliability.get("w", 1.0)))
         drift_flag = bool(drift.get("drift", False))
         inflation = float(uncertainty.get("meta", {}).get("inflation", 1.0))

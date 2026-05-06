@@ -4,15 +4,21 @@ import csv
 import json
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 AUDIT_JSON = REPO_ROOT / "reports" / "publication" / "active_theorem_audit.json"
 ASSUMPTION_MAP_CSV = REPO_ROOT / "reports" / "publication" / "defended_assumption_map.csv"
 DEFENDED_CORE_JSON = REPO_ROOT / "reports" / "publication" / "defended_theorem_core.json"
+CH04 = REPO_ROOT / "chapters_merged" / "ch04_theoretical_foundations.tex"
+CH37 = REPO_ROOT / "chapters" / "ch37_universality_completeness.tex"
+APP_C = REPO_ROOT / "appendices" / "app_c_full_proofs.tex"
 
 
 def _load_payload() -> dict:
     return json.loads(AUDIT_JSON.read_text(encoding="utf-8"))
+
+
+def _read(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
 
 
 def test_active_theorem_audit_covers_yaml_canonical_surfaces() -> None:
@@ -49,6 +55,33 @@ def test_active_theorem_audit_covers_yaml_canonical_surfaces() -> None:
         "T_sensor_converse",
         "T_trajectory_PAC",
     ]
+
+
+def test_t1_to_t10_theorem_statements_are_strong_but_scoped() -> None:
+    ch04 = _read(CH04)
+    ch37 = _read(CH37)
+    app_c = _read(APP_C)
+
+    assert "Under Assumptions A1, A2, A4, A11, and A12" in ch04
+    assert "nonzero observation-error tail coexist" in ch04
+    assert "conditional one-step shield theorem" in ch04
+    assert "A1, A2, A4, A5, A6, A7, and A9" in ch04
+    assert "fixed-margin quality-ignorant" in ch04
+    assert "rate at which OASG grows" in ch04
+    assert r"\tau_t^{(\delta)}" in ch04
+    assert "with probability at least $1-\\delta$" in ch04
+    assert "piecewise hold-or-safe-landing rule" in ch04
+    assert "sequence-level comparison is the full defended T8" in ch04
+
+    assert r"\mathbb{E}\!\left[\mathrm{OASG}_T(\pi)\right]" in ch37
+    assert r"\sum_{t=1}^T \delta_t p_t(1-w_t)" in ch37
+    assert "grows linearly with the degradation" in ch37
+    assert "Mathematical contract vs. domain discharge" in ch37
+    assert "domain discharge artifacts are evidence, not an extra hidden assumption" in ch37
+    assert "contract-universal, not unrestricted-global" in ch37
+    assert r"\mathbb{E}[\mathrm{OASG}_T(\pi)]" in app_c
+    assert "Mathematical contract vs. domain discharge" in app_c
+    assert "Domain discharge is evidence, not an extra hidden assumption" in app_c
 
 
 def test_every_active_theorem_row_has_required_sync_fields() -> None:
@@ -130,7 +163,9 @@ def test_t11_domain_runtime_lemmas_are_supporting_not_flagship() -> None:
 
 def test_observation_ambiguity_sandwich_is_supporting_not_flagship() -> None:
     payload = _load_payload()
-    row = next(item for item in payload["theorems"] if item["theorem_id"] == "T10_T11_ObservationAmbiguitySandwich")
+    row = next(
+        item for item in payload["theorems"] if item["theorem_id"] == "T10_T11_ObservationAmbiguitySandwich"
+    )
     assert row["defense_tier"] == "supporting_defended"
     assert row["rigor_rating"] == "proof_runtime_linked"
     assert row["code_correspondence"] == "matches"
@@ -139,7 +174,17 @@ def test_observation_ambiguity_sandwich_is_supporting_not_flagship() -> None:
     assert row["unresolved_assumptions"] == []
     assert row["dependencies"] == ["T10", "T11", "Common safe-core witness"]
     assert "global optimality" in row["scope_note"]
+    assert "contract-universal, not unrestricted-global" in row["scope_note"]
     assert "ObservationAmbiguitySandwich" in row["title"]
+
+
+def test_t9_t10_separate_contract_from_domain_discharge() -> None:
+    payload = _load_payload()
+    for theorem_id in ("T9", "T10"):
+        row = next(item for item in payload["theorems"] if item["theorem_id"] == theorem_id)
+        contract_text = f"{row['scope_note']} {row['weakest_step']} {row['remediation_detail']}"
+        assert "domain discharge is evidence, not an extra hidden assumption" in contract_text
+        assert row["rigor_rating"] == "mechanized_kernel_empirical_discharge"
 
 
 def test_equal_domain_artifact_package_rows_are_supporting_not_flagship() -> None:
@@ -188,20 +233,31 @@ def test_namespace_drift_entries_cover_legacy_numbering_and_mini_harness() -> No
     payload = _load_payload()
     drift_surfaces = {entry["surface"] for entry in payload["namespace_drift"]}
     assert "src/orius/dc3s/coverage_theorem.py and tests/test_conditional_coverage.py" in drift_surfaces
-    assert "src/orius/universal/contract.py, tests/test_universal_contract.py, and tests/test_unification.py" in drift_surfaces
+    assert (
+        "src/orius/universal/contract.py, tests/test_universal_contract.py, and tests/test_unification.py"
+        in drift_surfaces
+    )
     assert "reports/publication/theorem_surface_register.csv" in drift_surfaces
 
 
 def test_defense_tiers_match_the_rebuilt_core() -> None:
     payload = _load_payload()
-    flagship_ids = [row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "flagship_defended"]
-    supporting_ids = [row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "supporting_defended"]
-    draft_ids = [row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "draft_non_defended"]
+    flagship_ids = [
+        row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "flagship_defended"
+    ]
+    supporting_ids = [
+        row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "supporting_defended"
+    ]
+    draft_ids = [
+        row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "draft_non_defended"
+    ]
 
     assert flagship_ids == ["T1", "T2", "T3a", "T4", "T6", "T7", "T11", "T_trajectory_PAC"]
     assert supporting_ids == [
         "T3b",
         "T8",
+        "T9",
+        "T10",
         "T10_T11_ObservationAmbiguitySandwich",
         "T11_AV_BrakeHold",
         "T11_HC_FailSafeRelease",
@@ -214,7 +270,6 @@ def test_defense_tiers_match_the_rebuilt_core() -> None:
         "T_stale_decay",
     ]
     assert "T5" in draft_ids
-    assert "T9" in draft_ids
     assert "T_minimax" in draft_ids
 
 
@@ -231,8 +286,8 @@ def test_summary_exposes_defended_core_counts_and_readiness() -> None:
     summary = payload["summary"]
     assert summary["defense_tier_counts"] == {
         "flagship_defended": 8,
-        "supporting_defended": 12,
-        "draft_non_defended": 9,
+        "supporting_defended": 14,
+        "draft_non_defended": 7,
     }
     assert summary["flagship_gate_ready"] is True
 
@@ -249,6 +304,8 @@ def test_defended_core_is_generated_from_active_defended_registry_rows() -> None
         "T6",
         "T7",
         "T8",
+        "T9",
+        "T10",
         "T11",
         "T10_T11_ObservationAmbiguitySandwich",
         "T11_AV_BrakeHold",
@@ -262,8 +319,6 @@ def test_defended_core_is_generated_from_active_defended_registry_rows() -> None
         "T_stale_decay",
         "T_trajectory_PAC",
     ]
-    assert "T9" not in row_ids
-    assert "T10" not in row_ids
     assert core["summary"]["flagship_defended_ids"] == [
         "T1",
         "T2",
@@ -293,7 +348,6 @@ def test_assumption_map_separates_t11_typed_obligations_from_unresolved_assumpti
     scoped_unresolved = [
         row
         for row in rows
-        if row["item_type"] == "theorem_local_assumption"
-        and row["resolution_status"] == "scoped_unresolved"
+        if row["item_type"] == "theorem_local_assumption" and row["resolution_status"] == "scoped_unresolved"
     ]
-    assert any(row["theorem_id"] == "T10" and "boundary-mass" in row["item"] for row in scoped_unresolved)
+    assert not any(row["theorem_id"] == "T10" and "boundary-mass" in row["item"] for row in scoped_unresolved)

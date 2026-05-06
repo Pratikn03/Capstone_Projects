@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Build a dataset-integrity audit for the staged ORIUS data surfaces."""
+
 from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -16,9 +17,10 @@ if str(REPO_ROOT) not in sys.path:
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from scripts._dataset_registry import DATASET_REGISTRY, repo_path
-from orius.data_pipeline.real_data_contract import file_sha256, utc_now_iso, write_json
+import itertools
 
+from orius.data_pipeline.real_data_contract import file_sha256, utc_now_iso, write_json
+from scripts._dataset_registry import DATASET_REGISTRY, repo_path
 
 DEFAULT_JSON_OUT = REPO_ROOT / "reports" / "audit" / "data_integrity_audit.json"
 DEFAULT_MD_OUT = REPO_ROOT / "reports" / "audit" / "data_integrity_audit.md"
@@ -91,9 +93,11 @@ def _split_range(path: Path, *, timestamp_col: str = "timestamp") -> tuple[pd.Ti
 
 
 def _split_gap_hours(paths: list[Path], *, timestamp_col: str = "timestamp") -> dict[str, float]:
-    ranges = [(path.name, *_split_range(path, timestamp_col=timestamp_col)) for path in paths if path.exists()]
+    ranges = [
+        (path.name, *_split_range(path, timestamp_col=timestamp_col)) for path in paths if path.exists()
+    ]
     gaps: dict[str, float] = {}
-    for (left_name, _, left_end), (right_name, right_start, _) in zip(ranges, ranges[1:]):
+    for (left_name, _, left_end), (right_name, right_start, _) in itertools.pairwise(ranges):
         key = f"{left_name}->{right_name}"
         gaps[key] = round((right_start - left_end).total_seconds() / 3600.0, 2)
     return gaps
@@ -107,13 +111,21 @@ def _opsd_row() -> dict[str, Any]:
     features_path = repo_path(cfg.features_path)
     splits_dir = repo_path(cfg.splits_path)
     raw_stats = _csv_rows_and_range(raw_csv, timestamp_col="utc_timestamp") if raw_csv.exists() else None
-    processed_stats = _parquet_rows_and_range(features_path) if features_path is not None and features_path.exists() else None
-    split_paths = [
-        splits_dir / "train.parquet",
-        splits_dir / "calibration.parquet",
-        splits_dir / "val.parquet",
-        splits_dir / "test.parquet",
-    ] if splits_dir is not None else []
+    processed_stats = (
+        _parquet_rows_and_range(features_path)
+        if features_path is not None and features_path.exists()
+        else None
+    )
+    split_paths = (
+        [
+            splits_dir / "train.parquet",
+            splits_dir / "calibration.parquet",
+            splits_dir / "val.parquet",
+            splits_dir / "test.parquet",
+        ]
+        if splits_dir is not None
+        else []
+    )
     split_gaps = _split_gap_hours(split_paths)
     claimed_rows = None if manifest is None else manifest.get("output_summary", {}).get("rows")
     claim_match = "couldn't verify"
@@ -122,7 +134,11 @@ def _opsd_row() -> dict[str, Any]:
     return {
         "dataset": "OPSD Germany",
         "dataset_key": "opsd_germany",
-        "raw_data_present": "yes" if raw_csv.exists() else "manifest-only" if manifest is not None else "missing",
+        "raw_data_present": "yes"
+        if raw_csv.exists()
+        else "manifest-only"
+        if manifest is not None
+        else "missing",
         "claimed_rows_records_match": claim_match,
         "hash_matches": "no hash in manifest",
         "actually_used_by_corresponding_adapter": _actual_usage_label("DE"),
@@ -150,14 +166,22 @@ def _eia_row(dataset_key: str) -> dict[str, Any]:
     manifest = _load_json(manifest_path) if manifest_path is not None else None
     raw_root = REPO_ROOT / "data" / "raw" / "us_eia930"
     features_path = repo_path(cfg.features_path)
-    processed_stats = _parquet_rows_and_range(features_path) if features_path is not None and features_path.exists() else None
+    processed_stats = (
+        _parquet_rows_and_range(features_path)
+        if features_path is not None and features_path.exists()
+        else None
+    )
     claim_match = "couldn't verify"
     if manifest is not None and processed_stats is not None:
         claim_match = "yes" if int(manifest["rows"]) == int(processed_stats["rows"]) else "no"
     return {
         "dataset": f"EIA-930 {cfg.ba_code}",
         "dataset_key": dataset_key.lower(),
-        "raw_data_present": "yes" if raw_root.exists() else "manifest-only" if manifest is not None else "missing",
+        "raw_data_present": "yes"
+        if raw_root.exists()
+        else "manifest-only"
+        if manifest is not None
+        else "missing",
         "claimed_rows_records_match": claim_match,
         "hash_matches": "no hash in manifest",
         "actually_used_by_corresponding_adapter": _actual_usage_label(dataset_key),
@@ -182,7 +206,11 @@ def _navigation_row() -> dict[str, Any]:
     return {
         "dataset": "KITTI Odometry",
         "dataset_key": "kitti_odometry",
-        "raw_data_present": "yes" if raw_root is not None and raw_root.exists() else "manifest-only" if manifest is not None else "missing",
+        "raw_data_present": "yes"
+        if raw_root is not None and raw_root.exists()
+        else "manifest-only"
+        if manifest is not None
+        else "missing",
         "claimed_rows_records_match": "couldn't verify",
         "hash_matches": "no hash in manifest",
         "actually_used_by_corresponding_adapter": _actual_usage_label("NAVIGATION"),
@@ -207,11 +235,17 @@ def _cmapss_row() -> dict[str, Any]:
     rul_fd001 = raw_dir / "RUL_FD001.txt"
     raw_present = all(path.exists() for path in (train_fd001, test_fd001, rul_fd001))
 
-    train_frame = pd.read_csv(train_fd001, sep=r"\s+", header=None, engine="python") if train_fd001.exists() else None
-    test_frame = pd.read_csv(test_fd001, sep=r"\s+", header=None, engine="python") if test_fd001.exists() else None
+    train_frame = (
+        pd.read_csv(train_fd001, sep=r"\s+", header=None, engine="python") if train_fd001.exists() else None
+    )
+    test_frame = (
+        pd.read_csv(test_fd001, sep=r"\s+", header=None, engine="python") if test_fd001.exists() else None
+    )
     rul_rows = sum(1 for _ in rul_fd001.open(encoding="utf-8")) if rul_fd001.exists() else 0
 
-    claim_match = "yes" if raw_present and train_frame is not None and test_frame is not None else "couldn't verify"
+    claim_match = (
+        "yes" if raw_present and train_frame is not None and test_frame is not None else "couldn't verify"
+    )
     if raw_present and train_frame is not None and test_frame is not None:
         if int(train_frame[0].nunique()) != 100 or int(test_frame[0].nunique()) != 100 or rul_rows != 100:
             claim_match = "no"
@@ -264,7 +298,11 @@ def _ccpp_row() -> dict[str, Any]:
     return {
         "dataset": "UCI CCPP",
         "dataset_key": "ccpp",
-        "raw_data_present": "yes" if raw_frame is not None else "manifest-only" if manifest is not None else "missing",
+        "raw_data_present": "yes"
+        if raw_frame is not None
+        else "manifest-only"
+        if manifest is not None
+        else "missing",
         "claimed_rows_records_match": claim_match,
         "hash_matches": "no hash in manifest",
         "actually_used_by_corresponding_adapter": _actual_usage_label("INDUSTRIAL"),
@@ -303,7 +341,11 @@ def _healthcare_row() -> dict[str, Any]:
     return {
         "dataset": "BIDMC runtime / MIMIC-III boundary",
         "dataset_key": "bidmc_runtime_boundary",
-        "raw_data_present": "yes" if raw_root is not None and raw_root.exists() else "manifest-only" if manifest is not None else "missing",
+        "raw_data_present": "yes"
+        if raw_root is not None and raw_root.exists()
+        else "manifest-only"
+        if manifest is not None
+        else "missing",
         "claimed_rows_records_match": claim_match,
         "hash_matches": "no hash in manifest",
         "actually_used_by_corresponding_adapter": _actual_usage_label("HEALTHCARE"),
@@ -335,7 +377,9 @@ def build_report() -> dict[str, Any]:
         "generated_at_utc": utc_now_iso(),
         "repo_root": str(REPO_ROOT),
         "datasets": rows,
-        "blocked_datasets": [row["dataset"] for row in rows if row.get("actually_used_by_corresponding_adapter") == "no"],
+        "blocked_datasets": [
+            row["dataset"] for row in rows if row.get("actually_used_by_corresponding_adapter") == "no"
+        ],
     }
 
 
@@ -366,7 +410,9 @@ def _markdown(report: dict[str, Any]) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build a dataset-integrity audit for the staged ORIUS surfaces")
+    parser = argparse.ArgumentParser(
+        description="Build a dataset-integrity audit for the staged ORIUS surfaces"
+    )
     parser.add_argument("--json-out", type=Path, default=DEFAULT_JSON_OUT, help="Write the JSON audit here")
     parser.add_argument("--md-out", type=Path, default=DEFAULT_MD_OUT, help="Write the Markdown summary here")
     args = parser.parse_args()

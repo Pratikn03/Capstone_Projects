@@ -27,7 +27,6 @@ Running Tests:
 See Also:
     - src/orius/utils/metrics.py: Module under test
 """
-import pandas as pd
 
 from orius.utils.metrics import rmse
 
@@ -35,7 +34,7 @@ from orius.utils.metrics import rmse
 def test_rmse_zero():
     """
     Test that RMSE is zero for perfect predictions.
-    
+
     This is the most basic sanity check: if predictions exactly match
     actuals, the error should be exactly zero.
     """

@@ -1,4 +1,5 @@
 """Shadow-mode ACK semantics test for edge-agent iteration helper."""
+
 from __future__ import annotations
 
 import json
@@ -44,12 +45,14 @@ class _TestApiClient:
         return resp.json()
 
 
-def _predict_target(*, target: str, horizon: int, features_df: pd.DataFrame, forecast_cfg: dict, required: bool):
+def _predict_target(
+    *, target: str, horizon: int, features_df: pd.DataFrame, forecast_cfg: dict, required: bool
+):
     idx = np.arange(horizon, dtype=float)
     if target == "load_mw":
         y = 52.0 + 4.0 * np.sin((2.0 * math.pi * idx / 24.0) - 0.5)
     elif target == "wind_mw":
-        y = 8.0 + 1.8 * np.sin((2.0 * math.pi * (idx + 4.0) / 24.0))
+        y = 8.0 + 1.8 * np.sin(2.0 * math.pi * (idx + 4.0) / 24.0)
     else:
         y = np.maximum(0.0, 4.0 * np.sin(math.pi * ((idx % 24.0) - 6.0) / 12.0))
     return np.asarray(y, dtype=float), Path(f"shadow_test_{target}.bin")
@@ -66,7 +69,9 @@ def test_shadow_mode_ack_payload(monkeypatch, tmp_path):
         lambda _cfg: pd.DataFrame({"price_eur_mwh": [60.0], "carbon_kg_per_mwh": [400.0]}),
     )
     monkeypatch.setattr(dc3s_router, "_predict_target", _predict_target)
-    monkeypatch.setattr(dc3s_router, "_resolve_conformal_q", lambda target, horizon: np.full(horizon, 4.0, dtype=float))
+    monkeypatch.setattr(
+        dc3s_router, "_resolve_conformal_q", lambda target, horizon: np.full(horizon, 4.0, dtype=float)
+    )
 
     client = TestClient(app)
     api = _TestApiClient(client, api_key)

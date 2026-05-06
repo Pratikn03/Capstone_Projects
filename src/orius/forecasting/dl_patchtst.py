@@ -1,4 +1,5 @@
 """PatchTST-style transformer forecaster for multivariate hourly sequences."""
+
 from __future__ import annotations
 
 import math

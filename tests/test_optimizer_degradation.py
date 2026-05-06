@@ -109,7 +109,9 @@ def test_throughput_cost_penalizes_microcycling():
     out_no_deg = optimize_dispatch([0.0, 10.0], [0.0, 0.0], cfg_no_deg)
     out_deg = optimize_dispatch([0.0, 10.0], [0.0, 0.0], cfg_deg)
 
-    throughput_no_deg = float(np.sum(out_no_deg["battery_charge_mw"]) + np.sum(out_no_deg["battery_discharge_mw"]))
+    throughput_no_deg = float(
+        np.sum(out_no_deg["battery_charge_mw"]) + np.sum(out_no_deg["battery_discharge_mw"])
+    )
     throughput_deg = float(np.sum(out_deg["battery_charge_mw"]) + np.sum(out_deg["battery_discharge_mw"]))
 
     assert throughput_deg <= throughput_no_deg + 1e-8

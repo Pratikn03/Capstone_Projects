@@ -6,7 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 VALIDATION_SCRIPT = REPO_ROOT / "scripts" / "run_universal_orius_validation.py"
 TRAINING_SCRIPT = REPO_ROOT / "scripts" / "run_universal_training_audit.py"
@@ -164,8 +163,7 @@ def test_domain_closure_matrix_does_not_paint_failed_domains_green(tmp_path: Pat
     )
 
     closure_rows = {
-        row["domain"]: row
-        for row in csv.DictReader((validation_out / "domain_closure_matrix.csv").open())
+        row["domain"]: row for row in csv.DictReader((validation_out / "domain_closure_matrix.csv").open())
     }
     p5_rows = {
         row["domain"]: row

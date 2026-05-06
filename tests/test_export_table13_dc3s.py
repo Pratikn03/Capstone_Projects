@@ -107,9 +107,9 @@ def test_build_table13_omits_missing_optional_columns(tmp_path: Path) -> None:
 
 def test_build_table13_requires_required_columns(tmp_path: Path) -> None:
     input_path = tmp_path / "dc3s_main_table.csv"
-    pd.DataFrame(
-        [{"scenario": "nominal", "seed": 0, "controller": "deterministic_lp"}]
-    ).to_csv(input_path, index=False)
+    pd.DataFrame([{"scenario": "nominal", "seed": 0, "controller": "deterministic_lp"}]).to_csv(
+        input_path, index=False
+    )
 
     with pytest.raises(ValueError, match="Missing required columns"):
         build_table13(input_path=input_path, out_dir=tmp_path)

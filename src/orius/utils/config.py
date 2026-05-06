@@ -1,8 +1,9 @@
 """Utilities: config validation models and helpers."""
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, List, Optional, Type
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -10,21 +11,24 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class SignalsConfig(BaseModel):
     """Signals config in data.yaml (price/carbon files)."""
+
     enabled: bool = False
-    file: Optional[str] = None
+    file: str | None = None
 
     model_config = ConfigDict(extra="allow")
 
 
 class DataConfig(BaseModel):
     """Top-level data config schema."""
-    signals: Optional[SignalsConfig] = None
+
+    signals: SignalsConfig | None = None
 
     model_config = ConfigDict(extra="allow")
 
 
 class ObjectiveConfig(BaseModel):
     """Optimization objective weights."""
+
     cost_weight: float = 1.0
     carbon_weight: float = 0.0
 
@@ -33,20 +37,22 @@ class ObjectiveConfig(BaseModel):
 
 class CarbonConfig(BaseModel):
     """Carbon signal options for optimization."""
+
     source: str = "average"
-    budget_reduction_pct: Optional[float] = None
-    budget_kg: Optional[float] = None
+    budget_reduction_pct: float | None = None
+    budget_kg: float | None = None
 
     model_config = ConfigDict(extra="allow")
 
 
 class BatteryConfig(BaseModel):
     """Battery constraint defaults for optimization."""
+
     capacity_mwh: float = 10.0
     max_power_mw: float = 2.0
     efficiency: float = 0.9
-    efficiency_regime_a: Optional[float] = None
-    efficiency_regime_b: Optional[float] = None
+    efficiency_regime_a: float | None = None
+    efficiency_regime_b: float | None = None
     efficiency_soc_split: float = 0.80
     degradation_cost_per_mwh: float = 10.0
     min_soc_mwh: float = 0.0
@@ -57,6 +63,7 @@ class BatteryConfig(BaseModel):
 
 class GridConfig(BaseModel):
     """Grid constraint defaults for optimization."""
+
     max_import_mw: float = 50.0
     price_per_mwh: float = 70.0
     carbon_cost_per_mwh: float = 20.0
@@ -67,6 +74,7 @@ class GridConfig(BaseModel):
 
 class OptimizationConfig(BaseModel):
     """Schema for configs/optimization.yaml."""
+
     objective: ObjectiveConfig = Field(default_factory=ObjectiveConfig)
     carbon: CarbonConfig = Field(default_factory=CarbonConfig)
     battery: BatteryConfig = Field(default_factory=BatteryConfig)
@@ -77,6 +85,7 @@ class OptimizationConfig(BaseModel):
 
 class TaskConfig(BaseModel):
     """Forecasting task configuration."""
+
     horizon_hours: int = 24
     lookback_hours: int = 168
     targets: list[str] = Field(default_factory=list)
@@ -87,6 +96,7 @@ class TaskConfig(BaseModel):
 
 class TrainDataConfig(BaseModel):
     """Train-time data paths."""
+
     processed_path: str = "data/processed/features.parquet"
     timestamp_col: str = "timestamp"
 
@@ -95,6 +105,7 @@ class TrainDataConfig(BaseModel):
 
 class TrainForecastConfig(BaseModel):
     """Schema for configs/train_forecast.yaml."""
+
     task: TaskConfig
     data: TrainDataConfig
     seed: int = 42
@@ -107,6 +118,7 @@ class TrainForecastConfig(BaseModel):
 
 class MonitoringConfig(BaseModel):
     """Schema for configs/monitoring.yaml."""
+
     data_drift: dict[str, Any] = Field(default_factory=dict)
     model_drift: dict[str, Any] = Field(default_factory=dict)
     retraining: dict[str, Any] = Field(default_factory=dict)
@@ -117,6 +129,7 @@ class MonitoringConfig(BaseModel):
 
 class PublishAuditConfig(BaseModel):
     """Schema for configs/publish_audit.yaml."""
+
     publish_audit: dict[str, Any] = Field(default_factory=dict)
 
     model_config = ConfigDict(extra="allow")
@@ -124,6 +137,7 @@ class PublishAuditConfig(BaseModel):
 
 class ForecastConfig(BaseModel):
     """Schema for configs/forecast.yaml."""
+
     data: dict[str, Any] = Field(default_factory=dict)
     models: dict[str, Any] = Field(default_factory=dict)
     fallback_order: list[str] = Field(default_factory=list)
@@ -144,7 +158,7 @@ class UncertaintyConformalConfig(BaseModel):
 class UncertaintyConfig(BaseModel):
     enabled: bool = True
     target: str = "load_mw"
-    targets: Optional[List[str]] = None
+    targets: list[str] | None = None
     calibration_split: str = "val"
     artifacts_dir: str = "artifacts/uncertainty"
     calibration_npz: str = "artifacts/backtests/calibration.npz"
@@ -184,7 +198,7 @@ class StreamingValidationConfig(BaseModel):
     cadence_tolerance_seconds: int = 120
     min_mw: float = 0.0
     max_mw: float = 200000.0
-    max_delta_mw: Optional[float] = None
+    max_delta_mw: float | None = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -215,7 +229,7 @@ class ShiftAwareUncertaintyConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-CONFIG_MODELS: dict[str, Type[BaseModel]] = {
+CONFIG_MODELS: dict[str, type[BaseModel]] = {
     "data.yaml": DataConfig,
     "optimization.yaml": OptimizationConfig,
     "train_forecast.yaml": TrainForecastConfig,
@@ -234,8 +248,8 @@ class _AttrDict(dict):
     def __getattr__(self, key: str) -> Any:
         try:
             return self[key]
-        except KeyError:
-            raise AttributeError(key)
+        except KeyError as exc:
+            raise AttributeError(key) from exc
 
     def __setattr__(self, key: str, value: Any) -> None:
         self[key] = value

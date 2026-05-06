@@ -9,6 +9,7 @@ Usage
 -----
     python scripts/run_adversarial_benchmark.py [--seeds N] [--horizon H] [--out DIR]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -21,18 +22,18 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 import numpy as np
 
+from orius.dc3s.quality import compute_reliability_robust
+from orius.orius_bench.aerospace_track import AerospaceTrackAdapter
 from orius.orius_bench.fault_engine import (
     FaultEvent,
     FaultSchedule,
     apply_faults,
     generate_fault_schedule,
 )
-from orius.dc3s.quality import compute_reliability_robust
-from orius.orius_bench.industrial_track import IndustrialTrackAdapter
 from orius.orius_bench.healthcare_track import HealthcareTrackAdapter
-from orius.orius_bench.vehicle_track import VehicleTrackAdapter
-from orius.orius_bench.aerospace_track import AerospaceTrackAdapter
+from orius.orius_bench.industrial_track import IndustrialTrackAdapter
 from orius.orius_bench.navigation_track import NavigationTrackAdapter
+from orius.orius_bench.vehicle_track import VehicleTrackAdapter
 
 
 def _make_adversarial_schedule(seed: int, horizon: int) -> FaultSchedule:
@@ -81,7 +82,7 @@ def _run_domain_episode(
             state_history = state_history[-20:]
 
         # Update history for robust OQE
-        primary_key = list(state.keys())[0]
+        primary_key = next(iter(state.keys()))
         primary_val = state.get(primary_key, 0.0)
         if primary_val == primary_val:  # not NaN
             history.append(float(primary_val))
@@ -147,30 +148,30 @@ def run_adversarial_benchmark(
 
     # Domain adapters (battery handled separately — use industrial as proxy)
     adapters = {
-        "industrial":  IndustrialTrackAdapter(),
-        "healthcare":  HealthcareTrackAdapter(),
-        "vehicle":     VehicleTrackAdapter(),
-        "aerospace":   AerospaceTrackAdapter(),
-        "navigation":  NavigationTrackAdapter(),
+        "industrial": IndustrialTrackAdapter(),
+        "healthcare": HealthcareTrackAdapter(),
+        "vehicle": VehicleTrackAdapter(),
+        "aerospace": AerospaceTrackAdapter(),
+        "navigation": NavigationTrackAdapter(),
     }
 
     results: dict = {}
     for name, adapter in adapters.items():
         std_tsvrs = []
-        adv_std_tsvrs = []   # adversarial with standard OQE
+        adv_std_tsvrs = []  # adversarial with standard OQE
         adv_robust_tsvrs = []  # adversarial with robust OQE
 
         for s in range(seeds):
             seed = s * 100 + 1
-            r_std     = _run_domain_episode(adapter, seed, horizon, adversarial=False, use_robust_oqe=False)
-            r_adv_std = _run_domain_episode(adapter, seed, horizon, adversarial=True,  use_robust_oqe=False)
-            r_adv_rob = _run_domain_episode(adapter, seed, horizon, adversarial=True,  use_robust_oqe=True)
+            r_std = _run_domain_episode(adapter, seed, horizon, adversarial=False, use_robust_oqe=False)
+            r_adv_std = _run_domain_episode(adapter, seed, horizon, adversarial=True, use_robust_oqe=False)
+            r_adv_rob = _run_domain_episode(adapter, seed, horizon, adversarial=True, use_robust_oqe=True)
 
             std_tsvrs.append(r_std["tsvr"])
             adv_std_tsvrs.append(r_adv_std["tsvr"])
             adv_robust_tsvrs.append(r_adv_rob["tsvr"])
 
-        mean_std    = float(np.mean(std_tsvrs))
+        mean_std = float(np.mean(std_tsvrs))
         mean_adv_std = float(np.mean(adv_std_tsvrs))
         mean_adv_rob = float(np.mean(adv_robust_tsvrs))
 
@@ -191,8 +192,10 @@ def run_adversarial_benchmark(
         }
 
         status = "PASS" if evidence_pass else "FAIL"
-        print(f"  [{status}] {name:12s}: std={mean_std:.3f}  adv_std={mean_adv_std:.3f}"
-              f"  adv_rob={mean_adv_rob:.3f}  ratio={ratio:.2f}x")
+        print(
+            f"  [{status}] {name:12s}: std={mean_std:.3f}  adv_std={mean_adv_std:.3f}"
+            f"  adv_rob={mean_adv_rob:.3f}  ratio={ratio:.2f}x"
+        )
 
     all_pass = all(r["evidence_pass"] for r in results.values())
     report = {
@@ -218,9 +221,7 @@ def main() -> int:
     args = parser.parse_args()
 
     print("=== ORIUS Adversarial Fault Benchmark ===")
-    report = run_adversarial_benchmark(
-        seeds=args.seeds, horizon=args.horizon, out_dir=args.out
-    )
+    report = run_adversarial_benchmark(seeds=args.seeds, horizon=args.horizon, out_dir=args.out)
     print(f"\n  All pass: {report['all_pass']}")
     return 0 if report["all_pass"] else 1
 

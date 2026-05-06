@@ -10,14 +10,16 @@ compute_reliability_robust
     Byzantine-resistant variant operating on a sliding signal-history window
     instead of a single event pair.
 """
+
 from __future__ import annotations
 
 import math
 import statistics
 import warnings
+from collections.abc import Mapping, MutableMapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Mapping, MutableMapping, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -29,6 +31,7 @@ __all__ = ["compute_reliability", "compute_reliability_robust", "w_t_as_capacity
 # ---------------------------------------------------------------------------
 # Threat model  (Part 2 of the formal tamper-detection theory)
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class ThreatModel:
@@ -50,9 +53,7 @@ class ThreatModel:
 
     def __post_init__(self) -> None:
         if not (0.0 <= self.max_byzantine_fraction < 1 / 3):
-            raise ValueError(
-                f"max_byzantine_fraction must be in [0, 1/3); got {self.max_byzantine_fraction}"
-            )
+            raise ValueError(f"max_byzantine_fraction must be in [0, 1/3); got {self.max_byzantine_fraction}")
         if self.max_delay_steps < 0:
             raise ValueError(f"max_delay_steps must be >= 0; got {self.max_delay_steps}")
 
@@ -109,11 +110,11 @@ def _extract_ts(event: Mapping[str, Any]) -> datetime | None:
 
 
 def _is_number(value: Any) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
+    return isinstance(value, int | float) and not isinstance(value, bool) and math.isfinite(float(value))
 
 
 def _is_numeric_or_nan(value: Any) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool)
+    return isinstance(value, int | float) and not isinstance(value, bool)
 
 
 def _signal_keys(event: Mapping[str, Any], last_event: Mapping[str, Any] | None) -> list[str]:
@@ -130,7 +131,7 @@ def _signal_keys(event: Mapping[str, Any], last_event: Mapping[str, Any] | None)
 def _as_bool(value: Any) -> bool | None:
     if isinstance(value, bool):
         return value
-    if isinstance(value, (int, float)) and math.isfinite(float(value)):
+    if isinstance(value, int | float) and math.isfinite(float(value)):
         return bool(float(value))
     if isinstance(value, str):
         low = value.strip().lower()
@@ -322,20 +323,19 @@ def compute_reliability(
         return detected if explicit is None else explicit
 
     explicit_faults: dict[str, bool | None] = {
-        "dropout":      _as_bool(event.get("dropout")),
+        "dropout": _as_bool(event.get("dropout")),
         "stale_sensor": _as_bool(event.get("stale_sensor")),
         "delay_jitter": _as_bool(event.get("delay_jitter")),
         "out_of_order": _as_bool(event.get("out_of_order")),
-        "spikes":       _as_bool(event.get("spikes")),
+        "spikes": _as_bool(event.get("spikes")),
     }
     fault_flags = {
-        "dropout":      _resolve_fault_flag(explicit_faults["dropout"],      bool(keys) and present < len(keys)),  # noqa: E241
+        "dropout": _resolve_fault_flag(explicit_faults["dropout"], bool(keys) and present < len(keys)),
         "stale_sensor": _resolve_fault_flag(explicit_faults["stale_sensor"], bool(stale_detected)),
         "delay_jitter": _resolve_fault_flag(explicit_faults["delay_jitter"], delay_seconds > 0.0),
         "out_of_order": _resolve_fault_flag(explicit_faults["out_of_order"], bool(out_of_order)),
-        "spikes":       _resolve_fault_flag(explicit_faults["spikes"],       bool(spike_detected)),  # noqa: E241
+        "spikes": _resolve_fault_flag(explicit_faults["spikes"], bool(spike_detected)),
     }
-
 
     missing_penalty = max(0.0, 1.0 - missing_fraction)
     delay_penalty = math.exp(-lambda_delay * max(0.0, delay_seconds))
@@ -343,10 +343,7 @@ def compute_reliability(
     # We track a running fraction via the adaptive_state (ooo_history).
     # Fallback: binary penalty for backward compatibility.
     raw_ooo = (_ftit_state(adaptive_state) or {}).get("ooo_history", [])
-    ooo_history = [
-        float(v) for v in raw_ooo
-        if isinstance(v, (int, float)) and math.isfinite(float(v))
-    ]
+    ooo_history = [float(v) for v in raw_ooo if isinstance(v, int | float) and math.isfinite(float(v))]
     ooo_history.append(0.0 if out_of_order else 1.0)
     # Keep a rolling window of the last _OOO_HISTORY_WINDOW observations.
     if len(ooo_history) > _OOO_HISTORY_WINDOW:
@@ -400,10 +397,7 @@ def compute_reliability(
         "p_delay": float((preview or {}).get("p", {}).get("delay_jitter", 0.0)),
         "p_ooo": float((preview or {}).get("p", {}).get("out_of_order", 0.0)),
         "p_spike": float((preview or {}).get("p", {}).get("spikes", 0.0)),
-        "smooth_rates": {
-            key: float((preview or {}).get("p", {}).get(key, 0.0))
-            for key in FTIT_FAULT_KEYS
-        },
+        "smooth_rates": {key: float((preview or {}).get("p", {}).get(key, 0.0)) for key in FTIT_FAULT_KEYS},
         "stale_tracker": stale_tracker,
         "ooo_history": ooo_history,
         "ooo_fraction_in_order": float(ooo_fraction_in_order),
@@ -424,7 +418,7 @@ def compute_reliability(
     stale_decay_rate = float(cfg.get("stale_decay_rate", 0.85))
     if max_stale_count > stale_tau_max:
         extra_steps = max_stale_count - stale_tau_max
-        decay_factor = stale_decay_rate ** extra_steps
+        decay_factor = stale_decay_rate**extra_steps
         w_t = max(min_w, min(float(w_t), float(w_t) * decay_factor))
         flags["stale_decay_applied"] = True
         flags["stale_decay_factor"] = float(decay_factor)
@@ -449,11 +443,7 @@ def compute_reliability(
 
     if backend == "deep":
         deep_cfg = dict(cfg.get("deep", {}))
-        model_path = str(
-            deep_cfg.get("model_path")
-            or cfg.get("deep_model_path")
-            or ""
-        ).strip()
+        model_path = str(deep_cfg.get("model_path") or cfg.get("deep_model_path") or "").strip()
         strict = bool(deep_cfg.get("strict", cfg.get("deep_strict", False)))
         seq_len = int(deep_cfg.get("seq_len", 8))
         try:
@@ -475,10 +465,15 @@ def compute_reliability(
             sequence = prepare_sequence(feature, adaptive_state=adaptive_state, seq_len=seq_len)
             model, deep_model_cfg, metadata = load_model(model_path)
             import torch as _torch
+
             with _torch.no_grad():
                 tensor = _torch.from_numpy(sequence).unsqueeze(0)
                 deep_w, fault_logit = model(tensor)
-            update_history(adaptive_state if isinstance(adaptive_state, MutableMapping) else None, feature, seq_len=deep_model_cfg.seq_len)
+            update_history(
+                adaptive_state if isinstance(adaptive_state, MutableMapping) else None,
+                feature,
+                seq_len=deep_model_cfg.seq_len,
+            )
             w_t = float(np.clip(float(deep_w.detach().cpu().item()), float(deep_model_cfg.min_w), 1.0))
             fault_prob = float(_torch.sigmoid(fault_logit).detach().cpu().item())
             flags.update(
@@ -516,12 +511,14 @@ def compute_reliability(
     # yet w_t remains suspiciously high.  Real degraded telemetry almost never
     # produces all-zero fault flags alongside a high reliability score.
     tamper_score = 0.0
-    active_faults = sum([
-        bool(fault_flags.get("dropout", False)),
-        bool(fault_flags.get("stale_sensor", False)),
-        bool(fault_flags.get("spikes", False)),
-        bool(fault_flags.get("out_of_order", False)),
-    ])
+    active_faults = sum(
+        [
+            bool(fault_flags.get("dropout", False)),
+            bool(fault_flags.get("stale_sensor", False)),
+            bool(fault_flags.get("spikes", False)),
+            bool(fault_flags.get("out_of_order", False)),
+        ]
+    )
     # If multiple faults are simultaneously active but w_t is still high,
     # the OQE score may have been crafted to appear trustworthy.
     if active_faults >= 2 and float(w_t) > 0.75:
@@ -551,6 +548,7 @@ def compute_reliability(
 # ---------------------------------------------------------------------------
 # Byzantine-Resistant OQE (Phase 3)
 # ---------------------------------------------------------------------------
+
 
 def compute_reliability_robust(
     signal_history: Sequence[float],
@@ -609,7 +607,7 @@ def compute_reliability_robust(
     # 1. Trimmed-mean history: remove top and bottom trim_frac
     k_trim = max(1, int(n * trim_frac))
     sorted_vals = sorted(vals)
-    trimmed = sorted_vals[k_trim: n - k_trim] if n - 2 * k_trim >= 3 else sorted_vals
+    trimmed = sorted_vals[k_trim : n - k_trim] if n - 2 * k_trim >= 3 else sorted_vals
 
     trimmed_mean = float(sum(trimmed) / len(trimmed))
     full_mean = float(sum(vals) / n)

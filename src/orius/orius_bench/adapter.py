@@ -7,10 +7,12 @@ simple 2D robot.
 The seven ORIUS metrics are computed uniformly across domains via
 ``metrics_engine.py``.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 
 class BenchmarkAdapter(ABC):
@@ -25,7 +27,9 @@ class BenchmarkAdapter(ABC):
         """Return the hidden true state of the system."""
 
     @abstractmethod
-    def observe(self, true_state: Mapping[str, Any], fault: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
+    def observe(
+        self, true_state: Mapping[str, Any], fault: Mapping[str, Any] | None = None
+    ) -> Mapping[str, Any]:
         """Apply optional fault injection and return the observed state."""
 
     @abstractmethod

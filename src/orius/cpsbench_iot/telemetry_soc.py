@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import numpy as np
 
 
 @dataclass
 class SOCTelemetryFaultConfig:
-    dropout_prob: float = 0.0          # probability SOC packet missing at a step
-    stale_prob: float = 0.0            # probability SOC repeats previous value
-    noise_std_mwh: float = 0.0         # measurement noise
+    dropout_prob: float = 0.0  # probability SOC packet missing at a step
+    stale_prob: float = 0.0  # probability SOC repeats previous value
+    noise_std_mwh: float = 0.0  # measurement noise
     seed: int = 0
 
 
@@ -17,6 +18,7 @@ class SOCTelemetryChannel:
     Produces soc_obs from soc_true with fault injection.
     This is intentionally simple and deterministic per seed.
     """
+
     def __init__(self, cfg: SOCTelemetryFaultConfig):
         self.cfg = cfg
         self.rng = np.random.default_rng(int(cfg.seed))

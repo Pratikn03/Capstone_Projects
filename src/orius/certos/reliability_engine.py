@@ -1,7 +1,9 @@
 """CertOS reliability engine: OQE / quality scoring."""
+
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 
 def compute_reliability(
@@ -17,5 +19,6 @@ def compute_reliability(
     if "expected_cadence_s" in kwargs and float(kwargs["expected_cadence_s"]) <= 0.0:
         raise ValueError("expected_cadence_s must be positive")
     from orius.dc3s.quality import compute_reliability as _compute
+
     weight, flags = _compute(dict(event), None if last_event is None else dict(last_event), **kwargs)
     return float(weight), {"engine": "certos.reliability", **dict(flags)}

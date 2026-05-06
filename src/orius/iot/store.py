@@ -1,11 +1,13 @@
 """DuckDB-backed state and queue persistence for IoT closed-loop simulation."""
+
 from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from collections.abc import Mapping
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 from uuid import uuid4
 
 import duckdb
@@ -31,7 +33,7 @@ def _json_load(payload: str | None) -> dict[str, Any] | None:
 
 
 def _utc_iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class IoTLoopStore:
@@ -110,13 +112,54 @@ class IoTLoopStore:
             )
             """
         )
+        self._conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS iot_device_nonce (
+                device_id VARCHAR,
+                device_key_id VARCHAR,
+                device_nonce VARCHAR,
+                seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (device_id, device_key_id, device_nonce)
+            )
+            """
+        )
         # Backward-compatible migrations for existing local DB files.
         self._conn.execute("ALTER TABLE iot_command_queue ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP")
         self._conn.execute("ALTER TABLE iot_command_queue ADD COLUMN IF NOT EXISTS timeout_at TIMESTAMP")
         self._conn.execute("ALTER TABLE iot_command_queue ADD COLUMN IF NOT EXISTS timeout_reason VARCHAR")
-        self._conn.execute("ALTER TABLE iot_device_state ADD COLUMN IF NOT EXISTS hold_active BOOLEAN DEFAULT FALSE")
+        self._conn.execute(
+            "ALTER TABLE iot_device_state ADD COLUMN IF NOT EXISTS hold_active BOOLEAN DEFAULT FALSE"
+        )
         self._conn.execute("ALTER TABLE iot_device_state ADD COLUMN IF NOT EXISTS hold_reason VARCHAR")
         self._conn.execute("ALTER TABLE iot_device_state ADD COLUMN IF NOT EXISTS hold_since_utc VARCHAR")
+
+    def record_device_nonce(self, *, device_id: str, device_key_id: str, device_nonce: str) -> bool:
+        """Record a device nonce.
+
+        Returns False when the nonce has already been seen for this device/key.
+        """
+
+        existing = self._conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM iot_device_nonce
+            WHERE device_id = ? AND device_key_id = ? AND device_nonce = ?
+            """,
+            [device_id, device_key_id, device_nonce],
+        ).fetchone()[0]
+        if int(existing) > 0:
+            return False
+        self._conn.execute(
+            """
+            INSERT INTO iot_device_nonce (
+                device_id,
+                device_key_id,
+                device_nonce
+            ) VALUES (?, ?, ?)
+            """,
+            [device_id, device_key_id, device_nonce],
+        )
+        return True
 
     def _state_upsert(
         self,
@@ -145,12 +188,18 @@ class IoTLoopStore:
             "latest_reliability_flags_json": _json_dump(latest_reliability_flags)
             if latest_reliability_flags is not None
             else _json_dump(prior.get("latest_reliability_flags")),
-            "last_command_id": last_command_id if last_command_id is not None else prior.get("last_command_id"),
+            "last_command_id": last_command_id
+            if last_command_id is not None
+            else prior.get("last_command_id"),
             "last_command_json": _json_dump(last_command)
             if last_command is not None
             else _json_dump(prior.get("last_command")),
-            "last_ack_json": _json_dump(last_ack) if last_ack is not None else _json_dump(prior.get("last_ack")),
-            "hold_active": bool(hold_active) if hold_active is not _UNSET else bool(prior.get("hold_active", False)),
+            "last_ack_json": _json_dump(last_ack)
+            if last_ack is not None
+            else _json_dump(prior.get("last_ack")),
+            "hold_active": bool(hold_active)
+            if hold_active is not _UNSET
+            else bool(prior.get("hold_active", False)),
             "hold_reason": hold_reason if hold_reason is not _UNSET else prior.get("hold_reason"),
             "hold_since_utc": hold_since_utc if hold_since_utc is not _UNSET else prior.get("hold_since_utc"),
         }

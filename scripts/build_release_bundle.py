@@ -1,10 +1,11 @@
 """Build a release bundle with reports + run manifest."""
+
 from __future__ import annotations
 
 import argparse
 import json
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -39,7 +40,7 @@ def main() -> None:
 
     manifest = {
         "bundle_id": bundle_dir.name,
-        "generated_at": datetime.now(tz=timezone.utc).isoformat(),
+        "generated_at": datetime.now(tz=UTC).isoformat(),
         "run_id": run_id,
         "reports_dir": str(reports_src),
         "run_snapshot_dir": str(run_dir),
@@ -50,4 +51,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

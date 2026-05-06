@@ -18,7 +18,7 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from orius.dc3s.certificate import (  # noqa: E402
+from orius.dc3s.certificate import (
     CERTIFICATE_SCHEMA_VERSION,
     make_certificate,
     normalize_certificate_schema,
@@ -96,7 +96,9 @@ def _validate_schema_witnesses(findings: list[str]) -> None:
     if not rows:
         findings.append(f"certificate schema witness is empty: {SCHEMA_WITNESS_PATH.relative_to(REPO_ROOT)}")
         return
-    missing_columns = sorted((TRACE_SCHEMA_COLUMNS | {"validity_horizon_H_t", "expires_at_step"}) - set(rows[0]))
+    missing_columns = sorted(
+        (TRACE_SCHEMA_COLUMNS | {"validity_horizon_H_t", "expires_at_step"}) - set(rows[0])
+    )
     if missing_columns:
         findings.append(f"certificate schema witness missing columns: {missing_columns}")
         return
@@ -169,7 +171,9 @@ def main() -> int:
     )["valid"]:
         findings.append("tampered signed certificate verified as valid")
 
-    legacy = normalize_certificate_schema({"command_id": "legacy", "cert_hash": "abc123", "safe_action": {"x": 1}})
+    legacy = normalize_certificate_schema(
+        {"command_id": "legacy", "cert_hash": "abc123", "safe_action": {"x": 1}}
+    )
     if legacy.get("certificate_hash") != "abc123":
         findings.append("legacy cert_hash did not normalize to certificate_hash")
     if legacy.get("certificate_schema_version") != CERTIFICATE_SCHEMA_VERSION:

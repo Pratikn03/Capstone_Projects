@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import itertools
+
 import numpy as np
 import pandas as pd
 
@@ -25,7 +27,9 @@ def test_aci_update_correctness() -> None:
 
 def test_subgroup_tracking_correctness() -> None:
     tracker = SubgroupCoverageTracker(target_coverage=0.9, window_size=2)
-    key = tracker.build_group_key(reliability_score=0.2, volatility=0.9, fault_type="dropout", ts="2026-01-01T03:00:00Z")
+    key = tracker.build_group_key(
+        reliability_score=0.2, volatility=0.9, fault_type="dropout", ts="2026-01-01T03:00:00Z"
+    )
     stats = tracker.update(group_key=key, covered=False, interval_width=5.0, abs_residual=2.0)
     stats = tracker.update(group_key=key, covered=True, interval_width=3.0, abs_residual=1.0)
     stats = tracker.update(group_key=key, covered=True, interval_width=3.0, abs_residual=1.0)
@@ -50,7 +54,12 @@ def test_validity_score_boundedness() -> None:
 def test_interval_monotonicity_property() -> None:
     cfg = ShiftAwareConfig(enabled=True, policy_mode="shift_aware_linear", aci_mode="fixed")
     widths = []
-    for reliability, drift, resid in [(0.9, False, 0.1), (0.7, False, 0.5), (0.5, True, 1.0), (0.2, True, 2.0)]:
+    for reliability, drift, resid in [
+        (0.9, False, 0.1),
+        (0.7, False, 0.5),
+        (0.5, True, 1.0),
+        (0.2, True, 2.0),
+    ]:
         d = build_runtime_interval(
             y_hat=100.0,
             base_half_width=5.0,
@@ -62,7 +71,7 @@ def test_interval_monotonicity_property() -> None:
             config=cfg,
         )
         widths.append(d.adjusted_half_width)
-    assert all(b >= a for a, b in zip(widths, widths[1:]))
+    assert all(b >= a for a, b in itertools.pairwise(widths))
 
 
 def test_legacy_mode_reproduces_no_extra_widening() -> None:
@@ -105,7 +114,12 @@ def test_artifact_schema_consistency(tmp_path) -> None:
     tracker = SubgroupCoverageTracker()
     key = tracker.build_group_key(reliability_score=0.5, volatility=0.1, fault_type="none", ts="")
     tracker.update(group_key=key, covered=True, interval_width=1.0, abs_residual=0.2)
-    write_shift_aware_artifacts(tracker=tracker, validity_trace=[{"t": 0, "validity_score": 1.0}], adaptive_trace=[{"t": 0, "effective_alpha": 0.1}], publication_dir=str(tmp_path))
+    write_shift_aware_artifacts(
+        tracker=tracker,
+        validity_trace=[{"t": 0, "validity_score": 1.0}],
+        adaptive_trace=[{"t": 0, "effective_alpha": 0.1}],
+        publication_dir=str(tmp_path),
+    )
     df = pd.read_csv(tmp_path / "reliability_group_coverage.csv")
     assert {"reliability_bin", "count", "empirical_coverage", "under_coverage_gap"}.issubset(df.columns)
 
@@ -226,7 +240,9 @@ def test_runtime_state_persists_without_module_globals(tmp_path) -> None:
 
 def test_subgroup_window_resize_recomputes_stats() -> None:
     tracker = SubgroupCoverageTracker(target_coverage=0.9, window_size=4)
-    key = tracker.build_group_key(reliability_score=0.5, volatility=0.5, fault_type="none", ts="2026-01-01T00:00:00Z")
+    key = tracker.build_group_key(
+        reliability_score=0.5, volatility=0.5, fault_type="none", ts="2026-01-01T00:00:00Z"
+    )
     tracker.update(group_key=key, covered=False, interval_width=2.0, abs_residual=1.0)
     tracker.update(group_key=key, covered=True, interval_width=2.0, abs_residual=1.0)
     tracker.update(group_key=key, covered=True, interval_width=2.0, abs_residual=1.0)

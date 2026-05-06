@@ -71,7 +71,9 @@ def weighted_online_recalibration(
     for idx in range(len(y_true)):
         center = 0.5 * (lower[idx] + upper[idx])
         half_width = max(0.5 * (upper[idx] - lower[idx]), 1.0e-9)
-        base_factor = float(np.clip(1.0 + 0.7 * (1.0 - reliability[idx]) + 0.5 * shift_score[idx], 1.0, max_scale))
+        base_factor = float(
+            np.clip(1.0 + 0.7 * (1.0 - reliability[idx]) + 0.5 * shift_score[idx], 1.0, max_scale)
+        )
         adaptive_boost = max(0.0, weighted_gap_state)
         adaptive_factor = float(np.clip(base_factor * (1.0 + learning_rate * adaptive_boost), 1.0, max_scale))
         adaptive_half = half_width * adaptive_factor

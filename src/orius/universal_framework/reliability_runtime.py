@@ -1,11 +1,11 @@
 """Shared domain-native reliability helpers for non-battery adapters."""
+
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any, Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any
 
 from orius.dc3s.quality import compute_reliability
-
 
 FeatureSource = str | Callable[[Mapping[str, Any]], Any]
 

@@ -15,11 +15,11 @@ Usage:
   python scripts/statistical_tests.py
   python scripts/statistical_tests.py --region us
 """
+
 from __future__ import annotations
 
 import argparse
 import json
-import pickle
 import sys
 import warnings
 from dataclasses import dataclass
@@ -33,14 +33,15 @@ REPO = Path(__file__).resolve().parents[1]
 if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
-from orius.utils.metrics import rmse, mae, r2_score
-from orius.forecasting.dl_lstm import LSTMForecaster
-from orius.forecasting.dl_tcn import TCNForecaster
-from orius.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
-from orius.utils.scaler import StandardScaler
-
 import torch
 from torch.utils.data import DataLoader
+
+from orius.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
+from orius.forecasting.dl_lstm import LSTMForecaster
+from orius.forecasting.dl_tcn import TCNForecaster
+from orius.release.artifact_loader import load_pickle_artifact, load_torch_artifact
+from orius.utils.metrics import mae, r2_score, rmse
+from orius.utils.scaler import StandardScaler
 
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -60,13 +61,15 @@ class RegionConfig:
 def _get_regions() -> dict[str, RegionConfig]:
     return {
         "de": RegionConfig(
-            name="de", label="Germany (OPSD)",
+            name="de",
+            label="Germany (OPSD)",
             features_path=REPO / "data" / "processed" / "features.parquet",
             models_dir=REPO / "artifacts" / "models",
             reports_dir=REPO / "reports",
         ),
         "us": RegionConfig(
-            name="us", label="USA (EIA-930)",
+            name="us",
+            label="USA (EIA-930)",
             features_path=REPO / "data" / "processed" / "us_eia930" / "features.parquet",
             models_dir=REPO / "artifacts" / "models_eia930",
             reports_dir=REPO / "reports" / "eia930",
@@ -74,9 +77,7 @@ def _get_regions() -> dict[str, RegionConfig]:
     }
 
 
-def diebold_mariano_test(
-    e1: np.ndarray, e2: np.ndarray, h: int = 1, power: int = 2
-) -> dict:
+def diebold_mariano_test(e1: np.ndarray, e2: np.ndarray, h: int = 1, power: int = 2) -> dict:
     """
     Diebold-Mariano test for equal predictive accuracy.
 
@@ -141,8 +142,7 @@ def get_predictions(region: RegionConfig, target: str, test_df: pd.DataFrame) ->
         gbm_path = p
         break
     if gbm_path and gbm_path.exists():
-        with open(gbm_path, "rb") as f:
-            bundle = pickle.load(f)
+        bundle = load_pickle_artifact(gbm_path)
         feat_cols = bundle.get("feature_cols", [])
         available = [c for c in feat_cols if c in test_df.columns]
         if available:
@@ -154,7 +154,7 @@ def get_predictions(region: RegionConfig, target: str, test_df: pd.DataFrame) ->
         path = region.models_dir / f"{kind}_{target}.pt"
         if not path.exists():
             continue
-        bundle = torch.load(path, map_location="cpu", weights_only=False)
+        bundle = load_torch_artifact(path, map_location="cpu", weights_only=False)
         feat_cols = bundle.get("feature_cols", [])
         available = [c for c in feat_cols if c in test_df.columns]
         if not available:
@@ -213,17 +213,17 @@ def get_predictions(region: RegionConfig, target: str, test_df: pd.DataFrame) ->
 
 def run_region(region: RegionConfig) -> dict:
     """Run statistical tests for one region."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Statistical Significance Tests — {region.label}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if not region.features_path.exists():
-        print(f"  [skip] Features not found")
+        print("  [skip] Features not found")
         return {}
 
     df = pd.read_parquet(region.features_path).sort_values("timestamp")
     n = len(df)
-    test_df = df.iloc[int(n * 0.85):]
+    test_df = df.iloc[int(n * 0.85) :]
 
     results = {"region": region.label, "targets": {}}
     rows = []
@@ -236,14 +236,16 @@ def run_region(region: RegionConfig) -> dict:
 
         # R² and metrics for each model
         if "gbm" in preds:
-            y = preds["y_true"][:len(preds["gbm"])]
-            p = preds["gbm"][:len(y)]
+            y = preds["y_true"][: len(preds["gbm"])]
+            p = preds["gbm"][: len(y)]
             target_result["metrics"]["gbm"] = {
                 "r2": round(r2_score(y, p), 6),
                 "rmse": round(rmse(y, p), 2),
                 "mae": round(mae(y, p), 2),
             }
-            print(f"    GBM   R²={target_result['metrics']['gbm']['r2']:.4f}  RMSE={target_result['metrics']['gbm']['rmse']:.1f}")
+            print(
+                f"    GBM   R²={target_result['metrics']['gbm']['r2']:.4f}  RMSE={target_result['metrics']['gbm']['rmse']:.1f}"
+            )
 
         for kind in ["lstm", "tcn"]:
             if f"{kind}_pred" in preds and f"{kind}_true" in preds:
@@ -254,13 +256,15 @@ def run_region(region: RegionConfig) -> dict:
                     "rmse": round(rmse(yt, yp), 2),
                     "mae": round(mae(yt, yp), 2),
                 }
-                print(f"    {kind.upper():5s} R²={target_result['metrics'][kind]['r2']:.4f}  RMSE={target_result['metrics'][kind]['rmse']:.1f}")
+                print(
+                    f"    {kind.upper():5s} R²={target_result['metrics'][kind]['r2']:.4f}  RMSE={target_result['metrics'][kind]['rmse']:.1f}"
+                )
 
         # DM tests for all model pairs
         model_errors = {}
         if "gbm" in preds:
-            y = preds["y_true"][:len(preds["gbm"])]
-            model_errors["gbm"] = y - preds["gbm"][:len(y)]
+            y = preds["y_true"][: len(preds["gbm"])]
+            model_errors["gbm"] = y - preds["gbm"][: len(y)]
 
         for kind in ["lstm", "tcn"]:
             if f"{kind}_pred" in preds:
@@ -281,17 +285,21 @@ def run_region(region: RegionConfig) -> dict:
                 target_result["dm_tests"].append(dm)
 
                 winner = m1 if dm["better_model"] == "model1" else m2
-                print(f"    DM {m1} vs {m2}: stat={dm['dm_stat']:.3f}  p={dm['p_value']:.4f}  → {dm['conclusion']} (better: {winner})")
+                print(
+                    f"    DM {m1} vs {m2}: stat={dm['dm_stat']:.3f}  p={dm['p_value']:.4f}  → {dm['conclusion']} (better: {winner})"
+                )
 
-                rows.append({
-                    "target": target,
-                    "model_1": m1,
-                    "model_2": m2,
-                    "dm_statistic": dm["dm_stat"],
-                    "p_value": dm["p_value"],
-                    "conclusion": dm["conclusion"],
-                    "better_model": winner,
-                })
+                rows.append(
+                    {
+                        "target": target,
+                        "model_1": m1,
+                        "model_2": m2,
+                        "dm_statistic": dm["dm_stat"],
+                        "p_value": dm["p_value"],
+                        "conclusion": dm["conclusion"],
+                        "better_model": winner,
+                    }
+                )
 
         results["targets"][target] = target_result
 

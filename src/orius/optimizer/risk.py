@@ -8,10 +8,10 @@ When uncertainty bounds are available, the optimizer can use worst-case scenario
 
 This ensures the dispatch plan remains feasible even under adverse conditions.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Tuple
 
 import numpy as np
 
@@ -19,7 +19,7 @@ import numpy as np
 @dataclass
 class RiskConfig:
     """Configuration for risk-aware dispatch optimization.
-    
+
     Attributes:
         enabled: Whether to apply risk adjustments
         mode: Risk mode ('worst_case_interval' or 'robust')
@@ -27,6 +27,7 @@ class RiskConfig:
         renew_bound: Which bound to use for renewables ('upper' or 'lower')
         reserve_soc_mwh: Minimum SOC reserve to maintain (emergency buffer)
     """
+
     enabled: bool = True
     mode: str = "worst_case_interval"
     load_bound: str = "upper"  # Conservative: assume higher demand
@@ -37,14 +38,14 @@ class RiskConfig:
 def apply_interval_bounds(
     load_point: np.ndarray,
     renew_point: np.ndarray,
-    load_lo: Optional[np.ndarray] = None,
-    load_hi: Optional[np.ndarray] = None,
-    renew_lo: Optional[np.ndarray] = None,
-    renew_hi: Optional[np.ndarray] = None,
-    cfg: Optional[RiskConfig] = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+    load_lo: np.ndarray | None = None,
+    load_hi: np.ndarray | None = None,
+    renew_lo: np.ndarray | None = None,
+    renew_hi: np.ndarray | None = None,
+    cfg: RiskConfig | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
     """Apply interval bounds to forecasts for conservative planning.
-    
+
     Args:
         load_point: Point forecast for load (MW)
         renew_point: Point forecast for renewables (MW)
@@ -53,7 +54,7 @@ def apply_interval_bounds(
         renew_lo: Lower bound of renewables prediction interval
         renew_hi: Upper bound of renewables prediction interval
         cfg: Risk configuration (defaults to conservative settings)
-    
+
     Returns:
         Tuple of (adjusted_load, adjusted_renewables) arrays
     """

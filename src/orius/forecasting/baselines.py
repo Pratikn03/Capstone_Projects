@@ -1,12 +1,15 @@
 """Forecasting baselines for quick comparisons."""
+
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 
+
 def persistence_24h(df: pd.DataFrame, target: str = "load_mw") -> np.ndarray:
     """Predict next step using value from 24 hours ago (assumes hourly data)."""
     return df[target].shift(24).to_numpy()
+
 
 def moving_average(df: pd.DataFrame, target: str = "load_mw", window: int = 24) -> np.ndarray:
     """Predict using a simple rolling mean over the previous window."""

@@ -7,9 +7,8 @@ import numpy as np
 import pytest
 import torch
 
-from orius.dc3s.deep_oqe import DeepOQEConfig, DeepOQEModel, FEATURE_NAMES, extract_feature_vector, save_model
+from orius.dc3s.deep_oqe import FEATURE_NAMES, DeepOQEConfig, DeepOQEModel, extract_feature_vector, save_model
 from orius.dc3s.quality import compute_reliability
-
 
 _CADENCE = 3600.0
 _BASE_CFG = {"backend": "heuristic", "min_w": 0.05}
@@ -40,7 +39,13 @@ def test_extract_feature_vector_matches_runtime_contract() -> None:
         spike_ratio=0.5,
         ooo_fraction_in_order=0.75,
         stale_tracker={"unchanged_counts": {"load_mw": 2, "renewables_mw": 1}},
-        fault_flags={"dropout": True, "stale_sensor": False, "delay_jitter": True, "out_of_order": False, "spikes": False},
+        fault_flags={
+            "dropout": True,
+            "stale_sensor": False,
+            "delay_jitter": True,
+            "out_of_order": False,
+            "spikes": False,
+        },
     )
     assert feature.shape == (len(FEATURE_NAMES),)
     assert feature.dtype == np.float32

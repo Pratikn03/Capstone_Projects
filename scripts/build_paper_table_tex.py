@@ -93,9 +93,7 @@ def _render_tbl08(token: str, csv_path: Path, title: str) -> str:
     target_order = ["Load", "Wind", "Solar"]
     model_order = ["GBM", "LSTM", "TCN", "N-BEATS", "TFT", "PatchTST"]
     filtered = df[
-        (df["Region"] == "DE")
-        & (df["Target"].isin(target_order))
-        & (df["Model"].isin(model_order))
+        (df["Region"] == "DE") & (df["Target"].isin(target_order)) & (df["Model"].isin(model_order))
     ].copy()
     filtered["Target"] = pd.Categorical(filtered["Target"], categories=target_order, ordered=True)
     filtered["Model"] = pd.Categorical(filtered["Model"], categories=model_order, ordered=True)
@@ -118,9 +116,9 @@ def _render_tbl08(token: str, csv_path: Path, title: str) -> str:
         if model == "GBM":
             model = r"\textbf{GBM}"
 
-        def maybe_bold(value: str) -> str:
+        def maybe_bold(value: str, current_row=row) -> str:
             escaped = _tex_escape(value)
-            if str(row["Model"]) == "GBM" and escaped != "---":
+            if str(current_row["Model"]) == "GBM" and escaped != "---":
                 return rf"\textbf{{{escaped}}}"
             return escaped
 
@@ -255,7 +253,6 @@ def _render_tbl04(token: str, csv_path: Path, title: str) -> str:
     return _table_wrapper(title=title, label=token, tabular=lines, size=r"\scriptsize")
 
 
-
 def _render_tbl02(token: str, csv_path: Path, title: str) -> str:
     df = _read_csv(csv_path).copy()
     keep_columns = [
@@ -333,18 +330,18 @@ def _render_tbl09(token: str, csv_path: Path, title: str) -> str:
     return _table_wrapper(title=title, label=token, tabular=lines, size=r"\scriptsize")
 
 
-def render_table_tex(token: str, csv_path: Path, title: str) -> str:
-    if token == "TBL08_FORECAST_BASELINES":
-        return _render_tbl08(token, csv_path, title)
-    if token == "TBL09_CROSS_DOMAIN_OASG":
-        return _render_tbl09(token, csv_path, title)
-    if token == "TBL04_TRANSFER_STRESS":
-        return _render_tbl04(token, csv_path, title)
-    if token == "TBL02_ABLATIONS":
-        return _render_tbl02(token, csv_path, title)
-    if token == "TBL03_CQR_GROUP_COVERAGE":
-        return _render_tbl03(token, csv_path, title)
-    return _render_generic_table(token, csv_path, title)
+def render_table_tex(table_token: str, csv_path: Path, title: str) -> str:
+    if table_token == "TBL08_FORECAST_BASELINES":
+        return _render_tbl08(table_token, csv_path, title)
+    if table_token == "TBL09_CROSS_DOMAIN_OASG":
+        return _render_tbl09(table_token, csv_path, title)
+    if table_token == "TBL04_TRANSFER_STRESS":
+        return _render_tbl04(table_token, csv_path, title)
+    if table_token == "TBL02_ABLATIONS":
+        return _render_tbl02(table_token, csv_path, title)
+    if table_token == "TBL03_CQR_GROUP_COVERAGE":
+        return _render_tbl03(table_token, csv_path, title)
+    return _render_generic_table(table_token, csv_path, title)
 
 
 def write_table_tex(token: str, csv_path: Path, title: str, out_path: Path) -> None:
@@ -354,7 +351,9 @@ def write_table_tex(token: str, csv_path: Path, title: str, out_path: Path) -> N
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate LaTeX table fragments and manifest lookup for paper assets")
+    parser = argparse.ArgumentParser(
+        description="Generate LaTeX table fragments and manifest lookup for paper assets"
+    )
     parser.add_argument("--manifest", default="paper/manifest.yaml")
     parser.add_argument("--paper-dir", default="paper")
     args = parser.parse_args()

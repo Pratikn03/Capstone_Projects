@@ -15,12 +15,12 @@ Prerequisites:
     pip install wfdb
     Internet access to PhysioNet (no credentials needed for this dataset).
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-import traceback
 from pathlib import Path
 from typing import Any
 
@@ -43,11 +43,11 @@ RESP_MIN = 5.0
 RESP_MAX = 35.0
 
 # Critical-event thresholds (stricter than safe-set, for labelling)
-DESAT_SPO2 = 92.0           # SpO2 < 92 % → desaturation event
-BRADY_HR = 50.0             # HR < 50 → bradycardia
-TACHY_HR = 120.0            # HR > 120 → tachycardia
-TACHYPNEA_RESP = 25.0       # RR > 25 → tachypnea
-APNEA_RESP = 5.0            # RR < 5 → apnea/bradypnea
+DESAT_SPO2 = 92.0  # SpO2 < 92 % → desaturation event
+BRADY_HR = 50.0  # HR < 50 → bradycardia
+TACHY_HR = 120.0  # HR > 120 → tachycardia
+TACHYPNEA_RESP = 25.0  # RR > 25 → tachypnea
+APNEA_RESP = 5.0  # RR < 5 → apnea/bradypnea
 
 # Signals we want from the numerics records
 TARGET_SIGNALS = {"SpO2", "HR", "RESP", "PULSE", "ABPMean", "ABPSys", "ABPDias"}
@@ -156,9 +156,7 @@ def _ema_forecast(values: np.ndarray, alpha: float = EMA_ALPHA) -> np.ndarray:
     return forecast
 
 
-def _label_critical_events(
-    spo2: np.ndarray, hr: np.ndarray, resp: np.ndarray
-) -> dict[str, Any]:
+def _label_critical_events(spo2: np.ndarray, hr: np.ndarray, resp: np.ndarray) -> dict[str, Any]:
     """Label critical events in a patient's time series."""
     labels: dict[str, Any] = {
         "has_desaturation": False,
@@ -211,13 +209,15 @@ def _label_critical_events(
     labels["n_apnea_steps"] = int(apnea_mask.sum())
     labels["has_apnea"] = labels["n_apnea_steps"] > 0
 
-    labels["is_critical"] = any([
-        labels["has_desaturation"],
-        labels["has_bradycardia"],
-        labels["has_tachycardia"],
-        labels["has_tachypnea"],
-        labels["has_apnea"],
-    ])
+    labels["is_critical"] = any(
+        [
+            labels["has_desaturation"],
+            labels["has_bradycardia"],
+            labels["has_tachycardia"],
+            labels["has_tachypnea"],
+            labels["has_apnea"],
+        ]
+    )
 
     return labels
 
@@ -237,7 +237,7 @@ def build_mimic3_bridge(
 
     rng = np.random.default_rng(seed)
 
-    print(f"Fetching MIMIC-III record list from PhysioNet ...")
+    print("Fetching MIMIC-III record list from PhysioNet ...")
     all_patients = wfdb.get_record_list(DB)
     print(f"  {len(all_patients)} patient directories available")
 
@@ -296,8 +296,10 @@ def build_mimic3_bridge(
         n = len(spo2)
         patients_processed += 1
         patient_id = patient_dir.rstrip("/").split("/")[-1]
-        print(f"  [{patients_processed}/{n_patients}] {patient_id}: "
-              f"{n} samples, SpO2 range [{np.nanmin(spo2):.0f}, {np.nanmax(spo2):.0f}]%")
+        print(
+            f"  [{patients_processed}/{n_patients}] {patient_id}: "
+            f"{n} samples, SpO2 range [{np.nanmin(spo2):.0f}, {np.nanmax(spo2):.0f}]%"
+        )
 
         # Compute reliability
         reliability = _compute_reliability(spo2, hr, resp)
@@ -310,21 +312,28 @@ def build_mimic3_bridge(
 
         tag = "CRITICAL" if labels["is_critical"] else "normal"
         events = []
-        if labels["has_desaturation"]: events.append(f"desat({labels['n_desat_steps']})")
-        if labels["has_bradycardia"]: events.append(f"brady({labels['n_brady_steps']})")
-        if labels["has_tachycardia"]: events.append(f"tachy({labels['n_tachy_steps']})")
-        if labels["has_tachypnea"]: events.append(f"tachypnea({labels['n_tachypnea_steps']})")
-        if labels["has_apnea"]: events.append(f"apnea({labels['n_apnea_steps']})")
+        if labels["has_desaturation"]:
+            events.append(f"desat({labels['n_desat_steps']})")
+        if labels["has_bradycardia"]:
+            events.append(f"brady({labels['n_brady_steps']})")
+        if labels["has_tachycardia"]:
+            events.append(f"tachy({labels['n_tachy_steps']})")
+        if labels["has_tachypnea"]:
+            events.append(f"tachypnea({labels['n_tachypnea_steps']})")
+        if labels["has_apnea"]:
+            events.append(f"apnea({labels['n_apnea_steps']})")
         print(f"    {tag}  {', '.join(events) if events else 'no events'}")
 
-        manifest_entries.append({
-            "patient_id": patient_id,
-            "patient_dir": patient_dir,
-            "record": rec_name,
-            "n_samples": n,
-            "duration_hours": float(df["time_sec"].iloc[-1] / 3600) if "time_sec" in df.columns else None,
-            **labels,
-        })
+        manifest_entries.append(
+            {
+                "patient_id": patient_id,
+                "patient_dir": patient_dir,
+                "record": rec_name,
+                "n_samples": n,
+                "duration_hours": float(df["time_sec"].iloc[-1] / 3600) if "time_sec" in df.columns else None,
+                **labels,
+            }
+        )
 
         # Build ORIUS rows
         spo2_clean = np.nan_to_num(spo2, nan=95.0)
@@ -332,18 +341,22 @@ def build_mimic3_bridge(
         resp_clean = np.nan_to_num(resp, nan=15.0)
 
         for step in range(n):
-            all_rows.append({
-                "timestamp": f"{patient_id}_t{step}",
-                "target": float(spo2_clean[step]),
-                "forecast": float(spo2_forecast[step]),
-                "reliability": float(reliability[step]),
-                "hr": float(hr_clean[step]),
-                "pulse": float(pulse[step]) if pulse is not None and step < len(pulse) else float(hr_clean[step]),
-                "resp": float(resp_clean[step]),
-                "patient_id": patient_id,
-                "domain_label": "healthcare",
-                "is_critical": labels["is_critical"],
-            })
+            all_rows.append(
+                {
+                    "timestamp": f"{patient_id}_t{step}",
+                    "target": float(spo2_clean[step]),
+                    "forecast": float(spo2_forecast[step]),
+                    "reliability": float(reliability[step]),
+                    "hr": float(hr_clean[step]),
+                    "pulse": float(pulse[step])
+                    if pulse is not None and step < len(pulse)
+                    else float(hr_clean[step]),
+                    "resp": float(resp_clean[step]),
+                    "patient_id": patient_id,
+                    "domain_label": "healthcare",
+                    "is_critical": labels["is_critical"],
+                }
+            )
 
     # Write outputs
     if not all_rows:
@@ -377,10 +390,12 @@ def build_mimic3_bridge(
     manifest_path.write_text(json.dumps(manifest_data, indent=2, default=str) + "\n")
 
     print(f"\n{'=' * 70}")
-    print(f"MIMIC-III → ORIUS Healthcare Bridge Complete")
+    print("MIMIC-III → ORIUS Healthcare Bridge Complete")
     print(f"{'=' * 70}")
-    print(f"  Patients:       {patients_processed} ({n_critical} critical, "
-          f"{patients_processed - n_critical} normal)")
+    print(
+        f"  Patients:       {patients_processed} ({n_critical} critical, "
+        f"{patients_processed - n_critical} normal)"
+    )
     print(f"  Total rows:     {len(orius_df):,}")
     print(f"  Output CSV:     {csv_path}")
     print(f"  Manifest:       {manifest_path}")
@@ -391,8 +406,9 @@ def build_mimic3_bridge(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Bridge MIMIC-III numerics to ORIUS healthcare")
-    parser.add_argument("--n-patients", type=int, default=30,
-                        help="Number of patients to download (default: 30)")
+    parser.add_argument(
+        "--n-patients", type=int, default=30, help="Number of patients to download (default: 30)"
+    )
     parser.add_argument("--out-dir", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()

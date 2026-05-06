@@ -24,7 +24,7 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from orius.dc3s.certificate import (  # noqa: E402
+from orius.dc3s.certificate import (
     CERTIFICATE_SCHEMA_VERSION,
     normalize_certificate_schema,
     recompute_certificate_hash,
@@ -81,7 +81,9 @@ def _cert_columns(cert: dict[str, Any] | None) -> dict[str, str]:
         return {column: "" for column in SCHEMA_COLUMNS}
     normalized = normalize_certificate_schema(cert)
     return {
-        "certificate_schema_version": str(normalized.get("certificate_schema_version", CERTIFICATE_SCHEMA_VERSION)),
+        "certificate_schema_version": str(
+            normalized.get("certificate_schema_version", CERTIFICATE_SCHEMA_VERSION)
+        ),
         "certificate_hash": str(normalized.get("certificate_hash", "")),
         "prev_hash": str(normalized.get("prev_hash", "") or ""),
         "issuer": str(normalized.get("issuer", "")),
@@ -107,7 +109,10 @@ def _battery_witness_cert(row: pd.Series, previous_hash: str | None) -> dict[str
                 "discharge_mw": float(row.get("candidate_discharge_mw", 0.0) or 0.0),
             },
             "safe_action": safe_action,
-            "uncertainty": {"interval_lower": row.get("interval_lower"), "interval_upper": row.get("interval_upper")},
+            "uncertainty": {
+                "interval_lower": row.get("interval_lower"),
+                "interval_upper": row.get("interval_upper"),
+            },
             "reliability": {"w_t": float(row.get("reliability_w", 1.0) or 1.0)},
             "validity_horizon_H_t": 1,
             "theorem_contracts": {"T11": "battery_witness_runtime_certificate"},
@@ -130,7 +135,11 @@ def _sync_trace(trace_path: Path, *, domain: str, certificates: list[dict[str, A
     assigned = 0
     if domain in {"av", "healthcare"}:
         cert_iter = iter(certificates)
-        mask = df["controller"].astype(str).eq("orius") if "controller" in df.columns else pd.Series(False, index=df.index)
+        mask = (
+            df["controller"].astype(str).eq("orius")
+            if "controller" in df.columns
+            else pd.Series(False, index=df.index)
+        )
         for idx in df.index[mask]:
             cert = next(cert_iter, None)
             if cert is None:
@@ -140,7 +149,12 @@ def _sync_trace(trace_path: Path, *, domain: str, certificates: list[dict[str, A
             assigned += 1
     elif domain == "battery":
         previous_hash: str | None = None
-        valid_mask = df.get("certificate_valid", pd.Series(False, index=df.index)).astype(str).str.lower().isin({"true", "1"})
+        valid_mask = (
+            df.get("certificate_valid", pd.Series(False, index=df.index))
+            .astype(str)
+            .str.lower()
+            .isin({"true", "1"})
+        )
         for idx in df.index[valid_mask]:
             cert = _battery_witness_cert(df.loc[idx], previous_hash)
             previous_hash = str(cert["certificate_hash"])

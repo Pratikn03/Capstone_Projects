@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """Validate bounded nuPlan replay evidence for a full AV predeployment freeze."""
+
 from __future__ import annotations
 
 import argparse
 import csv
-from datetime import datetime, timezone
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SUMMARY = REPO_ROOT / "reports" / "predeployment_external_validation" / "nuplan_closed_loop_summary.csv"
+DEFAULT_SUMMARY = (
+    REPO_ROOT / "reports" / "predeployment_external_validation" / "nuplan_closed_loop_summary.csv"
+)
 DEFAULT_TRACES = REPO_ROOT / "reports" / "predeployment_external_validation" / "nuplan_closed_loop_traces.csv"
 DEFAULT_SOURCE_MANIFEST = (
     REPO_ROOT / "reports" / "predeployment_external_validation" / "nuplan_closed_loop_manifest.json"
@@ -93,14 +95,18 @@ def validate(
 
     summary, summary_findings = _read_summary(summary_path) if summary_path.exists() else ({}, [])
     findings.extend(summary_findings)
-    trace_stats = _trace_stats(traces_path) if traces_path.exists() else {
-        "trace_rows_scanned": 0,
-        "validation_surfaces": [],
-        "scenario_count_scanned": 0,
-        "controllers_scanned": [],
-        "orius_trace_rows_scanned": 0,
-        "orius_true_constraint_violations": 0,
-    }
+    trace_stats = (
+        _trace_stats(traces_path)
+        if traces_path.exists()
+        else {
+            "trace_rows_scanned": 0,
+            "validation_surfaces": [],
+            "scenario_count_scanned": 0,
+            "controllers_scanned": [],
+            "orius_trace_rows_scanned": 0,
+            "orius_true_constraint_violations": 0,
+        }
+    )
     source_manifest = (
         json.loads(source_manifest_path.read_text(encoding="utf-8")) if source_manifest_path.exists() else {}
     )
@@ -122,7 +128,9 @@ def validate(
     if "nuplan" not in source_dataset.lower():
         findings.append(f"AV full-freeze source dataset is not nuPlan: {source_dataset}")
     if runtime_rows < min_runtime_rows:
-        findings.append(f"nuPlan ORIUS runtime rows below full-freeze floor: {runtime_rows} < {min_runtime_rows}")
+        findings.append(
+            f"nuPlan ORIUS runtime rows below full-freeze floor: {runtime_rows} < {min_runtime_rows}"
+        )
     if trace_rows < min_trace_rows:
         findings.append(f"nuPlan trace rows below full-freeze floor: {trace_rows} < {min_trace_rows}")
     if orius_tsvr > MAX_NUPLAN_RUNTIME_TSVR:
@@ -137,7 +145,11 @@ def validate(
         findings.append("nuPlan full-freeze summary claims road deployment")
     if _boolish(summary.get("full_autonomous_driving_closure_claimed")):
         findings.append("nuPlan full-freeze summary claims full autonomous-driving field closure")
-    for phrase in ("does not claim completed carla", "road deployment", "full autonomous-driving field closure"):
+    for phrase in (
+        "does not claim completed carla",
+        "road deployment",
+        "full autonomous-driving field closure",
+    ):
         if phrase not in claim_boundary:
             findings.append(f"nuPlan claim boundary missing phrase: {phrase}")
     if trace_stats["validation_surfaces"] and trace_stats["validation_surfaces"] != [NUPLAN_SURFACE]:
@@ -145,15 +157,19 @@ def validate(
     if "orius" not in trace_stats["controllers_scanned"]:
         findings.append("nuPlan traces do not contain ORIUS controller rows")
     if trace_stats["orius_trace_rows_scanned"]:
-        trace_tsvr = int(trace_stats["orius_true_constraint_violations"]) / float(trace_stats["orius_trace_rows_scanned"])
+        trace_tsvr = int(trace_stats["orius_true_constraint_violations"]) / float(
+            trace_stats["orius_trace_rows_scanned"]
+        )
         if trace_tsvr > MAX_NUPLAN_RUNTIME_TSVR:
             findings.append("nuPlan ORIUS trace TSVR exceeds promoted empirical epsilon")
     if source_manifest.get("status") != NUPLAN_STATUS:
-        findings.append(f"nuPlan source manifest status is not {NUPLAN_STATUS}: {source_manifest.get('status')}")
+        findings.append(
+            f"nuPlan source manifest status is not {NUPLAN_STATUS}: {source_manifest.get('status')}"
+        )
 
     passed = not findings
     manifest = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "status": "nuplan_full_freeze_pass" if passed else "nuplan_full_freeze_failed",
         "pass": passed,
         "summary": str(summary_path),

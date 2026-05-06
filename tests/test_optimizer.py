@@ -22,6 +22,7 @@ See Also:
     - test_optimizer_constraints.py: More detailed constraint tests
     - src/orius/optimizer/lp_dispatch.py: The module being tested
 """
+
 import numpy as np
 
 from orius.optimizer import optimize_dispatch
@@ -30,15 +31,15 @@ from orius.optimizer import optimize_dispatch
 def test_optimize_dispatch_shapes():
     """
     Test that optimizer returns arrays of correct shape.
-    
+
     This is a basic sanity check that the optimizer produces outputs
     matching the input horizon length. Each output should have exactly
     3 elements for a 3-hour scenario.
     """
     # Arrange: Create a tiny 3-hour scenario for easy validation
     load = [10.0, 12.0, 9.0]  # MW of demand each hour
-    ren = [3.0, 4.0, 2.0]     # MW of renewable generation
-    
+    ren = [3.0, 4.0, 2.0]  # MW of renewable generation
+
     # Battery configuration: 5 MWh capacity, 2 MW max power
     cfg = {
         "battery": {
@@ -48,24 +49,17 @@ def test_optimize_dispatch_shapes():
             "min_soc_mwh": 0.5,
             "initial_soc_mwh": 2.5,
         },
-        "grid": {
-            "max_import_mw": 50.0, 
-            "price_per_mwh": 50.0, 
-            "carbon_kg_per_mwh": 0.0
-        },
+        "grid": {"max_import_mw": 50.0, "price_per_mwh": 50.0, "carbon_kg_per_mwh": 0.0},
         "penalties": {
-            "curtailment_per_mw": 500.0,    # High penalty for wasting renewables
-            "unmet_load_per_mw": 10000.0,   # Very high penalty for blackouts
+            "curtailment_per_mw": 500.0,  # High penalty for wasting renewables
+            "unmet_load_per_mw": 10000.0,  # Very high penalty for blackouts
         },
-        "objective": {
-            "cost_weight": 1.0, 
-            "carbon_weight": 0.0
-        },
+        "objective": {"cost_weight": 1.0, "carbon_weight": 0.0},
     }
 
     # Act: Run the optimizer
     out = optimize_dispatch(load, ren, cfg)
-    
+
     # Assert: Each output array has correct length (matches horizon)
     assert len(out["grid_mw"]) == 3, "Grid import should match horizon length"
     assert len(out["battery_charge_mw"]) == 3, "Charge should match horizon"

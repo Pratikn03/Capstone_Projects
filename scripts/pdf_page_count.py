@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Print the page count for a PDF file."""
+
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
-import subprocess
 
 
 def _read_with_python_library(pdf_path: Path) -> int | None:

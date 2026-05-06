@@ -14,11 +14,11 @@ _w.warn(
 
 from .plant import VehiclePlant  # noqa: E402
 from .vehicle_adapter import VehicleDomainAdapter  # noqa: E402
-from .vehicle_runner import run_vehicle_episode, compute_vehicle_metrics  # noqa: E402
+from .vehicle_runner import compute_vehicle_metrics, run_vehicle_episode  # noqa: E402
 
 __all__ = [
-    "VehiclePlant",
     "VehicleDomainAdapter",
-    "run_vehicle_episode",
+    "VehiclePlant",
     "compute_vehicle_metrics",
+    "run_vehicle_episode",
 ]

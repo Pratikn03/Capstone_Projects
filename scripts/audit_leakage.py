@@ -1,18 +1,17 @@
 """Temporal and feature leakage audit for publish gating."""
+
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import json
-import pickle
-from pathlib import Path
 import re
 import sys
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -20,6 +19,7 @@ if str(REPO_ROOT) not in sys.path:
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
+from orius.release.artifact_loader import load_pickle_artifact
 
 DATASETS = {
     "DE": {
@@ -113,7 +113,9 @@ def _boundaries_ok(
     }
 
 
-def _scan_feature_names(features_path: Path, forbidden_exact: set[str], forbidden_patterns: list[re.Pattern[str]]) -> dict[str, Any]:
+def _scan_feature_names(
+    features_path: Path, forbidden_exact: set[str], forbidden_patterns: list[re.Pattern[str]]
+) -> dict[str, Any]:
     out = {"path": str(features_path), "forbidden_exact_hits": [], "forbidden_pattern_hits": []}
     if not features_path.exists():
         out["missing"] = True
@@ -131,13 +133,15 @@ def _scan_feature_names(features_path: Path, forbidden_exact: set[str], forbidde
     return out
 
 
-def _scan_model_artifact_features(models_dir: Path, forbidden_exact: set[str], forbidden_patterns: list[re.Pattern[str]]) -> list[dict[str, Any]]:
+def _scan_model_artifact_features(
+    models_dir: Path, forbidden_exact: set[str], forbidden_patterns: list[re.Pattern[str]]
+) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     if not models_dir.exists():
         return findings
     for artifact in sorted(models_dir.glob("*.pkl")):
         try:
-            bundle = pickle.loads(artifact.read_bytes())
+            bundle = load_pickle_artifact(artifact)
         except Exception:
             continue
         if not isinstance(bundle, dict):
@@ -205,51 +209,77 @@ def run_leakage_audit(*, config_path: Path) -> dict[str, Any]:
 
         boundaries = _boundaries_ok(train_ts, calibration_ts, val_ts, test_ts)
         feature_scan = _scan_feature_names(dcfg["features_path"], forbidden_exact, forbidden_patterns)
-        model_feature_hits = _scan_model_artifact_features(dcfg["models_dir"], forbidden_exact, forbidden_patterns)
+        model_feature_hits = _scan_model_artifact_features(
+            dcfg["models_dir"], forbidden_exact, forbidden_patterns
+        )
 
         dataset_fail = False
         if overlap_train_calibration > max_overlap_train_calibration:
             dataset_fail = True
-            violations.append({"dataset": name, "type": "overlap_train_calibration", "value": overlap_train_calibration})
+            violations.append(
+                {"dataset": name, "type": "overlap_train_calibration", "value": overlap_train_calibration}
+            )
         if patient_overlap_train_calibration > max_overlap_train_calibration:
             dataset_fail = True
             violations.append(
-                {"dataset": name, "type": "patient_overlap_train_calibration", "value": patient_overlap_train_calibration}
+                {
+                    "dataset": name,
+                    "type": "patient_overlap_train_calibration",
+                    "value": patient_overlap_train_calibration,
+                }
             )
         if overlap_calibration_val > max_overlap_calibration_val:
             dataset_fail = True
-            violations.append({"dataset": name, "type": "overlap_calibration_val", "value": overlap_calibration_val})
+            violations.append(
+                {"dataset": name, "type": "overlap_calibration_val", "value": overlap_calibration_val}
+            )
         if patient_overlap_calibration_val > max_overlap_calibration_val:
             dataset_fail = True
             violations.append(
-                {"dataset": name, "type": "patient_overlap_calibration_val", "value": patient_overlap_calibration_val}
+                {
+                    "dataset": name,
+                    "type": "patient_overlap_calibration_val",
+                    "value": patient_overlap_calibration_val,
+                }
             )
         if overlap_calibration_test > max_overlap_calibration_test:
             dataset_fail = True
-            violations.append({"dataset": name, "type": "overlap_calibration_test", "value": overlap_calibration_test})
+            violations.append(
+                {"dataset": name, "type": "overlap_calibration_test", "value": overlap_calibration_test}
+            )
         if patient_overlap_calibration_test > max_overlap_calibration_test:
             dataset_fail = True
             violations.append(
-                {"dataset": name, "type": "patient_overlap_calibration_test", "value": patient_overlap_calibration_test}
+                {
+                    "dataset": name,
+                    "type": "patient_overlap_calibration_test",
+                    "value": patient_overlap_calibration_test,
+                }
             )
         if overlap_train_val > max_overlap_train_val:
             dataset_fail = True
             violations.append({"dataset": name, "type": "overlap_train_val", "value": overlap_train_val})
         if patient_overlap_train_val > max_overlap_train_val:
             dataset_fail = True
-            violations.append({"dataset": name, "type": "patient_overlap_train_val", "value": patient_overlap_train_val})
+            violations.append(
+                {"dataset": name, "type": "patient_overlap_train_val", "value": patient_overlap_train_val}
+            )
         if overlap_train_test > max_overlap_train_test:
             dataset_fail = True
             violations.append({"dataset": name, "type": "overlap_train_test", "value": overlap_train_test})
         if patient_overlap_train_test > max_overlap_train_test:
             dataset_fail = True
-            violations.append({"dataset": name, "type": "patient_overlap_train_test", "value": patient_overlap_train_test})
+            violations.append(
+                {"dataset": name, "type": "patient_overlap_train_test", "value": patient_overlap_train_test}
+            )
         if overlap_val_test > max_overlap_val_test:
             dataset_fail = True
             violations.append({"dataset": name, "type": "overlap_val_test", "value": overlap_val_test})
         if patient_overlap_val_test > max_overlap_val_test:
             dataset_fail = True
-            violations.append({"dataset": name, "type": "patient_overlap_val_test", "value": patient_overlap_val_test})
+            violations.append(
+                {"dataset": name, "type": "patient_overlap_val_test", "value": patient_overlap_val_test}
+            )
         if (
             not boundaries["train_calibration_ok"]
             or not boundaries["calibration_val_ok"]
@@ -274,7 +304,9 @@ def run_leakage_audit(*, config_path: Path) -> dict[str, Any]:
             )
         if model_feature_hits:
             dataset_fail = True
-            violations.append({"dataset": name, "type": "model_features_forbidden", "value": model_feature_hits})
+            violations.append(
+                {"dataset": name, "type": "model_features_forbidden", "value": model_feature_hits}
+            )
 
         datasets_out[name] = {
             "rows": {
@@ -307,7 +339,7 @@ def run_leakage_audit(*, config_path: Path) -> dict[str, Any]:
 
     fail = any(d.get("fail", False) for d in datasets_out.values())
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "gates": {
             "max_overlap_train_calibration": max_overlap_train_calibration,
             "max_overlap_calibration_val": max_overlap_calibration_val,

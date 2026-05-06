@@ -1,4 +1,5 @@
 """Tests for prepared-but-not-promoted next-tier validation manifests."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,7 +15,11 @@ def test_next_tier_validation_manifests_are_non_claims(tmp_path: Path) -> None:
     assert summary["completed"]["healthcare_heldout_runtime"] is False
 
     av_text = (tmp_path / "nuplan_carla_preparation_manifest.json").read_text(encoding="utf-8").lower()
-    hc_text = (tmp_path / "healthcare_heldout_runtime_preparation_manifest.json").read_text(encoding="utf-8").lower()
+    hc_text = (
+        (tmp_path / "healthcare_heldout_runtime_preparation_manifest.json")
+        .read_text(encoding="utf-8")
+        .lower()
+    )
 
     assert "prepared_not_completed" in av_text
     assert "not claim completed nuplan" in av_text or "does not claim completed nuplan" in av_text

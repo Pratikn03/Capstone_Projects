@@ -19,13 +19,12 @@ Organisation mirrors the thesis surface register:
                   intervention-sufficiency, reliability-awareness,
                   episode-aggregation, AV promotion routes)
 """
+
 from __future__ import annotations
 
-import math
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
-
 
 # ═══════════════════════════════════════════════════════════════════════
 # S1 / S2: Precursor theorems
@@ -108,9 +107,7 @@ def verify_observation_gap_under_dropout(
         "signal_range": float(signal_range),
         "gap_lower_bound": float(gap_lower_bound),
         "holds": gap_lower_bound >= 0.0,
-        "statement": (
-            "|x_obs − x_true| ≥ δ·R under δ-fraction dropout."
-        ),
+        "statement": ("|x_obs − x_true| ≥ δ·R under δ-fraction dropout."),
     }
 
 
@@ -140,9 +137,7 @@ def verify_boundary_proximity_under_arbitrage(
         "rate_second_half": rate_second,
         "proximity_increasing": increasing,
         "holds": near_boundary > 0.0,
-        "statement": (
-            "Under arbitrage, boundary proximity rate increases over time."
-        ),
+        "statement": ("Under arbitrage, boundary proximity rate increases over time."),
     }
 
 
@@ -230,8 +225,7 @@ def verify_aggregation_under_predictable_budget(
         "all_nonnegative": all_nonneg,
         "holds": all_nonneg and episode_bound >= 0.0,
         "statement": (
-            "E[V_T] ≤ Σ_t r_t by linearity of expectation when each r_t "
-            "is a predictable per-step risk bound."
+            "E[V_T] ≤ Σ_t r_t by linearity of expectation when each r_t is a predictable per-step risk bound."
         ),
     }
 
@@ -290,10 +284,7 @@ def verify_inflated_set_contains_state(
         "state_contained": contained,
         "minimum_inflation_needed": float(min_inflation),
         "holds": contained,
-        "statement": (
-            "The inflated set [x_obs ± infl·h] contains x_true when "
-            "infl ≥ |x_true − x_obs| / h."
-        ),
+        "statement": ("The inflated set [x_obs ± infl·h] contains x_true when infl ≥ |x_true − x_obs| / h."),
     }
 
 
@@ -320,8 +311,7 @@ def verify_tightened_feasibility(
         "tightened_is_subset": tightened_subset,
         "holds": holds,
         "statement": (
-            "If a ∈ S_tight ⊆ S_true, then a ∈ S_true.  Tightened "
-            "feasibility implies true feasibility."
+            "If a ∈ S_tight ⊆ S_true, then a ∈ S_true.  Tightened feasibility implies true feasibility."
         ),
     }
 
@@ -354,12 +344,14 @@ def verify_conditional_conservatism(
             mask = (w >= bin_edges[i]) & (w <= bin_edges[i + 1])
         if np.sum(mask) > 0:
             gc = float(np.mean(covered[mask]))
-            group_coverages.append({
-                "bin": f"[{bin_edges[i]:.2f}, {bin_edges[i+1]:.2f}]",
-                "count": int(np.sum(mask)),
-                "coverage": gc,
-                "meets_target": gc >= 1.0 - alpha,
-            })
+            group_coverages.append(
+                {
+                    "bin": f"[{bin_edges[i]:.2f}, {bin_edges[i + 1]:.2f}]",
+                    "count": int(np.sum(mask)),
+                    "coverage": gc,
+                    "meets_target": gc >= 1.0 - alpha,
+                }
+            )
     all_meet = all(g["meets_target"] for g in group_coverages)
     return {
         "n_samples": len(y),
@@ -410,8 +402,7 @@ def verify_intervention_lead_time(
         "bounded": max_lead <= 3,  # typical: intervention within 3 steps
         "holds": len(lead_times) == 0 or max_lead <= len(w),
         "statement": (
-            "When reliability drops below threshold, the DC3S shield "
-            "intervenes within bounded lead time."
+            "When reliability drops below threshold, the DC3S shield intervenes within bounded lead time."
         ),
     }
 
@@ -425,7 +416,7 @@ def verify_safe_budget_monotonicity(
     The per-step risk budget r_t = α(1 − w_t) is monotonically decreasing
     in w_t.
     """
-    w = np.asarray(sorted(list(w_values)), dtype=float)
+    w = np.asarray(sorted(w_values), dtype=float)
     budgets = alpha * (1.0 - w)
     monotone_decreasing = bool(np.all(np.diff(budgets) <= 1e-12))
     return {
@@ -542,8 +533,8 @@ def verify_oasg_severity(
         "max_severity": float(np.max(np.abs(errs))) if len(errs) > 0 else 0.0,
         "holds": True,
         "statement": (
-            "OASG severity bounded by |x_obs − x_true|.  "
-            f"Max = {float(np.max(np.abs(errs))):.4f}." if len(errs) > 0
+            f"OASG severity bounded by |x_obs − x_true|.  Max = {float(np.max(np.abs(errs))):.4f}."
+            if len(errs) > 0
             else "No OASG events."
         ),
     }
@@ -586,7 +577,7 @@ def verify_intervention_safety_tradeoff(
     vr = np.asarray(list(violation_rates), dtype=float)
     # Check if sorted by intervention rate, violations decrease
     order = np.argsort(ir)
-    ir_sorted = ir[order]
+    ir[order]
     vr_sorted = vr[order]
     monotone = bool(np.all(np.diff(vr_sorted) <= 1e-9))
     corr = float(np.corrcoef(ir, vr)[0, 1]) if len(ir) > 1 else 0.0
@@ -619,9 +610,7 @@ def verify_perfect_telemetry_collapse(
         "expected_violations": float(bound),
         "collapses_to_zero": bound == 0.0,
         "holds": bound == 0.0,
-        "statement": (
-            "E[V] = α(1 − 1)T = 0.  Perfect telemetry ⟹ zero expected violations."
-        ),
+        "statement": ("E[V] = α(1 − 1)T = 0.  Perfect telemetry ⟹ zero expected violations."),
     }
 
 
@@ -725,8 +714,7 @@ def verify_episode_aggregation(
         "mean_per_step_risk": mean_per_step,
         "holds": episode_bound >= 0.0,
         "statement": (
-            f"E[V_T] ≤ Σ r_t = {episode_bound:.4f} over {T} steps.  "
-            f"Mean per-step risk = {mean_per_step:.6f}."
+            f"E[V_T] ≤ Σ r_t = {episode_bound:.4f} over {T} steps.  Mean per-step risk = {mean_per_step:.6f}."
         ),
     }
 
@@ -903,35 +891,35 @@ SUPPORTING_RESULTS_REGISTER = {
 
 
 __all__ = [
+    # Register
+    "SUPPORTING_RESULTS_REGISTER",
+    "verify_admissible_fault_sequence_existence",
+    "verify_aggregation_under_predictable_budget",
+    "verify_av_promotion_routes",
+    "verify_boundary_proximity_under_arbitrage",
+    "verify_conditional_conservatism",
+    "verify_constraint_class_mismatch_barrier",
+    "verify_dc3s_feasibility_guarantee",
+    "verify_episode_aggregation",
     # Precursor theorems
     "verify_illusion_under_dropout",
-    "verify_dc3s_feasibility_guarantee",
-    # Lemmas
-    "verify_observation_gap_under_dropout",
-    "verify_boundary_proximity_under_arbitrage",
-    "verify_admissible_fault_sequence_existence",
-    "verify_no_margin_compensation",
-    "verify_aggregation_under_predictable_budget",
+    "verify_inflated_set_contains_state",
     # Propositions
     "verify_insufficiency_of_observed_evaluation",
-    "verify_inflated_set_contains_state",
-    "verify_tightened_feasibility",
-    "verify_conditional_conservatism",
     "verify_intervention_lead_time",
-    "verify_safe_budget_monotonicity",
-    "verify_transfer_failure_breaks_pattern",
-    "verify_constraint_class_mismatch_barrier",
+    "verify_intervention_safety_tradeoff",
+    "verify_intervention_sufficiency",
+    "verify_no_margin_compensation",
     # Corollaries
     "verify_oasg_rate_lower_bound",
     "verify_oasg_severity",
-    "verify_zero_violation_regime",
-    "verify_intervention_safety_tradeoff",
+    # Lemmas
+    "verify_observation_gap_under_dropout",
     "verify_perfect_telemetry_collapse",
-    "verify_reliability_proportional_safety",
-    "verify_intervention_sufficiency",
     "verify_reliability_awareness_necessary",
-    "verify_episode_aggregation",
-    "verify_av_promotion_routes",
-    # Register
-    "SUPPORTING_RESULTS_REGISTER",
+    "verify_reliability_proportional_safety",
+    "verify_safe_budget_monotonicity",
+    "verify_tightened_feasibility",
+    "verify_transfer_failure_breaks_pattern",
+    "verify_zero_violation_regime",
 ]

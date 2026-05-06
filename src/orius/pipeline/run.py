@@ -1,4 +1,5 @@
 """Pipeline orchestration: run."""
+
 from __future__ import annotations
 
 import argparse
@@ -9,15 +10,18 @@ import platform
 import shutil
 import subprocess
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Any
+from typing import Any
 
+import numpy as np
 import yaml
 
 from orius.utils.logging import setup_logging
 from orius.utils.registry import register_models
+
 
 def _repo_root() -> Path:
     # Key: orchestrate end-to-end pipeline steps
@@ -158,7 +162,9 @@ def _load_weather_config(cfg_path: Path, repo_root: Path, log: logging.Logger) -
     if not weather_path:
         log.warning("weather.enabled is true but weather.file is missing in %s", cfg_path)
         return WeatherConfig(True, None)
-    path = (repo_root / weather_path).resolve() if not Path(weather_path).is_absolute() else Path(weather_path)
+    path = (
+        (repo_root / weather_path).resolve() if not Path(weather_path).is_absolute() else Path(weather_path)
+    )
     return WeatherConfig(True, path)
 
 
@@ -179,7 +185,9 @@ def _load_holidays_config(cfg_path: Path, repo_root: Path, log: logging.Logger) 
     if not holiday_path:
         log.warning("holidays.enabled is true but holidays.file is missing in %s", cfg_path)
         return HolidaysConfig(True, None, country)
-    path = (repo_root / holiday_path).resolve() if not Path(holiday_path).is_absolute() else Path(holiday_path)
+    path = (
+        (repo_root / holiday_path).resolve() if not Path(holiday_path).is_absolute() else Path(holiday_path)
+    )
     return HolidaysConfig(True, path, country)
 
 
@@ -341,9 +349,7 @@ def _resolve_calibration_npz_path(
     target: str = "load_mw",
 ) -> Path | None:
     """Resolve calibration NPZ path used to learn FACI scale bounds."""
-    template = str(
-        uncertainty_cfg.get("calibration_npz", "artifacts/backtests/{target}_calibration.npz")
-    )
+    template = str(uncertainty_cfg.get("calibration_npz", "artifacts/backtests/{target}_calibration.npz"))
     candidates: list[Path] = []
 
     try:
@@ -647,16 +653,18 @@ def _apply_operational_load_stress(
         raise ValueError("load_lower_bound and load_upper_bound must have identical length")
 
     stress_cfg = (
-        research_operational_cfg.get("stress", {})
-        if isinstance(research_operational_cfg, dict)
-        else {}
+        research_operational_cfg.get("stress", {}) if isinstance(research_operational_cfg, dict) else {}
     )
     if not bool(stress_cfg.get("enabled", False)):
-        return lower, upper, {
-            "applied": False,
-            "load_stress_additive_mw": 0.0,
-            "stress_interval_multiplier": 1.0,
-        }
+        return (
+            lower,
+            upper,
+            {
+                "applied": False,
+                "load_stress_additive_mw": 0.0,
+                "stress_interval_multiplier": 1.0,
+            },
+        )
 
     eps_safe = 1e-9
     width = np.maximum(upper - lower, eps_safe)
@@ -703,11 +711,15 @@ def _apply_operational_load_stress(
     stressed_upper = np.maximum(stressed_lower, mid + 0.5 * capped_width)
 
     stress_interval_multiplier = float(np.mean((stressed_upper - stressed_lower) / width))
-    return stressed_lower, stressed_upper, {
-        "applied": True,
-        "load_stress_additive_mw": float(additive),
-        "stress_interval_multiplier": stress_interval_multiplier,
-    }
+    return (
+        stressed_lower,
+        stressed_upper,
+        {
+            "applied": True,
+            "load_stress_additive_mw": float(additive),
+            "stress_interval_multiplier": stress_interval_multiplier,
+        },
+    )
 
 
 def _build_window_operational_config(
@@ -728,6 +740,7 @@ def _build_window_operational_config(
     - Battery reserve floor is applied as a minimum SoC fraction of capacity.
     """
     import copy
+
     import numpy as np
 
     cfg = copy.deepcopy(base_config if isinstance(base_config, dict) else {})
@@ -778,7 +791,9 @@ def _build_window_operational_config(
             cfg["research_operational"] = {}
         cfg["research_operational"].setdefault("terminal_soc", {})
         if isinstance(cfg["research_operational"]["terminal_soc"], dict):
-            cfg["research_operational"]["terminal_soc"]["resolved_target_mwh"] = float(resolved_terminal_target)
+            cfg["research_operational"]["terminal_soc"]["resolved_target_mwh"] = float(
+                resolved_terminal_target
+            )
 
     cap_cfg = research_op.get("grid_cap", {}) if isinstance(research_op, dict) else {}
     if bool(cap_cfg.get("enabled", True)):
@@ -961,9 +976,8 @@ def _run_research_step(
         renewables_forecast = wind_forecast + solar_forecast
 
         load_true = window_df["load_mw"].to_numpy(dtype=float)
-        renewables_true = (
-            window_df["wind_mw"].to_numpy(dtype=float)
-            + window_df["solar_mw"].to_numpy(dtype=float)
+        renewables_true = window_df["wind_mw"].to_numpy(dtype=float) + window_df["solar_mw"].to_numpy(
+            dtype=float
         )
 
         base_lower, base_upper = _build_base_load_intervals(
@@ -1004,14 +1018,10 @@ def _run_research_step(
         window_grid_cfg = window_config.get("grid", {}) if isinstance(window_config, dict) else {}
         window_battery_cfg = window_config.get("battery", {}) if isinstance(window_config, dict) else {}
         window_research_cfg = (
-            window_config.get("research_operational", {})
-            if isinstance(window_config, dict)
-            else {}
+            window_config.get("research_operational", {}) if isinstance(window_config, dict) else {}
         )
         window_terminal_cfg = (
-            window_research_cfg.get("terminal_soc", {})
-            if isinstance(window_research_cfg, dict)
-            else {}
+            window_research_cfg.get("terminal_soc", {}) if isinstance(window_research_cfg, dict) else {}
         )
         operational_grid_cap = float(
             window_grid_cfg.get("max_import_mw", window_grid_cfg.get("max_draw_mw", np.nan))
@@ -1155,10 +1165,16 @@ def _run_research_step(
         "window_end": None,
         "robust_feasible": bool(new_df["robust_feasible"].all()),
         "solver_status": "summary",
-        "operational_grid_cap_mw": float(pd.to_numeric(new_df["operational_grid_cap_mw"], errors="coerce").mean()),
+        "operational_grid_cap_mw": float(
+            pd.to_numeric(new_df["operational_grid_cap_mw"], errors="coerce").mean()
+        ),
         "reserve_soc_mwh": float(pd.to_numeric(new_df["reserve_soc_mwh"], errors="coerce").mean()),
-        "terminal_soc_target_mwh": float(pd.to_numeric(new_df["terminal_soc_target_mwh"], errors="coerce").mean()),
-        "load_stress_additive_mw": float(pd.to_numeric(new_df["load_stress_additive_mw"], errors="coerce").mean()),
+        "terminal_soc_target_mwh": float(
+            pd.to_numeric(new_df["terminal_soc_target_mwh"], errors="coerce").mean()
+        ),
+        "load_stress_additive_mw": float(
+            pd.to_numeric(new_df["load_stress_additive_mw"], errors="coerce").mean()
+        ),
         "stress_interval_multiplier": float(
             pd.to_numeric(new_df["stress_interval_multiplier"], errors="coerce").mean()
         ),
@@ -1285,11 +1301,7 @@ def main() -> None:
     args = parser.parse_args()
 
     repo_root = _repo_root()
-    steps = (
-        ALL_STEPS
-        if args.all
-        else [s.strip() for s in args.steps.split(",") if s.strip()]
-    )
+    steps = ALL_STEPS if args.all else [s.strip() for s in args.steps.split(",") if s.strip()]
 
     run_id = args.run_id or datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     run_dir = repo_root / "artifacts" / "runs" / run_id
@@ -1313,7 +1325,9 @@ def main() -> None:
     raw_hash = _hash_paths([raw_csv], repo_root) if raw_csv.exists() else None
     data_cfg_hash = _hash_paths([data_cfg], repo_root) if data_cfg.exists() else None
     signals_hash = (
-        _hash_paths([signal_cfg.path], repo_root) if signal_cfg.enabled and signal_cfg.path and signal_cfg.path.exists() else None
+        _hash_paths([signal_cfg.path], repo_root)
+        if signal_cfg.enabled and signal_cfg.path and signal_cfg.path.exists()
+        else None
     )
 
     features_path = repo_root / "data" / "processed" / "features.parquet"
@@ -1331,7 +1345,18 @@ def main() -> None:
         ):
             log.info("Data step skipped (cache hit)")
         else:
-            _run([sys.executable, "-m", "orius.data_pipeline.validate_schema", "--in", "data/raw", "--report", "reports/data_quality_report.md"], log)
+            _run(
+                [
+                    sys.executable,
+                    "-m",
+                    "orius.data_pipeline.validate_schema",
+                    "--in",
+                    "data/raw",
+                    "--report",
+                    "reports/data_quality_report.md",
+                ],
+                log,
+            )
             build_cmd = [
                 sys.executable,
                 "-m",
@@ -1358,7 +1383,18 @@ def main() -> None:
                     log.warning("Holidays enabled but file missing; proceeding without holidays.")
                 build_cmd += ["--holiday-country", holidays_cfg.country]
             _run(build_cmd, log)
-            _run([sys.executable, "-m", "orius.data_pipeline.split_time_series", "--in", "data/processed/features.parquet", "--out", "data/processed/splits"], log)
+            _run(
+                [
+                    sys.executable,
+                    "-m",
+                    "orius.data_pipeline.split_time_series",
+                    "--in",
+                    "data/processed/features.parquet",
+                    "--out",
+                    "data/processed/splits",
+                ],
+                log,
+            )
 
         cache["raw_hash"] = raw_hash
         cache["data_cfg_hash"] = data_cfg_hash
@@ -1370,11 +1406,22 @@ def main() -> None:
         if not features_path.exists():
             raise FileNotFoundError("Missing data/processed/features.parquet. Run data step first.")
         train_hash = _hash_paths([features_path, train_cfg], repo_root)
-        if not args.force and cache.get("train_hash") == train_hash and (repo_root / "artifacts" / "models").exists():
+        if (
+            not args.force
+            and cache.get("train_hash") == train_hash
+            and (repo_root / "artifacts" / "models").exists()
+        ):
             log.info("Train step skipped (cache hit)")
         else:
-            _run([sys.executable, "-m", "orius.forecasting.train", "--config", "configs/train_forecast.yaml"], log)
-            register_models(repo_root / "artifacts" / "models", repo_root / "artifacts" / "registry" / "models.json", run_id=run_id)
+            _run(
+                [sys.executable, "-m", "orius.forecasting.train", "--config", "configs/train_forecast.yaml"],
+                log,
+            )
+            register_models(
+                repo_root / "artifacts" / "models",
+                repo_root / "artifacts" / "registry" / "models.json",
+                run_id=run_id,
+            )
         cache["train_hash"] = train_hash
 
     # ── ANOMALY ─────────────────────────────────────────────
@@ -1391,9 +1438,13 @@ def main() -> None:
             log.info("Anomaly step skipped (cache hit)")
         else:
             anomaly_cmd = [
-                sys.executable, "-m", "orius.anomaly.train",
-                "--train-data", "data/processed/splits/train.parquet",
-                "--out", str(anomaly_model_path),
+                sys.executable,
+                "-m",
+                "orius.anomaly.train",
+                "--train-data",
+                "data/processed/splits/train.parquet",
+                "--out",
+                str(anomaly_model_path),
             ]
             if anomaly_cfg_path.exists():
                 anomaly_cmd += ["--config", str(anomaly_cfg_path)]
@@ -1442,7 +1493,9 @@ def main() -> None:
             raise ValueError("research_datasets must include at least one of: de,us")
         invalid = [d for d in research_datasets if d not in dataset_specs]
         if invalid:
-            raise ValueError(f"Unsupported research_datasets: {invalid}. Allowed values: {sorted(dataset_specs)}")
+            raise ValueError(
+                f"Unsupported research_datasets: {invalid}. Allowed values: {sorted(dataset_specs)}"
+            )
 
         task_cfg = _load_yaml(train_cfg).get("task", {})
         default_horizon = int(task_cfg.get("horizon_hours", 24)) if isinstance(task_cfg, dict) else 24
@@ -1479,11 +1532,7 @@ def main() -> None:
             )
 
             cache_key = f"research_hash_{dataset}"
-            if (
-                not args.force
-                and cache.get(cache_key) == research_hash
-                and spec.output_csv.exists()
-            ):
+            if not args.force and cache.get(cache_key) == research_hash and spec.output_csv.exists():
                 log.info("Research step for %s skipped (cache hit)", dataset)
                 research_results[dataset] = {
                     "rows_written": 0,
@@ -1530,9 +1579,12 @@ def main() -> None:
             log.info("Benchmark step skipped (cache hit)")
         else:
             bench_cmd = [
-                sys.executable, str(cpsbench_script),
-                "--out-dir", str(benchmark_out),
-                "--horizon", str(args.benchmark_horizon),
+                sys.executable,
+                str(cpsbench_script),
+                "--out-dir",
+                str(benchmark_out),
+                "--horizon",
+                str(args.benchmark_horizon),
             ]
             if args.benchmark_seeds:
                 bench_cmd += ["--seeds"] + [str(s) for s in args.benchmark_seeds]

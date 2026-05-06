@@ -44,6 +44,7 @@ The Five Invariants (supporting reference harness)
   Inv 4: uncertainty_set(w=1) = conf_set  — calibration consistency at full reliability
   Inv 5: uncertainty_set(w=0).is_empty    — total failure → only fallback admissible
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -51,8 +52,8 @@ from typing import Protocol, runtime_checkable
 
 import numpy as np
 
-
 # ── Typed value objects ────────────────────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class SafetyBound:
@@ -70,6 +71,7 @@ class SafetyBound:
                   denominator: inflation = q / (w + ε). Prevents
                   division by zero when w_t → 0.
     """
+
     alpha: float
     epsilon: float
 
@@ -94,6 +96,7 @@ class TightenedSet:
                    action exists and the fallback must be used. This
                    satisfies supporting invariant 5 at w_t = 0.
     """
+
     lower: np.ndarray
     upper: np.ndarray
     is_empty: bool
@@ -113,12 +116,14 @@ class RepairResult:
         repair_distance : L2 distance from candidate to action. Used
                           for performance accounting (repair rate metric).
     """
+
     action: np.ndarray
     was_repaired: bool
     repair_distance: float
 
 
 # ── Universal adapter Protocol ─────────────────────────────────────────────────
+
 
 @runtime_checkable
 class UniversalAdapterProtocol(Protocol):
@@ -226,6 +231,7 @@ class UniversalAdapterProtocol(Protocol):
 
 # ── Contract verifier ──────────────────────────────────────────────────────────
 
+
 class ContractVerifier:
     """Runtime checker for the supporting five-invariant reference harness.
 
@@ -315,9 +321,7 @@ class ContractVerifier:
                 "Check that your OQE scoring is properly normalised."
             )
 
-    def _check_invariant_4_calibration_consistency(
-        self, z_t: np.ndarray, q_t: float, tol: float
-    ) -> None:
+    def _check_invariant_4_calibration_consistency(self, z_t: np.ndarray, q_t: float, tol: float) -> None:
         """Supporting invariant 4: the width shrinkage from w_t=1 to w_t=0.5 must be ≈ 2·q_t.
 
         Theoretical requirement: the inflation rule m_t = q_t / (w_t + ε) gives:
@@ -363,9 +367,7 @@ class ContractVerifier:
                 "Check that your inflation rule uses m_t = q_t / (w_t + ε)."
             )
 
-    def _check_invariant_5_zero_reliability_empty(
-        self, z_t: np.ndarray, q_t: float
-    ) -> None:
+    def _check_invariant_5_zero_reliability_empty(self, z_t: np.ndarray, q_t: float) -> None:
         """Supporting invariant 5: at w_t = 0 (total observation failure), the tightened
         set must be empty (is_empty = True).
 
@@ -383,9 +385,7 @@ class ContractVerifier:
                 "set should collapse to empty. Only the fallback action is safe."
             )
 
-    def _check_invariant_2_tightened_subset(
-        self, z_t: np.ndarray, q_t: float, tol: float
-    ) -> None:
+    def _check_invariant_2_tightened_subset(self, z_t: np.ndarray, q_t: float, tol: float) -> None:
         """Supporting invariant 2: the tightened set A_t must be a subset of the nominal
         set A_nominal (= uncertainty_set at w_t = 1, the widest permissible set).
 
@@ -410,9 +410,7 @@ class ContractVerifier:
                 "Tightening must not expand the action set above the nominal ceiling."
             )
 
-    def _check_invariant_1_repair_membership(
-        self, z_t: np.ndarray, q_t: float, tol: float
-    ) -> None:
+    def _check_invariant_1_repair_membership(self, z_t: np.ndarray, q_t: float, tol: float) -> None:
         """Supporting invariant 1: the repaired action must lie in the tightened set.
 
         This is the core supporting invariant: it mirrors the repair-membership
@@ -427,7 +425,7 @@ class ContractVerifier:
             # Cannot test repair against an empty set; fallback is the only action.
             # Check that fallback() exists and returns something.
             fb = self.adapter.fallback()
-            if fb is None or (hasattr(fb, '__len__') and len(fb) == 0):
+            if fb is None or (hasattr(fb, "__len__") and len(fb) == 0):
                 raise ContractViolation(
                     "Invariant 1 (repair membership) FAILED: safe_set is empty "
                     "and fallback() returned None or empty array."
@@ -439,9 +437,7 @@ class ContractVerifier:
 
         result = self.adapter.repair(outside_candidate, safe_set)
         if result is None or result.action is None:
-            raise ContractViolation(
-                "Invariant 1 (repair membership) FAILED: repair() returned None."
-            )
+            raise ContractViolation("Invariant 1 (repair membership) FAILED: repair() returned None.")
         if np.any(result.action < safe_set.lower - tol):
             raise ContractViolation(
                 f"Invariant 1 (repair membership) FAILED: repaired action "
@@ -458,6 +454,7 @@ class ContractVerifier:
 
 # ── Exception ──────────────────────────────────────────────────────────────────
 
+
 class ContractViolation(Exception):
     """Raised when a DomainAdapter fails one of the five supporting invariant checks.
 
@@ -466,4 +463,5 @@ class ContractViolation(Exception):
     in test suites; in production the invariant failure indicates a bug in the
     adapter implementation that must be fixed before deployment.
     """
+
     pass

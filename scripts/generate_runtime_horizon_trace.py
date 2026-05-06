@@ -5,6 +5,7 @@ Outputs: reports/paper2/runtime_horizon_trace.csv
 
 Columns: step, tau_t, remaining_certified_time, expiration_trigger_reason, renewal_trigger_reason
 """
+
 from __future__ import annotations
 
 import csv
@@ -74,20 +75,28 @@ def main() -> int:
         expiration_reason = expire["expiration_trigger_reason"] or ""
         renewal_reason = renew["renewal_trigger_reason"] or ""
 
-        rows.append({
-            "step": step,
-            "tau_t": tau_t,
-            "remaining_certified_time": remaining,
-            "expiration_trigger_reason": expiration_reason,
-            "renewal_trigger_reason": renewal_reason,
-        })
+        rows.append(
+            {
+                "step": step,
+                "tau_t": tau_t,
+                "remaining_certified_time": remaining,
+                "expiration_trigger_reason": expiration_reason,
+                "renewal_trigger_reason": renewal_reason,
+            }
+        )
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     out_path = OUT_DIR / "runtime_horizon_trace.csv"
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(
             f,
-            fieldnames=["step", "tau_t", "remaining_certified_time", "expiration_trigger_reason", "renewal_trigger_reason"],
+            fieldnames=[
+                "step",
+                "tau_t",
+                "remaining_certified_time",
+                "expiration_trigger_reason",
+                "renewal_trigger_reason",
+            ],
         )
         w.writeheader()
         w.writerows(rows)

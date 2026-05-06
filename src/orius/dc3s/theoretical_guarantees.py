@@ -14,11 +14,12 @@ the older exploratory numbering.  The older helpers remain available as
 auxiliary analyses, but they are no longer mislabeled as the current T9--T11
 theorem surface.
 """
+
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Sequence
 
 import numpy as np
 
@@ -29,10 +30,10 @@ from orius.universal_theory.observation_ambiguity import (
     verify_covered_orius_release,
 )
 
-
 # ──────────────────────────────────────────────────────────────────────
 # Auxiliary coverage-envelope helper
 # ──────────────────────────────────────────────────────────────────────
+
 
 def compute_finite_sample_coverage_bound(
     n_calibration: int,
@@ -40,20 +41,22 @@ def compute_finite_sample_coverage_bound(
     delta: float,
     w_min: float,
 ) -> dict:
-    r"""Auxiliary finite-sample coverage envelope.
+    r"""Auxiliary finite-sample audit envelope.
 
     Statement
     ---------
-    Let {(X_i, Y_i)}_{i=1}^n be calibration data with reliability
-    weights w_i \in [w_min, 1].  Let C_t^w be the DC³S conformal set
-    constructed with reliability-weighted quantile at level 1 - alpha.
+    This helper computes the numerical slack used by the legacy grouped-PICP
+    audit table.  It is not a conformal validity theorem and should not be
+    cited as proving that reliability weighting preserves exchangeability.
+    Given a nominal target 1 - alpha and an effective sample envelope
 
-    For any delta > 0:
+        n_eff = floor(n * w_min),
 
-        P(Y_{n+1} \in C_{n+1}^w) >= 1 - alpha - epsilon(n, delta, w_min)
+    it reports the lower audit target
 
-    where epsilon(n, delta, w_min) = sqrt( log(2/delta) / (2 * n_eff) )
-    and n_eff = floor(n * w_min).
+        coverage_bound = max(0, 1 - alpha - epsilon)
+
+    where epsilon = sqrt(log(2/delta) / (2 * n_eff)).
 
     The bound tightens as:
      (a) calibration size n grows,
@@ -66,13 +69,9 @@ def compute_finite_sample_coverage_bound(
     than claiming exact weighted conformal validity.  The working assumption is
     that the calibration subset available at reliability floor w_min behaves
     like n_eff = floor(n * w_min) usable samples for a Hoeffding-style
-    concentration estimate.  Applying Hoeffding's inequality to the resulting
-    indicator average gives:
-
-        P(|PICP - (1-alpha)| > epsilon) <= 2 * exp(-2 * n_eff * epsilon^2)
-
-    Solving for epsilon at confidence level delta gives the stated bound.
-    The floor function ensures n_eff is integer.
+    audit estimate.  Applying Hoeffding's inequality to bounded coverage
+    indicators gives the epsilon used above.  The floor function ensures n_eff
+    is integer.
 
     Parameters
     ----------
@@ -166,9 +165,11 @@ def compute_coverage_bound_surface(
 # Auxiliary constructive separation helper
 # ──────────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class SeparationResult:
     """Result of the reliability-blind vs. DC³S separation analysis."""
+
     blind_violations: float
     blind_interventions: float
     dc3s_violations: float
@@ -284,9 +285,12 @@ def assert_separation(
 ) -> SeparationResult:
     """Assert that the constructive witness shows DC³S no worse on either axis."""
     result = compute_separation_gap(
-        dc3s_violations, dc3s_interventions,
-        blind_violations, blind_interventions,
-        w_min, alpha,
+        dc3s_violations,
+        dc3s_interventions,
+        blind_violations,
+        blind_interventions,
+        w_min,
+        alpha,
     )
     if not result.pareto_dominant:
         raise ValueError(
@@ -345,16 +349,15 @@ def simulate_separation_construction(
 
         # Controller actions
         for name, q_width in [
-            ("dc3s", q_nominal / w_t),          # adapts to w_t
-            ("blind_narrow", q_nominal),          # calibrated for w=1
-            ("blind_wide", q_nominal / w_min),    # calibrated for w=w_min
+            ("dc3s", q_nominal / w_t),  # adapts to w_t
+            ("blind_narrow", q_nominal),  # calibrated for w=1
+            ("blind_wide", q_nominal / w_min),  # calibrated for w=w_min
         ]:
             # Would the action be clipped?
             safe_margin = q_width * 0.1
-            proposed_action = 0.0  # hold at midpoint
 
             # Check if true state is within the controller's uncertainty set
-            obs_soc = true_soc + rng.normal(0, sigma_disturbance * (1 - w_t) * 0.1)
+            true_soc + rng.normal(0, sigma_disturbance * (1 - w_t) * 0.1)
             violation = abs(true_soc - soc_mid) > soc_margin
 
             # Intervention: action differs from proposed
@@ -398,6 +401,7 @@ def simulate_separation_construction(
 # ──────────────────────────────────────────────────────────────────────
 # Auxiliary adaptive-tracking helper
 # ──────────────────────────────────────────────────────────────────────
+
 
 def compute_adaptive_regret_bound(
     T: int,
@@ -478,7 +482,7 @@ def compute_adaptive_regret_bound(
     max_delta_sq = min(max_oracle_jump, infl_max) ** 2
 
     tracking_term = tau * max_delta_sq * (1.0 + math.log(max(T, 1)))
-    transient_term = max_delta_sq / max(gamma ** 2, 1e-12)
+    transient_term = max_delta_sq / max(gamma**2, 1e-12)
     cumulative_bound = tracking_term + transient_term
     per_step_bound = cumulative_bound / T
 
@@ -509,7 +513,7 @@ def assert_sublinear_regret(
         raise ValueError(
             f"Per-step regret is not decreasing: "
             f"R_{T}/T = {result['per_step_bound']:.6f}, "
-            f"R_{2*T}/(2T) = {result_2T['per_step_bound']:.6f}"
+            f"R_{2 * T}/(2T) = {result_2T['per_step_bound']:.6f}"
         )
     return result
 
@@ -538,7 +542,8 @@ def simulate_adaptive_tracking(
     for jt in jump_times:
         oracle[jt:] = np.clip(
             oracle[jt - 1] + rng.uniform(-jump_magnitude, jump_magnitude),
-            1.0, infl_max,
+            1.0,
+            infl_max,
         )
 
     # DC³S tracker: exponential smoothing
@@ -640,8 +645,23 @@ def compute_stylized_frontier_lower_bound(
     *,
     boundary_mass: float | Sequence[float],
     alpha: float = 0.10,
+    violation_severity: float | Sequence[float] = 1.0,
 ) -> dict:
-    r"""Executable witness for T10's stylized reliability-risk frontier."""
+    r"""Executable witness for T10's boundary-indistinguishability lower bound.
+
+    The count-rate lower bound is
+
+        E[V_T] >= 1/2 * sum_t p_t * (1 - w_t).
+
+    The OASG-severity lower bound multiplies each per-step Le Cam term by a
+    supplied minimum violation severity delta_t:
+
+        E[OASG_T] >= 1/2 * sum_t delta_t * p_t * (1 - w_t).
+
+    The caller must supply or justify the boundary mass p_t and severity
+    sequence for the domain. This helper computes the rate implied by those
+    inputs; it does not discharge the domain assumptions by itself.
+    """
     w = np.asarray(reliability, dtype=float).reshape(-1)
     if w.size == 0:
         raise ValueError("reliability must be non-empty")
@@ -659,22 +679,41 @@ def compute_stylized_frontier_lower_bound(
     if np.any((p < 0.0) | (p > 1.0)):
         raise ValueError("boundary_mass must lie in [0, 1]")
 
+    if np.isscalar(violation_severity):
+        severity = np.full_like(w, float(violation_severity), dtype=float)
+    else:
+        severity = np.asarray(violation_severity, dtype=float).reshape(-1)
+        if severity.size != w.size:
+            raise ValueError("violation_severity must be scalar or match reliability length")
+    if np.any(severity < 0.0):
+        raise ValueError("violation_severity must be non-negative")
+
     per_step_terms = p * (1.0 - w)
+    per_step_oasg_terms = severity * per_step_terms
     expected_lower = 0.5 * np.sum(per_step_terms)
+    oasg_lower = 0.5 * np.sum(per_step_oasg_terms)
+    degradation_budget = float(np.sum(1.0 - w))
+    oasg_rate = float(oasg_lower / degradation_budget) if degradation_budget > 0.0 else 0.0
     special_case_active = bool(np.all(p >= alpha / 2.0))
     special_case_lower = float((alpha / 4.0) * np.sum(1.0 - w)) if special_case_active else None
     return {
         "horizon": int(w.size),
         "mean_reliability_w": float(np.mean(w)),
         "boundary_mass_min": float(np.min(p)),
+        "violation_severity_min": float(np.min(severity)),
+        "degradation_budget": degradation_budget,
         "expected_lower_bound": float(expected_lower),
+        "oasg_lower_bound": float(oasg_lower),
+        "oasg_rate_per_degradation_budget": oasg_rate,
         "per_step_terms": per_step_terms.tolist(),
+        "per_step_oasg_terms": per_step_oasg_terms.tolist(),
         "special_case_active": special_case_active,
         "special_case_lower_bound": special_case_lower,
         "assumptions_used": [
             "Boundary-testing subproblem with latent safe/unsafe hypotheses.",
             "Boundary-indistinguishability lower bound with the 1/2 Le Cam factor retained explicitly.",
             "Boundary mass sequence p_t supplied explicitly; no universal value is assumed.",
+            "Violation severity sequence delta_t supplied explicitly; no universal value is assumed.",
             "Corollary of L1 (Rate-Distortion Safety Law) via the capacity bridge L2.",
         ],
     }
@@ -701,15 +740,15 @@ def evaluate_structural_transfer(
         "fallback": bool(fallback_exists),
     }
     vb = verified_by or {}
-    verification_status = {
-        name: vb.get(name) for name in obligation_map
-    }
-    unverified = [name for name, method in verification_status.items()
-                  if obligation_map[name] and method is None]
+    verification_status = {name: vb.get(name) for name in obligation_map}
+    unverified = [
+        name for name, method in verification_status.items() if obligation_map[name] and method is None
+    ]
     unverified_warning = (
         f"Obligations asserted without verification method: {', '.join(unverified)}. "
         "These are external assertions, not derived proofs."
-        if unverified else None
+        if unverified
+        else None
     )
     failed = tuple(name for name, ok in obligation_map.items() if not ok)
     counterexamples = {
@@ -1092,7 +1131,13 @@ THEOREM_REGISTER = {
         "type": "expiration_bound",
         "code_witness": "certificate_expiration_bound",
         "module": "orius.universal_theory.battery_instantiation",
-        "dependencies": ["uncertainty_interval", "soc_bounds", "drift_volatility", "confidence_delta", "first_passage_side_conditions"],
+        "dependencies": [
+            "uncertainty_interval",
+            "soc_bounds",
+            "drift_volatility",
+            "confidence_delta",
+            "first_passage_side_conditions",
+        ],
         "parent_law": None,
     },
     "T7": {
@@ -1132,7 +1177,12 @@ THEOREM_REGISTER = {
         "type": "impossibility",
         "code_witness": "compute_universal_impossibility_bound",
         "module": "orius.dc3s.theoretical_guarantees",
-        "dependencies": ["t4_witness_window", "persistent_fault_rate", "phi_mixing_assumption", "azuma_windowing"],
+        "dependencies": [
+            "t4_witness_window",
+            "persistent_fault_rate",
+            "phi_mixing_assumption",
+            "azuma_windowing",
+        ],
         "parent_law": None,
     },
     "T10": {
@@ -1158,7 +1208,12 @@ THEOREM_REGISTER = {
         "type": "transfer_theorem",
         "code_witness": "evaluate_structural_transfer",
         "module": "orius.dc3s.theoretical_guarantees",
-        "dependencies": ["coverage_obligation", "safe_action_soundness", "repair_membership", "fallback_admissibility"],
+        "dependencies": [
+            "coverage_obligation",
+            "safe_action_soundness",
+            "repair_membership",
+            "fallback_admissibility",
+        ],
         "parent_law": None,
     },
     "T10_T11_ObservationAmbiguitySandwich": {
@@ -1242,8 +1297,15 @@ THEOREM_REGISTER = {
         "type": "pac_trajectory",
         "code_witness": "pac_trajectory_safety_certificate",
         "module": "orius.universal_theory.risk_bounds",
-        "dependencies": ["conformal_coverage", "exit_time_reflection_principle", "union_bound",
-                         "A1_model_error", "A4_known_dynamics", "A5_absorbed_tightening", "A9_sub_gaussian"],
+        "dependencies": [
+            "conformal_coverage",
+            "exit_time_reflection_principle",
+            "union_bound",
+            "A1_model_error",
+            "A4_known_dynamics",
+            "A5_absorbed_tightening",
+            "A9_sub_gaussian",
+        ],
         "parent_law": None,
     },
 }
@@ -1292,8 +1354,7 @@ def prove_byzantine_bound(
             "holds": False,
             "trim_frac": trim_frac,
             "proof_sketch": (
-                "Theorem does not hold: requires f < 1/3, "
-                "trim_frac >= f, W > 0, sigma_honest > 0."
+                "Theorem does not hold: requires f < 1/3, trim_frac >= f, W > 0, sigma_honest > 0."
             ),
         }
 
@@ -1482,10 +1543,7 @@ def stale_decay_episode_risk(
     """
     total_gap = 0.0
     for k in range(T):
-        if k <= tau_max:
-            w_k = w_0
-        else:
-            w_k = w_0 * (gamma ** (k - tau_max))
+        w_k = w_0 if k <= tau_max else w_0 * gamma ** (k - tau_max)
         total_gap += 1.0 - w_k
 
     tsvr_bound = alpha * total_gap
@@ -1568,7 +1626,10 @@ def complete_oasg_characterization(
             f"The defended converse gap remains open."
         ),
         "theorems_used": [
-            "T_minimax", "T_trajectory_PAC", "T_sensor_converse", "T3_achievability",
+            "T_minimax",
+            "T_trajectory_PAC",
+            "T_sensor_converse",
+            "T3_achievability",
         ],
         "scope_note": (
             "Assembles the current executable witnesses without asserting that the "
@@ -1578,34 +1639,34 @@ def complete_oasg_characterization(
 
 
 __all__ = [
-    "compute_finite_sample_coverage_bound",
-    "assert_finite_sample_bound",
-    "compute_coverage_bound_surface",
-    "compute_separation_gap",
-    "assert_separation",
-    "simulate_separation_construction",
-    "SeparationResult",
-    "compute_adaptive_regret_bound",
-    "assert_sublinear_regret",
-    "simulate_adaptive_tracking",
-    "compute_universal_impossibility_bound",
-    "compute_stylized_frontier_lower_bound",
-    "evaluate_structural_transfer",
-    "common_safe_core",
-    "observation_only_bayes_lower_bound",
-    "verify_covered_orius_release",
-    "build_observation_ambiguity_contract_summary",
-    "TransferContractResult",
     "THEOREM_REGISTER",
-    "prove_byzantine_bound",
-    "verify_byzantine_bound_empirical",
-    "stale_decay_bound",
-    "verify_stale_decay_sufficiency",
-    "stale_decay_episode_risk",
-    "compute_tight_impossibility_bound",
-    "verify_minimax_gap",
-    "sensor_quality_converse",
-    "compute_minimum_w_for_tsvr",
-    "verify_complete_characterization",
+    "SeparationResult",
+    "TransferContractResult",
+    "assert_finite_sample_bound",
+    "assert_separation",
+    "assert_sublinear_regret",
+    "build_observation_ambiguity_contract_summary",
+    "common_safe_core",
     "complete_oasg_characterization",
+    "compute_adaptive_regret_bound",
+    "compute_coverage_bound_surface",
+    "compute_finite_sample_coverage_bound",
+    "compute_minimum_w_for_tsvr",
+    "compute_separation_gap",
+    "compute_stylized_frontier_lower_bound",
+    "compute_tight_impossibility_bound",
+    "compute_universal_impossibility_bound",
+    "evaluate_structural_transfer",
+    "observation_only_bayes_lower_bound",
+    "prove_byzantine_bound",
+    "sensor_quality_converse",
+    "simulate_adaptive_tracking",
+    "simulate_separation_construction",
+    "stale_decay_bound",
+    "stale_decay_episode_risk",
+    "verify_byzantine_bound_empirical",
+    "verify_complete_characterization",
+    "verify_covered_orius_release",
+    "verify_minimax_gap",
+    "verify_stale_decay_sufficiency",
 ]

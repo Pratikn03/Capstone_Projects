@@ -1,4 +1,5 @@
 """API health and readiness helpers."""
+
 from __future__ import annotations
 
 import os
@@ -24,4 +25,3 @@ def readiness_check() -> dict:
     }
     status = "ok" if has_features and has_models else "degraded"
     return {"status": status, "checks": checks}
-

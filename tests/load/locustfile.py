@@ -9,15 +9,13 @@ Run with:
 
 Web UI available at: http://localhost:8089
 """
+
 from __future__ import annotations
 
-import json
 import os
 import random
-from typing import Any, Dict, List
 
-from locust import HttpUser, TaskSet, task, between, events, tag
-from locust.runners import MasterRunner
+from locust import HttpUser, TaskSet, between, events, tag, task
 
 # Configuration
 API_KEY = os.environ.get("ORIUS_API_KEY", "test-api-key")
@@ -27,29 +25,24 @@ API_KEY = os.environ.get("ORIUS_API_KEY", "test-api-key")
 # HELPER FUNCTIONS
 # =============================================================================
 
-def generate_load_forecast(horizon: int = 24) -> List[float]:
+
+def generate_load_forecast(horizon: int = 24) -> list[float]:
     """Generate realistic load demand forecast."""
     base_load = 45000
-    return [
-        base_load + random.gauss(0, 2000) + 5000 * abs(random.gauss(0, 1))
-        for _ in range(horizon)
-    ]
+    return [base_load + random.gauss(0, 2000) + 5000 * abs(random.gauss(0, 1)) for _ in range(horizon)]
 
 
-def generate_renewable_forecast(horizon: int = 24, scale: float = 5000) -> List[float]:
+def generate_renewable_forecast(horizon: int = 24, scale: float = 5000) -> list[float]:
     """Generate renewable generation forecast."""
     return [max(0, random.gauss(scale / 2, scale / 3)) for _ in range(horizon)]
 
 
-def generate_price_forecast(horizon: int = 24) -> List[float]:
+def generate_price_forecast(horizon: int = 24) -> list[float]:
     """Generate price forecast with daily pattern."""
-    return [
-        50 + 20 * abs(random.gauss(0, 1)) + 10 * (1 if 8 <= i % 24 <= 20 else 0)
-        for i in range(horizon)
-    ]
+    return [50 + 20 * abs(random.gauss(0, 1)) + 10 * (1 if 8 <= i % 24 <= 20 else 0) for i in range(horizon)]
 
 
-def generate_time_series(length: int = 168, base: float = 45000) -> List[float]:
+def generate_time_series(length: int = 168, base: float = 45000) -> list[float]:
     """Generate time series data for anomaly detection."""
     return [base + random.gauss(0, 1000) for _ in range(length)]
 
@@ -58,9 +51,10 @@ def generate_time_series(length: int = 168, base: float = 45000) -> List[float]:
 # TASK SETS
 # =============================================================================
 
+
 class ForecastTasks(TaskSet):
     """Tasks related to forecasting endpoints."""
-    
+
     @task(10)
     @tag("forecast", "critical")
     def forecast_load(self):
@@ -84,7 +78,7 @@ class ForecastTasks(TaskSet):
                     response.failure("Missing predictions in response")
             else:
                 response.failure(f"Status {response.status_code}")
-    
+
     @task(5)
     @tag("forecast")
     def forecast_wind(self):
@@ -100,7 +94,7 @@ class ForecastTasks(TaskSet):
             headers={"X-API-Key": API_KEY},
             name="/forecast/predict [wind]",
         )
-    
+
     @task(5)
     @tag("forecast")
     def forecast_solar(self):
@@ -116,7 +110,7 @@ class ForecastTasks(TaskSet):
             headers={"X-API-Key": API_KEY},
             name="/forecast/predict [solar]",
         )
-    
+
     @task(2)
     @tag("forecast", "intervals")
     def forecast_with_intervals(self):
@@ -138,7 +132,7 @@ class ForecastTasks(TaskSet):
 
 class OptimizationTasks(TaskSet):
     """Tasks related to optimization endpoints."""
-    
+
     @task(8)
     @tag("optimize", "critical")
     def optimize_dispatch_robust(self):
@@ -168,7 +162,7 @@ class OptimizationTasks(TaskSet):
                     response.failure("Optimization infeasible")
             elif response.status_code != 200:
                 response.failure(f"Status {response.status_code}")
-    
+
     @task(4)
     @tag("optimize")
     def optimize_dispatch_deterministic(self):
@@ -191,7 +185,7 @@ class OptimizationTasks(TaskSet):
             name="/optimize/dispatch [deterministic]",
             timeout=30,
         )
-    
+
     @task(2)
     @tag("optimize", "impact")
     def get_impact_metrics(self):
@@ -205,7 +199,7 @@ class OptimizationTasks(TaskSet):
 
 class AnomalyTasks(TaskSet):
     """Tasks related to anomaly detection endpoints."""
-    
+
     @task(5)
     @tag("anomaly")
     def detect_anomalies(self):
@@ -221,7 +215,7 @@ class AnomalyTasks(TaskSet):
             headers={"X-API-Key": API_KEY},
             name="/anomaly/detect",
         )
-    
+
     @task(2)
     @tag("anomaly")
     def get_anomaly_summary(self):
@@ -235,19 +229,19 @@ class AnomalyTasks(TaskSet):
 
 class MonitoringTasks(TaskSet):
     """Tasks related to monitoring endpoints."""
-    
+
     @task(10)
     @tag("monitoring", "health")
     def health_check(self):
         """Test health endpoint."""
         self.client.get("/health", name="/health")
-    
+
     @task(5)
     @tag("monitoring", "health")
     def ready_check(self):
         """Test readiness endpoint."""
         self.client.get("/ready", name="/ready")
-    
+
     @task(3)
     @tag("monitoring")
     def get_drift_metrics(self):
@@ -257,13 +251,13 @@ class MonitoringTasks(TaskSet):
             headers={"X-API-Key": API_KEY},
             name="/monitor/drift",
         )
-    
+
     @task(2)
     @tag("monitoring", "metrics")
     def get_prometheus_metrics(self):
         """Test Prometheus metrics endpoint."""
         self.client.get("/metrics", name="/metrics")
-    
+
     @task(1)
     @tag("monitoring")
     def get_research_metrics(self):
@@ -279,22 +273,24 @@ class MonitoringTasks(TaskSet):
 # USER CLASSES
 # =============================================================================
 
+
 class ORIUSUser(HttpUser):
     """
     Standard ORIUS API user simulating typical operator behavior.
-    
+
     This user performs a mix of forecasting, optimization, and monitoring
     tasks with realistic wait times between requests.
     """
+
     wait_time = between(1, 5)
-    
+
     tasks = {
         ForecastTasks: 4,
         OptimizationTasks: 3,
         AnomalyTasks: 2,
         MonitoringTasks: 1,
     }
-    
+
     def on_start(self):
         """Called when a simulated user starts."""
         # Verify API is accessible
@@ -308,6 +304,7 @@ class HeavyForecastUser(HttpUser):
     User that heavily uses forecasting endpoints.
     Simulates automated forecast consumers.
     """
+
     wait_time = between(0.5, 2)
     tasks = [ForecastTasks]
     weight = 2
@@ -318,6 +315,7 @@ class OptimizationUser(HttpUser):
     User focused on optimization endpoints.
     Simulates dispatch planning systems.
     """
+
     wait_time = between(2, 10)
     tasks = [OptimizationTasks]
     weight = 1
@@ -328,6 +326,7 @@ class MonitoringBot(HttpUser):
     Monitoring bot that frequently checks health and metrics.
     Simulates monitoring systems like Prometheus.
     """
+
     wait_time = between(5, 15)
     tasks = [MonitoringTasks]
     weight = 1
@@ -336,6 +335,7 @@ class MonitoringBot(HttpUser):
 # =============================================================================
 # EVENT HOOKS
 # =============================================================================
+
 
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs):
@@ -370,21 +370,23 @@ def on_request(request_type, name, response_time, response_length, **kwargs):
 # CUSTOM LOAD SHAPES
 # =============================================================================
 
+
 class StepLoadShape:
     """
     Step load shape that increases users in discrete steps.
     """
+
     step_time = 30
     step_load = 10
     spawn_rate = 5
     time_limit = 600  # 10 minutes
-    
+
     def tick(self):
         run_time = self.get_run_time()
-        
+
         if run_time > self.time_limit:
             return None
-        
+
         current_step = run_time // self.step_time
         return (current_step * self.step_load, self.spawn_rate)
 
@@ -393,18 +395,21 @@ class DoubleWaveLoadShape:
     """
     Double wave pattern simulating morning and evening peak loads.
     """
+
     min_users = 10
     max_users = 100
-    
+
     def tick(self):
         import math
+
         run_time = self.get_run_time()
-        
+
         # Two peaks per hour (simulating morning/evening)
         user_count = int(
-            self.min_users + 
-            (self.max_users - self.min_users) * 
-            (1 + math.sin(run_time * math.pi / 900)) / 2  # 15 minute cycle
+            self.min_users
+            + (self.max_users - self.min_users)
+            * (1 + math.sin(run_time * math.pi / 900))
+            / 2  # 15 minute cycle
         )
-        
+
         return (user_count, user_count)

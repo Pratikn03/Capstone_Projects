@@ -14,11 +14,13 @@ compute_inflation
 compute_dispatch_sensitivity
     Numerical perturbation-based dispatch sensitivity probe.
 """
+
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 
@@ -27,9 +29,9 @@ from orius.forecasting.uncertainty.cqr import assign_bins, cqr_scores, rolling_v
 __all__ = [
     "RACCertConfig",
     "RACCertModel",
-    "compute_q_multiplier",
-    "compute_inflation",
     "compute_dispatch_sensitivity",
+    "compute_inflation",
+    "compute_q_multiplier",
     "normalize_sensitivity",
 ]
 
@@ -81,10 +83,7 @@ class RACCertModel:
             sb = scores[bins == b]
             n = int(sb.size)
             counts[b] = n
-            if n == 0:
-                q_bin = global_q
-            else:
-                q_bin = float(np.quantile(sb, max(self.cfg.eps, 1.0 - self.cfg.alpha)))
+            q_bin = global_q if n == 0 else float(np.quantile(sb, max(self.cfg.eps, 1.0 - self.cfg.alpha)))
             w_local = float(n / (n + tau)) if tau > 0.0 else 1.0
             qhat[b] = w_local * q_bin + (1.0 - w_local) * global_q
 
@@ -140,7 +139,7 @@ class RACCertModel:
         return json.dumps(payload, indent=2, sort_keys=True)
 
     @staticmethod
-    def from_json(s: str) -> "RACCertModel":
+    def from_json(s: str) -> RACCertModel:
         payload = json.loads(s)
         cfg = RACCertConfig(**payload.get("cfg", {}))
         model = RACCertModel(cfg=cfg)
@@ -220,4 +219,3 @@ def compute_dispatch_sensitivity(
     net_minus = float(dis_minus) - float(ch_minus)
     sens = abs(net_plus - net_minus) / (2.0 * eps)
     return float(max(0.0, sens))
-

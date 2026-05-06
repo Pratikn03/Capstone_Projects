@@ -1,4 +1,5 @@
 """Timeout -> hold -> reset lifecycle tests for IoT command queue."""
+
 from __future__ import annotations
 
 import json
@@ -50,7 +51,9 @@ def test_queue_timeout_triggers_hold_and_reset(monkeypatch, tmp_path):
     finally:
         store.close()
 
-    next_cmd = client.get("/iot/command/next", params={"device_id": device_id, "peek": "false"}, headers=headers)
+    next_cmd = client.get(
+        "/iot/command/next", params={"device_id": device_id, "peek": "false"}, headers=headers
+    )
     assert next_cmd.status_code == 200, next_cmd.text
     next_payload = next_cmd.json()
     assert next_payload["status"] == "hold"

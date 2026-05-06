@@ -1,12 +1,11 @@
 """Comprehensive tests for forecasting conformal prediction."""
-from __future__ import annotations
 
-import json
+from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from orius.forecasting.uncertainty.conformal import AdaptiveConformal, ConformalConfig
+from orius.forecasting.uncertainty.conformal import AdaptiveConformal
 from orius.forecasting.uncertainty.cqr import (
     RegimeCQR,
     RegimeCQRConfig,

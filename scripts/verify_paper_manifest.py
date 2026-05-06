@@ -39,11 +39,9 @@ def _check_sections(tex: str, errors: list[str]) -> None:
         errors.append("Top-level part count is lower than the required ORIUS monograph structure.")
         return
 
-    for got, exp_prefix in zip(parts[: len(REQUIRED_PARTS)], REQUIRED_PARTS):
+    for got, exp_prefix in zip(parts[: len(REQUIRED_PARTS)], REQUIRED_PARTS, strict=False):
         if got != exp_prefix:
-            errors.append(
-                f"Top-level part mismatch: expected '{exp_prefix}' but found '{got}'."
-            )
+            errors.append(f"Top-level part mismatch: expected '{exp_prefix}' but found '{got}'.")
             break
     if r"\documentclass[12pt,oneside]{book}" not in tex:
         errors.append("paper.tex must declare the book-class monograph surface.")
@@ -135,13 +133,15 @@ def main() -> int:
     # Ensure every manifest token is either used or explicitly marked optional when
     # the canonical manuscript still uses the legacy manifest macro surface.
     if macro_surface_active:
-        optional_tokens = set(
+        optional_tokens = {
             token
             for section in (manifest.get("figures") or {}, manifest.get("tables") or {})
             for token, entry in section.items()
             if (entry or {}).get("optional", False)
+        }
+        unused = sorted(
+            ((figure_manifest | table_manifest) - (figure_tokens_used | table_tokens_used)) - optional_tokens
         )
-        unused = sorted(((figure_manifest | table_manifest) - (figure_tokens_used | table_tokens_used)) - optional_tokens)
         if unused:
             warnings.append(f"Unused manifest tokens: {unused}")
     else:

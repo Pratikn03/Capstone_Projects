@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from orius.dc3s.calibration import (
     build_uncertainty_set,
     calibrate_ambiguity_lambda,
@@ -52,7 +53,7 @@ def test_build_uncertainty_set_drift_inflation():
 
 
 def test_build_uncertainty_set_clipped():
-    cfg = {"k_q": 5.0, "k_drift": 5.0, "infl_max": 3.0} # massive constants to force clipping
+    cfg = {"k_q": 5.0, "k_drift": 5.0, "infl_max": 3.0}  # massive constants to force clipping
     # Quality w_t=0.0, drift_flag=True
     lo, hi, meta = build_uncertainty_set(yhat=100.0, q=10.0, w_t=0.0, drift_flag=True, cfg=cfg)
     # Max inflation is 3.0

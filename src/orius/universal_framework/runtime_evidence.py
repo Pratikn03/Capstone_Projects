@@ -1,8 +1,10 @@
 """Registry-backed runtime evidence defaults for universal domain adapters."""
+
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 try:  # pragma: no cover - fallback kept for non-repo packaging contexts
     from scripts._dataset_registry import get_runtime_dataset_config, get_runtime_source_label
@@ -152,9 +154,7 @@ def resolve_runtime_evidence(
             fallback_policy = str(registry_cfg.fallback_policy or fallback_policy)
             exact_blocker = str(registry_cfg.exact_blocker or exact_blocker)
             if get_runtime_source_label is not None:
-                runtime_source_label = str(
-                    get_runtime_source_label(normalized, allow_support_tier=True)
-                )
+                runtime_source_label = str(get_runtime_source_label(normalized, allow_support_tier=True))
 
     runtime_surface = _surface_label(normalized, runtime_source_label)
     if cfg_dict.get("runtime_surface") not in (None, ""):

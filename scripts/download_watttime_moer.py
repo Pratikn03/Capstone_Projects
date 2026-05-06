@@ -1,10 +1,11 @@
 """Download WattTime marginal emissions (MOER) history into signals format."""
+
 from __future__ import annotations
 
 import argparse
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pandas as pd
 from requests.auth import HTTPBasicAuth

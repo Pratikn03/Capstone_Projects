@@ -12,6 +12,7 @@ Usage:
   python scripts/download_aerospace_datasets.py --source synthetic
   python scripts/download_aerospace_datasets.py --out data/aerospace/processed/my_aerospace.csv
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,7 +31,6 @@ from orius.data_pipeline.real_data_contract import (
     utc_now_iso,
     write_json,
 )
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = REPO_ROOT / "data" / "aerospace"
@@ -55,9 +55,7 @@ def _row_summary_path(out_path: Path) -> Path:
 def _resolve_cmapss_raw_source() -> ResolvedRawSource:
     missing = [name for name in CMAPSS_TRAIN_FILES if not (RAW_DIR / name).exists()]
     if missing:
-        raise FileNotFoundError(
-            "Missing C-MAPSS train files under data/aerospace/raw: " + ", ".join(missing)
-        )
+        raise FileNotFoundError("Missing C-MAPSS train files under data/aerospace/raw: " + ", ".join(missing))
     return ResolvedRawSource(
         path=RAW_DIR,
         source_kind="repo_local",
@@ -126,8 +124,7 @@ def convert_cmapss_to_orius(out_path: Path) -> Path:
 
         subset_base = pd.Timestamp("2010-01-01T00:00:00Z") + pd.to_timedelta(subset_index * 365, unit="D")
         raw["ts_utc"] = (
-            subset_base
-            + pd.to_timedelta(raw["unit_number"] * 10000 + raw["step"], unit="min")
+            subset_base + pd.to_timedelta(raw["unit_number"] * 10000 + raw["step"], unit="min")
         ).dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         frame = raw[
@@ -222,7 +219,15 @@ def generate_synthetic_flight(out_path: Path, n_steps: int = 5000) -> Path:
     with out_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(
             handle,
-            fieldnames=["flight_id", "step", "altitude_m", "airspeed_kt", "bank_angle_deg", "fuel_remaining_pct", "ts_utc"],
+            fieldnames=[
+                "flight_id",
+                "step",
+                "altitude_m",
+                "airspeed_kt",
+                "bank_angle_deg",
+                "fuel_remaining_pct",
+                "ts_utc",
+            ],
         )
         writer.writeheader()
         writer.writerows(rows)
@@ -256,7 +261,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Build Aerospace datasets for ORIUS")
     parser.add_argument("--source", choices=["cmapss", "synthetic"], default="cmapss", help="Dataset source")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Output CSV path")
-    parser.add_argument("--steps", type=int, default=5000, help="Number of timesteps for synthetic generation")
+    parser.add_argument(
+        "--steps", type=int, default=5000, help="Number of timesteps for synthetic generation"
+    )
     parser.add_argument(
         "--external-root",
         type=Path,

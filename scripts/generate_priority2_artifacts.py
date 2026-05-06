@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """Generate Priority-2 evidence artifacts."""
+
 from __future__ import annotations
 
-from pathlib import Path
 import json
+from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -61,8 +62,8 @@ def _build_blackout_half_life() -> dict[str, str]:
     if not fault.any():
         raise RuntimeError("48h trace has no fault-active rows")
     onset = int(np.where(fault)[0][0])
-    baseline = float(np.median(width[max(0, onset - 5):onset])) if onset > 0 else float(width[0])
-    peak = float(np.max(width[onset:onset + 6])) if onset < len(width) - 1 else float(width[onset])
+    baseline = float(np.median(width[max(0, onset - 5) : onset])) if onset > 0 else float(width[0])
+    peak = float(np.max(width[onset : onset + 6])) if onset < len(width) - 1 else float(width[onset])
     target = baseline + 0.5 * (peak - baseline)
     half_idx = None
     for i in range(onset, len(width)):
@@ -147,4 +148,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

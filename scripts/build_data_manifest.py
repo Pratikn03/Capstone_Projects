@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Build deterministic data identity manifest for raw/processed/split artifacts."""
+
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import hashlib
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -82,7 +82,7 @@ def _file_record(path: Path) -> dict[str, Any]:
     return {
         "path": str(path.relative_to(REPO_ROOT)).replace("\\", "/"),
         "size_bytes": int(stat.st_size),
-        "mtime_utc": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+        "mtime_utc": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
         "sha256": _sha256(path),
         "schema_hash": _schema_hash(path),
     }
@@ -150,12 +150,9 @@ def build_manifest(datasets: list[str]) -> dict[str, Any]:
             "features_path": str(features_path.relative_to(REPO_ROOT)).replace("\\", "/"),
             "features_schema_hash": _schema_hash(features_path),
             "split_paths": {
-                key: str(path.relative_to(REPO_ROOT)).replace("\\", "/")
-                for key, path in split_files.items()
+                key: str(path.relative_to(REPO_ROOT)).replace("\\", "/") for key, path in split_files.items()
             },
-            "split_boundaries": {
-                key: _split_boundaries(path) for key, path in split_files.items()
-            },
+            "split_boundaries": {key: _split_boundaries(path) for key, path in split_files.items()},
             "split_schema_hashes": {
                 key: _schema_hash(path) for key, path in split_files.items() if path.exists()
             },
@@ -166,22 +163,22 @@ def build_manifest(datasets: list[str]) -> dict[str, Any]:
         name: payload.get("split_boundaries", {}) for name, payload in datasets_payload.items()
     }
     schema_components = sorted(
-        f"{row['path']}::{row.get('schema_hash')}"
-        for row in records
-        if row.get("schema_hash")
+        f"{row['path']}::{row.get('schema_hash')}" for row in records if row.get("schema_hash")
     )
     aggregate_schema_hash = hashlib.sha256(
         json.dumps(schema_components, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
     ).hexdigest()
 
     manifest_core = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "datasets": datasets_payload,
         "files": records,
         "split_boundaries": aggregated_split_boundaries,
         "schema_hash": aggregate_schema_hash,
     }
-    manifest_bytes = json.dumps(manifest_core, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    manifest_bytes = json.dumps(
+        manifest_core, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    ).encode("utf-8")
     manifest_core["manifest_sha256"] = hashlib.sha256(manifest_bytes).hexdigest()
     return manifest_core
 

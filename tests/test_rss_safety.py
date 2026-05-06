@@ -5,8 +5,6 @@ Verifies the Shalev-Shwartz et al. 2017 longitudinal formula:
     clamped to ≥ 0.
 """
 
-import math
-
 import numpy as np
 import pytest
 
@@ -58,7 +56,7 @@ class TestRssSafeGap:
         speeds = [5.0, 10.0, 15.0, 20.0, 25.0, 30.0]
         gaps = [rss_safe_gap(v, v_lead) for v in speeds]
         for i in range(len(gaps) - 1):
-            assert gaps[i + 1] > gaps[i], f"Not monotonic at {speeds[i+1]}"
+            assert gaps[i + 1] > gaps[i], f"Not monotonic at {speeds[i + 1]}"
 
     def test_clamp_to_zero(self):
         """When lead is much faster, raw formula goes negative → clamp."""
@@ -66,8 +64,7 @@ class TestRssSafeGap:
         assert gap == 0.0
 
     def test_custom_params(self):
-        gap = rss_safe_gap(20.0, 10.0, t_resp=1.5, a_min_brake_ego=3.0,
-                           a_max_brake_lead=8.0)
+        gap = rss_safe_gap(20.0, 10.0, t_resp=1.5, a_min_brake_ego=3.0, a_max_brake_lead=8.0)
         expected = 20.0 * 1.5 + 20.0**2 / 6.0 - 10.0**2 / 16.0
         assert gap == pytest.approx(max(0.0, expected))
 

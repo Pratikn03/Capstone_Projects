@@ -46,13 +46,13 @@ def time_split_with_calibration(
     if gap_hours > 0 and not train.empty:
         cursor = _next_start_idx(df, ts_col, cursor, train[ts_col].max(), gap)
 
-    cal = df.iloc[cursor:cursor + n_cal].copy()
+    cal = df.iloc[cursor : cursor + n_cal].copy()
     cursor += len(cal)
 
     if gap_hours > 0 and not cal.empty:
         cursor = _next_start_idx(df, ts_col, cursor, cal[ts_col].max(), gap)
 
-    val = df.iloc[cursor:cursor + n_val].copy()
+    val = df.iloc[cursor : cursor + n_val].copy()
     cursor += len(val)
 
     if gap_hours > 0 and not val.empty:
@@ -100,7 +100,7 @@ def time_split(
         if gap_hours > 0 and not train.empty:
             gap = pd.Timedelta(hours=int(gap_hours))
             cursor = _next_start_idx(frame, ts_col, cursor, train[ts_col].max(), gap)
-        val = frame.iloc[cursor:cursor + n_val].copy()
+        val = frame.iloc[cursor : cursor + n_val].copy()
         cursor += len(val)
         if gap_hours > 0 and not val.empty:
             gap = pd.Timedelta(hours=int(gap_hours))
@@ -177,8 +177,6 @@ Gap hours: {args.gap_hours}
 """,
         encoding="utf-8",
     )
-
-    print(f"Wrote splits to: {out_dir}")
 
 
 if __name__ == "__main__":

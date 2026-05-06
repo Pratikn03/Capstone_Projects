@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import csv
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 import numpy as np
-
-from .real_data_loader import load_vehicle_rows
 
 __all__ = [
     "OASGMetricResult",
@@ -208,11 +206,7 @@ def _build_box_surface(
 
 def _load_trace_rows(path: Path, *, controller_field: str, controller_value: str) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
-        rows = [
-            row
-            for row in csv.DictReader(handle)
-            if row.get(controller_field) == controller_value
-        ]
+        rows = [row for row in csv.DictReader(handle) if row.get(controller_field) == controller_value]
     if not rows:
         raise ValueError(f"No rows found in {path} for {controller_field}={controller_value!r}")
     return rows

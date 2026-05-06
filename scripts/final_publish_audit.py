@@ -5,22 +5,22 @@ Produces:
 - reports/publish/final_audit_report.json
 - reports/publish/go_no_go_decision.json
 """
+
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import duckdb
 import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -71,7 +71,7 @@ def _collect_python_package_versions() -> dict[str, str | None]:
 def _snapshot_baseline(out_dir: Path) -> dict[str, Any]:
     dirty_lines = _run_checked_output(["git", "status", "--short"]).splitlines()
     payload = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "git": {
             "branch": _run_checked_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]),
             "head": _run_checked_output(["git", "rev-parse", "HEAD"]),
@@ -91,8 +91,10 @@ def _snapshot_baseline(out_dir: Path) -> dict[str, Any]:
 def _write_scope_manifest(out_dir: Path, publish_cfg: dict[str, Any]) -> dict[str, Any]:
     scope_cfg = publish_cfg.get("scope", {}) if isinstance(publish_cfg.get("scope"), dict) else {}
     payload = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "in_scope": scope_cfg.get("include", ["src/orius/**", "services/api/**", "scripts/**", "configs/**", "iot/**"]),
+        "generated_at": datetime.now(UTC).isoformat(),
+        "in_scope": scope_cfg.get(
+            "include", ["src/orius/**", "services/api/**", "scripts/**", "configs/**", "iot/**"]
+        ),
         "non_blocking_out_of_scope": scope_cfg.get(
             "non_blocking_out_of_scope",
             ["frontend visual/style-only changes", "paper formatting/layout artifacts", "generated figures"],
@@ -103,11 +105,13 @@ def _write_scope_manifest(out_dir: Path, publish_cfg: dict[str, Any]) -> dict[st
 
 
 def _write_repro_lock(out_dir: Path, publish_cfg: dict[str, Any]) -> dict[str, Any]:
-    repro_cfg = publish_cfg.get("reproducibility", {}) if isinstance(publish_cfg.get("reproducibility"), dict) else {}
+    repro_cfg = (
+        publish_cfg.get("reproducibility", {}) if isinstance(publish_cfg.get("reproducibility"), dict) else {}
+    )
     run_id_prefix = str(repro_cfg.get("run_id_prefix", "publish"))
     payload = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "run_id": f"{run_id_prefix}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+        "generated_at": datetime.now(UTC).isoformat(),
+        "run_id": f"{run_id_prefix}_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}",
         "seeds": repro_cfg.get("seeds", {}),
         "out_dir": str(out_dir),
     }
@@ -143,7 +147,9 @@ def _run_step(
     cmd_env = os.environ.copy()
     src_path = str(REPO_ROOT / "src")
     existing_pythonpath = cmd_env.get("PYTHONPATH", "")
-    cmd_env["PYTHONPATH"] = f"{src_path}{os.pathsep}{existing_pythonpath}" if existing_pythonpath else src_path
+    cmd_env["PYTHONPATH"] = (
+        f"{src_path}{os.pathsep}{existing_pythonpath}" if existing_pythonpath else src_path
+    )
     if env:
         cmd_env.update(env)
     proc = subprocess.run(
@@ -341,7 +347,13 @@ def _evaluate_go_no_go(
 
     failing_steps = [s.name for s in steps if not s.ok]
     if failing_steps:
-        blockers.append({"category": "pipeline_steps", "message": "One or more required steps failed", "details": failing_steps})
+        blockers.append(
+            {
+                "category": "pipeline_steps",
+                "message": "One or more required steps failed",
+                "details": failing_steps,
+            }
+        )
 
     safety_violations = int((iot_nominal or {}).get("safety_violations", 999999))
     cert_rate = float((iot_nominal or {}).get("certificate_completeness_rate", 0.0))
@@ -349,18 +361,32 @@ def _evaluate_go_no_go(
     hold_rate = iot_ack_hold.get("hold_rate")
 
     if safety_violations > safety_req:
-        blockers.append({"category": "safety_violations", "message": f"safety_violations={safety_violations} > {safety_req}"})
+        blockers.append(
+            {
+                "category": "safety_violations",
+                "message": f"safety_violations={safety_violations} > {safety_req}",
+            }
+        )
     if cert_rate < cert_req:
-        blockers.append({"category": "certificate_completeness", "message": f"certificate_completeness_rate={cert_rate:.4f} < {cert_req:.4f}"})
+        blockers.append(
+            {
+                "category": "certificate_completeness",
+                "message": f"certificate_completeness_rate={cert_rate:.4f} < {cert_req:.4f}",
+            }
+        )
     if ack_rate is None or float(ack_rate) < ack_req:
-        blockers.append({"category": "ack_success_rate", "message": f"ack_success_rate={ack_rate} < {ack_req:.4f}"})
+        blockers.append(
+            {"category": "ack_success_rate", "message": f"ack_success_rate={ack_rate} < {ack_req:.4f}"}
+        )
     if hold_rate is None or float(hold_rate) > hold_max:
         blockers.append({"category": "hold_rate", "message": f"hold_rate={hold_rate} > {hold_max:.4f}"})
 
     critical_alerts: list[str] = []
     if require_no_critical:
         data_drift = bool((monitoring_summary.get("data_drift") or {}).get("drift", False))
-        model_drift = bool((monitoring_summary.get("model_drift") or {}).get("decision", {}).get("drift", False))
+        model_drift = bool(
+            (monitoring_summary.get("model_drift") or {}).get("decision", {}).get("drift", False)
+        )
         dc3s_triggered = bool((monitoring_summary.get("dc3s_health") or {}).get("triggered", False))
         if data_drift:
             critical_alerts.append("data_drift")
@@ -369,10 +395,16 @@ def _evaluate_go_no_go(
         if dc3s_triggered:
             critical_alerts.append("dc3s_health_triggered")
     if critical_alerts:
-        blockers.append({"category": "critical_alerts", "message": "critical monitoring alerts present", "details": critical_alerts})
+        blockers.append(
+            {
+                "category": "critical_alerts",
+                "message": "critical monitoring alerts present",
+                "details": critical_alerts,
+            }
+        )
 
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "gate_config": gates,
         "metrics": {
             "safety_violations": safety_violations,
@@ -405,7 +437,7 @@ def _build_markdown_report(
     lines: list[str] = []
     lines.append("# Final Publish Audit Report")
     lines.append("")
-    lines.append(f"- Generated at: `{datetime.now(timezone.utc).isoformat()}`")
+    lines.append(f"- Generated at: `{datetime.now(UTC).isoformat()}`")
     lines.append(f"- Run ID: `{repro_lock.get('run_id')}`")
     lines.append(f"- GO/NO-GO: **{'GO' if go_no_go.get('go') else 'NO-GO'}**")
     lines.append("")
@@ -435,7 +467,9 @@ def _build_markdown_report(
     lines.append("| Step | Status | Return Code | Duration (s) | Log |")
     lines.append("|---|:---:|---:|---:|---|")
     for step in step_results:
-        lines.append(f"| {step.name} | {'OK' if step.ok else 'FAIL'} | {step.return_code} | {step.duration_s:.1f} | `{step.log_path}` |")
+        lines.append(
+            f"| {step.name} | {'OK' if step.ok else 'FAIL'} | {step.return_code} | {step.duration_s:.1f} | `{step.log_path}` |"
+        )
     lines.append("")
     lines.append("## Data Freshness")
     lines.append(f"- Summary: `{data_refresh_summary}`")
@@ -486,7 +520,11 @@ def main() -> None:
     publish_cfg = _load_publish_cfg(config_path)
     out_dir = Path(
         args.out_dir
-        or ((publish_cfg.get("reproducibility") or {}).get("out_dir") if isinstance(publish_cfg.get("reproducibility"), dict) else None)
+        or (
+            (publish_cfg.get("reproducibility") or {}).get("out_dir")
+            if isinstance(publish_cfg.get("reproducibility"), dict)
+            else None
+        )
         or "reports/publish"
     )
     if not out_dir.is_absolute():
@@ -536,7 +574,8 @@ def main() -> None:
         ),
         (
             "refresh_data_delta",
-            [sys.executable, "scripts/refresh_data_delta.py", "--dataset", "ALL", "--apply"] + (["--run-hooks"] if args.run_hooks else []),
+            [sys.executable, "scripts/refresh_data_delta.py", "--dataset", "ALL", "--apply"]
+            + (["--run-hooks"] if args.run_hooks else []),
             None,
             None,
         ),
@@ -552,10 +591,30 @@ def main() -> None:
             None,
             None,
         ),
-        ("backfill_dc3s_typed_columns", [sys.executable, "scripts/backfill_dc3s_typed_columns.py"], None, None),
-        ("audit_na_tables", [sys.executable, "scripts/audit_na_tables.py", "--config", str(config_path)], None, None),
-        ("audit_leakage", [sys.executable, "scripts/audit_leakage.py", "--config", str(config_path)], None, None),
-        ("audit_code_health", [sys.executable, "scripts/audit_code_health.py", "--config", str(config_path)], None, None),
+        (
+            "backfill_dc3s_typed_columns",
+            [sys.executable, "scripts/backfill_dc3s_typed_columns.py"],
+            None,
+            None,
+        ),
+        (
+            "audit_na_tables",
+            [sys.executable, "scripts/audit_na_tables.py", "--config", str(config_path)],
+            None,
+            None,
+        ),
+        (
+            "audit_leakage",
+            [sys.executable, "scripts/audit_leakage.py", "--config", str(config_path)],
+            None,
+            None,
+        ),
+        (
+            "audit_code_health",
+            [sys.executable, "scripts/audit_code_health.py", "--config", str(config_path)],
+            None,
+            None,
+        ),
         (
             "compile_gate",
             [sys.executable, "-m", "compileall", "src", "services", "scripts"],
@@ -714,7 +773,11 @@ def main() -> None:
 
     dc3s_cfg_path = REPO_ROOT / "configs/dc3s.yaml"
     dc3s_cfg = yaml.safe_load(dc3s_cfg_path.read_text(encoding="utf-8")) if dc3s_cfg_path.exists() else {}
-    dc3s_audit_cfg = ((dc3s_cfg or {}).get("dc3s") or {}).get("audit", {}) if isinstance((dc3s_cfg or {}).get("dc3s"), dict) else {}
+    dc3s_audit_cfg = (
+        ((dc3s_cfg or {}).get("dc3s") or {}).get("audit", {})
+        if isinstance((dc3s_cfg or {}).get("dc3s"), dict)
+        else {}
+    )
     dc3s_db_path = Path(str(dc3s_audit_cfg.get("duckdb_path", "data/audit/dc3s_audit.duckdb")))
     if not dc3s_db_path.is_absolute():
         dc3s_db_path = REPO_ROOT / dc3s_db_path
@@ -723,7 +786,7 @@ def main() -> None:
     dc3s_readiness = _compute_dc3s_typed_readiness(dc3s_db_path, dc3s_table)
     monitoring_summary = _load_monitoring_summary(REPO_ROOT / "reports/monitoring_summary.json")
     monitoring_readiness = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "retraining": monitoring_summary.get("retraining"),
         "dc3s_health": monitoring_summary.get("dc3s_health"),
     }
@@ -740,7 +803,7 @@ def main() -> None:
     )
 
     final_json = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "baseline_ref": str(args.baseline_ref),
         "baseline": baseline,
         "scope_manifest": scope_manifest,

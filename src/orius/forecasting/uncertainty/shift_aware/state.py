@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
-
 ValidityStatus = Literal["nominal", "watch", "degraded", "invalid"]
 
 
@@ -147,7 +146,7 @@ class ShiftAwareConfig:
         return asdict(self)
 
     @classmethod
-    def from_mapping(cls, cfg: dict[str, Any] | None) -> "ShiftAwareConfig":
+    def from_mapping(cls, cfg: dict[str, Any] | None) -> ShiftAwareConfig:
         if not cfg:
             return cls()
         raw = dict(cfg)
@@ -163,7 +162,9 @@ class ShiftAwareConfig:
             if src in raw and dst not in raw:
                 raw[dst] = raw[src]
         thresholds = dict(raw.get("thresholds", {})) if isinstance(raw.get("thresholds"), dict) else {}
-        widening_caps = dict(raw.get("widening_caps", {})) if isinstance(raw.get("widening_caps"), dict) else {}
+        widening_caps = (
+            dict(raw.get("widening_caps", {})) if isinstance(raw.get("widening_caps"), dict) else {}
+        )
         if "watch" in thresholds:
             raw["watch_threshold"] = thresholds["watch"]
         if "degraded" in thresholds:

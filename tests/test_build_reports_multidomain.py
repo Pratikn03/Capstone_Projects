@@ -1,4 +1,5 @@
 """Regression tests for multi-domain report generation edge cases."""
+
 from __future__ import annotations
 
 from pathlib import Path

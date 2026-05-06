@@ -6,6 +6,7 @@ navigation surface for the book: battery remains the deepest witness row, while
 temporal validity, graceful fallback, benchmark discipline, bounded composition,
 and runtime governance extend the same universal safety-layer argument.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -18,7 +19,6 @@ os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
-
 
 BG = "#F7F8FA"
 TEXT = "#14202B"
@@ -142,7 +142,7 @@ def _arrow(
             fontsize=9,
             color=MUTED,
             zorder=5,
-            bbox=dict(fc="white", ec="none", pad=1.0, alpha=0.9),
+            bbox={"fc": "white", "ec": "none", "pad": 1.0, "alpha": 0.9},
         )
 
 

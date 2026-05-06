@@ -4,6 +4,7 @@
 Runs without full orius deps (direct import of graceful.py).
 Outputs to stdout; no artifact. Use for evidence-first verification.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -45,7 +46,12 @@ def main() -> int:
 
     # 3. compare_policies four policies
     result = mod.compare_policies(last_action, 10, 50.0, constraints)
-    assert set(result.keys()) == {"blind_persistence", "immediate_shutdown", "simple_ramp_down", "optimized_graceful"}
+    assert set(result.keys()) == {
+        "blind_persistence",
+        "immediate_shutdown",
+        "simple_ramp_down",
+        "optimized_graceful",
+    }
 
     out = REPO / "reports" / "paper3"
     out.mkdir(parents=True, exist_ok=True)

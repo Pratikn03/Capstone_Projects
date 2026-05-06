@@ -4,21 +4,21 @@ The downstream ORIUS AV training/runtime path consumes a source-neutral
 ``replay_windows.parquet`` table. This module converts nuPlan DB logs into that
 contract while leaving the older Waymo parser available as a legacy source.
 """
+
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import hashlib
 import json
 import math
-from pathlib import Path
 import shutil
 import sqlite3
-import sys
 import tempfile
-from typing import Any
 import zipfile
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -27,7 +27,6 @@ import pyarrow.parquet as pq
 
 from orius.av_waymo.dataset import MAX_NEIGHBORS, NEIGHBOR_RADIUS_M, TOTAL_SCENARIO_STEPS
 from orius.av_waymo.replay import _project_to_ego_frame, _slot_fields, compute_state_safety_metrics
-
 
 DEFAULT_EGO_LENGTH_M = 4.8
 DEFAULT_EGO_WIDTH_M = 2.0
@@ -186,7 +185,7 @@ def _yaw_from_quaternion(qw: float, qx: float, qy: float, qz: float) -> float:
 
 
 def _timestamp_to_iso(timestamp_us: int) -> str:
-    return datetime.fromtimestamp(int(timestamp_us) / 1_000_000.0, tz=timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.fromtimestamp(int(timestamp_us) / 1_000_000.0, tz=UTC).isoformat().replace("+00:00", "Z")
 
 
 def _speed(vx: Any, vy: Any) -> float:
@@ -203,11 +202,11 @@ def _clip_speed_limit(speeds: Iterable[float]) -> float:
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _emit_progress(event: Mapping[str, Any]) -> None:
-    print(json.dumps(event, sort_keys=True), file=sys.stderr, flush=True)
+    pass
 
 
 def _sha256_file(path: Path) -> str:
@@ -229,7 +228,9 @@ def _archive_id(path: Path, sha256: str) -> str:
 def _nuplan_source_dataset(archive_path: str | Path, db_entry_name: str, location: Any = None) -> str:
     """Return a stable nuPlan source label from archive/member/log metadata."""
 
-    archive_text = " ".join(str(part).lower() for part in (archive_path, db_entry_name) if part not in (None, ""))
+    archive_text = " ".join(
+        str(part).lower() for part in (archive_path, db_entry_name) if part not in (None, "")
+    )
     for needle, label in (
         ("pittsburgh", "nuplan_pittsburgh"),
         ("boston", "nuplan_boston"),
@@ -316,7 +317,9 @@ def resolve_nuplan_train_archives(
     """Validate candidate nuPlan train zips and return DB-bearing archives."""
     archives: list[NuPlanArchive] = []
     skipped: list[dict[str, Any]] = []
-    for candidate in _candidate_train_paths(train_zips=train_zips, train_dirs=train_dirs, train_glob=train_glob):
+    for candidate in _candidate_train_paths(
+        train_zips=train_zips, train_dirs=train_dirs, train_glob=train_glob
+    ):
         path = Path(candidate)
         if _is_incomplete_download(path):
             skipped.append({"path": str(path), "reason": "incomplete_download"})
@@ -363,7 +366,9 @@ def resolve_nuplan_train_archives(
             )
     if not archives:
         skipped_reasons = ", ".join(f"{row['path']}:{row['reason']}" for row in skipped) or "no candidates"
-        raise FileNotFoundError(f"No completed nuPlan train archives with DB entries were found ({skipped_reasons}).")
+        raise FileNotFoundError(
+            f"No completed nuPlan train archives with DB entries were found ({skipped_reasons})."
+        )
     return archives, skipped
 
 
@@ -397,7 +402,7 @@ def inspect_nuplan_archives(
     """Return a lightweight manifest for local nuPlan zip archives."""
     explicit_train_zips: list[str | Path] = []
     if train_zip is not None:
-        if isinstance(train_zip, (str, Path)):
+        if isinstance(train_zip, str | Path):
             explicit_train_zips.append(train_zip)
         else:
             explicit_train_zips.extend(train_zip)
@@ -503,7 +508,9 @@ def _scene_groups(lidar_rows: list[sqlite3.Row]) -> list[list[sqlite3.Row]]:
     return [sorted(rows, key=lambda item: int(item["timestamp_us"])) for _, rows in sorted(grouped.items())]
 
 
-def _candidate_windows(scene_rows: list[sqlite3.Row], *, stride: int) -> Iterable[tuple[int, list[sqlite3.Row]]]:
+def _candidate_windows(
+    scene_rows: list[sqlite3.Row], *, stride: int
+) -> Iterable[tuple[int, list[sqlite3.Row]]]:
     if len(scene_rows) < TOTAL_SCENARIO_STEPS:
         return
     step = max(1, int(stride))
@@ -511,7 +518,9 @@ def _candidate_windows(scene_rows: list[sqlite3.Row], *, stride: int) -> Iterabl
         yield start, scene_rows[start : start + TOTAL_SCENARIO_STEPS]
 
 
-def _select_neighbors(row: sqlite3.Row, boxes: list[sqlite3.Row], *, ego_heading: float) -> list[dict[str, Any]]:
+def _select_neighbors(
+    row: sqlite3.Row, boxes: list[sqlite3.Row], *, ego_heading: float
+) -> list[dict[str, Any]]:
     ego_x = float(row["ego_x"])
     ego_y = float(row["ego_y"])
     selected: list[dict[str, Any]] = []
@@ -653,7 +662,7 @@ def build_nuplan_replay_surface(
     """Convert local nuPlan DB logs into ORIUS ``replay_windows.parquet``."""
     explicit_train_zips: list[str | Path] = []
     if train_zip is not None:
-        if isinstance(train_zip, (str, Path)):
+        if isinstance(train_zip, str | Path):
             explicit_train_zips.append(train_zip)
         else:
             explicit_train_zips.extend(train_zip)
@@ -733,11 +742,12 @@ def build_nuplan_replay_surface(
                         break
                     if config.max_scenarios is not None and scenario_count >= int(config.max_scenarios):
                         break
-                    if config.max_dbs_per_archive is not None and archive_db_count >= int(config.max_dbs_per_archive):
+                    if config.max_dbs_per_archive is not None and archive_db_count >= int(
+                        config.max_dbs_per_archive
+                    ):
                         break
-                    if (
-                        config.max_scenarios_per_archive is not None
-                        and archive_scenario_count >= int(config.max_scenarios_per_archive)
+                    if config.max_scenarios_per_archive is not None and archive_scenario_count >= int(
+                        config.max_scenarios_per_archive
                     ):
                         break
 
@@ -745,9 +755,13 @@ def build_nuplan_replay_surface(
                     try:
                         lidar_rows = _fetch_lidar_rows(extracted_db)
                         db_scenario_count = 0
-                        for scene_index, scene_rows in enumerate(_scene_groups(lidar_rows)):
-                            for window_start, window in _candidate_windows(scene_rows, stride=config.scenario_stride):
-                                if config.max_scenarios is not None and scenario_count >= int(config.max_scenarios):
+                        for _scene_index, scene_rows in enumerate(_scene_groups(lidar_rows)):
+                            for window_start, window in _candidate_windows(
+                                scene_rows, stride=config.scenario_stride
+                            ):
+                                if config.max_scenarios is not None and scenario_count >= int(
+                                    config.max_scenarios
+                                ):
                                     break
                                 if (
                                     config.max_scenarios_per_archive is not None
@@ -793,11 +807,12 @@ def build_nuplan_replay_surface(
                                 scenario_count += 1
                                 archive_scenario_count += 1
                                 db_scenario_count += 1
-                            if config.max_scenarios is not None and scenario_count >= int(config.max_scenarios):
+                            if config.max_scenarios is not None and scenario_count >= int(
+                                config.max_scenarios
+                            ):
                                 break
-                            if (
-                                config.max_scenarios_per_archive is not None
-                                and archive_scenario_count >= int(config.max_scenarios_per_archive)
+                            if config.max_scenarios_per_archive is not None and archive_scenario_count >= int(
+                                config.max_scenarios_per_archive
                             ):
                                 break
                         inventory_rows.append(
@@ -844,7 +859,9 @@ def build_nuplan_replay_surface(
 
     if row_count <= 0:
         replay_path.unlink(missing_ok=True)
-        raise ValueError("No nuPlan replay rows were generated. Check max_scenarios, max_dbs, and DB window length.")
+        raise ValueError(
+            "No nuPlan replay rows were generated. Check max_scenarios, max_dbs, and DB window length."
+        )
 
     inventory_path = out_path / "nuplan_db_inventory.csv"
     scenario_index_path = out_path / "scenario_index.parquet"

@@ -4,6 +4,7 @@
 The builder intentionally uses an allowlist. It does not mirror the repository,
 raw datasets, or historical report trees.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,7 +16,7 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -76,7 +77,7 @@ class CopySpec:
 
 
 def _utc_stamp() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
 
 
 def _sha256(path: Path) -> str:
@@ -106,9 +107,13 @@ def _iter_source_files(root: Path) -> list[Path]:
         rel = path.relative_to(root)
         if any(part in DISALLOWED_PARTS or part.startswith("._") for part in rel.parts):
             continue
-        if path.is_dir():
-            continue
         if path.is_symlink():
+            try:
+                if not path.resolve().is_file():
+                    continue
+            except OSError:
+                continue
+        elif path.is_dir():
             continue
         if _is_disallowed_path(rel):
             continue
@@ -346,7 +351,7 @@ def _generated_environment_files(release_root: Path) -> list[tuple[Path, str]]:
         if proc.returncode == 0:
             generated.append((release_root / "environment/pip_freeze.txt", proc.stdout))
     except (OSError, subprocess.TimeoutExpired):
-        pass
+        return generated
     return generated
 
 
@@ -384,7 +389,9 @@ def build_release(
         if src.exists():
             entries.append(
                 _copy_spec(
-                    CopySpec(Path(rel), Path("environment") / Path(rel).name, "environment", "reproducibility"),
+                    CopySpec(
+                        Path(rel), Path("environment") / Path(rel).name, "environment", "reproducibility"
+                    ),
                     repo_root=repo_root,
                     release_root=release_root,
                     copy_mode=copy_mode,
@@ -470,7 +477,9 @@ def build_release(
     for rel in TABLE_FILES:
         entries.append(
             _copy_spec(
-                CopySpec(Path(rel), Path("tables/publication") / Path(rel).name, "table", "paper_claim_surface"),
+                CopySpec(
+                    Path(rel), Path("tables/publication") / Path(rel).name, "table", "paper_claim_surface"
+                ),
                 repo_root=repo_root,
                 release_root=release_root,
                 copy_mode=copy_mode,
@@ -552,7 +561,7 @@ def build_release(
     manifest = {
         "bundle_version": 1,
         "bundle_id": release_id,
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "mode": mode,
         "copy_mode_requested": copy_mode,
         "include_manuscripts": include_manuscripts,

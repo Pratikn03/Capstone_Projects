@@ -4,10 +4,12 @@ Controllers submit to the benchmark by implementing ``ControllerAPI``.
 The benchmark runner calls ``propose_action`` each step and logs the
 result through the certificate and audit path.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 
 class ControllerAPI(ABC):

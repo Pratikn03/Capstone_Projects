@@ -1,4 +1,5 @@
 """Forecasting: train baseline models for quick comparisons."""
+
 from __future__ import annotations
 
 import argparse
@@ -8,19 +9,23 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from orius.utils.metrics import rmse, mape
+from orius.forecasting.baselines import moving_average, persistence_24h
+from orius.forecasting.ml_gbm import predict_gbm, train_gbm
+from orius.utils.metrics import mape, rmse
 from orius.utils.seed import set_seed
-from orius.forecasting.baselines import persistence_24h, moving_average
-from orius.forecasting.ml_gbm import train_gbm, predict_gbm
 
 TARGETS = ["load_mw", "wind_mw", "solar_mw"]
 
-def make_xy(df: pd.DataFrame, target: str, drop_cols=("timestamp",)) -> tuple[np.ndarray, np.ndarray, list[str]]:
+
+def make_xy(
+    df: pd.DataFrame, target: str, drop_cols=("timestamp",)
+) -> tuple[np.ndarray, np.ndarray, list[str]]:
     """Split into features (X) and target (y) while avoiding leakage."""
     cols = [c for c in df.columns if c not in drop_cols and c not in TARGETS]
     X = df[cols].to_numpy()
     y = df[target].to_numpy()
     return X, y, cols
+
 
 def main():
     """CLI entrypoint for baseline training + evaluation."""
@@ -47,8 +52,8 @@ def main():
         df = pd.read_parquet(features_path).sort_values("timestamp")
         n = len(df)
         train_df = df.iloc[: int(n * 0.7)]
-        val_df = df.iloc[int(n * 0.7): int(n * 0.85)]
-        test_df = df.iloc[int(n * 0.85):]
+        val_df = df.iloc[int(n * 0.7) : int(n * 0.85)]
+        test_df = df.iloc[int(n * 0.85) :]
 
     # Baselines
     def eval_baseline(name: str, y_true: np.ndarray, y_pred: np.ndarray):
@@ -99,7 +104,7 @@ def main():
 
     out_json = out_dir / f"week1_baseline_{args.target}.json"
     out_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    print(f"Wrote: {out_json}")
+
 
 if __name__ == "__main__":
     main()

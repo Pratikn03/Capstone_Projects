@@ -15,7 +15,6 @@ from pathlib import Path
 
 from cleanup_appledouble import default_exclude_parts, find_sidecars
 
-
 PRUNE_PARTS = {".venv", ".venv2", "frontend/node_modules", ".git"}
 ROOT_INSTALLER_PATTERNS = ("*.dmg",)
 ROOT_DOWNLOAD_PATTERNS = ("*.crdownload", "*.partial", "*.download")
@@ -64,7 +63,9 @@ def _stale_pid_files(root: Path) -> list[Path]:
 def _active_write_candidates(root: Path) -> list[Path]:
     candidates: set[Path] = set()
     for pattern in ACTIVE_WRITE_PATTERNS:
-        candidates.update(path for path in root.rglob(pattern) if path.is_file() and not _is_pruned(path, root))
+        candidates.update(
+            path for path in root.rglob(pattern) if path.is_file() and not _is_pruned(path, root)
+        )
     return sorted(candidates)
 
 
@@ -72,7 +73,9 @@ def _open_paths(paths: list[Path]) -> list[Path]:
     if not paths:
         return []
     try:
-        completed = subprocess.run(["lsof", *[str(path) for path in paths]], check=False, capture_output=True, text=True)
+        completed = subprocess.run(
+            ["lsof", *[str(path) for path in paths]], check=False, capture_output=True, text=True
+        )
     except FileNotFoundError:
         return []
     if completed.returncode not in (0, 1):
@@ -154,10 +157,16 @@ def _print_group(title: str, root: Path, paths: list[Path], *, limit: int = 25) 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", default=".")
-    parser.add_argument("--exclude-active", action="store_true", help="Apply active-run AppleDouble allowlists.")
-    parser.add_argument("--allow-active", action="store_true", help="Do not fail on active open downloads/temp files.")
+    parser.add_argument(
+        "--exclude-active", action="store_true", help="Apply active-run AppleDouble allowlists."
+    )
+    parser.add_argument(
+        "--allow-active", action="store_true", help="Do not fail on active open downloads/temp files."
+    )
     parser.add_argument("--delete-stale-pids", action="store_true", help="Delete stale PID marker files.")
-    parser.add_argument("--allow-git-temp-packs", action="store_true", help="Warn, but do not fail, on tmp git packs.")
+    parser.add_argument(
+        "--allow-git-temp-packs", action="store_true", help="Warn, but do not fail, on tmp git packs."
+    )
     args = parser.parse_args()
 
     root = Path(args.root).resolve()

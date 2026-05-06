@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate the YAML-canonical ORIUS theorem audit surface."""
+
 from __future__ import annotations
 
 import ast
@@ -8,7 +9,6 @@ import sys
 from pathlib import Path
 
 import yaml
-
 from _active_theorem_program import (
     ASSUMPTION_MAP_CSV,
     ASSUMPTION_MAP_MD,
@@ -46,13 +46,12 @@ from _active_theorem_program import (
     render_theorem_surface_summary_tex,
 )
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from orius.universal_theory.contracts import ASSUMPTION_REGISTER as CODE_ASSUMPTION_REGISTER  # noqa: E402
+from orius.universal_theory.contracts import ASSUMPTION_REGISTER as CODE_ASSUMPTION_REGISTER
 
 ASSUMPTION_REGISTER = REPO_ROOT / "appendices" / "app_b_assumptions.tex"
 PROOF_SURFACES = [
@@ -113,6 +112,8 @@ EXPECTED_FLAGSHIP = ["T1", "T2", "T3a", "T4", "T6", "T7", "T11", "T_trajectory_P
 EXPECTED_SUPPORTING = [
     "T3b",
     "T8",
+    "T9",
+    "T10",
     "T10_T11_ObservationAmbiguitySandwich",
     "T11_AV_BrakeHold",
     "T11_HC_FailSafeRelease",
@@ -124,7 +125,7 @@ EXPECTED_SUPPORTING = [
     "T11_Byzantine",
     "T_stale_decay",
 ]
-EXPECTED_DRAFT = ["T5", "T9", "T10", "L1", "L2", "L3", "L4", "T_minimax", "T_sensor_converse"]
+EXPECTED_DRAFT = ["T5", "L1", "L2", "L3", "L4", "T_minimax", "T_sensor_converse"]
 
 SYNC_EXPECTATIONS = {
     ASSUMPTION_REGISTER: [
@@ -136,10 +137,18 @@ SYNC_EXPECTATIONS = {
         "A13 --- TV bridge",
     ],
     REPO_ROOT / "appendices/app_c_full_proofs.tex": [
+        "Mathematical contract vs. domain discharge",
+        "Domain discharge is evidence, not an extra hidden assumption",
+        "contract-universal, not unrestricted-global",
         "C.11\\quad Universal Impossibility (T9)",
         "C.12\\quad Boundary-Indistinguishability Lower Bound (T10)",
         "C.13\\quad Typed Structural Transfer and Failure-Mode Converse (T11)",
         "L1 — Rate-Distortion Safety Law",
+    ],
+    REPO_ROOT / "chapters/ch37_universality_completeness.tex": [
+        "Mathematical contract vs. domain discharge",
+        "domain discharge artifacts are evidence, not an extra hidden assumption",
+        "contract-universal, not unrestricted-global",
     ],
     REPO_ROOT / "src/orius/universal_theory/battery_instantiation.py": [
         "floor(delta_bnd^2 / (2 * sigma_d^2 * log(2 / delta)))",
@@ -221,7 +230,9 @@ def _check_assumption_references(known_ids: set[str]) -> list[str]:
                 findings.append(f"{REGISTRY_YAML}: theorem '{theorem_id}' cites unknown assumption '{item}'")
         for item in theorem.get("typed_obligations", []):
             if not isinstance(item, str):
-                findings.append(f"{REGISTRY_YAML}: theorem '{theorem_id}' has non-string typed obligation '{item}'")
+                findings.append(
+                    f"{REGISTRY_YAML}: theorem '{theorem_id}' has non-string typed obligation '{item}'"
+                )
     return findings
 
 
@@ -280,15 +291,25 @@ def main() -> int:
     payload = build_active_theorem_audit_payload()
     theorem_ids = [row["theorem_id"] for row in payload["theorems"]]
     if theorem_ids != EXPECTED_THEOREM_IDS:
-        findings.append(f"Active theorem audit IDs out of sync: expected {EXPECTED_THEOREM_IDS}, found {theorem_ids}")
+        findings.append(
+            f"Active theorem audit IDs out of sync: expected {EXPECTED_THEOREM_IDS}, found {theorem_ids}"
+        )
 
-    flagship_ids = [row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "flagship_defended"]
-    supporting_ids = [row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "supporting_defended"]
-    draft_ids = [row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "draft_non_defended"]
+    flagship_ids = [
+        row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "flagship_defended"
+    ]
+    supporting_ids = [
+        row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "supporting_defended"
+    ]
+    draft_ids = [
+        row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "draft_non_defended"
+    ]
     if flagship_ids != EXPECTED_FLAGSHIP:
         findings.append(f"Flagship defended core drifted: expected {EXPECTED_FLAGSHIP}, found {flagship_ids}")
     if supporting_ids != EXPECTED_SUPPORTING:
-        findings.append(f"Supporting defended core drifted: expected {EXPECTED_SUPPORTING}, found {supporting_ids}")
+        findings.append(
+            f"Supporting defended core drifted: expected {EXPECTED_SUPPORTING}, found {supporting_ids}"
+        )
     if draft_ids != EXPECTED_DRAFT:
         findings.append(f"Draft theorem surface drifted: expected {EXPECTED_DRAFT}, found {draft_ids}")
 
@@ -317,7 +338,26 @@ def main() -> int:
             f"T11 typed obligations drifted: expected {expected_t11_obligations}, found {t11['typed_obligations']}"
         )
     if t11["unresolved_assumptions"]:
-        findings.append("T11 must not carry unresolved assumptions; obligations are runtime-linked typed obligations.")
+        findings.append(
+            "T11 must not carry unresolved assumptions; obligations are runtime-linked typed obligations."
+        )
+    for theorem_id in ("T9", "T10"):
+        row = next(item for item in payload["theorems"] if item["theorem_id"] == theorem_id)
+        contract_text = " ".join(
+            str(row.get(field, "")) for field in ("scope_note", "weakest_step", "remediation_detail")
+        )
+        if "domain discharge is evidence, not an extra hidden assumption" not in contract_text:
+            findings.append(
+                f"{theorem_id} must separate mathematical contract from empirical domain discharge."
+            )
+    sandwich = next(
+        row for row in payload["theorems"] if row["theorem_id"] == "T10_T11_ObservationAmbiguitySandwich"
+    )
+    sandwich_text = f"{sandwich['scope_note']} {sandwich['remediation_detail']}"
+    if "contract-universal, not unrestricted-global" not in sandwich_text:
+        findings.append(
+            "T10_T11_ObservationAmbiguitySandwich must remain contract-universal, not unrestricted-global."
+        )
     for lemma_id in (
         "T11_AV_BrakeHold",
         "T11_HC_FailSafeRelease",
@@ -378,6 +418,8 @@ def main() -> int:
         "T6",
         "T7",
         "T8",
+        "T9",
+        "T10",
         "T11",
         "T10_T11_ObservationAmbiguitySandwich",
         "T11_AV_BrakeHold",
@@ -395,8 +437,6 @@ def main() -> int:
         findings.append(
             f"Defended core rows drifted: expected {expected_defended_core}, found {defended_core_rows}"
         )
-    if any(theorem_id in defended_core_rows for theorem_id in ("T9", "T10")):
-        findings.append("T9/T10 must remain draft-only and absent from defended_theorem_core.")
 
     required_drift_surfaces = {
         "src/orius/dc3s/coverage_theorem.py and tests/test_conditional_coverage.py",
@@ -432,7 +472,9 @@ def main() -> int:
             continue
         actual = path.read_text(encoding="utf-8")
         if actual != expected:
-            findings.append(f"{path}: generated theorem artifact is out of sync. Run scripts/build_active_theorem_audit.py.")
+            findings.append(
+                f"{path}: generated theorem artifact is out of sync. Run scripts/build_active_theorem_audit.py."
+            )
 
     if findings:
         print("[validate_theorem_surface] FAIL")

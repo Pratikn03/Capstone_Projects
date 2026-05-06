@@ -7,6 +7,7 @@ evidence surface so that validate_paper_claims and sync_paper_assets pass.
 Usage:
     python scripts/sync_impact_from_manifest.py
 """
+
 from __future__ import annotations
 
 import csv

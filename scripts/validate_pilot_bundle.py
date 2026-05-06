@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate future-pilot evidence bundles for schema and linkage integrity."""
+
 from __future__ import annotations
 
 import argparse

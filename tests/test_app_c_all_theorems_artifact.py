@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 APPENDIX_TEX = REPO_ROOT / "appendices" / "app_c_all_theorems.tex"
 APPENDIX_PDF = REPO_ROOT / "appendices" / "app_c_all_theorems.pdf"

@@ -9,6 +9,7 @@ Produces artifact-backed outputs for:
 Usage:
     python scripts/run_evidence_artifacts.py [--skip-graceful]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -47,28 +48,43 @@ def main() -> int:
 
     # Temporal validity: half-life + blackout
     total += 1
-    if _run([str(py), "scripts/run_certificate_half_life_blackout.py", "--seeds", "42", "--horizons", "0", "4", "12"], "temporal-validity half-life blackout"):
+    if _run(
+        [
+            str(py),
+            "scripts/run_certificate_half_life_blackout.py",
+            "--seeds",
+            "42",
+            "--horizons",
+            "0",
+            "4",
+            "12",
+        ],
+        "temporal-validity half-life blackout",
+    ):
         csv = REPO / "reports/publication/certificate_half_life_blackout.csv"
         if csv.exists() and csv.stat().st_size > 0:
             ok += 1
             print(f"  PASS temporal validity: {csv}")
         else:
-            print(f"  FAIL temporal validity: artifact missing or empty")
+            print("  FAIL temporal validity: artifact missing or empty")
     else:
-        print(f"  BLOCKED temporal validity: script failed")
+        print("  BLOCKED temporal validity: script failed")
 
     # Runtime governance: CertOS lifecycle
     total += 1
-    if _run([str(py), "scripts/run_certos_lifecycle.py", "--steps", "96", "--out", "reports/certos"], "CertOS lifecycle"):
+    if _run(
+        [str(py), "scripts/run_certos_lifecycle.py", "--steps", "96", "--out", "reports/certos"],
+        "CertOS lifecycle",
+    ):
         csv = REPO / "reports/certos/certos_lifecycle.csv"
         j = REPO / "reports/certos/certos_summary.json"
         if csv.exists() and j.exists() and csv.stat().st_size > 0:
             ok += 1
             print(f"  PASS CertOS: {csv}, {j}")
         else:
-            print(f"  FAIL CertOS: artifact missing or empty")
+            print("  FAIL CertOS: artifact missing or empty")
     else:
-        print(f"  BLOCKED CertOS: script failed")
+        print("  BLOCKED CertOS: script failed")
 
     # Graceful fallback: depends on 48h_trace
     if not args.skip_graceful:
@@ -81,11 +97,11 @@ def main() -> int:
                     ok += 1
                     print(f"  PASS graceful fallback: {gd}")
                 else:
-                    print(f"  FAIL graceful fallback: artifact missing")
+                    print("  FAIL graceful fallback: artifact missing")
             else:
-                print(f"  BLOCKED graceful fallback: generate_priority2_artifacts failed")
+                print("  BLOCKED graceful fallback: generate_priority2_artifacts failed")
         else:
-            print(f"  BLOCKED graceful fallback: 48h_trace.csv missing (run generate_48h_trace first)")
+            print("  BLOCKED graceful fallback: 48h_trace.csv missing (run generate_48h_trace first)")
 
     print(f"\n=== Evidence artifacts: {ok}/{total} PASS ===")
     return 0 if ok == total else 1

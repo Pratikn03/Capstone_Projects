@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Micro-benchmark core DC3S step functions."""
+
 from __future__ import annotations
 
 import argparse
@@ -7,9 +8,10 @@ import json
 import platform
 import sys
 import time
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 
@@ -208,7 +210,9 @@ def _benchmark_chain(iterations: int, warmup: int, *, use_kappa: bool) -> dict[s
             cfg=payload["linear_cfg"],
         )
         current_soc = current_soc + safe["charge_mw"] - safe["discharge_mw"]
-        current_soc = min(payload["constraints"]["max_soc_mwh"], max(payload["constraints"]["min_soc_mwh"], current_soc))
+        current_soc = min(
+            payload["constraints"]["max_soc_mwh"], max(payload["constraints"]["min_soc_mwh"], current_soc)
+        )
         adaptive_state = {}
         last_event = event
 
@@ -345,7 +349,7 @@ def run_benchmark(*, iterations: int, warmup: int, out_path: Path) -> dict[str, 
         "environment": {
             "python_version": sys.version.split()[0],
             "platform": platform.platform(),
-            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "timestamp_utc": datetime.now(UTC).isoformat(),
         },
         "benchmarks": benchmarks,
     }

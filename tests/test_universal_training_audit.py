@@ -1,4 +1,5 @@
 """Regression tests for the canonical-domain training audit."""
+
 from __future__ import annotations
 
 import csv
@@ -6,7 +7,6 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "run_universal_training_audit.py"
@@ -42,8 +42,7 @@ def test_universal_training_audit_reports_verified_domains(tmp_path: Path) -> No
     assert "battery" in report["training_surface_closed_domains"]
 
     summary_rows = {
-        row["domain"]: row
-        for row in csv.DictReader((tmp_path / "domain_training_summary.csv").open())
+        row["domain"]: row for row in csv.DictReader((tmp_path / "domain_training_summary.csv").open())
     }
     assert summary_rows["battery"]["training_verified"] == "True"
     assert summary_rows["battery"]["training_surface_closed"] == "True"

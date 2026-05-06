@@ -7,10 +7,11 @@ Implements the temporal safety certificate logic for DC3S (Paper 2):
 - check_renewal_trigger: decides whether to renew an existing certificate
 - time_to_expiration: remaining valid steps and hours for a certificate
 """
+
 from __future__ import annotations
 
 import math
-from typing import Any, Dict
+from typing import Any
 
 from scipy.stats import norm as _norm
 
@@ -20,17 +21,31 @@ from .brownian_half_life import (
     validity_probability,
 )
 
+__all__ = [
+    "CertificateHalfLifeResult",
+    "certificate_half_life",
+    "check_renewal_trigger",
+    "compute_certificate_state",
+    "compute_conservative_horizon",
+    "compute_half_life_from_horizon",
+    "compute_validity_horizon",
+    "conservative_validity_horizon",
+    "time_to_expiration",
+    "validity_probability",
+    "verify_horizon_safety",
+]
+
 MAX_HORIZON_STEPS: int = 4096
 FALLBACK_QUALITY_THRESHOLD: float = 0.05
 
 
 def compute_validity_horizon(
-    observed_state: Dict[str, float],
+    observed_state: dict[str, float],
     quality_score: float,
     safety_margin_mwh: float,
-    constraints: Dict[str, float],
+    constraints: dict[str, float],
     sigma_d: float,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Compute the validity horizon tau_t.
 
     tau_t is the estimated number of steps before the conformal uncertainty
@@ -55,15 +70,12 @@ def compute_validity_horizon(
 
     min_dist = min(dist_to_min, dist_to_max)
 
-    if sigma_d > 1e-6:
-        tau_t = min((min_dist / sigma_d) ** 2, MAX_HORIZON_STEPS)
-    else:
-        tau_t = MAX_HORIZON_STEPS
+    tau_t = min((min_dist / sigma_d) ** 2, MAX_HORIZON_STEPS) if sigma_d > 1e-06 else MAX_HORIZON_STEPS
 
     return {"tau_t": int(tau_t), "soc_min_mwh": soc_lower_bound, "soc_max_mwh": soc_upper_bound}
 
 
-def compute_half_life_from_horizon(tau_t: float, decay_rate: float) -> Dict[str, Any]:
+def compute_half_life_from_horizon(tau_t: float, decay_rate: float) -> dict[str, Any]:
     """Convert a validity horizon into a half-life.
 
     Uses the same log-based decay transform as the battery helper:
@@ -87,14 +99,14 @@ def compute_certificate_state(
     quality_score: float = 1.0,
     safety_margin_mwh: float = 100.0,
     sigma_d: float = 50.0,
-    constraints: Dict[str, float] | None = None,
+    constraints: dict[str, float] | None = None,
     current_step: int = 0,
     renewal_threshold: int = 5,
     fallback_threshold: int = 1,
     decay_rate: float = 0.5,
     # Legacy dict-based calling convention kept for backwards compatibility
-    observed_state: Dict[str, float] | None = None,
-) -> Dict[str, Any]:
+    observed_state: dict[str, float] | None = None,
+) -> dict[str, Any]:
     """Compute the full certificate validity state.
 
     Accepts either:
@@ -148,9 +160,7 @@ def compute_certificate_state(
 
     if H_t == 0:
         status = "expired"
-    elif H_t <= fallback_threshold:
-        status = "degraded"
-    elif H_t <= renewal_threshold:
+    elif H_t <= fallback_threshold or H_t <= renewal_threshold:
         status = "degraded"
     else:
         status = "valid"
@@ -169,10 +179,10 @@ def compute_certificate_state(
 
 
 def check_renewal_trigger(
-    certificate_state: Dict[str, Any],
+    certificate_state: dict[str, Any],
     new_quality_score: float,
     renewal_quality_threshold: float = 0.5,
-) -> Dict[str, bool]:
+) -> dict[str, bool]:
     """Decide whether to renew an existing certificate.
 
     Renewal is triggered when:
@@ -190,7 +200,7 @@ def time_to_expiration(
     H_t: int,
     elapsed_since_issue: int,
     dt_hours: float = 1.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Compute remaining validity from a certificate with horizon H_t.
 
     Args:
@@ -218,7 +228,7 @@ def compute_conservative_horizon(
     margin: float,
     sigma_d: float,
     delta: float = 0.05,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Compute a conservative validity horizon using first-passage-time theory.
 
     Under a symmetric random-walk disturbance with per-step standard deviation
@@ -280,7 +290,7 @@ def verify_horizon_safety(
     margin: float,
     sigma_d: float,
     delta: float = 0.05,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Verify that a given horizon H_t satisfies the exit-probability bound.
 
     Checks: P(max_{k<=H_t} |W_k| >= margin) <= delta.

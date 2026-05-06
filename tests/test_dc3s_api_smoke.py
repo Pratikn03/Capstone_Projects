@@ -1,8 +1,9 @@
 """Smoke tests for DC3S API endpoints with synthetic forecast patching."""
+
 from __future__ import annotations
 
-import math
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -16,7 +17,6 @@ from services.api.main import app
 from services.api.routers import dc3s as dc3s_router
 from services.api.security import API_KEY_NAME
 
-
 DC3S_HEADERS = {API_KEY_NAME: "dc3s-test-key"}
 
 
@@ -29,21 +29,29 @@ def _dc3s_auth(monkeypatch):
     get_api_keys.cache_clear()
 
 
-def _predict_target(*, target: str, horizon: int, features_df: pd.DataFrame, forecast_cfg: dict, required: bool):
+def _predict_target(
+    *, target: str, horizon: int, features_df: pd.DataFrame, forecast_cfg: dict, required: bool
+):
     idx = np.arange(horizon, dtype=float)
     if target == "load_mw":
         y = 52.0 + 4.0 * np.sin((2.0 * math.pi * idx / 24.0) - 0.5)
     elif target == "wind_mw":
-        y = 8.0 + 1.8 * np.sin((2.0 * math.pi * (idx + 4.0) / 24.0))
+        y = 8.0 + 1.8 * np.sin(2.0 * math.pi * (idx + 4.0) / 24.0)
     else:
         y = np.maximum(0.0, 4.0 * np.sin(math.pi * ((idx % 24.0) - 6.0) / 12.0))
     return np.asarray(y, dtype=float), Path(f"test_{target}.bin")
 
 
 def test_dc3s_step_and_audit_round_trip(monkeypatch, tmp_path):
-    monkeypatch.setattr(dc3s_router, "_load_features_df", lambda _cfg: pd.DataFrame({"price_eur_mwh": [60.0], "carbon_kg_per_mwh": [400.0]}))
+    monkeypatch.setattr(
+        dc3s_router,
+        "_load_features_df",
+        lambda _cfg: pd.DataFrame({"price_eur_mwh": [60.0], "carbon_kg_per_mwh": [400.0]}),
+    )
     monkeypatch.setattr(dc3s_router, "_predict_target", _predict_target)
-    monkeypatch.setattr(dc3s_router, "_resolve_conformal_q", lambda target, horizon: np.full(horizon, 4.0, dtype=float))
+    monkeypatch.setattr(
+        dc3s_router, "_resolve_conformal_q", lambda target, horizon: np.full(horizon, 4.0, dtype=float)
+    )
     monkeypatch.setattr(
         dc3s_router,
         "_load_dc3s_cfg",
@@ -79,14 +87,14 @@ def test_dc3s_step_and_audit_round_trip(monkeypatch, tmp_path):
     req = {
         "device_id": "test-device",
         "zone_id": "DE",
-            "current_soc_mwh": 1.0,
-            "telemetry_event": {
-                "ts_utc": "2026-02-22T00:00:00+00:00",
-                "load_mw": 52.0,
-                "renewables_mw": 12.0,
-            },
-            "last_actual_load_mw": 52.0,
-            "last_pred_load_mw": 50.0,
+        "current_soc_mwh": 1.0,
+        "telemetry_event": {
+            "ts_utc": "2026-02-22T00:00:00+00:00",
+            "load_mw": 52.0,
+            "renewables_mw": 12.0,
+        },
+        "last_actual_load_mw": 52.0,
+        "last_pred_load_mw": 50.0,
         "controller": "deterministic",
         "horizon": 24,
         "include_certificate": True,
@@ -139,9 +147,15 @@ def test_dc3s_step_and_audit_round_trip(monkeypatch, tmp_path):
 
 
 def test_dc3s_step_active_mode_blocks_failed_guarantees(monkeypatch):
-    monkeypatch.setattr(dc3s_router, "_load_features_df", lambda _cfg: pd.DataFrame({"price_eur_mwh": [60.0], "carbon_kg_per_mwh": [400.0]}))
+    monkeypatch.setattr(
+        dc3s_router,
+        "_load_features_df",
+        lambda _cfg: pd.DataFrame({"price_eur_mwh": [60.0], "carbon_kg_per_mwh": [400.0]}),
+    )
     monkeypatch.setattr(dc3s_router, "_predict_target", _predict_target)
-    monkeypatch.setattr(dc3s_router, "_resolve_conformal_q", lambda target, horizon: np.full(horizon, 4.0, dtype=float))
+    monkeypatch.setattr(
+        dc3s_router, "_resolve_conformal_q", lambda target, horizon: np.full(horizon, 4.0, dtype=float)
+    )
     monkeypatch.setattr(dc3s_router, "_resolve_iot_mode", lambda _event: "active")
     monkeypatch.setattr(
         dc3s_router,
@@ -169,9 +183,15 @@ def test_dc3s_step_active_mode_blocks_failed_guarantees(monkeypatch):
 
 
 def test_dc3s_step_persists_adaptive_state_across_repeated_events(monkeypatch, tmp_path):
-    monkeypatch.setattr(dc3s_router, "_load_features_df", lambda _cfg: pd.DataFrame({"price_eur_mwh": [60.0], "carbon_kg_per_mwh": [400.0]}))
+    monkeypatch.setattr(
+        dc3s_router,
+        "_load_features_df",
+        lambda _cfg: pd.DataFrame({"price_eur_mwh": [60.0], "carbon_kg_per_mwh": [400.0]}),
+    )
     monkeypatch.setattr(dc3s_router, "_predict_target", _predict_target)
-    monkeypatch.setattr(dc3s_router, "_resolve_conformal_q", lambda target, horizon: np.full(horizon, 4.0, dtype=float))
+    monkeypatch.setattr(
+        dc3s_router, "_resolve_conformal_q", lambda target, horizon: np.full(horizon, 4.0, dtype=float)
+    )
     monkeypatch.setattr(
         dc3s_router,
         "_load_dc3s_cfg",

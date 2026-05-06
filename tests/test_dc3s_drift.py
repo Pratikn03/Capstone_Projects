@@ -1,4 +1,5 @@
 """Unit tests for DC3S Page-Hinkley drift detector."""
+
 from __future__ import annotations
 
 from orius.dc3s.drift import PageHinkleyDetector
@@ -28,4 +29,3 @@ def test_page_hinkley_triggers_and_cooldown():
     # During cooldown, drift should not retrigger immediately.
     during_cooldown = detector.update(5.0)
     assert during_cooldown["drift"] is False
-

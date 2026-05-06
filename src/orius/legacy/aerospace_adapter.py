@@ -6,13 +6,15 @@ Placeholder for thesis domain 4 (Aerospace). Safety predicates:
 - bank_angle_deg in [-max_bank, max_bank]
 - fuel_remaining_pct >= fuel_min
 """
+
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
-from orius.dc3s.domain_adapter import DomainAdapter
 from orius.dc3s.certificate import make_certificate
+from orius.dc3s.domain_adapter import DomainAdapter
 from orius.universal_framework.reliability_runtime import assess_domain_reliability
 from orius.universal_framework.runtime_evidence import resolve_runtime_evidence
 
@@ -214,9 +216,7 @@ class AerospaceDomainAdapter(DomainAdapter):
         if fuel_lo < self._fuel_min_pct:
             throttle_safe = min(throttle_safe, 0.5)
             reason = reason or "low_fuel_uncertainty"
-        repaired = (
-            abs(throttle_safe - throttle) > 1e-9 or abs(bank_safe - bank_cmd) > 1e-9
-        )
+        repaired = abs(throttle_safe - throttle) > 1e-9 or abs(bank_safe - bank_cmd) > 1e-9
         meta = {
             "mode": "projection",
             "repaired": repaired,
@@ -259,7 +259,9 @@ class AerospaceDomainAdapter(DomainAdapter):
         model_hash = str(cfg.get("model_hash", ""))
         config_hash = str(cfg.get("config_hash", ""))
         intervened = bool(repair_meta.get("repaired")) if isinstance(repair_meta, Mapping) else None
-        intervention_reason = repair_meta.get("intervention_reason") if isinstance(repair_meta, Mapping) else None
+        intervention_reason = (
+            repair_meta.get("intervention_reason") if isinstance(repair_meta, Mapping) else None
+        )
         reliability_w = float(reliability.get("w_t", reliability.get("w", 1.0)))
         drift_flag = bool(drift.get("drift", False))
         inflation = float(uncertainty.get("meta", {}).get("inflation", 1.0))

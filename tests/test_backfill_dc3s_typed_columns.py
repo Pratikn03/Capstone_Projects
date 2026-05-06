@@ -1,4 +1,5 @@
 """Tests for DC3S typed-column backfill utility."""
+
 from __future__ import annotations
 
 import json

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Classify repo paths into source, evidence, generated, and local-only classes."""
+
 from __future__ import annotations
 
 import argparse
 import csv
 import json
 import subprocess
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -58,7 +59,11 @@ def classify_path(path: str | Path) -> str:
 
     if name == "external_sources_manifest.json":
         return "small_canonical_evidence"
-    if name.startswith("._") or name in TEMP_NAMES or "smoke" in name.lower() and suffix in {".png", ".jpg", ".jpeg"}:
+    if (
+        name.startswith("._")
+        or name in TEMP_NAMES
+        or ("smoke" in name.lower() and suffix in {".png", ".jpg", ".jpeg"})
+    ):
         return "temporary_ai_codex_artifact"
     if any(part in CACHE_DIRS for part in parts):
         return "cache_build_output"
@@ -80,7 +85,12 @@ def classify_path(path: str | Path) -> str:
         return "generated_report"
     if parts[0] == "paper" and "assets" in parts:
         return "small_canonical_evidence"
-    if suffix in SOURCE_SUFFIXES or name in {"Makefile", "Dockerfile", "package-lock.json", "requirements.lock.txt"}:
+    if suffix in SOURCE_SUFFIXES or name in {
+        "Makefile",
+        "Dockerfile",
+        "package-lock.json",
+        "requirements.lock.txt",
+    }:
         return "source"
     return "other"
 
@@ -97,7 +107,8 @@ def _git_paths(args: list[str]) -> list[str]:
 
 
 def iter_inventory(include_untracked: bool = False) -> Iterable[dict[str, object]]:
-    paths = set(_git_paths(["ls-files"]))
+    tracked_paths = set(_git_paths(["ls-files"]))
+    paths = set(tracked_paths)
     if include_untracked:
         paths.update(_git_paths(["ls-files", "-o", "--exclude-standard"]))
     for rel in sorted(paths):
@@ -105,7 +116,7 @@ def iter_inventory(include_untracked: bool = False) -> Iterable[dict[str, object
         yield {
             "path": rel,
             "category": classify_path(rel),
-            "tracked": rel in paths,
+            "tracked": rel in tracked_paths,
             "exists": path.exists(),
             "size_bytes": path.stat().st_size if path.exists() and path.is_file() else 0,
         }

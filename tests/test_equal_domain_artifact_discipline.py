@@ -5,12 +5,14 @@ import json
 import subprocess
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION = REPO_ROOT / "reports" / "publication"
 DOMAIN_DIRS = {
     "Battery Energy Storage": REPO_ROOT / "reports" / "battery_av" / "battery",
-    "Autonomous Vehicles": REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest",
+    "Autonomous Vehicles": REPO_ROOT
+    / "reports"
+    / "orius_av"
+    / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest",
     "Medical and Healthcare Monitoring": REPO_ROOT / "reports" / "healthcare",
 }
 PROMOTED_RUNTIME_MAX_TSVR = 1e-3
@@ -88,9 +90,9 @@ def test_each_domain_has_runtime_native_baselines_ablations_and_negative_control
         negative_rows = _rows(domain_dir / "runtime_negative_controls.csv")
         trace_rows = _rows(domain_dir / "runtime_comparator_traces.csv")
 
-        assert REQUIRED_BASELINES <= {row["baseline_family"] for row in comparator_rows}, domain
-        assert REQUIRED_ABLATIONS == {row["ablation_name"] for row in ablation_rows}, domain
-        assert REQUIRED_NEGATIVE_CONTROLS == {row["control_name"] for row in negative_rows}, domain
+        assert {row["baseline_family"] for row in comparator_rows} >= REQUIRED_BASELINES, domain
+        assert {row["ablation_name"] for row in ablation_rows} == REQUIRED_ABLATIONS, domain
+        assert {row["control_name"] for row in negative_rows} == REQUIRED_NEGATIVE_CONTROLS, domain
         assert trace_rows, domain
 
         for row in comparator_rows:
@@ -120,10 +122,7 @@ def test_each_domain_has_runtime_native_baselines_ablations_and_negative_control
 
 def test_each_domain_orius_row_is_non_degenerate_and_witness_closed() -> None:
     for domain, domain_dir in DOMAIN_DIRS.items():
-        rows = {
-            row["baseline_family"]: row
-            for row in _rows(domain_dir / "runtime_comparator_summary.csv")
-        }
+        rows = {row["baseline_family"]: row for row in _rows(domain_dir / "runtime_comparator_summary.csv")}
         orius = rows["orius_full_stack"]
         degenerate = rows["degenerate_fallback_runtime"]
         assert _safe_float(orius["tsvr"]) <= PROMOTED_RUNTIME_MAX_TSVR, domain
@@ -137,7 +136,9 @@ def test_each_domain_orius_row_is_non_degenerate_and_witness_closed() -> None:
 
 
 def test_equal_domain_reproducibility_manifest_is_complete() -> None:
-    payload = json.loads((PUBLICATION / "equal_domain_reproducibility_manifest.json").read_text(encoding="utf-8"))
+    payload = json.loads(
+        (PUBLICATION / "equal_domain_reproducibility_manifest.json").read_text(encoding="utf-8")
+    )
     assert ".venv/bin/python scripts/build_equal_domain_artifact_discipline.py" in payload["commands"]
     assert ".venv/bin/python scripts/validate_equal_domain_artifact_discipline.py" in payload["commands"]
     missing = [row["path"] for row in payload["artifacts"] if not row["exists"]]

@@ -1,8 +1,9 @@
 """Tests for DC3S health metric computation and sustained triggers."""
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import json
+from datetime import UTC, datetime
 
 import duckdb
 
@@ -10,7 +11,9 @@ from orius.dc3s.certificate import make_certificate, store_certificate
 from orius.monitoring.dc3s_health import compute_dc3s_health
 
 
-def _cert(command_id: str, *, intervened: bool, reliability_w: float, drift_flag: bool, inflation: float) -> dict:
+def _cert(
+    command_id: str, *, intervened: bool, reliability_w: float, drift_flag: bool, inflation: float
+) -> dict:
     return make_certificate(
         command_id=command_id,
         device_id="dev",
@@ -115,7 +118,7 @@ def test_compute_dc3s_health_falls_back_to_payload_json_for_legacy_rows(tmp_path
                 "legacy-1",
                 "hash",
                 None,
-                datetime.now(timezone.utc).isoformat(),
+                datetime.now(UTC).isoformat(),
                 json.dumps(payload),
             ],
         )

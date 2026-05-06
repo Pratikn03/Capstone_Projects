@@ -1,16 +1,17 @@
 """Paper 3: Fallback dispatch optimization logic."""
+
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 
 def solve_fallback_dispatch(
     initial_soc: float,
     remaining_horizon: int,
-    safe_soc_envelope: List[Dict[str, float]],
-    objective_weights: Dict[str, float],
-    constraints: Dict[str, float],
-) -> Dict[str, Any]:
+    safe_soc_envelope: list[dict[str, float]],
+    objective_weights: dict[str, float],
+    constraints: dict[str, float],
+) -> dict[str, Any]:
     """
     Solves the optimization problem for graceful degradation.
 

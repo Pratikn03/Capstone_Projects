@@ -14,11 +14,13 @@ Several maintenance scripts still rely on the legacy industrial, navigation,
 and aerospace helpers. Those APIs remain available here as compatibility
 surfaces even though the promoted runtime lane is now three-domain.
 """
+
 from __future__ import annotations
 
 import csv
 import math
 import sys
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -48,12 +50,15 @@ CCPP_PATH = REPO_ROOT / "data" / "industrial" / "raw" / "CCPP.csv"
 INDUSTRIAL_RUNTIME_PATH = REPO_ROOT / "data" / "industrial" / "processed" / "industrial_orius.csv"
 NAVIGATION_PATH = REPO_ROOT / "data" / "navigation" / "processed" / "navigation_orius.csv"
 AEROSPACE_RUNTIME_PATH = REPO_ROOT / "data" / "aerospace" / "processed" / "aerospace_public_adsb_runtime.csv"
-AEROSPACE_REALFLIGHT_PATH = REPO_ROOT / "data" / "aerospace" / "processed" / "aerospace_realflight_runtime.csv"
+AEROSPACE_REALFLIGHT_PATH = (
+    REPO_ROOT / "data" / "aerospace" / "processed" / "aerospace_realflight_runtime.csv"
+)
 
 
 # ---------------------------------------------------------------------------
 # Ornstein-Uhlenbeck synthetic generator
 # ---------------------------------------------------------------------------
+
 
 def _ou_series(
     mu: float,
@@ -83,6 +88,7 @@ def _ou_series(
 # ---------------------------------------------------------------------------
 # CCPP loader / generator
 # ---------------------------------------------------------------------------
+
 
 def load_ccpp_rows(path: Path | None = None) -> list[dict[str, float]]:
     """Load UCI CCPP rows from CSV."""
@@ -120,7 +126,7 @@ def generate_ccpp_synthetic(n: int = 9568, seed: int = 42) -> list[dict[str, flo
         pe_vals.append(pe)
     return [
         {"AT": at, "V": v, "AP": ap, "RH": rh, "PE": pe}
-        for at, v, ap, rh, pe in zip(at_vals, v_vals, ap_vals, rh_vals, pe_vals)
+        for at, v, ap, rh, pe in zip(at_vals, v_vals, ap_vals, rh_vals, pe_vals, strict=False)
     ]
 
 
@@ -132,13 +138,14 @@ def get_ccpp_rows(seed: int = 42) -> list[dict[str, float]]:
             if rows:
                 return rows
         except Exception:
-            pass
+            return generate_ccpp_synthetic(seed=seed)
     return generate_ccpp_synthetic(seed=seed)
 
 
 # ---------------------------------------------------------------------------
 # BIDMC loader / generator
 # ---------------------------------------------------------------------------
+
 
 def load_bidmc_rows(path: Path | None = None) -> list[dict[str, float]]:
     """Load PhysioNet BIDMC vitals from CSV.
@@ -184,8 +191,7 @@ def generate_bidmc_synthetic(n: int = 4000, seed: int = 42) -> list[dict[str, fl
     spo2_vals = _ou_series(97.5, 1.2, 0.35, n, seed=seed + 1, clip_lo=70.0, clip_hi=100.0)
     rr_vals = _ou_series(18.0, 4.0, 0.25, n, seed=seed + 2, clip_lo=4.0, clip_hi=60.0)
     return [
-        {"HR": hr, "SpO2": spo2, "RR": rr}
-        for hr, spo2, rr in zip(hr_vals, spo2_vals, rr_vals)
+        {"HR": hr, "SpO2": spo2, "RR": rr} for hr, spo2, rr in zip(hr_vals, spo2_vals, rr_vals, strict=False)
     ]
 
 
@@ -197,7 +203,7 @@ def get_bidmc_rows(seed: int = 42) -> list[dict[str, float]]:
             if rows:
                 return rows
         except Exception:
-            pass
+            return generate_bidmc_synthetic(seed=seed)
     return generate_bidmc_synthetic(seed=seed)
 
 
@@ -311,11 +317,11 @@ def load_vehicle_rows(path: Path | None = None) -> list[dict[str, Any]]:
                 }
                 if "lead_present" in row:
                     parsed["lead_present"] = row["lead_present"] in ("True", "true", "1")
-                if "lead_rel_x_m" in row and row["lead_rel_x_m"]:
+                if row.get("lead_rel_x_m"):
                     parsed["lead_rel_x_m"] = float(row["lead_rel_x_m"])
-                if "lead_speed_mps" in row and row["lead_speed_mps"]:
+                if row.get("lead_speed_mps"):
                     parsed["lead_speed_mps"] = float(row["lead_speed_mps"])
-                if "rss_safe_gap_m" in row and row["rss_safe_gap_m"]:
+                if row.get("rss_safe_gap_m"):
                     parsed["rss_safe_gap_m"] = float(row["rss_safe_gap_m"])
                 if "rss_violation_true" in row:
                     parsed["rss_violation_true"] = row["rss_violation_true"] in ("True", "true", "1")
@@ -354,6 +360,19 @@ def load_healthcare_runtime_rows(path: Path | None = None) -> list[dict[str, Any
     """Load processed healthcare rows."""
     p = Path(path) if path else HEALTHCARE_RUNTIME_PATH
     rows: list[dict[str, Any]] = []
+
+    def _normalized_ts(row: dict[str, str], step: int) -> str:
+        raw_ts = str(row.get("ts_utc") or "").strip()
+        if raw_ts:
+            return raw_ts
+        token = str(row.get("timestamp") or "").strip()
+        if not token:
+            return ""
+        if "_t" not in token:
+            return token
+        ts = datetime(2026, 1, 1, tzinfo=UTC) + timedelta(seconds=int(step))
+        return ts.isoformat().replace("+00:00", "Z")
+
     with p.open(newline="", encoding="utf-8") as fh:
         reader = csv.DictReader(fh)
         for row in reader:
@@ -363,10 +382,11 @@ def load_healthcare_runtime_rows(path: Path | None = None) -> list[dict[str, Any
                     if step_raw in {None, ""} and "timestamp" in row:
                         token = str(row.get("timestamp", ""))
                         step_raw = token.rsplit("_t", 1)[-1] if "_t" in token else 0
+                    step = int(float(step_raw or 0))
                     rows.append(
                         {
                             "patient_id": row.get("patient_id", "patient-0"),
-                            "step": int(float(step_raw or 0)),
+                            "step": step,
                             "hr_bpm": float(row["hr"]),
                             "spo2_pct": float(row["target"]),
                             "forecast_spo2_pct": float(row.get("forecast", row["target"])),
@@ -374,14 +394,15 @@ def load_healthcare_runtime_rows(path: Path | None = None) -> list[dict[str, Any
                             "reliability": float(row.get("reliability", 1.0)),
                             "domain_label": row.get("domain_label", "healthcare"),
                             "is_critical": row.get("is_critical", "False") in ("True", "true", "1"),
-                            "ts_utc": row.get("ts_utc") or row.get("timestamp", ""),
+                            "ts_utc": _normalized_ts(row, step),
                         }
                     )
                     continue
+                step = int(float(row.get("step", 0)))
                 rows.append(
                     {
                         "patient_id": row.get("patient_id", "patient-0"),
-                        "step": int(float(row.get("step", 0))),
+                        "step": step,
                         "hr_bpm": float(row["hr_bpm"]),
                         "spo2_pct": float(row["spo2_pct"]),
                         "forecast_spo2_pct": float(row.get("forecast_spo2_pct", row["spo2_pct"])),
@@ -389,7 +410,7 @@ def load_healthcare_runtime_rows(path: Path | None = None) -> list[dict[str, Any
                         "reliability": float(row.get("reliability", 1.0)),
                         "domain_label": row.get("domain_label", "healthcare"),
                         "is_critical": row.get("is_critical", "False") in ("True", "true", "1"),
-                        "ts_utc": row.get("ts_utc", ""),
+                        "ts_utc": _normalized_ts(row, step),
                     }
                 )
             except (KeyError, ValueError):
@@ -401,6 +422,7 @@ def load_healthcare_runtime_rows(path: Path | None = None) -> list[dict[str, Any
 # Dataset-info helper (for prepare_datasets.py)
 # ---------------------------------------------------------------------------
 
+
 def dataset_status() -> dict[str, Any]:
     """Return availability status for active and compatibility datasets."""
     ccpp_real = False
@@ -410,7 +432,7 @@ def dataset_status() -> dict[str, Any]:
             ccpp_rows = len(load_ccpp_rows())
             ccpp_real = ccpp_rows > 0
         except Exception:
-            pass
+            ccpp_rows = 0
 
     bidmc_real = False
     bidmc_rows = 0
@@ -419,7 +441,7 @@ def dataset_status() -> dict[str, Any]:
             bidmc_rows = len(load_bidmc_rows(BIDMC_PATH))
             bidmc_real = bidmc_rows > 0
         except Exception:
-            pass
+            bidmc_rows = 0
 
     return {
         "ccpp": {

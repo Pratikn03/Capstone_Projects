@@ -1,11 +1,12 @@
 """Fault-tolerant interval tracking (FTIT) state updates for DC3S."""
+
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 import numpy as np
-
 
 FTIT_FAULT_KEYS = ("dropout", "stale_sensor", "delay_jitter", "out_of_order", "spikes")
 
@@ -54,7 +55,7 @@ def _alpha_map(cfg: Mapping[str, Any]) -> dict[str, float]:
 def _bool_flag(value: Any) -> float:
     if isinstance(value, bool):
         return 1.0 if value else 0.0
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return 1.0 if float(value) != 0.0 else 0.0
     if isinstance(value, str):
         low = value.strip().lower()

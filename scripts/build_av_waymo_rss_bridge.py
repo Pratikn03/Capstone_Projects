@@ -43,17 +43,16 @@ def augment_with_rss(
     """Augment trajectory CSV and features parquet with RSS columns."""
     # Lazy import to keep script self-contained
     import importlib
+
     mod = importlib.import_module("orius.vehicles.rss_safety")
     rss_safe_gap_vec = mod.rss_safe_gap_vec
     RssParameters = mod.RssParameters
 
-    params = RssParameters(t_resp=t_resp, a_min_brake_ego=a_min_brake_ego,
-                           a_max_brake_lead=a_max_brake_lead)
+    params = RssParameters(t_resp=t_resp, a_min_brake_ego=a_min_brake_ego, a_max_brake_lead=a_max_brake_lead)
 
     # Load lead-gap cache
     gap_df = pd.read_parquet(lead_gap_path)
-    print(f"[rss-bridge] lead-gap cache: {len(gap_df):,} rows, "
-          f"{gap_df.lead_present.sum():,} with lead")
+    print(f"[rss-bridge] lead-gap cache: {len(gap_df):,} rows, {gap_df.lead_present.sum():,} with lead")
 
     # Load trajectories
     traj = pd.read_csv(trajectories_path)
@@ -65,8 +64,15 @@ def augment_with_rss(
     traj["step_index"] = traj["step"]
 
     # Merge lead-gap onto trajectories
-    lead_cols = ["scenario_id", "step_index", "lead_present", "lead_track_id",
-                 "lead_rel_x_m", "lead_rel_y_m", "lead_speed_mps"]
+    lead_cols = [
+        "scenario_id",
+        "step_index",
+        "lead_present",
+        "lead_track_id",
+        "lead_rel_x_m",
+        "lead_rel_y_m",
+        "lead_speed_mps",
+    ]
     traj = traj.merge(
         gap_df[lead_cols],
         on=["scenario_id", "step_index"],
@@ -94,10 +100,18 @@ def augment_with_rss(
 
     # Write augmented CSV (drop internal join columns)
     csv_cols = [
-        "vehicle_id", "step", "position_m", "speed_mps", "speed_limit_mps",
-        "lead_position_m", "ts_utc",
-        "lead_present", "lead_rel_x_m", "lead_speed_mps",
-        "rss_safe_gap_m", "rss_violation_true",
+        "vehicle_id",
+        "step",
+        "position_m",
+        "speed_mps",
+        "speed_limit_mps",
+        "lead_position_m",
+        "ts_utc",
+        "lead_present",
+        "lead_rel_x_m",
+        "lead_speed_mps",
+        "rss_safe_gap_m",
+        "rss_violation_true",
     ]
     traj[csv_cols].to_csv(output_csv, index=False)
     print(f"[rss-bridge] wrote {len(traj):,} rows to {output_csv}")
@@ -149,18 +163,18 @@ def augment_with_rss(
         "rss_violation_rate_traj": float(n_viol_traj / max(1, traj["lead_present"].sum())),
         "rss_violations_feat": int(n_viol_feat),
     }
-    print(f"[rss-bridge] RSS violations (trajectories): {n_viol_traj:,} / "
-          f"{int(traj['lead_present'].sum()):,} lead-present steps "
-          f"({stats['rss_violation_rate_traj']:.2%})")
+    print(
+        f"[rss-bridge] RSS violations (trajectories): {n_viol_traj:,} / "
+        f"{int(traj['lead_present'].sum()):,} lead-present steps "
+        f"({stats['rss_violation_rate_traj']:.2%})"
+    )
     return stats
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--trajectories", type=Path,
-                        default=PROCESSED / "av_trajectories_orius.csv")
-    parser.add_argument("--features", type=Path,
-                        default=PROCESSED / "features.parquet")
+    parser.add_argument("--trajectories", type=Path, default=PROCESSED / "av_trajectories_orius.csv")
+    parser.add_argument("--features", type=Path, default=PROCESSED / "features.parquet")
     parser.add_argument("--lead-gap", type=Path, default=LEAD_GAP)
     parser.add_argument("--t-resp", type=float, default=0.75)
     parser.add_argument("--a-min-brake-ego", type=float, default=4.0)

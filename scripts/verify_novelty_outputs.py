@@ -12,6 +12,7 @@ Validates that all Advanced novelty components have generated required artifacts
 Exit code 0 = all checks passed
 Exit code 1 = missing or invalid artifacts
 """
+
 from __future__ import annotations
 
 import argparse
@@ -24,6 +25,7 @@ import pandas as pd
 
 class Colors:
     """ANSI color codes."""
+
     GREEN = "\033[92m"
     RED = "\033[91m"
     YELLOW = "\033[93m"
@@ -45,21 +47,21 @@ def print_warn(msg: str) -> None:
 
 
 def print_section(title: str) -> None:
-    print(f"\n{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.RESET}")
+    print(f"\n{Colors.BOLD}{Colors.BLUE}{'=' * 60}{Colors.RESET}")
     print(f"{Colors.BOLD}{Colors.BLUE}{title}{Colors.RESET}")
-    print(f"{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.RESET}\n")
+    print(f"{Colors.BOLD}{Colors.BLUE}{'=' * 60}{Colors.RESET}\n")
 
 
 class NoveltyChecker:
     """Validates novelty artifacts."""
-    
+
     def __init__(self, verbose: bool = False):
         self.verbose = verbose
         self.errors: list[str] = []
         self.warnings: list[str] = []
         self.checks_passed = 0
         self.checks_failed = 0
-    
+
     def check_file_exists(self, path: Path, description: str) -> bool:
         """Check if file exists."""
         if path.exists():
@@ -71,12 +73,12 @@ class NoveltyChecker:
             self.errors.append(f"Missing: {path}")
             self.checks_failed += 1
             return False
-    
+
     def check_csv_valid(self, path: Path, description: str, min_rows: int = 1) -> bool:
         """Check if CSV is valid and has minimum rows."""
         if not self.check_file_exists(path, f"{description} (CSV)"):
             return False
-        
+
         try:
             df = pd.read_csv(path)
             if len(df) < min_rows:
@@ -90,70 +92,63 @@ class NoveltyChecker:
             self.errors.append(f"Invalid CSV: {path}")
             self.checks_failed += 1
             return False
-    
+
     def check_json_valid(self, path: Path, description: str, required_keys: list[str] | None = None) -> bool:
         """Check if JSON is valid."""
         if not self.check_file_exists(path, f"{description} (JSON)"):
             return False
-        
+
         try:
             data = json.loads(path.read_text())
-            
+
             if required_keys:
                 missing = [k for k in required_keys if k not in data]
                 if missing:
                     print_warn(f"  Missing keys: {missing}")
                     self.warnings.append(f"Incomplete JSON {path}: missing {missing}")
                 elif self.verbose:
-                    print(f"  All required keys present")
-            
+                    print("  All required keys present")
+
             return True
         except Exception as e:
             print_fail(f"  Invalid JSON: {e}")
             self.errors.append(f"Invalid JSON: {path}")
             self.checks_failed += 1
             return False
-    
+
     def check_ablation_outputs(self, ablation_dir: Path) -> None:
         """Check ablation study outputs."""
         print_section("Ablation Study Outputs")
-        
+
         # Results CSV
         self.check_csv_valid(
             ablation_dir / "ablation_results.csv",
             "Ablation results",
-            min_rows=4  # At least 4 scenarios
+            min_rows=4,  # At least 4 scenarios
         )
-        
+
         # Summary CSV
-        self.check_csv_valid(
-            ablation_dir / "ablation_summary.csv",
-            "Ablation summary",
-            min_rows=3
-        )
-        
+        self.check_csv_valid(ablation_dir / "ablation_summary.csv", "Ablation summary", min_rows=3)
+
         # Statistical comparisons
         self.check_json_valid(
             ablation_dir / "ablation_stats.json",
             "Statistical tests",
-            required_keys=None  # Variable keys based on scenarios
+            required_keys=None,  # Variable keys based on scenarios
         )
-        
+
         # Visualization
-        self.check_file_exists(
-            ablation_dir / "ablation_comparison.png",
-            "Ablation bar chart"
-        )
-    
+        self.check_file_exists(ablation_dir / "ablation_comparison.png", "Ablation bar chart")
+
     def check_statistical_outputs(self, tables_dir: Path) -> None:
         """Check statistical analysis outputs."""
         print_section("Statistical Analysis Outputs")
-        
+
         # LaTeX tables
         latex_files = [
             "ablation_table.tex",
         ]
-        
+
         for latex_file in latex_files:
             path = tables_dir / latex_file
             if path.exists():
@@ -161,28 +156,28 @@ class NoveltyChecker:
                 self.checks_passed += 1
             else:
                 print_warn(f"LaTeX table: {path} (optional)")
-    
+
     def check_figures(self, figures_dir: Path) -> None:
         """Check publication figures."""
         print_section("Publication Figures")
-        
+
         if not figures_dir.exists():
             print_warn(f"Figures directory not found: {figures_dir}")
-            self.warnings.append(f"Missing figures directory")
+            self.warnings.append("Missing figures directory")
             return
-        
+
         # Count PNG files
         png_files = list(figures_dir.glob("*.png"))
         svg_files = list(figures_dir.glob("*.svg"))
-        
+
         print_ok(f"Found {len(png_files)} PNG files, {len(svg_files)} SVG files")
         self.checks_passed += 1
-        
+
         # Check for specific novelty figures
         expected_novelty_figs = [
             "ablation_comparison.png",
         ]
-        
+
         for fig in expected_novelty_figs:
             found = any(fig in str(f) for f in png_files)
             if found:
@@ -194,7 +189,7 @@ class NoveltyChecker:
                     print_ok(f"  {fig} (in ablations/)")
                 else:
                     print_warn(f"  {fig} (not found)")
-    
+
     def verify_novelty_outputs(
         self,
         ablation_dir: Path,
@@ -203,7 +198,7 @@ class NoveltyChecker:
     ) -> bool:
         """
         Comprehensive verification of novelty outputs.
-        
+
         Returns:
             True if all critical checks pass
         """
@@ -215,7 +210,7 @@ class NoveltyChecker:
             print_fail(f"Ablation directory not found: {ablation_dir}")
             self.errors.append("Missing ablation directory")
             self.checks_failed += 1
-        
+
         # Check statistical outputs
         if tables_dir.exists():
             self.check_statistical_outputs(tables_dir)
@@ -223,26 +218,26 @@ class NoveltyChecker:
             print_section("Statistical Analysis Outputs")
             print_warn(f"Tables directory not found: {tables_dir}")
             self.warnings.append("Missing tables directory")
-        
+
         # Check figures
         self.check_figures(figures_dir)
-        
+
         # Summary
         print_section("Verification Summary")
         print(f"Checks passed: {Colors.GREEN}{self.checks_passed}{Colors.RESET}")
         print(f"Checks failed: {Colors.RED}{self.checks_failed}{Colors.RESET}")
         print(f"Warnings: {Colors.YELLOW}{len(self.warnings)}{Colors.RESET}")
-        
+
         if self.errors:
             print(f"\n{Colors.RED}Critical Errors:{Colors.RESET}")
             for err in self.errors[:10]:
                 print(f"  {Colors.RED}•{Colors.RESET} {err}")
-        
+
         if self.warnings and self.verbose:
             print(f"\n{Colors.YELLOW}Warnings:{Colors.RESET}")
             for warn in self.warnings[:10]:
                 print(f"  {Colors.YELLOW}•{Colors.RESET} {warn}")
-        
+
         return self.checks_failed == 0
 
 
@@ -271,21 +266,22 @@ def main():
         help="Figures directory",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Verbose output",
     )
-    
+
     args = parser.parse_args()
-    
+
     checker = NoveltyChecker(verbose=args.verbose)
-    
+
     success = checker.verify_novelty_outputs(
         ablation_dir=args.ablation_dir,
         tables_dir=args.tables_dir,
         figures_dir=args.figures_dir,
     )
-    
+
     if success:
         print(f"\n{Colors.GREEN}{Colors.BOLD}✓ All novelty checks PASSED{Colors.RESET}")
         sys.exit(0)

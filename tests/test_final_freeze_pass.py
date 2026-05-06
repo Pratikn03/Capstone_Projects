@@ -3,11 +3,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CENTRAL_CLAIM = (
-    "ORIUS identifies OASG as the degraded-observation release hazard and "
-    "provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare."
+    "ORIUS provides a reliability-aware runtime safety layer for physical AI under "
+    "degraded observation, enforcing certificate-backed action release through "
+    "uncertainty coverage, repair, and fallback."
 )
 
 
@@ -97,7 +97,6 @@ def test_existing_pdf_inventory_is_limited_to_canonical_and_diagnostic_surfaces(
     camera_ready_figure_exports = {
         rel_path
         for rel_path in pdfs
-        if rel_path.startswith("paper/assets/figures/fig")
-        or rel_path.startswith("reports/publication/fig_")
+        if rel_path.startswith("paper/assets/figures/fig") or rel_path.startswith("reports/publication/fig_")
     }
     assert pdfs == canonical_surfaces | camera_ready_figure_exports

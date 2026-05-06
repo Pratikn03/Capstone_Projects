@@ -1,4 +1,5 @@
 """API tests for the ORIUS universal framework endpoints."""
+
 from __future__ import annotations
 
 import json
@@ -9,7 +10,6 @@ from fastapi.testclient import TestClient
 from services.api.config import get_api_keys
 from services.api.main import app
 from services.api.security import API_KEY_NAME
-
 
 UNIVERSAL_HEADERS = {API_KEY_NAME: "universal-test-key"}
 

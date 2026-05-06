@@ -2,7 +2,9 @@
 
 Outputs: reports/universal_orius_validation/tbl_all_domain_training_metrics.tex
 """
+
 from __future__ import annotations
+
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -13,12 +15,12 @@ OUT = REPO_ROOT / "reports/universal_orius_validation/tbl_all_domain_training_me
 # Others: reports/{domain}/week2_metrics.json + run_universal_training_audit.py
 ROWS = [
     # Domain                              Train   Cal    Test   RMSE     MAE     sMAPE   PICP90  Width
-    ("Energy Management (Battery / DE)", 12163,  868,   2537,  253.32,  200.90, "0.0035", "0.924", "1111.05"),
-    ("Autonomous Vehicles",                 85,    6,     19,   0.0565,  0.0443, "0.0036", "0.947",   "0.2663"),
-    ("Industrial Process Control",        6680,  477,   1433,   3.6095,  2.7294, "0.0060", "0.896",  "11.5782"),
-    ("Medical Monitoring (ICU Vitals)",    319,   22,     71,   0.7638,  0.6233, "0.0070", "0.930",   "3.1030"),
-    ("Aerospace (Flight Envelope)",       3483,  248,    748,  16.32,   12.58,  "0.0066", "0.912",  "35.61"),
-    ("Navigation (Simulation)",           None, None,   None,     None,    None,    "—",     "—",       "—"),
+    ("Energy Management (Battery / DE)", 12163, 868, 2537, 253.32, 200.90, "0.0035", "0.924", "1111.05"),
+    ("Autonomous Vehicles", 85, 6, 19, 0.0565, 0.0443, "0.0036", "0.947", "0.2663"),
+    ("Industrial Process Control", 6680, 477, 1433, 3.6095, 2.7294, "0.0060", "0.896", "11.5782"),
+    ("Medical Monitoring (ICU Vitals)", 319, 22, 71, 0.7638, 0.6233, "0.0070", "0.930", "3.1030"),
+    ("Aerospace (Flight Envelope)", 3483, 248, 748, 16.32, 12.58, "0.0066", "0.912", "35.61"),
+    ("Navigation (Simulation)", None, None, None, None, None, "—", "—", "—"),
 ]
 
 

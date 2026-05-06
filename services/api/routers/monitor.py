@@ -1,24 +1,24 @@
 """API router: monitor."""
+
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any, Dict
-
 import json
-import pandas as pd
+from pathlib import Path
+from typing import Any
 
+import pandas as pd
 from fastapi import APIRouter, Security
 
 from orius.forecasting.predict import load_model_bundle
 from orius.monitoring.dc3s_health import compute_dc3s_health, load_dc3s_audit_config, load_dc3s_health_config
+from orius.monitoring.report import write_monitoring_report
 from orius.monitoring.retraining import (
-    load_monitoring_config,
     compute_data_drift,
     compute_model_metrics_gbm,
     evaluate_model_drift,
+    load_monitoring_config,
     retraining_decision,
 )
-from orius.monitoring.report import write_monitoring_report
 from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
@@ -84,7 +84,7 @@ def _load_frozen_metrics_snapshot(path: Path = Path("reports/frozen_metrics_snap
         return None
 
 
-def _compute_dc3s_health_block(update_state: bool = False) -> Dict[str, Any] | None:
+def _compute_dc3s_health_block(update_state: bool = False) -> dict[str, Any] | None:
     cfg = load_dc3s_health_config()
     if not bool(cfg.get("enabled", True)):
         return None
@@ -102,7 +102,7 @@ def _compute_dc3s_health_block(update_state: bool = False) -> Dict[str, Any] | N
 
 
 @router.get("")
-def monitor(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+def monitor(api_key: str = Security(get_api_key)) -> dict[str, Any]:
     verify_scope("read", api_key)
     cfg = load_monitoring_config()
     dc3s_health = _compute_dc3s_health_block(update_state=False)
@@ -167,7 +167,9 @@ def monitor(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
         cfg,
         data_drift.get("drift", False),
         model_drift.get("drift", False),
-        last_trained_path=Path("reports/week2_metrics.json") if Path("reports/week2_metrics.json").exists() else None,
+        last_trained_path=Path("reports/week2_metrics.json")
+        if Path("reports/week2_metrics.json").exists()
+        else None,
         dc3s_health=dc3s_health,
     )
 
@@ -187,14 +189,14 @@ def monitor(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
 
 
 @router.get("/dc3s")
-def monitor_dc3s(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+def monitor_dc3s(api_key: str = Security(get_api_key)) -> dict[str, Any]:
     verify_scope("read", api_key)
     block = _compute_dc3s_health_block(update_state=False)
     return block or {"enabled": False}
 
 
 @router.get("/research-metrics")
-def research_metrics(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+def research_metrics(api_key: str = Security(get_api_key)) -> dict[str, Any]:
     verify_scope("read", api_key)
     de = _load_latest_research_summary(Path("reports/research_metrics_de.csv"))
     us = _load_latest_research_summary(Path("reports/research_metrics_us.csv"))
@@ -211,7 +213,7 @@ def research_metrics(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
 
 
 @router.get("/model-info")
-def model_info(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+def model_info(api_key: str = Security(get_api_key)) -> dict[str, Any]:
     verify_scope("read", api_key)
     metrics = _load_week2_metrics()
     registry_latest = _load_registry_latest()
@@ -252,6 +254,7 @@ def _load_dc3s_calibrated_params() -> dict | None:
         return None
     try:
         import yaml  # type: ignore[import]
+
         raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         return raw.get("dc3s") or None
     except Exception:
@@ -265,14 +268,15 @@ def _load_dc3s_base_params() -> dict:
         return {}
     try:
         import yaml  # type: ignore[import]
+
         raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         dc3s = raw.get("dc3s", raw)
         return {
             "k_quality": dc3s.get("k_quality"),
-            "k_drift":   dc3s.get("k_drift"),
-            "infl_max":  dc3s.get("infl_max"),
-            "detector":  dc3s.get("drift", {}).get("detector", "page_hinkley"),
-            "alpha":     dc3s.get("alpha", 0.10),
+            "k_drift": dc3s.get("k_drift"),
+            "infl_max": dc3s.get("infl_max"),
+            "detector": dc3s.get("drift", {}).get("detector", "page_hinkley"),
+            "alpha": dc3s.get("alpha", 0.10),
         }
     except Exception:
         return {}
@@ -293,8 +297,11 @@ def _load_ablation_top5() -> list[dict] | None:
             None,
         )
         width_col = next(
-            (c for c in ["mean_interval_width_mean", "mean_interval_width", "adaptive_width_mean_mean"]
-             if c in df.columns),
+            (
+                c
+                for c in ["mean_interval_width_mean", "mean_interval_width", "adaptive_width_mean_mean"]
+                if c in df.columns
+            ),
             None,
         )
         ctrl_col = "controller" if "controller" in df.columns else None
@@ -305,8 +312,11 @@ def _load_ablation_top5() -> list[dict] | None:
             df = meets if not meets.empty else df
         if width_col and df[width_col].notna().any():
             df = df.sort_values(width_col)
-        return df[["k_quality", "k_drift", "infl_max", *(c for c in [picp_col, width_col] if c)]
-                  ].head(5).to_dict(orient="records")
+        return (
+            df[["k_quality", "k_drift", "infl_max", *(c for c in [picp_col, width_col] if c)]]
+            .head(5)
+            .to_dict(orient="records")
+        )
     except Exception:
         return None
 
@@ -322,7 +332,7 @@ def _load_wilcoxon_results() -> dict | None:
         return None
 
 
-def _load_dc3s_shield_summary() -> Dict[str, Any]:
+def _load_dc3s_shield_summary() -> dict[str, Any]:
     """
     Aggregate DC³S formal guarantee and parameter metadata for the /model-info endpoint.
 
@@ -367,9 +377,10 @@ def _load_dc3s_shield_summary() -> Dict[str, Any]:
     coverage_theorem_available = False
     try:
         from orius.dc3s.coverage_theorem import verify_inflation_geq_one  # noqa: F401
+
         coverage_theorem_available = True
     except ImportError:
-        pass
+        coverage_theorem_available = False
 
     return {
         "coverage_theorem_implemented": coverage_theorem_available,
@@ -384,13 +395,15 @@ def _load_dc3s_shield_summary() -> Dict[str, Any]:
             "test": "Wilcoxon signed-rank (paired, non-parametric)",
             "comparison": "dc3s_wrapped vs deterministic_lp",
             "results": wilcoxon,
-        } if wilcoxon else None,
+        }
+        if wilcoxon
+        else None,
         "cross_region_transfer": transfer_summary,
     }
 
 
 @router.get("/dc3s-params")
-def dc3s_params(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+def dc3s_params(api_key: str = Security(get_api_key)) -> dict[str, Any]:
     verify_scope("read", api_key)
     """
     Detailed DC³S parameter and ablation endpoint.
@@ -411,7 +424,7 @@ def dc3s_params(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
             df = pd.read_csv(ablation_path)
             ablation_full = df.head(50).to_dict(orient="records")
         except Exception:
-            pass
+            ablation_full = None
 
     # Cross-region transfer stats
     transfer_stats: dict | None = None
@@ -421,7 +434,7 @@ def dc3s_params(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
             df_xr = pd.read_csv(xr_path)
             transfer_stats = df_xr.to_dict(orient="records")
         except Exception:
-            pass
+            transfer_stats = None
 
     return {
         "available": True,

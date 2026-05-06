@@ -1,8 +1,9 @@
 """Generic safety shield that delegates action repair to a domain-specific adapter."""
+
 from __future__ import annotations
 
-from typing import Any, Mapping, Protocol
-
+from collections.abc import Mapping
+from typing import Any, Protocol
 
 Action = Mapping[str, Any]
 UncertaintySet = Mapping[str, Any]
@@ -22,8 +23,7 @@ class ProjectionAdapter(Protocol):
         candidate_action: Action,
         uncertainty_set: UncertaintySet | None,
         state: Any | None = None,
-    ) -> tuple[Action, dict[str, Any]]:
-        ...
+    ) -> tuple[Action, dict[str, Any]]: ...
 
 
 def repair_action(

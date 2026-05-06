@@ -4,15 +4,16 @@
 Runs the benchmark twice with identical seeds and compares outputs.
 Writes reports/orius_bench/replay_test.log with PASS/FAIL.
 """
+
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import subprocess
 import sys
 import tempfile
-import argparse
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -28,9 +29,12 @@ def _run_benchmark(out_dir: Path, seeds: int = 2, horizon: int = 24) -> int:
     cmd = [
         sys.executable,
         str(REPO / "scripts" / "run_orius_bench_release.py"),
-        "--seeds", str(seeds),
-        "--horizon", str(horizon),
-        "--out", str(out_dir),
+        "--seeds",
+        str(seeds),
+        "--horizon",
+        str(horizon),
+        "--out",
+        str(out_dir),
     ]
     r = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True)
     return r.returncode
@@ -75,8 +79,7 @@ def main() -> int:
         if code1 != 0:
             out_log.parent.mkdir(parents=True, exist_ok=True)
             out_log.write_text(
-                f"[{datetime.now(timezone.utc).isoformat()}] REPLAY TEST: FAIL\n"
-                f"First run exited with code {code1}\n"
+                f"[{datetime.now(UTC).isoformat()}] REPLAY TEST: FAIL\nFirst run exited with code {code1}\n"
             )
             print("First run failed")
             return 1
@@ -86,8 +89,7 @@ def main() -> int:
         if code2 != 0:
             out_log.parent.mkdir(parents=True, exist_ok=True)
             out_log.write_text(
-                f"[{datetime.now(timezone.utc).isoformat()}] REPLAY TEST: FAIL\n"
-                f"Second run exited with code {code2}\n"
+                f"[{datetime.now(UTC).isoformat()}] REPLAY TEST: FAIL\nSecond run exited with code {code2}\n"
             )
             print("Second run failed")
             return 1
@@ -100,7 +102,7 @@ def main() -> int:
             mismatch = f"Row count: {len(lb1)} vs {len(lb2)}"
         else:
             mismatch = None
-            for i, (r1, r2) in enumerate(zip(lb1, lb2)):
+            for i, (r1, r2) in enumerate(zip(lb1, lb2, strict=False)):
                 for k in r1:
                     if k not in r2 or str(r1[k]) != str(r2[k]):
                         mismatch = f"Row {i} key={k}: {r1.get(k)} vs {r2.get(k)}"
@@ -124,7 +126,7 @@ def main() -> int:
         # Write replay_test.log
         out_log.parent.mkdir(parents=True, exist_ok=True)
         lines = [
-            f"[{datetime.now(timezone.utc).isoformat()}] ORIUS-Bench Replay Test",
+            f"[{datetime.now(UTC).isoformat()}] ORIUS-Bench Replay Test",
             "",
             f"Seeds: {seeds} (1000..{1000 + seeds - 1})",
             f"Horizon: {horizon}",

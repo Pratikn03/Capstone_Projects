@@ -1,4 +1,5 @@
 """Tests for API auth coverage validation."""
+
 from __future__ import annotations
 
 from scripts.validate_api_auth_coverage import validate

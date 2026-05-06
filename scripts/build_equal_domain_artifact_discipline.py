@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
 """Build equal artifact-discipline gates for the promoted three-domain lane."""
+
 from __future__ import annotations
 
 import csv
 import hashlib
 import json
 import math
+from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import yaml
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
-AV_RUNTIME_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+AV_RUNTIME_DIR = (
+    REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+)
 PROMOTED_RUNTIME_MAX_TSVR = 1e-3
 PROMOTED_RUNTIME_MIN_PASS_RATE = 1.0 - PROMOTED_RUNTIME_MAX_TSVR
 
@@ -164,7 +167,7 @@ FAMILY_NOTES = {
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _repo_rel(path: Path) -> str:
@@ -352,7 +355,11 @@ def _trace_stats_for_path(path: Path, *, domain_key: str) -> dict[str, dict[str,
 
 def _trace_stats(path: Path, controller: str, *, domain_key: str) -> dict[str, Any]:
     stats_by_controller = _trace_stats_for_path(path, domain_key=domain_key)
-    return stats_by_controller.get(controller) or stats_by_controller.get(_controller_alias(controller)) or _empty_trace_stats()
+    return (
+        stats_by_controller.get(controller)
+        or stats_by_controller.get(_controller_alias(controller))
+        or _empty_trace_stats()
+    )
 
 
 def _format_float(value: Any) -> str:
@@ -377,7 +384,11 @@ def _source_row_for_family(
             "fallback_activation_rate": "1.0",
             "n_steps": str(n_steps),
         }
-        stats = {**trace_stats, "useful_work_total": 0.0, "representative_trace_id": "battery-derived-safe-hold"}
+        stats = {
+            **trace_stats,
+            "useful_work_total": 0.0,
+            "representative_trace_id": "battery-derived-safe-hold",
+        }
         return controller, row, stats
     row = summary_rows.get(controller) or summary_rows.get(_controller_alias(controller)) or {}
     stats = _trace_stats(spec.runtime_traces, controller, domain_key=spec.key)
@@ -387,10 +398,12 @@ def _source_row_for_family(
 def _comparator_rows_for_domain(spec: DomainSpec) -> list[dict[str, Any]]:
     summary_rows = _summary_by_controller(spec.runtime_summary)
     rows: list[dict[str, Any]] = []
-    for family in REQUIRED_BASELINE_FAMILY_ORDER + ("degenerate_fallback_runtime",):
+    for family in (*REQUIRED_BASELINE_FAMILY_ORDER, "degenerate_fallback_runtime"):
         controller, source, stats = _source_row_for_family(spec, family, summary_rows)
         n_steps = _safe_int(source.get("n_steps"), _safe_int(stats.get("n_steps")))
-        useful_work_total = _safe_float(source.get("useful_work_total"), _safe_float(stats.get("useful_work_total")))
+        useful_work_total = _safe_float(
+            source.get("useful_work_total"), _safe_float(stats.get("useful_work_total"))
+        )
         is_orius = family == "orius_full_stack"
         evidence_status = "runtime_native_full_stack" if is_orius else "runtime_native_comparator"
         if family == "degenerate_fallback_runtime":
@@ -432,7 +445,9 @@ def _comparator_rows_for_domain(spec: DomainSpec) -> list[dict[str, Any]]:
     return rows
 
 
-def _ablation_rows_for_domain(spec: DomainSpec, comparator_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _ablation_rows_for_domain(
+    spec: DomainSpec, comparator_rows: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     by_family = {row["baseline_family"]: row for row in comparator_rows}
     orius = by_family["orius_full_stack"]
     orius_tsvr = _safe_float(orius["tsvr"])
@@ -471,17 +486,35 @@ def _ablation_rows_for_domain(spec: DomainSpec, comparator_rows: list[dict[str, 
     return rows
 
 
-def _negative_control_rows_for_domain(spec: DomainSpec, comparator_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _negative_control_rows_for_domain(
+    spec: DomainSpec, comparator_rows: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     by_family = {row["baseline_family"]: row for row in comparator_rows}
     orius = by_family["orius_full_stack"]
     fixed = by_family["fixed_threshold_or_fixed_inflation_runtime"]
     nominal = by_family["nominal_deterministic_controller"]
     specs = [
         ("actual_reliability", orius, "Canonical runtime reliability signal."),
-        ("shuffled_reliability_score", orius, "Reliability-order perturbation control derived from the runtime trace."),
-        ("delayed_reliability_score", orius, "One-step delayed reliability control derived from the runtime trace."),
-        ("constant_low_reliability_conservative_policy", fixed, "Conservative constant-low-reliability runtime comparator."),
-        ("stronger_predictor_without_runtime_adaptation", nominal, "Predictor-only/no-runtime-adaptation comparator."),
+        (
+            "shuffled_reliability_score",
+            orius,
+            "Reliability-order perturbation control derived from the runtime trace.",
+        ),
+        (
+            "delayed_reliability_score",
+            orius,
+            "One-step delayed reliability control derived from the runtime trace.",
+        ),
+        (
+            "constant_low_reliability_conservative_policy",
+            fixed,
+            "Conservative constant-low-reliability runtime comparator.",
+        ),
+        (
+            "stronger_predictor_without_runtime_adaptation",
+            nominal,
+            "Predictor-only/no-runtime-adaptation comparator.",
+        ),
     ]
     rows: list[dict[str, Any]] = []
     for control_name, source, note in specs:
@@ -614,18 +647,24 @@ def _build_equal_domain_rows() -> list[dict[str, Any]]:
         theorem_gate = all(theorem_id in theorem_ids for theorem_id in spec.theorem_ids)
         if not theorem_gate:
             blockers.append("missing_theorem_registry_rows")
-        proof_appendix_gate = spec.proof_anchor in proof_text or spec.proof_anchor.replace("_", "\\_") in proof_text
+        proof_appendix_gate = (
+            spec.proof_anchor in proof_text or spec.proof_anchor.replace("_", "\\_") in proof_text
+        )
         if not proof_appendix_gate:
             blockers.append("missing_proof_appendix_anchor")
-        runtime_native_gate = all(
-            row.get("metric_surface") == "runtime_denominator"
-            and not _has_forbidden(row.get("metric_surface", ""))
-            and not _has_forbidden(row.get("evidence_status", ""))
-            for row in comparator_rows
-        ) and bool(comparator_rows) and trace_path.exists()
+        runtime_native_gate = (
+            all(
+                row.get("metric_surface") == "runtime_denominator"
+                and not _has_forbidden(row.get("metric_surface", ""))
+                and not _has_forbidden(row.get("evidence_status", ""))
+                for row in comparator_rows
+            )
+            and bool(comparator_rows)
+            and trace_path.exists()
+        )
         if not runtime_native_gate:
             blockers.append("runtime_native_surface_missing_or_proxy")
-        baseline_gate = REQUIRED_BASELINE_FAMILIES <= set(by_family)
+        baseline_gate = set(by_family) >= REQUIRED_BASELINE_FAMILIES
         if domain_key in {"av", "healthcare"}:
             baseline_gate = baseline_gate and all(
                 row.get("independent_baseline") == "True"
@@ -640,13 +679,14 @@ def _build_equal_domain_rows() -> list[dict[str, Any]]:
             baseline_gate = baseline_gate and len(controllers) == len(set(controllers))
         if not baseline_gate:
             blockers.append("missing_required_baseline_families")
-        ablation_gate = REQUIRED_ABLATIONS <= set(by_ablation) and all(
-            not _has_forbidden(row.get("metric_surface", "")) and not _has_forbidden(row.get("evidence_status", ""))
+        ablation_gate = set(by_ablation) >= REQUIRED_ABLATIONS and all(
+            not _has_forbidden(row.get("metric_surface", ""))
+            and not _has_forbidden(row.get("evidence_status", ""))
             for row in ablation_rows
         )
         if not ablation_gate:
             blockers.append("missing_or_proxy_ablation_rows")
-        negative_control_gate = REQUIRED_NEGATIVE_CONTROLS <= set(by_control) and all(
+        negative_control_gate = set(by_control) >= REQUIRED_NEGATIVE_CONTROLS and all(
             not _has_forbidden(row.get("surface", "")) and not _has_forbidden(row.get("status", ""))
             for row in negative_rows
         )
@@ -747,12 +787,16 @@ def build_equal_domain_artifact_discipline() -> dict[str, Any]:
         discipline_csv,
         discipline_json,
         discipline_md,
-        *(DOMAIN_SPECS[key].report_dir / name for key in DOMAIN_SPECS for name in (
-            "runtime_comparator_summary.csv",
-            "runtime_comparator_traces.csv",
-            "runtime_ablation_summary.csv",
-            "runtime_negative_controls.csv",
-        )),
+        *(
+            DOMAIN_SPECS[key].report_dir / name
+            for key in DOMAIN_SPECS
+            for name in (
+                "runtime_comparator_summary.csv",
+                "runtime_comparator_traces.csv",
+                "runtime_ablation_summary.csv",
+                "runtime_negative_controls.csv",
+            )
+        ),
         REPO_ROOT / "appendices" / "app_c_full_proofs.tex",
         PUBLICATION_DIR / "theorem_registry.yml",
     ]
@@ -793,10 +837,7 @@ def main() -> int:
         for row in failed:
             print(f"- {row['domain']}: {row['blockers']}")
         return 1
-    print(
-        "[equal_domain_artifact_discipline] PASS "
-        f"csv={report['equal_domain_artifact_discipline_csv']}"
-    )
+    print(f"[equal_domain_artifact_discipline] PASS csv={report['equal_domain_artifact_discipline_csv']}")
     return 0
 
 

@@ -12,6 +12,7 @@ Usage:
   python scripts/download_healthcare_datasets.py --source synthetic  # Generate synthetic (no download)
   python scripts/download_healthcare_datasets.py --convert path/to/numerics.csv  # Convert existing CSV
 """
+
 from __future__ import annotations
 
 import argparse
@@ -49,6 +50,7 @@ def _local_bidmc_csv_files() -> list[Path]:
     if preferred.exists():
         return sorted(preferred.glob("bidmc_*_Numerics.csv"))
     return sorted(legacy.glob("bidmc_*_Numerics.csv"))
+
 
 def _row_summary_path(out_path: Path) -> Path:
     return out_path.parent / f"{out_path.stem}_row_summary.json"
@@ -90,6 +92,7 @@ def download_bidmc_full(*, include_signals: bool = True, include_breaths: bool =
 def convert_bidmc_to_orius(csv_path: Path, out_path: Path) -> Path:
     """Convert BIDMC Numerics CSV to ORIUS healthcare format."""
     import pandas as pd
+
     df = pd.read_csv(csv_path)
     df.columns = [str(c).strip() for c in df.columns]
     col_map = {}
@@ -189,9 +192,12 @@ def convert_bidmc_dir_to_orius(csv_files: list[Path], out_path: Path) -> Path:
     return out_path
 
 
-def generate_synthetic_vital_signs(out_path: Path, n_patients: int = 10, steps_per_patient: int = 500) -> Path:
+def generate_synthetic_vital_signs(
+    out_path: Path, n_patients: int = 10, steps_per_patient: int = 500
+) -> Path:
     """Generate synthetic vital signs in ORIUS format."""
     import random
+
     random.seed(42)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     rows = []
@@ -203,16 +209,20 @@ def generate_synthetic_vital_signs(out_path: Path, n_patients: int = 10, steps_p
             hr = hr_base + random.gauss(0, 3)
             spo2 = spo2_base + random.gauss(0, 1)
             rr = rr_base + random.gauss(0, 1)
-            rows.append({
-                "patient_id": pid,
-                "step": step,
-                "hr_bpm": f"{max(40, min(120, hr)):.1f}",
-                "spo2_pct": f"{max(85, min(100, spo2)):.1f}",
-                "respiratory_rate": f"{max(8, min(30, rr)):.1f}",
-                "ts_utc": f"2026-01-01T{step // 3600:02d}:{(step % 3600) // 60:02d}:{(step % 60):02d}Z",
-            })
+            rows.append(
+                {
+                    "patient_id": pid,
+                    "step": step,
+                    "hr_bpm": f"{max(40, min(120, hr)):.1f}",
+                    "spo2_pct": f"{max(85, min(100, spo2)):.1f}",
+                    "respiratory_rate": f"{max(8, min(30, rr)):.1f}",
+                    "ts_utc": f"2026-01-01T{step // 3600:02d}:{(step % 3600) // 60:02d}:{(step % 60):02d}Z",
+                }
+            )
     with open(out_path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["patient_id", "step", "hr_bpm", "spo2_pct", "respiratory_rate", "ts_utc"])
+        w = csv.DictWriter(
+            f, fieldnames=["patient_id", "step", "hr_bpm", "spo2_pct", "respiratory_rate", "ts_utc"]
+        )
         w.writeheader()
         w.writerows(rows)
     output_summary = summarize_csv_output(out_path)
@@ -244,7 +254,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Download Healthcare datasets for ORIUS")
     parser.add_argument("--source", choices=["bidmc", "synthetic"], default="bidmc", help="Dataset source")
     parser.add_argument("--convert", type=Path, help="Convert existing BIDMC-format CSV to ORIUS format")
-    parser.add_argument("--out", type=Path, default=PROCESSED_DIR / "healthcare_orius.csv", help="Output path")
+    parser.add_argument(
+        "--out", type=Path, default=PROCESSED_DIR / "healthcare_orius.csv", help="Output path"
+    )
     parser.add_argument(
         "--download-signals",
         action=argparse.BooleanOptionalAction,
@@ -282,7 +294,9 @@ def main() -> int:
             if csv_files:
                 convert_bidmc_dir_to_orius(csv_files, args.out)
                 return 0
-        print("Unable to build BIDMC healthcare surface. Download or place the full BIDMC CSV corpus under data/healthcare/raw/bidmc_csv/.")
+        print(
+            "Unable to build BIDMC healthcare surface. Download or place the full BIDMC CSV corpus under data/healthcare/raw/bidmc_csv/."
+        )
         return 1
 
     return 0
@@ -290,4 +304,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

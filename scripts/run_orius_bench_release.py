@@ -9,6 +9,7 @@ bundle JSON.
 Usage:
     python scripts/run_orius_bench_release.py [--seeds 5] [--horizon 96] [--out reports/orius_bench]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -16,11 +17,9 @@ import json
 import math
 import sys
 import tarfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
-import numpy as np
 
 from orius.adapters.aerospace import AerospaceTrackAdapter
 from orius.adapters.battery import BatteryTrackAdapter
@@ -46,7 +45,6 @@ from orius.orius_bench.export import (
 )
 from orius.orius_bench.fault_engine import (
     active_faults,
-    apply_faults,
     generate_fault_schedule,
 )
 from orius.orius_bench.metrics_engine import (
@@ -208,7 +206,7 @@ def main() -> None:
             "tsvr": "true_state_violation_rate",
             "oasg": "observation_action_safety_gap",
         },
-        "timestamp_iso": datetime.now(timezone.utc).isoformat(),
+        "timestamp_iso": datetime.now(UTC).isoformat(),
         "command_line": " ".join(sys.argv) if sys.argv else "",
         "seeds": list(range(1000, 1000 + args.seeds)),
         "horizon": args.horizon,

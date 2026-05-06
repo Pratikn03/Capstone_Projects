@@ -1,7 +1,7 @@
 # ORIUS External SSD Setup on macOS
 
 Use this workflow when the repo and Python environment stay on the MacBook internal SSD but
-large raw AV, navigation, and aerospace datasets live on an external SSD.
+large raw AV, healthcare, navigation, and aerospace datasets live on an external SSD.
 
 ## Target layout
 
@@ -40,7 +40,11 @@ make external-ssd-setup SSD_VOLUME="$SSD_VOLUME"
 This creates:
 
 - `$SSD_VOLUME/orius_external_data/`
+- `$SSD_VOLUME/orius_external_data/nuplan/`
+- `$SSD_VOLUME/orius_external_data/nuplan_maps/`
+- `$SSD_VOLUME/orius_external_data/carla/`
 - `$SSD_VOLUME/orius_external_data/waymo_open_motion/`
+- `$SSD_VOLUME/orius_external_data/healthcare_private/`
 - `$SSD_VOLUME/orius_external_data/argoverse2_motion/`
 - `$SSD_VOLUME/orius_external_data/argoverse2_sensor/`
 - `$SSD_VOLUME/orius_external_data/kitti_odometry/`
@@ -86,7 +90,11 @@ The external SSD root should contain:
 
 ```text
 $SSD_VOLUME/orius_external_data/
+├── nuplan/
+├── nuplan_maps/
+├── carla/
 ├── waymo_open_motion/
+├── healthcare_private/
 ├── argoverse2_motion/
 ├── argoverse2_sensor/
 ├── kitti_odometry/
@@ -96,10 +104,17 @@ $SSD_VOLUME/orius_external_data/
 Expected data details:
 
 - AV:
+  - active evidence lane: completed nuPlan archives under `nuplan/`
+  - nuPlan maps under `nuplan_maps/`
+  - CARLA assets/runs under `carla/` when simulation closure is performed
+  - Waymo remains a legacy compatibility corpus under `waymo_open_motion/`
   - `waymo_open_motion/`
   - `argoverse2_motion/`
   - `argoverse2_sensor/`
   - used through `scripts/download_av_datasets.py`
+- Healthcare:
+  - private/local row-level healthcare extracts under `healthcare_private/`
+  - repo-local artifacts are manifests, summaries, validators, and reproduction commands only
 - Navigation:
   - KITTI under `kitti_odometry/`
   - accepted layouts:
@@ -144,7 +159,8 @@ raw-data obligation.
 
 Hugging Face Jobs do not replace:
 
-- Waymo or Argoverse raw storage
+- nuPlan, CARLA, Waymo, or Argoverse raw storage
+- private/local healthcare raw-row governance
 - KITTI real-data closure
 - provider-approved aerospace telemetry
 

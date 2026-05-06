@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Analyze deprecated thesis reference PDF vs canonical repo-root paper.pdf."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -48,9 +49,7 @@ def find_sections(text: str) -> list[str]:
     for line in lines:
         s = line.strip()
         if len(s) > 3 and len(s) < 100:
-            if s[0].isdigit() and "." in s[:4]:
-                sections.append(s[:80])
-            elif s.upper() == s and len(s) > 5:
+            if (s[0].isdigit() and "." in s[:4]) or (s.upper() == s and len(s) > 5):
                 sections.append(s[:80])
     return sections[:50]
 
@@ -101,7 +100,15 @@ def main() -> None:
     for d in domains:
         t_v = t_kw.get(d, 0)
         p_v = p_kw.get(d, 0)
-        status = "BOTH" if t_v > 0 and p_v > 0 else "THESIS ONLY" if t_v > 0 else "PAPER ONLY" if p_v > 0 else "NEITHER"
+        status = (
+            "BOTH"
+            if t_v > 0 and p_v > 0
+            else "THESIS ONLY"
+            if t_v > 0
+            else "PAPER ONLY"
+            if p_v > 0
+            else "NEITHER"
+        )
         print(f"  {d:20} {status}")
     print()
 

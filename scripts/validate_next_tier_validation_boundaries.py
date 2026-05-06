@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Validate next-tier validation manifests remain bounded until rerun evidence exists."""
+
 from __future__ import annotations
 
 import json
 import re
 import sys
 from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = REPO_ROOT / "reports" / "predeployment_external_validation"
@@ -70,7 +70,9 @@ def main() -> int:
         nuplan_required = list(av.get("nuplan_completion_artifacts", []))
         carla_required = list(av.get("carla_completion_artifacts", []))
         complete = all(_artifact_exists(path) for path in required)
-        nuplan_complete = all(_artifact_exists(path) for path in nuplan_required) if nuplan_required else False
+        nuplan_complete = (
+            all(_artifact_exists(path) for path in nuplan_required) if nuplan_required else False
+        )
         carla_complete = all(_artifact_exists(path) for path in carla_required) if carla_required else False
         if av.get("completed_evidence") != complete:
             findings.append("AV completion flag does not match required nuPlan/CARLA artifacts")
@@ -93,7 +95,9 @@ def main() -> int:
             r"\bfull\s+autonomous[- ]driving\s+closure\b",
         ):
             if re.search(pattern, non_boundary_text):
-                findings.append(f"AV manifest has positive deployment/completion claim outside boundary: {pattern}")
+                findings.append(
+                    f"AV manifest has positive deployment/completion claim outside boundary: {pattern}"
+                )
 
     if hc:
         required = list(hc.get("required_runtime_artifacts_for_claim", []))
@@ -103,12 +107,18 @@ def main() -> int:
         if hc.get("heldout_claim_allowed") and not complete:
             findings.append("Healthcare held-out runtime claim allowed without runtime artifacts")
         boundary = str(hc.get("claim_boundary", "")).lower()
-        for phrase in ("not claim live clinical", "prospective trial evidence", "clinical decision support approval"):
+        for phrase in (
+            "not claim live clinical",
+            "prospective trial evidence",
+            "clinical decision support approval",
+        ):
             if phrase not in boundary:
                 findings.append(f"Healthcare boundary missing phrase: {phrase}")
 
     if summary.get("status") != "prepared_not_completed":
-        findings.append("Next-tier preparation summary must remain prepared_not_completed until promoted separately")
+        findings.append(
+            "Next-tier preparation summary must remain prepared_not_completed until promoted separately"
+        )
 
     if EXTERNAL_SUMMARY.exists():
         text = EXTERNAL_SUMMARY.read_text(encoding="utf-8").lower()

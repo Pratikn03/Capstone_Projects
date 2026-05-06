@@ -4,6 +4,7 @@
 Evidence-first: proves planner is a real runtime controller surface.
 Outputs: reports/paper3_runtime_linkage.md
 """
+
 from __future__ import annotations
 
 import argparse
@@ -28,7 +29,9 @@ def _load_graceful():
 
 
 def _load_half_life():
-    spec = importlib.util.spec_from_file_location("half_life", REPO / "src" / "orius" / "dc3s" / "half_life.py")
+    spec = importlib.util.spec_from_file_location(
+        "half_life", REPO / "src" / "orius" / "dc3s" / "half_life.py"
+    )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -91,12 +94,14 @@ def main() -> int:
     )
 
     # 3. CertOS graceful_planner (certos/graceful_planner.py) delegates to optimized_graceful
-    fallback_actions = list(graceful.optimized_graceful(
-        last_action=last_action,
-        horizon_steps=remaining_horizon,
-        soc_mwh=50.0,
-        constraints=constraints,
-    ))
+    fallback_actions = list(
+        graceful.optimized_graceful(
+            last_action=last_action,
+            horizon_steps=remaining_horizon,
+            soc_mwh=50.0,
+            constraints=constraints,
+        )
+    )
 
     # 4. Verify taper
     acts = list(graceful.optimized_graceful(last_action, 5, 50.0, constraints, utility_weight=1.0))
@@ -120,60 +125,104 @@ def main() -> int:
     ]
 
     checks = [
-        ("planner exists in code", "src/orius/dc3s/graceful.py: plan_graceful_degradation, optimized_graceful", "verify_paper3_runtime_linkage.py", "this report", "ch29 def:safe-landing", "PASS" if plan else "FAIL"),
-        ("planner uses certificate horizon, not fixed timer", "graceful.py L71,L91: remaining_horizon param; half_life.compute_certificate_state → H_t", "verify_paper3_runtime_linkage.py", "this report", "ch29 §Landing Controller Design", "PASS" if remaining_horizon > 0 and len(plan["actions"]) == remaining_horizon else "PASS"),
-        ("planner tapers actions over time", "graceful.py L46-48: scale = utility_weight * (1.0 - t)", "verify_paper3_runtime_linkage.py", "this report", "ch29 def:safe-landing (monotonic power reduction)", "PASS" if taper_ok else "FAIL"),
-        ("planner respects true-state safety constraints", "graceful.py L53-60: max_feasible_dis, max_feasible_chg, soc_min, soc_max", "verify_paper3_runtime_linkage.py", "this report", "ch29 def:safe-landing (SOC constraints)", "PASS"),
-        ("policy transitions are logged", "graceful.py: plan_graceful_degradation returns transition_log", "verify_paper3_runtime_linkage.py", "this report", "ch29 safe-landing protocol", "PASS" if has_transition_log else "FAIL"),
-        ("fallback termination condition exists", "graceful.py L79-81: remaining_horizon <= 0 → zero dispatch", "verify_paper3_runtime_linkage.py", "this report", "ch29 §Safe-Landing Protocol", "PASS"),
+        (
+            "planner exists in code",
+            "src/orius/dc3s/graceful.py: plan_graceful_degradation, optimized_graceful",
+            "verify_paper3_runtime_linkage.py",
+            "this report",
+            "ch29 def:safe-landing",
+            "PASS" if plan else "FAIL",
+        ),
+        (
+            "planner uses certificate horizon, not fixed timer",
+            "graceful.py L71,L91: remaining_horizon param; half_life.compute_certificate_state → H_t",
+            "verify_paper3_runtime_linkage.py",
+            "this report",
+            "ch29 §Landing Controller Design",
+            "PASS" if remaining_horizon > 0 and len(plan["actions"]) == remaining_horizon else "PASS",
+        ),
+        (
+            "planner tapers actions over time",
+            "graceful.py L46-48: scale = utility_weight * (1.0 - t)",
+            "verify_paper3_runtime_linkage.py",
+            "this report",
+            "ch29 def:safe-landing (monotonic power reduction)",
+            "PASS" if taper_ok else "FAIL",
+        ),
+        (
+            "planner respects true-state safety constraints",
+            "graceful.py L53-60: max_feasible_dis, max_feasible_chg, soc_min, soc_max",
+            "verify_paper3_runtime_linkage.py",
+            "this report",
+            "ch29 def:safe-landing (SOC constraints)",
+            "PASS",
+        ),
+        (
+            "policy transitions are logged",
+            "graceful.py: plan_graceful_degradation returns transition_log",
+            "verify_paper3_runtime_linkage.py",
+            "this report",
+            "ch29 safe-landing protocol",
+            "PASS" if has_transition_log else "FAIL",
+        ),
+        (
+            "fallback termination condition exists",
+            "graceful.py L79-81: remaining_horizon <= 0 → zero dispatch",
+            "verify_paper3_runtime_linkage.py",
+            "this report",
+            "ch29 §Safe-Landing Protocol",
+            "PASS",
+        ),
     ]
 
     for c in checks:
         lines.append(f"| {c[0]} | {c[1]} | {c[2]} | {c[3]} | {c[4]} | **{c[5]}** |")
 
-    lines.extend([
-        "",
-        "---",
-        "",
-        "## Runtime Surface",
-        "",
-        "| Component | Path | Role |",
-        "|-----------|------|------|",
-        "| DC3S planner | dc3s/graceful.py | plan_graceful_degradation, optimized_graceful |",
-        "| CertOS planner | certos/graceful_planner.py | plan_fallback → optimized_graceful |",
-        "| Certificate horizon | dc3s/half_life.py | compute_certificate_state → H_t |",
-        "",
-        "---",
-        "",
-        "## Verification Run",
-        "",
-        f"- Certificate H_t: {H_t}",
-        f"- remaining_horizon passed to planner: {remaining_horizon}",
-        f"- plan actions count: {len(plan['actions'])}",
-        f"- transition_log entries: {len(plan.get('transition_log', []))}",
-        f"- CertOS plan_fallback actions: {len(fallback_actions)}",
-        "",
-        "---",
-        "",
-        "## Command",
-        "",
-        "```bash",
-        "python3 scripts/verify_paper3_runtime_linkage.py",
-        "```",
-        "",
-        "---",
-        "",
-        "## Step 3.3 Status: **CLOSED**",
-        "",
-        "- [x] planner exists in code",
-        "- [x] planner uses certificate horizon",
-        "- [x] planner tapers actions",
-        "- [x] planner respects safety constraints",
-        "- [x] policy transitions logged",
-        "- [x] fallback termination exists",
-        "",
-        "**Paper 3 is not marked complete.** Only Step 3.3 is verified.",
-    ])
+    lines.extend(
+        [
+            "",
+            "---",
+            "",
+            "## Runtime Surface",
+            "",
+            "| Component | Path | Role |",
+            "|-----------|------|------|",
+            "| DC3S planner | dc3s/graceful.py | plan_graceful_degradation, optimized_graceful |",
+            "| CertOS planner | certos/graceful_planner.py | plan_fallback → optimized_graceful |",
+            "| Certificate horizon | dc3s/half_life.py | compute_certificate_state → H_t |",
+            "",
+            "---",
+            "",
+            "## Verification Run",
+            "",
+            f"- Certificate H_t: {H_t}",
+            f"- remaining_horizon passed to planner: {remaining_horizon}",
+            f"- plan actions count: {len(plan['actions'])}",
+            f"- transition_log entries: {len(plan.get('transition_log', []))}",
+            f"- CertOS plan_fallback actions: {len(fallback_actions)}",
+            "",
+            "---",
+            "",
+            "## Command",
+            "",
+            "```bash",
+            "python3 scripts/verify_paper3_runtime_linkage.py",
+            "```",
+            "",
+            "---",
+            "",
+            "## Step 3.3 Status: **CLOSED**",
+            "",
+            "- [x] planner exists in code",
+            "- [x] planner uses certificate horizon",
+            "- [x] planner tapers actions",
+            "- [x] planner respects safety constraints",
+            "- [x] policy transitions logged",
+            "- [x] fallback termination exists",
+            "",
+            "**Paper 3 is not marked complete.** Only Step 3.3 is verified.",
+        ]
+    )
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(lines), encoding="utf-8")
@@ -185,8 +234,7 @@ def main() -> int:
             target_label = str(out_path)
         LEGACY_OUT.parent.mkdir(parents=True, exist_ok=True)
         LEGACY_OUT.write_text(
-            "# Paper 3 Runtime Linkage Report\n\n"
-            f"Canonical report path: `{target_label}`\n",
+            f"# Paper 3 Runtime Linkage Report\n\nCanonical report path: `{target_label}`\n",
             encoding="utf-8",
         )
 

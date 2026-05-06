@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Build lightweight IEEE support assets for the active 3-domain ORIUS lane."""
+
 from __future__ import annotations
 
 import csv
 from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
@@ -26,7 +26,6 @@ def _read_rows(path: Path) -> list[dict[str, str]]:
         return []
     with path.open(encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
-
 
 
 def build() -> int:
@@ -85,7 +84,10 @@ def main() -> int:
         "bounded monitoring and alert-release semantics\\\\"
     )
     professor_runtime_lines.extend([r"\bottomrule", r"\end{tabularx}", r"\end{table*}"])
-    _write_text(IEEE_GENERATED_DIR / "orius_professor_runtime_governance_table.tex", "\n".join(professor_runtime_lines))
+    _write_text(
+        IEEE_GENERATED_DIR / "orius_professor_runtime_governance_table.tex",
+        "\n".join(professor_runtime_lines),
+    )
 
     professor_parity_lines = [
         r"\begin{table*}[t]",
@@ -125,7 +127,9 @@ def main() -> int:
         r"\end{tabular}}",
         r"\end{table*}",
     ]
-    _write_text(IEEE_GENERATED_DIR / "orius_deployment_validation_scope.tex", "\n".join(deployment_scope_lines))
+    _write_text(
+        IEEE_GENERATED_DIR / "orius_deployment_validation_scope.tex", "\n".join(deployment_scope_lines)
+    )
 
     claim_ledger = [
         "claim_id,support_status,scope,note",

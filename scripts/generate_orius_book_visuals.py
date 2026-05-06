@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Generate parity and flow visuals for the ORIUS universal-first monograph."""
+
 from __future__ import annotations
 
 import csv
@@ -11,7 +12,6 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
@@ -142,7 +142,9 @@ def build_parity_figure() -> None:
     plt.close(fig)
 
 
-def _box(ax, x: float, y: float, w: float, h: float, text: str, fc: str, ec: str) -> tuple[float, float, float, float]:
+def _box(
+    ax, x: float, y: float, w: float, h: float, text: str, fc: str, ec: str
+) -> tuple[float, float, float, float]:
     patch = FancyBboxPatch(
         (x, y),
         w,
@@ -189,11 +191,28 @@ def build_flow_figure() -> None:
         color="#475569",
     )
 
-    hazard = _box(ax, 0.03, 0.66, 0.15, 0.12, "Physical-AI Hazard\nunder degraded observation", "#eef2ff", "#4f46e5")
-    theory = _box(ax, 0.24, 0.66, 0.16, 0.12, "Theory Bridge\nOASG, repair,\ntemporal validity", "#ecfeff", "#0891b2")
-    runtime = _box(ax, 0.46, 0.66, 0.17, 0.12, "Runtime Kernel\nDetect · Calibrate ·\nConstrain · Shield · Certify", "#fff7ed", "#c2410c")
-    domains = _box(ax, 0.69, 0.66, 0.14, 0.12, "Domain Adapters\nbattery · AV\nhealthcare", "#f0fdf4", "#15803d")
-    parity = _box(ax, 0.86, 0.66, 0.11, 0.12, "Parity Gate\npromotion only\nby evidence", "#fef2f2", "#b91c1c")
+    hazard = _box(
+        ax, 0.03, 0.66, 0.15, 0.12, "Physical-AI Hazard\nunder degraded observation", "#eef2ff", "#4f46e5"
+    )
+    theory = _box(
+        ax, 0.24, 0.66, 0.16, 0.12, "Theory Bridge\nOASG, repair,\ntemporal validity", "#ecfeff", "#0891b2"
+    )
+    runtime = _box(
+        ax,
+        0.46,
+        0.66,
+        0.17,
+        0.12,
+        "Runtime Kernel\nDetect · Calibrate ·\nConstrain · Shield · Certify",
+        "#fff7ed",
+        "#c2410c",
+    )
+    domains = _box(
+        ax, 0.69, 0.66, 0.14, 0.12, "Domain Adapters\nbattery · AV\nhealthcare", "#f0fdf4", "#15803d"
+    )
+    parity = _box(
+        ax, 0.86, 0.66, 0.11, 0.12, "Parity Gate\npromotion only\nby evidence", "#fef2f2", "#b91c1c"
+    )
 
     for src, dst in ((hazard, theory), (theory, runtime), (runtime, domains), (domains, parity)):
         ax.add_patch(
@@ -268,7 +287,9 @@ def build_closure_timeline_figure() -> None:
         return
 
     labels = [str(step.get("step", step.get("label", ""))) for step in steps]
-    values = [1 if str(step.get("ok", "")).lower() == "true" or step.get("ok") is True else 0 for step in steps]
+    values = [
+        1 if str(step.get("ok", "")).lower() == "true" or step.get("ok") is True else 0 for step in steps
+    ]
     colors = ["#2e7d32" if value == 1 else "#c62828" for value in values]
 
     fig_height = max(3.6, 0.45 * len(labels))
@@ -282,7 +303,16 @@ def build_closure_timeline_figure() -> None:
     ax.invert_yaxis()
     ax.grid(axis="x", alpha=0.2, linestyle="--")
     for idx, value in enumerate(values):
-        ax.text(0.5, idx, "pass" if value == 1 else "fail", ha="center", va="center", color="white", weight="bold", fontsize=9)
+        ax.text(
+            0.5,
+            idx,
+            "pass" if value == 1 else "fail",
+            ha="center",
+            va="center",
+            color="white",
+            weight="bold",
+            fontsize=9,
+        )
 
     _write_png(fig, PUBLICATION_DIR / "fig_orius_equal_domain_gate_timeline.png")
     _write_png(fig, PAPER_FIG_DIR / "fig_orius_equal_domain_gate_timeline.png")
@@ -310,7 +340,16 @@ def build_calibration_matrix_figure() -> None:
     ax.set_xticks(range(3), ["Fault slices", "OQE buckets", "Completeness"])
     ax.set_title("ORIUS Calibration Coverage Matrix", fontsize=15, weight="bold", pad=12)
     for row_idx, row in enumerate(rows):
-        ax.text(2, row_idx, f"{float(row.get('calibration_completeness_pct', '0') or 0.0):.1f}%", ha="center", va="center", color="white", fontsize=9, weight="bold")
+        ax.text(
+            2,
+            row_idx,
+            f"{float(row.get('calibration_completeness_pct', '0') or 0.0):.1f}%",
+            ha="center",
+            va="center",
+            color="white",
+            fontsize=9,
+            weight="bold",
+        )
     fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
 
     _write_png(fig, PUBLICATION_DIR / "fig_orius_calibration_coverage_matrix.png")
@@ -322,7 +361,9 @@ def build_runtime_governance_matrix_figure() -> None:
     if not (RUNTIME_CSV.exists() and GOVERNANCE_CSV.exists()):
         return
     runtime_rows = list(csv.DictReader(RUNTIME_CSV.open("r", encoding="utf-8", newline="")))
-    governance_rows = {row["domain"]: row for row in csv.DictReader(GOVERNANCE_CSV.open("r", encoding="utf-8", newline=""))}
+    governance_rows = {
+        row["domain"]: row for row in csv.DictReader(GOVERNANCE_CSV.open("r", encoding="utf-8", newline=""))
+    }
     if not runtime_rows:
         return
     domains = [row["domain"] for row in runtime_rows]
@@ -333,7 +374,8 @@ def build_runtime_governance_matrix_figure() -> None:
             [
                 _binary_from_text(row.get("certos_status", "")),
                 _binary_from_text(governance.get("shared_constraint_status", "")),
-                min(max(float(governance.get("governance_completeness_pct", "0") or 0.0), 0.0), 100.0) / 100.0,
+                min(max(float(governance.get("governance_completeness_pct", "0") or 0.0), 0.0), 100.0)
+                / 100.0,
             ]
         )
     fig, ax = plt.subplots(figsize=(9.5, max(4.0, 0.7 * len(domains))))
@@ -343,7 +385,16 @@ def build_runtime_governance_matrix_figure() -> None:
     ax.set_title("ORIUS Runtime and Governance Matrix", fontsize=15, weight="bold", pad=12)
     for row_idx, domain in enumerate(domains):
         completeness = float(governance_rows.get(domain, {}).get("governance_completeness_pct", "0") or 0.0)
-        ax.text(2, row_idx, f"{completeness:.1f}%", ha="center", va="center", color="white", fontsize=9, weight="bold")
+        ax.text(
+            2,
+            row_idx,
+            f"{completeness:.1f}%",
+            ha="center",
+            va="center",
+            color="white",
+            fontsize=9,
+            weight="bold",
+        )
     fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
 
     _write_png(fig, PUBLICATION_DIR / "fig_orius_runtime_governance_matrix.png")

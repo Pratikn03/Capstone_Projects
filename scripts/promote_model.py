@@ -1,9 +1,10 @@
 """Promote (pin) model bundles in configs/forecast.yaml for rollback control."""
+
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import yaml
 
@@ -20,10 +21,7 @@ def main() -> None:
     args = parser.parse_args()
 
     cfg_path = Path(args.config)
-    if cfg_path.exists():
-        cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
-    else:
-        cfg = {}
+    cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {} if cfg_path.exists() else {}
 
     cfg.setdefault("models", {})
     cfg["models"][args.target] = args.path
@@ -35,4 +33,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

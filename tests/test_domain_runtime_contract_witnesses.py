@@ -8,11 +8,11 @@ from pathlib import Path
 from orius.universal_framework.healthcare_adapter import HealthcareDomainAdapter
 from orius.universal_theory.domain_runtime_contracts import (
     AV_BRAKE_HOLD_CONTRACT_ID,
+    BATTERY_SAFE_DISPATCH_CONTRACT_ID,
     HEALTHCARE_FAIL_SAFE_CONTRACT_ID,
     witness_from_runtime_trace_row,
 )
 from orius.universal_theory.domain_validity import domain_certificate_validity_semantics
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "build_domain_runtime_contract_artifacts.py"
@@ -85,6 +85,27 @@ def test_passing_healthcare_row_links_t11_certificate_and_postcondition() -> Non
     )
 
     assert witness.contract_id == HEALTHCARE_FAIL_SAFE_CONTRACT_ID
+    assert witness.passed is True
+    assert witness.failure_reason == "none"
+
+
+def test_passing_battery_row_links_t11_certificate_and_dispatch_postcondition() -> None:
+    witness = witness_from_runtime_trace_row(
+        {
+            "trace_id": "battery-dc3s-1",
+            "controller": "dc3s_wrapped",
+            "controller_label": "heuristic:dc3s_wrapped",
+            "domain": "battery",
+            "theorem_contracts": '{"T11": "battery_witness_runtime_certificate"}',
+            "certificate_valid": "True",
+            "true_constraint_violated": "False",
+            "true_margin": "5000.0",
+        },
+        domain="battery",
+    )
+
+    assert witness.contract_id == BATTERY_SAFE_DISPATCH_CONTRACT_ID
+    assert witness.t11_status == "runtime_linked"
     assert witness.passed is True
     assert witness.failure_reason == "none"
 
@@ -184,6 +205,60 @@ def test_tiny_positive_margin_does_not_round_up_t6_validity() -> None:
     assert "nonpositive_domain_margin" in validity.guarantee_fail_reasons
 
 
+def test_healthcare_tiny_t6_margin_routes_to_projected_release() -> None:
+    adapter = HealthcareDomainAdapter({"expected_cadence_s": 1.0})
+    constraints = {
+        "spo2_min_pct": 90.0,
+        "hr_min_bpm": 40.0,
+        "hr_max_bpm": 120.0,
+        "rr_min": 8.0,
+        "rr_max": 30.0,
+    }
+    tightened = adapter.tighten_action_set(
+        uncertainty={
+            "spo2_lower_pct": 90.4,
+            "spo2_upper_pct": 100.0,
+            "forecast_spo2_lower_pct": 90.4,
+            "hr_lower_bpm": 90.6,
+            "hr_upper_bpm": 100.6,
+            "rr_lower": 10.1,
+            "rr_upper": 20.1,
+            "spo2_pct": 100.0,
+            "forecast_spo2_pct": 95.4,
+            "hr_bpm": 95.6,
+            "respiratory_rate": 15.1,
+            "meta": {"validity_status": "watch", "w_t": 0.65},
+        },
+        constraints=constraints,
+        cfg={"validity_sigma_d": 1.0, "validity_delta": 0.05},
+    )
+    action, meta = adapter.repair_action(
+        {"alert_level": 0.0},
+        tightened,
+        state={},
+        uncertainty={},
+        constraints=constraints,
+        cfg={},
+    )
+    validity = domain_certificate_validity_semantics(
+        domain="healthcare",
+        safe_action=action,
+        uncertainty=tightened["uncertainty"],
+        reliability_w=0.65,
+        validity_status="watch",
+        step_index=10,
+        repair_meta=meta,
+        cfg={},
+    )
+
+    assert 0.0 < tightened["validity_margin"] < 1.0
+    assert tightened["projected_release"] is True
+    assert tightened["fallback_required"] is False
+    assert meta["mode"] == "projection"
+    assert validity.validity_horizon_H_t == 1
+    assert validity.guarantee_checks_passed is True
+
+
 def test_healthcare_nonpositive_validity_margin_routes_to_fallback() -> None:
     adapter = HealthcareDomainAdapter({"expected_cadence_s": 1.0})
     tightened = adapter.tighten_action_set(
@@ -198,7 +273,13 @@ def test_healthcare_nonpositive_validity_margin_routes_to_fallback() -> None:
             "rr_upper": 20.0,
             "meta": {"validity_status": "watch", "w_t": 0.5},
         },
-        constraints={"spo2_min_pct": 90.0, "hr_min_bpm": 40.0, "hr_max_bpm": 120.0, "rr_min": 8.0, "rr_max": 30.0},
+        constraints={
+            "spo2_min_pct": 90.0,
+            "hr_min_bpm": 40.0,
+            "hr_max_bpm": 120.0,
+            "rr_min": 8.0,
+            "rr_max": 30.0,
+        },
         cfg={},
     )
     action, meta = adapter.repair_action(
@@ -219,8 +300,37 @@ def test_healthcare_nonpositive_validity_margin_routes_to_fallback() -> None:
 
 def test_generated_summary_only_reports_full_witness_pass_when_every_orius_row_passes(tmp_path: Path) -> None:
     builder = _load_builder()
+    battery_trace = tmp_path / "battery_runtime_traces.csv"
     av_trace = tmp_path / "av_runtime_traces.csv"
     hc_trace = tmp_path / "healthcare_runtime_traces.csv"
+
+    with battery_trace.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "trace_id",
+                "controller",
+                "controller_label",
+                "domain",
+                "theorem_contracts",
+                "certificate_valid",
+                "true_constraint_violated",
+                "true_margin",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "trace_id": "battery-pass",
+                "controller": "dc3s_wrapped",
+                "controller_label": "heuristic:dc3s_wrapped",
+                "domain": "battery",
+                "theorem_contracts": '{"T11": "battery_witness_runtime_certificate"}',
+                "certificate_valid": "True",
+                "true_constraint_violated": "False",
+                "true_margin": "1.0",
+            }
+        )
 
     with av_trace.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
@@ -279,6 +389,7 @@ def test_generated_summary_only_reports_full_witness_pass_when_every_orius_row_p
         )
 
     report = builder.build_domain_runtime_contract_artifacts(
+        battery_trace=battery_trace,
         av_trace=av_trace,
         healthcare_trace=hc_trace,
         out_dir=tmp_path / "publication",
@@ -287,9 +398,12 @@ def test_generated_summary_only_reports_full_witness_pass_when_every_orius_row_p
     )
     summary = json.loads(Path(report["domain_runtime_contract_summary_json"]).read_text(encoding="utf-8"))
 
+    assert summary["domains"]["battery"]["witness_pass_rate"] == 1.0
     assert summary["domains"]["av"]["witness_pass_rate"] == 1.0
     assert summary["domains"]["healthcare"]["witness_pass_rate"] == 0.0
     assert summary["domains"]["healthcare"]["certificate_valid_rate"] == 0.0
+    manifest = json.loads(Path(report["orius_universal_contract_manifest_json"]).read_text(encoding="utf-8"))
+    assert set(manifest["domains"]) == {"battery", "av", "healthcare"}
     with hc_trace.open("r", encoding="utf-8", newline="") as handle:
         row = next(csv.DictReader(handle))
     assert row["contract_id"] == HEALTHCARE_FAIL_SAFE_CONTRACT_ID

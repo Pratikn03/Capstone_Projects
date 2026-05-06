@@ -1,11 +1,10 @@
 """End-to-end sanity tests for vehicle prototype harness."""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from orius.adapters.vehicle import VehicleDomainAdapter
 from orius.vehicles.plant import VehiclePlant
-from orius.vehicles.vehicle_runner import run_vehicle_episode, compute_vehicle_metrics
+from orius.vehicles.vehicle_runner import compute_vehicle_metrics, run_vehicle_episode
 
 
 def test_run_vehicle_episode_completes() -> None:
@@ -22,6 +21,7 @@ def test_run_vehicle_episode_completes() -> None:
 
 def test_compute_vehicle_metrics() -> None:
     from orius.vehicles.vehicle_runner import VehicleStepResult
+
     results = [
         VehicleStepResult(0, {"speed_mps": 5}, {}, {}, {}, False, False, 0.9),
         VehicleStepResult(1, {"speed_mps": 6}, {}, {}, {}, False, True, 0.8),

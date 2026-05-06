@@ -60,7 +60,7 @@ export function DispatchChart({
   const allowBaseline = Boolean(baseline && baseline.length) && showBaseline;
   const [mode, setMode] = useState<'optimized' | 'baseline'>(allowBaseline ? defaultMode : 'optimized');
   const chartData = mode === 'baseline' && baseline ? baseline : optimized;
-  const peakLoad = chartData.length ? Math.max(...chartData.map((d) => d.load_mw)) : 0;
+  const peakLoad = chartData.length ? Math.max(...chartData.map((d) => d.load_mw)) : null;
   const baselineMatches = useMemo(() => {
     if (!allowBaseline || !baseline || baseline.length !== optimized.length) return false;
     const keys: Array<keyof DispatchData> = [
@@ -119,9 +119,15 @@ export function DispatchChart({
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-energy-primary/10 text-energy-primary border border-energy-primary/20">
             {mode === 'optimized' ? 'Optimized Dispatch' : 'Baseline Comparison'}
           </span>
-          <span className="text-[10px] text-slate-500">
-            Peak: {peakLoad ? `${peakLoad.toLocaleString()} MW` : 'N/A'}
-          </span>
+          {peakLoad !== null ? (
+            <span className="text-[10px] text-slate-500">
+              Peak: {peakLoad.toLocaleString()} MW
+            </span>
+          ) : (
+            <span className="text-[10px] text-slate-500">
+              Trace pending
+            </span>
+          )}
         </div>
       </div>
 
@@ -165,7 +171,7 @@ export function DispatchChart({
                 type="monotone" dataKey="load_mw" stroke="#f1f5f9" fill="none"
                 strokeWidth={2} strokeDasharray="6 3" name="Net Load"
               />
-              <ReferenceLine y={peakLoad * 1.05} stroke="#ef444480" strokeDasharray="4 4" label="" />
+              {peakLoad !== null && <ReferenceLine y={peakLoad * 1.05} stroke="#ef444480" strokeDasharray="4 4" label="" />}
             </AreaChart>
           </ResponsiveContainer>
         ) : (
@@ -178,8 +184,8 @@ export function DispatchChart({
       <div className="px-5 pb-3 text-[11px] text-slate-500">
         {chartData.length
           ? mode === 'optimized'
-            ? 'Optimization shifts charging to solar peaks and discharges during evening ramps to reduce thermal output.'
-            : 'Baseline dispatch meets net load without battery support or carbon-aware scheduling.'
+            ? 'Artifact trace shows the ORIUS controller allocation under observed constraints; it is supporting evidence below theorem and runtime gates.'
+            : 'Baseline trace shows the counterfactual controller artifact used for promotion comparisons.'
           : 'Waiting for dispatch artifacts or API responses.'}
       </div>
     </motion.div>

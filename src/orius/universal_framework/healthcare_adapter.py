@@ -5,16 +5,18 @@ Vital signs: HR, SpO2, respiratory rate. Safety predicates:
 - spo2_pct >= spo2_min
 - respiratory_rate in [rr_min, rr_max]
 """
+
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
-from orius.dc3s.domain_adapter import DomainAdapter
 from orius.dc3s.certificate import make_certificate, recompute_certificate_hash
-from orius.universal_theory.domain_validity import domain_certificate_validity_semantics
+from orius.dc3s.domain_adapter import DomainAdapter
 from orius.universal_framework.reliability_runtime import assess_domain_reliability
 from orius.universal_framework.runtime_evidence import resolve_runtime_evidence
+from orius.universal_theory.domain_validity import domain_certificate_validity_semantics
 
 
 def _f(x: Any, default: float) -> float:
@@ -236,6 +238,15 @@ class HealthcareDomainAdapter(DomainAdapter):
             rr_lo - rr_min,
             rr_max - rr_hi,
         )
+        validity_delta = _f(cfg.get("validity_delta", self._cfg.get("validity_delta")), 0.05)
+        validity_sigma_d = _f(cfg.get("validity_sigma_d", self._cfg.get("validity_sigma_d")), 1.0)
+        if 0.0 < validity_delta < 1.0 and validity_sigma_d > 0.0:
+            hold_validity_margin_floor = math.sqrt(
+                2.0 * (validity_sigma_d**2) * math.log(2.0 / validity_delta)
+            )
+        else:
+            hold_validity_margin_floor = float("inf")
+        hold_certificate_horizon_positive = bool(validity_margin >= hold_validity_margin_floor)
         current_spo2 = _f(unc.get("spo2_pct"), (spo2_lo + spo2_hi) / 2.0)
         current_forecast_spo2 = _f(unc.get("forecast_spo2_pct"), forecast_spo2_lo)
         current_hr = _f(unc.get("hr_bpm"), (hr_lo + hr_hi) / 2.0)
@@ -263,6 +274,7 @@ class HealthcareDomainAdapter(DomainAdapter):
             or telemetry_missing_count > 0
             or telemetry_used_hold
             or validity_margin <= 0.0
+            or not hold_certificate_horizon_positive
         )
         projection_margin_floor = _f(self._cfg.get("graded_alert_projection_margin"), 1.5)
         projected_release = bool(
@@ -283,15 +295,33 @@ class HealthcareDomainAdapter(DomainAdapter):
             fallback_reason = "unsafe_vital_interval"
         elif validity_margin <= 0.0:
             fallback_reason = "nonpositive_certificate_margin"
+        elif not hold_certificate_horizon_positive:
+            fallback_reason = "certificate_horizon_below_one_step"
         else:
             fallback_reason = "certificate_validity_degraded"
-        fallback_region = "max_alert_release" if fallback_required else ("graded_alert_release" if projected_release else "hold_region")
+        fallback_region = (
+            "max_alert_release"
+            if fallback_required
+            else ("graded_alert_release" if projected_release else "hold_region")
+        )
         if fallback_required:
             alert_lower = 1.0
         elif projected_release:
+            projected_floor = _f(self._cfg.get("graded_alert_floor"), 0.20)
+            projected_base = _f(self._cfg.get("graded_alert_base"), 0.35)
+            reliability_weight = _f(self._cfg.get("graded_alert_reliability_weight"), 1.0)
+            margin_weight = _f(self._cfg.get("graded_alert_margin_weight"), 0.25)
             reliability_penalty = max(0.0, 0.65 - reliability_w)
             margin_credit = min(current_margin, 20.0) / 20.0
-            alert_lower = max(0.20, min(0.85, 0.35 + reliability_penalty + 0.25 * (1.0 - margin_credit)))
+            alert_lower = max(
+                projected_floor,
+                min(
+                    0.85,
+                    projected_base
+                    + reliability_weight * reliability_penalty
+                    + margin_weight * (1.0 - margin_credit),
+                ),
+            )
         else:
             alert_lower = 0.0
         alert_upper = 1.0
@@ -338,11 +368,15 @@ class HealthcareDomainAdapter(DomainAdapter):
             return {"alert_level": float(_f(fallback_action.get("alert_level"), 1.0))}, {
                 "mode": "fallback",
                 "repaired": True,
-                "original_alert_level": _f(candidate_action.get("alert_level", candidate_action.get("alarm_level", 0.0)), 0.0),
+                "original_alert_level": _f(
+                    candidate_action.get("alert_level", candidate_action.get("alarm_level", 0.0)), 0.0
+                ),
                 "intervention_reason": str(tightened_set.get("fallback_reason", "max_alert_release")),
                 "fallback_region": str(tightened_set.get("fallback_region", "max_alert_release")),
                 "fallback_required": True,
-                "theorem_contract": str(tightened_set.get("theorem_contract", "healthcare_fail_safe_release")),
+                "theorem_contract": str(
+                    tightened_set.get("theorem_contract", "healthcare_fail_safe_release")
+                ),
             }
         alert = _f(candidate_action.get("alert_level", candidate_action.get("alarm_level", 0.0)), 0.0)
         alert_lo = _f(tightened_set.get("alert_level_lower"), 0.0)
@@ -391,7 +425,9 @@ class HealthcareDomainAdapter(DomainAdapter):
         model_hash = str(cfg.get("model_hash", ""))
         config_hash = str(cfg.get("config_hash", ""))
         intervened = bool(repair_meta.get("repaired")) if isinstance(repair_meta, Mapping) else None
-        intervention_reason = repair_meta.get("intervention_reason") if isinstance(repair_meta, Mapping) else None
+        intervention_reason = (
+            repair_meta.get("intervention_reason") if isinstance(repair_meta, Mapping) else None
+        )
         reliability_w = float(reliability.get("w_t", reliability.get("w", 1.0)))
         drift_flag = bool(drift.get("drift", False))
         inflation = float(uncertainty.get("meta", {}).get("inflation", 1.0))
@@ -454,7 +490,9 @@ class HealthcareDomainAdapter(DomainAdapter):
             if isinstance(repair_meta, Mapping) and repair_meta.get("mode") == "projection"
             else "hold"
         )
-        certificate["fallback_region"] = repair_meta.get("fallback_region") if isinstance(repair_meta, Mapping) else None
+        certificate["fallback_region"] = (
+            repair_meta.get("fallback_region") if isinstance(repair_meta, Mapping) else None
+        )
         certificate["fallback_required"] = (
             bool(repair_meta.get("fallback_required", False)) if isinstance(repair_meta, Mapping) else False
         )
@@ -470,7 +508,9 @@ class HealthcareDomainAdapter(DomainAdapter):
             bool(repair_meta.get("projected_release", False)) if isinstance(repair_meta, Mapping) else False
         )
         certificate["projected_release_margin"] = (
-            float(repair_meta.get("projected_release_margin", 0.0)) if isinstance(repair_meta, Mapping) else 0.0
+            float(repair_meta.get("projected_release_margin", 0.0))
+            if isinstance(repair_meta, Mapping)
+            else 0.0
         )
         certificate["certificate_hash"] = recompute_certificate_hash(certificate)
         return certificate

@@ -2,7 +2,7 @@
 
 This document defines the active closure target for ORIUS:
 
-> ORIUS is a universal runtime safety layer for Physical AI under degraded observation, defended on a literal three-domain program: Battery, AV, and Healthcare.
+> ORIUS provides a reliability-aware runtime safety layer for physical AI under degraded observation, enforcing certificate-backed action release through uncertainty coverage, repair, and fallback.
 
 This is not an equal-theorem-depth claim. It is a code, data, replay, artifact,
 and governance closure target for the active repo-tracked program.

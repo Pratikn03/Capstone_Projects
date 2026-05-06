@@ -4,6 +4,7 @@
 Usage:
     python scripts/build_half_life_tables.py
 """
+
 from __future__ import annotations
 
 import sys
@@ -34,12 +35,14 @@ def main() -> None:
             print("Unexpected CSV format")
             sys.exit(1)
 
-    agg = df.groupby("blackout_hours", as_index=False).agg({
-        "tsvr_pct": "mean",
-        "coverage_pct": "mean",
-        "violations": "sum",
-        "total_steps": "sum",
-    })
+    agg = df.groupby("blackout_hours", as_index=False).agg(
+        {
+            "tsvr_pct": "mean",
+            "coverage_pct": "mean",
+            "violations": "sum",
+            "total_steps": "sum",
+        }
+    )
     agg["cva"] = (agg["coverage_pct"] / 100.0).round(4)
     agg["tsvr"] = (agg["tsvr_pct"] / 100.0).round(4)
 

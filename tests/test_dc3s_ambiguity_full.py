@@ -1,4 +1,5 @@
 """Comprehensive tests for DC3S ambiguity widening."""
+
 from __future__ import annotations
 
 import numpy as np

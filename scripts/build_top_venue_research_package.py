@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """Build a top-venue research package from canonical ORIUS artifacts."""
+
 from __future__ import annotations
 
 import csv
 import json
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
-EXTERNAL_VALIDATION = REPO_ROOT / "reports" / "predeployment_external_validation" / "external_validation_summary.csv"
+EXTERNAL_VALIDATION = (
+    REPO_ROOT / "reports" / "predeployment_external_validation" / "external_validation_summary.csv"
+)
 TRAINING_AUDIT = REPO_ROOT / "reports" / "universal_training_audit" / "domain_training_summary.csv"
 CLAIM_LEDGER = REPO_ROOT / "docs" / "claim_ledger.md"
 FREEZE_ROOT = REPO_ROOT / "reports" / "predeployment_freeze"
@@ -41,9 +43,9 @@ OUTPUTS = {
 
 
 PRIMARY_THESIS = (
-    "ORIUS identifies degraded observation as a physical-AI release hazard and provides "
-    "a reliability-aware runtime safety layer that enforces certificate-backed action "
-    "release across three bounded domains."
+    "ORIUS provides a reliability-aware runtime safety layer for physical AI under "
+    "degraded observation, enforcing certificate-backed action release through "
+    "uncertainty coverage, repair, and fallback."
 )
 THEORY_CLAIM = (
     "Observation-only mandatory-release controllers face a lower bound under "
@@ -186,7 +188,7 @@ SOURCE_ANCHORS = (
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _repo_rel(path: Path) -> str:
@@ -437,7 +439,13 @@ def _format_domain_table(benchmark_rows: list[dict[str, str]], external_rows: li
 def _format_theorem_summary(theorem_rows: list[dict[str, str]]) -> str:
     counter = Counter(row.get("defense_tier", "missing") for row in theorem_rows)
     selected = []
-    for theorem_id in ("T4", "T10_T11_ObservationAmbiguitySandwich", "T11", "T11_AV_BrakeHold", "T11_HC_FailSafeRelease"):
+    for theorem_id in (
+        "T4",
+        "T10_T11_ObservationAmbiguitySandwich",
+        "T11",
+        "T11_AV_BrakeHold",
+        "T11_HC_FailSafeRelease",
+    ):
         match = next((row for row in theorem_rows if row.get("theorem_id") == theorem_id), None)
         if match:
             selected.append(
@@ -493,11 +501,22 @@ def _build_uplift_scorecard(
     runtime_rows_pass = all(row.get("strict_runtime_gate") == "True" for row in benchmark_rows)
     external_by_domain = {row["domain"]: row for row in external_rows}
     av_boundary = external_by_domain.get("Autonomous Vehicles", {}).get("claim_boundary", "")
-    healthcare_boundary = external_by_domain.get("Medical and Healthcare Monitoring", {}).get("claim_boundary", "")
+    healthcare_boundary = external_by_domain.get("Medical and Healthcare Monitoring", {}).get(
+        "claim_boundary", ""
+    )
     battery_boundary = external_by_domain.get("Battery Energy Storage", {}).get("claim_boundary", "")
-    av_carla_completed = "not completed CARLA" not in av_boundary and "CARLA" in av_boundary
-    healthcare_live_completed = "not live clinical" not in healthcare_boundary and "prospective" not in healthcare_boundary
-    battery_physical_hil_completed = "not unrestricted field" not in battery_boundary and "physical" in battery_boundary.lower()
+    av_closed_loop_completed = bool(
+        external_by_domain.get("Autonomous Vehicles", {}).get("validation_surface")
+        == "nuplan_bounded_kinematic_closed_loop_planner"
+        and external_by_domain.get("Autonomous Vehicles", {}).get("pass") == "True"
+        and "road deployment" not in av_boundary.lower()
+    )
+    healthcare_live_completed = (
+        "not live clinical" not in healthcare_boundary and "prospective" not in healthcare_boundary
+    )
+    battery_physical_hil_completed = (
+        "not unrestricted field" not in battery_boundary and "physical" in battery_boundary.lower()
+    )
 
     return [
         {
@@ -514,8 +533,8 @@ def _build_uplift_scorecard(
             "current_baseline_score": 78,
             "target_score": 95,
             "current_status": _score_gate(has_t4_t11 and has_observation_sandwich),
-            "implemented_lift": "T4/T10/T11 bridge is represented as necessity plus Bayes lower bound plus covered alpha upper bound with executable observation-ambiguity witnesses.",
-            "remaining_blocker": "Keep T10 draft lower-bound surfaces scoped and prevent any global-optimality or all-ambiguity-implies-violation overclaim.",
+            "implemented_lift": "T4/T9/T10/T11 bridge is represented as necessity plus Bayes lower bound plus covered alpha upper bound with mechanized kernels, empirical T9/T10 discharge artifacts, and executable observation-ambiguity witnesses.",
+            "remaining_blocker": "Keep T9/T10 assumption-qualified and prevent any global-optimality or all-ambiguity-implies-violation overclaim beyond the discharged Battery/AV/Healthcare boundary-law artifacts.",
             "acceptance_gate": "T4, T11, and T10_T11_ObservationAmbiguitySandwich stay synchronized across audit, registry, code, tests, paper, and appendix.",
         },
         {
@@ -523,17 +542,19 @@ def _build_uplift_scorecard(
             "current_baseline_score": 86,
             "target_score": 95,
             "current_status": _score_gate(runtime_rows_pass),
-            "implemented_lift": "Runtime-denominator TSVR, fallback/intervention, calibration, and witness rows are source-locked per domain.",
-            "remaining_blocker": "High AV intervention and healthcare fallback rates must be explained as conservative fail-closed behavior, not hidden utility success.",
-            "acceptance_gate": "All promoted rows pass strict runtime gates and utility/fallback tradeoffs are explicit.",
+            "implemented_lift": "Runtime-denominator TSVR, fallback/intervention, calibration, witness rows, and fail-safe-normalized utility dominance are source-locked per domain.",
+            "remaining_blocker": "Keep AV and Healthcare utility-safety frontiers explicit in the paper so conservative fallback is reported as a measured cost, not hidden utility success.",
+            "acceptance_gate": "All promoted rows pass strict runtime gates and fail-safe-normalized utility/fallback tradeoffs are explicit.",
         },
         {
             "dimension": "external_validation_depth",
             "current_baseline_score": 72,
             "target_score": 95,
-            "current_status": _score_gate(av_carla_completed and healthcare_live_completed and battery_physical_hil_completed),
-            "implemented_lift": "Current package separates nuPlan replay/surrogate, retrospective healthcare, and battery software-HIL evidence from stronger future tiers.",
-            "remaining_blocker": "Complete CARLA or nuPlan closed-loop artifacts, stronger healthcare held-out/source/site replay, and physical or high-fidelity battery HIL.",
+            "current_status": _score_gate(
+                av_closed_loop_completed and healthcare_live_completed and battery_physical_hil_completed
+            ),
+            "implemented_lift": "Current package separates bounded nuPlan closed-loop planner evidence, retrospective healthcare source/site holdout, and battery software-HIL evidence from stronger future tiers.",
+            "remaining_blocker": "Complete prospective/live healthcare validation and physical or high-fidelity battery HIL; AV remains bounded nuPlan closed-loop rather than road deployment or CARLA.",
             "acceptance_gate": "No paper claim uses next-tier validation language before the corresponding artifact exists.",
         },
         {
@@ -598,7 +619,11 @@ def _build_markdown(
     freeze: dict[str, Any],
     uplift_scorecard: list[dict[str, Any]],
 ) -> str:
-    equal_domains = ", ".join(row["domain"] for row in equal_rows if all(row.get(key) == "True" for key in row if key.endswith("_gate")))
+    equal_domains = ", ".join(
+        row["domain"]
+        for row in equal_rows
+        if all(row.get(key) == "True" for key in row if key.endswith("_gate"))
+    )
     healthcare = next(row for row in training_rows if row["dataset"] == "HEALTHCARE")
     return f"""# Top-Venue Research Package: ORIUS / DC3S / GridPulse
 
@@ -642,13 +667,13 @@ Equal artifact discipline passes for: {equal_domains}.
 
 ## 5. What Is Explicitly Not Claimed?
 
-{chr(10).join(f'- {item}' for item in REQUIRED_NON_CLAIMS)}
+{chr(10).join(f"- {item}" for item in REQUIRED_NON_CLAIMS)}
 
 ## Healthcare / Biomedical Evidence
 
 Healthcare is framed as **retrospective source-holdout and time-forward monitoring validation**. It is not prospective trial evidence, not live clinical deployment, and not regulatory clinical decision support approval.
 
-Current healthcare training evidence: primary target `{healthcare['primary_target']}`, RMSE `{healthcare['rmse']}`, PICP90 `{healthcare['picp_90']}`. The calibration repair is explicitly reported as `{healthcare['note']}`.
+Current healthcare training evidence: primary target `{healthcare["primary_target"]}`, RMSE `{healthcare["rmse"]}`, PICP90 `{healthcare["picp_90"]}`. The calibration repair is explicitly reported as `{healthcare["note"]}`.
 
 Healthcare comparator framing should use NEWS2/MEWS-style thresholding, conformal alert-only, predictor-only no-runtime, and fixed conservative alert baselines.
 
@@ -662,7 +687,7 @@ Battery remains the deepest witness row. Software HIL/simulator rehearsal is val
 
 ## Freeze Status
 
-Current freeze status: `{freeze['status_note']}`.
+Current freeze status: `{freeze["status_note"]}`.
 
 Final frozen-release claims are not allowed until `predeployment_release_manifest.json` and frozen hash locks exist.
 
@@ -677,7 +702,7 @@ def _build_limitations(freeze: dict[str, Any]) -> str:
 
 ## Required Boundary Language
 
-{chr(10).join(f'- {item}' for item in REQUIRED_NON_CLAIMS)}
+{chr(10).join(f"- {item}" for item in REQUIRED_NON_CLAIMS)}
 
 ## Evidence Tiers
 
@@ -687,7 +712,7 @@ def _build_limitations(freeze: dict[str, Any]) -> str:
 
 ## Freeze Boundary
 
-Freeze status is `{freeze['status_note']}`. Do not claim a completed frozen release until `predeployment_release_manifest.json`, `frozen_artifact_hashes.csv`, and `frozen_artifact_hashes.json` exist for the release.
+Freeze status is `{freeze["status_note"]}`. Do not claim a completed frozen release until `predeployment_release_manifest.json`, `frozen_artifact_hashes.csv`, and `frozen_artifact_hashes.json` exist for the release.
 
 ## Universal Claim Boundary
 

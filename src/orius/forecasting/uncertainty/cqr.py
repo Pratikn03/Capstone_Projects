@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -143,7 +143,7 @@ class RegimeCQR:
         return json.dumps(payload, indent=2, sort_keys=True)
 
     @staticmethod
-    def from_json(data: str) -> "RegimeCQR":
+    def from_json(data: str) -> RegimeCQR:
         payload = json.loads(data)
         cfg = RegimeCQRConfig(**payload.get("cfg", {}))
         obj = RegimeCQR(cfg=cfg)

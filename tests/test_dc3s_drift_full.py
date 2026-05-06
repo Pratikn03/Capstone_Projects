@@ -1,4 +1,5 @@
 """Comprehensive tests for DC3S drift detectors."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -57,7 +58,9 @@ class TestPageHinkleySerialization:
         assert d2.threshold == d.threshold
 
     def test_from_state_with_cfg_overrides(self):
-        d = PageHinkleyDetector.from_state(None, cfg={"ph_delta": 0.05, "ph_lambda": 10.0, "warmup_steps": 20})
+        d = PageHinkleyDetector.from_state(
+            None, cfg={"ph_delta": 0.05, "ph_lambda": 10.0, "warmup_steps": 20}
+        )
         assert d.delta == 0.05
         assert d.threshold == 10.0
         assert d.warmup_steps == 20
@@ -70,8 +73,17 @@ class TestPageHinkleySerialization:
         d = PageHinkleyDetector()
         d.update(1.0)
         state = d.to_state()
-        expected_keys = {"delta", "threshold", "warmup_steps", "cooldown_steps", "count", "mean",
-                         "cumulative_sum", "min_cumulative_sum", "cooldown_remaining"}
+        expected_keys = {
+            "delta",
+            "threshold",
+            "warmup_steps",
+            "cooldown_steps",
+            "count",
+            "mean",
+            "cumulative_sum",
+            "min_cumulative_sum",
+            "cooldown_remaining",
+        }
         assert set(state.keys()) == expected_keys
 
 
@@ -172,6 +184,6 @@ class TestStressTest:
     def test_adwin_1000_samples_no_crash(self):
         d = ADWINDetector(min_window=20, max_window=200)
         rng = np.random.default_rng(1)
-        for i in range(1000):
+        for _i in range(1000):
             d.update(rng.normal(0.0, 1.0))
         assert d._count == 1000

@@ -8,10 +8,7 @@ experiments that imported ``orius.universal`` directly.
 from orius.universal_theory import (
     ContractVerifier,
     ContractViolation,
-    DomainInstantiation as UniversalAdapterProtocol,
     FrontierPoint,
-    ObservationConsistentStateSet as TightenedSet,
-    RepairDecision as RepairResult,
     SafetyCertificate,
     UniversalStepResult,
     compute_episode_risk_bound,
@@ -20,22 +17,31 @@ from orius.universal_theory import (
     execute_universal_step,
     minimum_reliability_for_target,
 )
+from orius.universal_theory import (
+    DomainInstantiation as UniversalAdapterProtocol,
+)
+from orius.universal_theory import (
+    ObservationConsistentStateSet as TightenedSet,
+)
+from orius.universal_theory import (
+    RepairDecision as RepairResult,
+)
 
 SafetyBound = dict[str, float]
 
 __all__ = [
     "ContractVerifier",
     "ContractViolation",
-    "UniversalAdapterProtocol",
-    "TightenedSet",
+    "FrontierPoint",
     "RepairResult",
     "SafetyBound",
     "SafetyCertificate",
+    "TightenedSet",
+    "UniversalAdapterProtocol",
     "UniversalStepResult",
-    "FrontierPoint",
-    "compute_frontier",
-    "minimum_reliability_for_target",
-    "compute_step_risk_bound",
     "compute_episode_risk_bound",
+    "compute_frontier",
+    "compute_step_risk_bound",
     "execute_universal_step",
+    "minimum_reliability_for_target",
 ]

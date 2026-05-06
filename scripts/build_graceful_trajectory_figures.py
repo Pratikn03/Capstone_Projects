@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Paper 3 publication figure builder backed by the canonical benchmark surface."""
+
 from __future__ import annotations
 
 import argparse
@@ -67,7 +68,7 @@ def build_publication_figure(
     ]
 
     fig, axes = plt.subplots(2, 2, figsize=(10.5, 8.4))
-    for ax, (metric, ylabel) in zip(axes.flat, metrics):
+    for ax, (metric, ylabel) in zip(axes.flat, metrics, strict=False):
         for policy in POLICY_ORDER:
             series = by_policy.get(policy, [])
             if not series:
@@ -111,7 +112,9 @@ def main() -> None:
     args = parser.parse_args()
 
     outputs = build_publication_figure(
-        paper3_dir=(REPO_ROOT / args.paper3_dir) if not Path(args.paper3_dir).is_absolute() else Path(args.paper3_dir),
+        paper3_dir=(REPO_ROOT / args.paper3_dir)
+        if not Path(args.paper3_dir).is_absolute()
+        else Path(args.paper3_dir),
         publication_dir=(REPO_ROOT / args.publication_dir)
         if not Path(args.publication_dir).is_absolute()
         else Path(args.publication_dir),

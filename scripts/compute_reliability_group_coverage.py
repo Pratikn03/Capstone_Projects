@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Compute reliability-binned coverage summaries for research analysis."""
+
 from __future__ import annotations
 
 import argparse
@@ -42,7 +43,9 @@ def build_summary(
     else:
         lower, upper = model.predict_interval(y_pred=y_pred, reliability=reliability)
 
-    rows = pd.DataFrame(model.group_coverage(y_true=y_true, lower=lower, upper=upper, reliability=reliability))
+    rows = pd.DataFrame(
+        model.group_coverage(y_true=y_true, lower=lower, upper=upper, reliability=reliability)
+    )
     summary = {
         "alpha": float(alpha),
         "n_bins": int(model.n_bins_),

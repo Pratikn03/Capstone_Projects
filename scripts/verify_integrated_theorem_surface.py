@@ -1,28 +1,30 @@
 #!/usr/bin/env python3
-"""Validate the hard-gated 18-row theorem traceability surface and emit audit artifacts.
+"""Validate the hard-gated 18-row proof-surface traceability gate and emit audit artifacts.
 
-The hard-gated theorem surface contains 18 rows:
-  - 10 unique theorem claims:
-      * 8 flagship T1--T8 theorems
-      * 2 supporting theorems from ch04
-  - 8 appendix theorem restatements in Appendix C
+The hard-gated proof surface contains 18 rows:
+  - 10 unique proof-surface claims:
+      * 2 supporting Chapter 4 statements
+      * T1--T8, with active defense tiers imported from active_theorem_audit
+  - 8 appendix proof restatements in Appendix C
 
-This script validates only traceability/release-gate properties of the
-hard-gated theorem rows and emits:
+This script validates traceability/release-gate properties without promoting
+retiered surfaces. In particular T5 stays a draft/non-defended definition and
+T8 stays supporting-defended, matching reports/publication/active_theorem_audit.
+It emits:
   - reports/publication/integrated_theorem_gate.csv
   - reports/publication/integrated_theorem_gate.json
   - reports/publication/integrated_theorem_gate_summary.tex
   - reports/publication/integrated_theorem_gate_matrix.tex
   - reports/publication/fig_integrated_theorem_gate.png
 """
+
 from __future__ import annotations
 
+import ast
 import csv
-import importlib
 import json
 import os
 import sys
-import ast
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -44,6 +46,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 REPORTS = REPO / "reports" / "publication"
 THEOREM_REGISTER = REPORTS / "theorem_surface_register.csv"
+ACTIVE_THEOREM_AUDIT = REPORTS / "active_theorem_audit.csv"
 TRACEABILITY = REPORTS / "chapter_theorem_traceability.csv"
 APPENDIX_PROOFS = REPO / "appendices" / "app_c_full_proofs.tex"
 
@@ -59,6 +62,8 @@ class GateRow:
     theorem_key: str
     theorem_class: str
     title: str
+    surface_kind: str
+    defense_tier: str
     source: str
     mapped_to: str
     traceability_status: str
@@ -74,6 +79,8 @@ class GateRow:
             "theorem_key": self.theorem_key,
             "theorem_class": self.theorem_class,
             "title": self.title,
+            "surface_kind": self.surface_kind,
+            "defense_tier": self.defense_tier,
             "source": self.source,
             "mapped_to": self.mapped_to,
             "traceability_status": self.traceability_status,
@@ -198,10 +205,10 @@ def _write_summary_tex(rows: list[GateRow]) -> None:
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        r"\caption{Integrated 18-row hard-gated theorem traceability summary. The unique theorem set",
-        r"contains the two supporting Chapter~4 theorem statements and the",
-        r"flagship T1--T8 ladder; the appendix class checks the eight theorem",
-        r"restatements in Appendix~C against that unique surface.}",
+        r"\caption{Integrated 18-row hard-gated proof-surface traceability summary. The unique surface set",
+        r"contains the two supporting Chapter~4 statements and the T1--T8 surface with",
+        r"active defense tiers imported from the theorem audit; Appendix~C restatements",
+        r"are checked against that unique surface.}",
         r"\label{tab:integrated-theorem-gate-summary}",
         r"\begin{tabular}{lrr}",
         r"\toprule",
@@ -282,12 +289,13 @@ def _write_figure(rows: list[GateRow]) -> None:
 
 def _load_rows() -> list[GateRow]:
     register_rows = _read_csv(THEOREM_REGISTER)
+    active_rows = _read_csv(ACTIVE_THEOREM_AUDIT)
     traceability_rows = _read_csv(TRACEABILITY)
     traceability_by_scope = {
-        row["theorem_ids_or_scope"]: row
-        for row in traceability_rows
-        if row.get("theorem_ids_or_scope")
+        row["theorem_ids_or_scope"]: row for row in traceability_rows if row.get("theorem_ids_or_scope")
     }
+    active_by_id = {row["theorem_id"]: row for row in active_rows if row.get("theorem_id")}
+    active_alias = {"T3": "T3a"}
     appendix_text = APPENDIX_PROOFS.read_text(encoding="utf-8")
     appendix_text_lower = appendix_text.lower()
     unique_titles = {
@@ -307,6 +315,8 @@ def _load_rows() -> list[GateRow]:
         source = register["source"]
         theorem_key = register.get("register_id", "").strip()
         theorem_class = "unique_theorem"
+        surface_kind = "theorem"
+        defense_tier = "traceability_locked"
         mapped_to = title
         traceability_status = "locked"
         code_anchors: list[str] = []
@@ -330,12 +340,18 @@ def _load_rows() -> list[GateRow]:
             artifact_ok = appendix_mapping_ok
             source_exists = (REPO / source).exists()
             pass_gate = source_exists and appendix_mapping_ok
-            notes = "appendix theorem restatement matches main theorem" if pass_gate else "appendix theorem mapping failed"
+            notes = (
+                "appendix theorem restatement matches main theorem"
+                if pass_gate
+                else "appendix theorem mapping failed"
+            )
             rows.append(
                 GateRow(
                     theorem_key=title.split()[0].rstrip("."),
                     theorem_class=theorem_class,
                     title=title,
+                    surface_kind="appendix_restatement",
+                    defense_tier="restatement",
                     source=source,
                     mapped_to=mapped_to,
                     traceability_status=traceability_status,
@@ -352,15 +368,24 @@ def _load_rows() -> list[GateRow]:
         if theorem_key not in HARD_GATED_KEYS or "General CPS" in title:
             continue
 
+        active_id = active_alias.get(theorem_key, theorem_key)
+        active = active_by_id.get(active_id, {})
+        if active:
+            surface_kind = active.get("surface_kind", surface_kind) or surface_kind
+            defense_tier = active.get("defense_tier", defense_tier) or defense_tier
+
         if theorem_key and theorem_key in traceability_by_scope:
             trace = traceability_by_scope[theorem_key]
-            traceability_status = trace.get("status", "missing")
+            traceability_status = defense_tier if active else trace.get("status", "missing")
             code_anchors = [item.strip() for item in trace.get("code_anchors", "").split(";") if item.strip()]
-            artifact_paths = [item.strip() for item in trace.get("artifact_paths", "").split(";") if item.strip()]
+            artifact_paths = [
+                item.strip() for item in trace.get("artifact_paths", "").split(";") if item.strip()
+            ]
         elif title in SUPPORTING_THEOREMS:
             supp = SUPPORTING_THEOREMS[title]
             theorem_key = str(supp["theorem_key"])
             traceability_status = str(supp["traceability_status"])
+            defense_tier = "supporting_defended"
             code_anchors = list(supp["code_anchors"])
             artifact_paths = list(supp["artifact_paths"])
         else:
@@ -371,9 +396,15 @@ def _load_rows() -> list[GateRow]:
         artifact_ok = _artifacts_ok(artifact_paths)
         partial = traceability_status.startswith("partial")
         pass_gate = source_exists and code_ok and artifact_ok and not partial
+        if theorem_key == "T5" and defense_tier == "draft_non_defended" and surface_kind == "definition":
+            pass_gate = source_exists and code_ok and artifact_ok
         notes = []
         if partial:
             notes.append("partial traceability")
+        if theorem_key == "T5" and defense_tier == "draft_non_defended":
+            notes.append("definition locked; excluded from defended headline counts")
+        if theorem_key == "T8" and defense_tier == "supporting_defended":
+            notes.append("supporting surface locked; excluded from flagship count")
         if not source_exists:
             notes.append("missing source")
         if not code_ok:
@@ -385,6 +416,8 @@ def _load_rows() -> list[GateRow]:
                 theorem_key=theorem_key or title,
                 theorem_class=theorem_class,
                 title=title,
+                surface_kind=surface_kind,
+                defense_tier=defense_tier,
                 source=source,
                 mapped_to=mapped_to,
                 traceability_status=traceability_status,
@@ -423,6 +456,10 @@ def main() -> int:
         "failed": sum(1 for row in rows if not row.pass_gate),
         "unique_theorems_total": sum(1 for row in rows if row.theorem_class == "unique_theorem"),
         "appendix_restatements_total": sum(1 for row in rows if row.theorem_class == "appendix_restatement"),
+        "defense_tier_counts": {
+            tier: sum(1 for row in rows if row.defense_tier == tier)
+            for tier in sorted({row.defense_tier for row in rows})
+        },
         "rows": [row.to_dict() for row in rows],
     }
     OUT_JSON.write_text(json.dumps(summary, indent=2), encoding="utf-8")
@@ -437,7 +474,7 @@ def main() -> int:
             print(f"  - {row.theorem_key}: {row.notes}")
         return 1
 
-    print("Integrated theorem gate PASS: 18/18 theorem rows traceability-locked.")
+    print("Integrated theorem gate PASS: 18/18 proof-surface rows traceability-locked.")
     return 0
 
 

@@ -5,6 +5,7 @@ This script converts a public ADS-B trajectory corpus into the explicit ORIUS
 aerospace support lane, records proxy-field provenance, and emits bounded
 runtime/governance artifacts without promoting the defended aerospace row.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,7 +16,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from huggingface_hub import snapshot_download
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT / "src") not in sys.path:
@@ -34,7 +34,6 @@ from orius.data_pipeline.real_data_contract import (
 )
 from orius.universal_framework import run_universal_step
 from orius.universal_framework.aerospace_adapter import AerospaceDomainAdapter
-
 
 HF_REPO_ID = "Pathange/tartanaviation-adsb-19k-clean"
 HF_LOCAL_DIRNAME = "tartanaviation_adsb_19k_clean"
@@ -82,21 +81,23 @@ def _load_adsb_csv(local_dir: Path) -> pd.DataFrame:
         raise FileNotFoundError(f"Missing ADS-B CSV at {csv_path}")
     df = pd.read_csv(csv_path)
     timestamp = pd.to_datetime(
-        dict(
-            year=df["year"],
-            month=df["month"],
-            day=df["day"],
-            hour=df["hour"],
-            minute=df["minute"],
-            second=np.floor(df["second"]).astype(int),
-        ),
+        {
+            "year": df["year"],
+            "month": df["month"],
+            "day": df["day"],
+            "hour": df["hour"],
+            "minute": df["minute"],
+            "second": np.floor(df["second"]).astype(int),
+        },
         utc=True,
         errors="coerce",
     )
     frac_seconds = (df["second"] - np.floor(df["second"])).fillna(0.0)
     timestamp = timestamp + pd.to_timedelta(frac_seconds, unit="s")
     df["timestamp"] = timestamp
-    df = df.dropna(subset=["timestamp", "aircraft_id", "altitude_ft", "ground_speed_kts", "heading_deg"]).copy()
+    df = df.dropna(
+        subset=["timestamp", "aircraft_id", "altitude_ft", "ground_speed_kts", "heading_deg"]
+    ).copy()
     df = df.sort_values(["aircraft_id", "timestamp"]).reset_index(drop=True)
     return df
 
@@ -166,7 +167,9 @@ def convert_adsb_to_runtime_frame(df: pd.DataFrame) -> pd.DataFrame:
         "fuel_proxy_kind",
         "source_dataset",
     ]
-    runtime = runtime[cols].dropna(subset=["altitude_m", "airspeed_kt", "bank_angle_deg"]).reset_index(drop=True)
+    runtime = (
+        runtime[cols].dropna(subset=["altitude_m", "airspeed_kt", "bank_angle_deg"]).reset_index(drop=True)
+    )
     return runtime
 
 
@@ -249,7 +252,9 @@ def _summary_rows(frame: pd.DataFrame) -> tuple[dict[str, object], list[dict[str
     return summary, rows
 
 
-def _write_runtime_artifacts(summary: dict[str, object], runtime_rows: list[dict[str, object]], frame: pd.DataFrame) -> None:
+def _write_runtime_artifacts(
+    summary: dict[str, object], runtime_rows: list[dict[str, object]], frame: pd.DataFrame
+) -> None:
     PUBLICATION_DIR.mkdir(parents=True, exist_ok=True)
     write_json(SUMMARY_JSON, summary)
 
@@ -300,7 +305,9 @@ def _write_runtime_artifacts(summary: dict[str, object], runtime_rows: list[dict
 
     diag = frame.copy()
     diag["speed_bucket"] = pd.cut(diag["airspeed_kt"], bins=[0, 120, 240, 360, 600], include_lowest=True)
-    diag["altitude_bucket"] = pd.cut(diag["altitude_m"], bins=[0, 1500, 6000, 12000, 20000], include_lowest=True)
+    diag["altitude_bucket"] = pd.cut(
+        diag["altitude_m"], bins=[0, 1500, 6000, 12000, 20000], include_lowest=True
+    )
     diag_rows = (
         diag.groupby(["speed_bucket", "altitude_bucket"], observed=False)
         .agg(
@@ -397,8 +404,12 @@ def build_public_runtime(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build bounded public-flight aerospace runtime artifacts")
     parser.add_argument("--external-root", type=Path, default=None, help="Override ORIUS_EXTERNAL_DATA_ROOT")
-    parser.add_argument("--out", type=Path, default=PROCESSED_CSV, help="Processed public-flight runtime CSV output")
-    parser.add_argument("--download", action="store_true", help="Force a fresh Hugging Face snapshot download")
+    parser.add_argument(
+        "--out", type=Path, default=PROCESSED_CSV, help="Processed public-flight runtime CSV output"
+    )
+    parser.add_argument(
+        "--download", action="store_true", help="Force a fresh Hugging Face snapshot download"
+    )
     args = parser.parse_args()
 
     try:

@@ -15,12 +15,13 @@ References:
     Bifet, A. & Gavalda, R. (2007). Learning from time-changing data with
     adaptive windowing. SIAM International Conference on Data Mining.
 """
+
 from __future__ import annotations
 
 import math
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Any, Deque, Dict
+from typing import Any
 
 
 @dataclass
@@ -41,7 +42,7 @@ class PageHinkleyDetector:
     min_cumulative_sum: float = 0.0
     cooldown_remaining: int = 0
 
-    def update(self, r_t: float) -> Dict[str, float | bool | int]:
+    def update(self, r_t: float) -> dict[str, float | bool | int]:
         value = float(r_t)
         self.count += 1
 
@@ -72,7 +73,7 @@ class PageHinkleyDetector:
             "mean_residual": float(self.mean),
         }
 
-    def to_state(self) -> Dict[str, Any]:
+    def to_state(self) -> dict[str, Any]:
         return {
             "delta": float(self.delta),
             "threshold": float(self.threshold),
@@ -86,7 +87,9 @@ class PageHinkleyDetector:
         }
 
     @classmethod
-    def from_state(cls, state: Dict[str, Any] | None, cfg: Dict[str, Any] | None = None) -> "PageHinkleyDetector":
+    def from_state(
+        cls, state: dict[str, Any] | None, cfg: dict[str, Any] | None = None
+    ) -> PageHinkleyDetector:
         cfg = cfg or {}
         detector = cls(
             delta=float(cfg.get("ph_delta", 0.01)),
@@ -138,7 +141,7 @@ class AdaptivePageHinkleyDetector:
             cooldown_steps=self.cooldown_steps,
         )
 
-    def update(self, r_t: float) -> Dict[str, float | bool | int]:
+    def update(self, r_t: float) -> dict[str, float | bool | int]:
         value = float(r_t)
         self._count += 1
         old_mean = self._running_mean
@@ -156,7 +159,7 @@ class AdaptivePageHinkleyDetector:
         result["adaptive_threshold"] = float(adaptive_threshold)
         return result
 
-    def to_state(self) -> Dict[str, Any]:
+    def to_state(self) -> dict[str, Any]:
         inner_state = self._inner.to_state()
         inner_state["base_threshold"] = self.base_threshold
         inner_state["k_var"] = self.k_var
@@ -166,7 +169,9 @@ class AdaptivePageHinkleyDetector:
         return inner_state
 
     @classmethod
-    def from_state(cls, state: Dict[str, Any] | None, cfg: Dict[str, Any] | None = None) -> "AdaptivePageHinkleyDetector":
+    def from_state(
+        cls, state: dict[str, Any] | None, cfg: dict[str, Any] | None = None
+    ) -> AdaptivePageHinkleyDetector:
         cfg = cfg or {}
         detector = cls(
             base_threshold=float(cfg.get("ph_lambda", 5.0)),
@@ -219,11 +224,11 @@ class ADWINDetector:
     max_window: int = 1200
     min_window: int = 32
     cooldown_steps: int = 24
-    _window: Deque[float] = field(default_factory=deque, repr=False)
+    _window: deque[float] = field(default_factory=deque, repr=False)
     _count: int = 0
     _cooldown_remaining: int = 0
 
-    def update(self, r_t: float) -> Dict[str, float | bool | int]:
+    def update(self, r_t: float) -> dict[str, float | bool | int]:
         """
         Ingest one residual sample and return drift status.
 
@@ -296,8 +301,8 @@ class ADWINDetector:
 
             # Variance estimate: V[W] ≤ (max - min)^2 / 4 (range-based bound)
             # We use per-sub-window variance for tighter bound
-            var0 = max(0.0, prefix_sq / n0 - mean0 ** 2)
-            var1 = max(0.0, (total_sq - prefix_sq) / n1 - mean1 ** 2)
+            var0 = max(0.0, prefix_sq / n0 - mean0**2)
+            var1 = max(0.0, (total_sq - prefix_sq) / n1 - mean1**2)
 
             # Hoeffding-style ε_cut (Bifet & Gavalda eq. 1):
             # ε_cut = sqrt((var_pool * 2 / m) * ln(4n² / delta))
@@ -323,7 +328,7 @@ class ADWINDetector:
 
         return False, max_diff
 
-    def to_state(self) -> Dict[str, Any]:
+    def to_state(self) -> dict[str, Any]:
         return {
             "delta": float(self.delta),
             "max_window": int(self.max_window),
@@ -335,7 +340,7 @@ class ADWINDetector:
         }
 
     @classmethod
-    def from_state(cls, state: Dict[str, Any] | None, cfg: Dict[str, Any] | None = None) -> "ADWINDetector":
+    def from_state(cls, state: dict[str, Any] | None, cfg: dict[str, Any] | None = None) -> ADWINDetector:
         cfg = cfg or {}
         detector = cls(
             delta=float(cfg.get("adwin_delta", 0.002)),
@@ -355,7 +360,7 @@ class ADWINDetector:
         return detector
 
 
-def make_detector(cfg: Dict[str, Any] | None = None) -> "PageHinkleyDetector | ADWINDetector":
+def make_detector(cfg: dict[str, Any] | None = None) -> PageHinkleyDetector | ADWINDetector:
     """
     Factory: instantiate either PageHinkley or ADWIN based on cfg['detector'].
 
@@ -374,4 +379,4 @@ def make_detector(cfg: Dict[str, Any] | None = None) -> "PageHinkleyDetector | A
     return PageHinkleyDetector.from_state(None, cfg)
 
 
-__all__ = ["PageHinkleyDetector", "ADWINDetector", "make_detector"]
+__all__ = ["ADWINDetector", "PageHinkleyDetector", "make_detector"]

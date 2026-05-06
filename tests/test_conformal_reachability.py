@@ -1,7 +1,6 @@
 """Tests for Paper 2 conformal reachability propagation."""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from orius.dc3s.reachability import (
     compute_expiration_bound,

@@ -1,11 +1,12 @@
 """Run a single in-process DC3S demo step and verify certificate audit retrieval."""
+
 from __future__ import annotations
 
 import json
 import math
 import sys
 from contextlib import ExitStack
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -23,12 +24,14 @@ from services.api.main import app
 from services.api.routers import dc3s as dc3s_router
 
 
-def _predict_target(*, target: str, horizon: int, features_df: pd.DataFrame, forecast_cfg: dict, required: bool):
+def _predict_target(
+    *, target: str, horizon: int, features_df: pd.DataFrame, forecast_cfg: dict, required: bool
+):
     idx = np.arange(horizon, dtype=float)
     if target == "load_mw":
         y = 52.0 + 4.0 * np.sin((2.0 * math.pi * idx / 24.0) - 0.4)
     elif target == "wind_mw":
-        y = 8.0 + 1.8 * np.sin((2.0 * math.pi * (idx + 4.0) / 24.0))
+        y = 8.0 + 1.8 * np.sin(2.0 * math.pi * (idx + 4.0) / 24.0)
     else:
         y = np.maximum(0.0, 4.0 * np.sin(math.pi * ((idx % 24.0) - 6.0) / 12.0))
     return np.asarray(y, dtype=float), Path(f"demo_{target}.bin")
@@ -40,14 +43,16 @@ def main() -> None:
     with ExitStack() as stack:
         stack.enter_context(patch.object(dc3s_router, "_load_features_df", return_value=features_df))
         stack.enter_context(patch.object(dc3s_router, "_predict_target", side_effect=_predict_target))
-        stack.enter_context(patch.object(dc3s_router, "_resolve_conformal_q", return_value=np.full(24, 4.0, dtype=float)))
+        stack.enter_context(
+            patch.object(dc3s_router, "_resolve_conformal_q", return_value=np.full(24, 4.0, dtype=float))
+        )
 
         payload = {
             "device_id": "demo-device-001",
             "zone_id": "DE",
             "current_soc_mwh": 1.0,
             "telemetry_event": {
-                "ts_utc": datetime.now(timezone.utc).isoformat(),
+                "ts_utc": datetime.now(UTC).isoformat(),
                 "load_mw": 52.0,
                 "renewables_mw": 12.0,
             },

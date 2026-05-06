@@ -10,6 +10,7 @@ Produces:
 
 Step 2.1 (runtime trace): run_paper2_runtime_horizon_trace.py
 """
+
 from __future__ import annotations
 
 import subprocess

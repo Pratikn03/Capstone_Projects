@@ -4,6 +4,7 @@
 Run before build to ensure all PaperFigure references resolve. Uses fallbacks
 when primary source is missing.
 """
+
 from __future__ import annotations
 
 import shutil
@@ -20,15 +21,41 @@ EIA930 = REPO / "reports" / "eia930" / "figures"
 FIGURE_MAP: dict[str, list[Path]] = {
     "FIG01_ARCHITECTURE": [PAPER_FIG / "fig01_architecture.png", REP_FIG / "architecture.png"],
     "FIG02_DC3S_STEP": [PUB / "figures" / "fig02_dc3s_step.png", REP_FIG / "dispatch_compare.png"],
-    "FIG03_TRUE_SOC_VIOLATION": [PUB / "fig_true_soc_violation_vs_dropout.png", PAPER_FIG / "fig03_true_soc_violation_vs_dropout.png"],
-    "FIG04_TRUE_SOC_SEVERITY": [PUB / "fig_true_soc_severity_p95_vs_dropout.png", PAPER_FIG / "fig04_true_soc_severity_p95_vs_dropout.png"],
-    "FIG05_CQR_GROUP_COVERAGE": [PUB / "fig_cqr_group_coverage.png", PUB / "fig_coverage_width.png", PAPER_FIG / "fig05_cqr_group_coverage.png"],
+    "FIG03_TRUE_SOC_VIOLATION": [
+        PUB / "fig_true_soc_violation_vs_dropout.png",
+        PAPER_FIG / "fig03_true_soc_violation_vs_dropout.png",
+    ],
+    "FIG04_TRUE_SOC_SEVERITY": [
+        PUB / "fig_true_soc_severity_p95_vs_dropout.png",
+        PAPER_FIG / "fig04_true_soc_severity_p95_vs_dropout.png",
+    ],
+    "FIG05_CQR_GROUP_COVERAGE": [
+        PUB / "fig_cqr_group_coverage.png",
+        PUB / "fig_coverage_width.png",
+        PAPER_FIG / "fig05_cqr_group_coverage.png",
+    ],
     "FIG06_TRANSFER_COVERAGE": [PUB / "fig_transfer_coverage.png", PAPER_FIG / "fig06_transfer_coverage.png"],
-    "FIG07_COST_SAFETY_FRONTIER": [PUB / "fig_cost_safety_pareto.png", PAPER_FIG / "fig07_cost_safety_frontier.png"],
-    "FIG08_RAC_SENSITIVITY_WIDTH": [PUB / "fig_rac_sensitivity_vs_width.png", PUB / "fig_coverage_width_tradeoff.png", PAPER_FIG / "fig08_rac_sensitivity_vs_width.png"],
-    "FIG09_REGION_DATASET_CARDS": [PUB / "fig_region_dataset_cards.png", PAPER_FIG / "fig09_region_dataset_cards.png"],
-    "FIG10_CALIBRATION_TRADEOFF": [PUB / "fig_calibration_tradeoff.png", PAPER_FIG / "fig10_calibration_tradeoff.png"],
-    "FIG11_TRANSFER_GENERALIZATION": [PUB / "fig_transfer_generalization.png", PAPER_FIG / "fig11_transfer_generalization.png"],
+    "FIG07_COST_SAFETY_FRONTIER": [
+        PUB / "fig_cost_safety_pareto.png",
+        PAPER_FIG / "fig07_cost_safety_frontier.png",
+    ],
+    "FIG08_RAC_SENSITIVITY_WIDTH": [
+        PUB / "fig_rac_sensitivity_vs_width.png",
+        PUB / "fig_coverage_width_tradeoff.png",
+        PAPER_FIG / "fig08_rac_sensitivity_vs_width.png",
+    ],
+    "FIG09_REGION_DATASET_CARDS": [
+        PUB / "fig_region_dataset_cards.png",
+        PAPER_FIG / "fig09_region_dataset_cards.png",
+    ],
+    "FIG10_CALIBRATION_TRADEOFF": [
+        PUB / "fig_calibration_tradeoff.png",
+        PAPER_FIG / "fig10_calibration_tradeoff.png",
+    ],
+    "FIG11_TRANSFER_GENERALIZATION": [
+        PUB / "fig_transfer_generalization.png",
+        PAPER_FIG / "fig11_transfer_generalization.png",
+    ],
     "FIG12_GEOGRAPHIC_SCOPE": [PAPER_FIG / "fig12_geographic_scope.png"],
     "FIG13_LOAD_RENEWABLE_PROFILES": [PAPER_FIG / "fig13_load_renewable_profiles.png"],
     "FIG14_FORECAST_VS_ACTUAL": [REP_FIG / "forecast_sample.png", REP_FIG / "forecast_vs_actual_load.png"],
@@ -44,7 +71,10 @@ FIGURE_MAP: dict[str, list[Path]] = {
     "FIG24_REGRET_PERTURBATION": [REP_FIG / "robustness_regret_boxplot.png"],
     "FIG25_DATA_DRIFT": [REP_FIG / "data_drift_ks_over_time.png"],
     "FIG26_ABLATION_SENSITIVITY": [PUB / "ablation_sensitivity.png"],
-    "FIG27_VIOLATION_VS_COST": [PUB / "sweeps" / "runs" / "alpha0=0.1__ph_lambda=5__kpen=0.5" / "violation_vs_cost_curve.png", REP_FIG / "impact_savings.png"],
+    "FIG27_VIOLATION_VS_COST": [
+        PUB / "sweeps" / "runs" / "alpha0=0.1__ph_lambda=5__kpen=0.5" / "violation_vs_cost_curve.png",
+        REP_FIG / "impact_savings.png",
+    ],
     "FIG28_DISTRIBUTIONAL_VS_CQR": [PUB / "fig_coverage_width.png"],
     "FIG29_CROSS_REGION_TRANSFER": [PUB / "cross_region_transfer.png", REP_FIG / "fig_transfer_coverage.png"],
     "FIG30_VIOLATION_RATE": [PUB / "fig_true_soc_violation_vs_dropout.png"],
@@ -63,7 +93,10 @@ FIGURE_MAP: dict[str, list[Path]] = {
     "FIG43_INTERVAL_WIDTH_BY_HORIZON": [REP_FIG / "interval_width_by_horizon.png"],
     "FIG44_DATA_DRIFT_KS": [REP_FIG / "data_drift_ks_over_time.png"],
     "FIG45_MODEL_DRIFT_METRIC": [REP_FIG / "model_drift_metric_over_time.png"],
-    "FIG46_ORIUS_PROGRAM": [PAPER_FIG / "fig46_orius_program_spine.png", PUB / "fig46_orius_program_spine.png"],
+    "FIG46_ORIUS_PROGRAM": [
+        PAPER_FIG / "fig46_orius_program_spine.png",
+        PUB / "fig46_orius_program_spine.png",
+    ],
     "FIG47_ERROR_DISTRIBUTION": [REP_FIG / "error_distribution_residuals.png"],
     "FIG48_SEASONALITY_ERROR_HEATMAP": [REP_FIG / "seasonality_error_heatmap.png"],
     "FIG49_ROBUSTNESS_REGRET_BOXPLOT": [REP_FIG / "robustness_regret_boxplot.png"],
@@ -72,7 +105,10 @@ FIGURE_MAP: dict[str, list[Path]] = {
     "FIG52_COST_CARBON_DETAIL": [REP_FIG / "cost_vs_carbon_tradeoff.png"],
     "FIG53_CASE_STUDY_DISPATCH": [REP_FIG / "case_study_dispatch.png", PAPER_FIG / "fig_48h_trace.png"],
     "FIG54_CASE_STUDY_WEEK": [REP_FIG / "case_study_week.png", EIA930 / "case_study_week.png"],
-    "FIG55_MULTI_HORIZON_BACKTEST": [REP_FIG / "multi_horizon_backtest.png", EIA930 / "multi_horizon_backtest.png"],
+    "FIG55_MULTI_HORIZON_BACKTEST": [
+        REP_FIG / "multi_horizon_backtest.png",
+        EIA930 / "multi_horizon_backtest.png",
+    ],
     "FIG56_USA_DATA_QUALITY": [REP_FIG / "usa_data_quality_deepdive.png"],
     "FIG57_GAP_HOURLY_PROFILES": [REP_FIG / "gap_hourly_profiles.png"],
     "FIG58_GAP_DISTRIBUTION": [PAPER_FIG / "fig58_gap_distribution.png"],

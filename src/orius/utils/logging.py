@@ -1,4 +1,5 @@
 """Utilities: structured logging setup."""
+
 from __future__ import annotations
 
 import json
@@ -6,11 +7,11 @@ import logging
 import os
 import sys
 from datetime import datetime
-from typing import Optional
 
 
 class JsonFormatter(logging.Formatter):
     """Format log records as compact JSON."""
+
     def format(self, record: logging.LogRecord) -> str:
         payload = {
             "ts": datetime.utcfromtimestamp(record.created).isoformat() + "Z",
@@ -27,10 +28,10 @@ class JsonFormatter(logging.Formatter):
 
 def setup_logging(
     *,
-    log_level: Optional[str] = None,
-    log_format: Optional[str] = None,
-    stream: Optional[object] = None,
-    file_path: Optional[str] = None,
+    log_level: str | None = None,
+    log_format: str | None = None,
+    stream: object | None = None,
+    file_path: str | None = None,
 ) -> None:
     """Configure root logging with optional JSON output."""
     level_name = (log_level or os.getenv("ORIUS_LOG_LEVEL", "INFO")).upper()
@@ -45,7 +46,11 @@ def setup_logging(
     root.setLevel(level)
     root.handlers = []
 
-    formatter = JsonFormatter() if use_json else logging.Formatter("[%(asctime)s] %(levelname)s %(name)s: %(message)s")
+    formatter = (
+        JsonFormatter()
+        if use_json
+        else logging.Formatter("[%(asctime)s] %(levelname)s %(name)s: %(message)s")
+    )
     stream_handler = logging.StreamHandler(stream or sys.stdout)
     stream_handler.setFormatter(formatter)
     stream_handler.setLevel(level)

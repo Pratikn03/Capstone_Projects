@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build tbl04 from existing cross_region_transfer.csv data."""
+
 import sys
 from pathlib import Path
 
@@ -33,15 +34,17 @@ for scenario in ["drift_combo", "nominal", "dropout"]:
             cost_delta_pct=("cost_delta_pct", "mean"),
         )
         for _, r in agg.iterrows():
-            rows.append({
-                "transfer_case": case,
-                "source_artifact": r["controller"],
-                "picp_90": r["picp_90"],
-                "mean_width": r["mean_width"],
-                "true_soc_violation_rate": r["true_soc_violation_rate"],
-                "true_soc_violation_severity_p95_mwh": r["true_soc_violation_severity_p95_mwh"],
-                "cost_delta_pct": r["cost_delta_pct"],
-            })
+            rows.append(
+                {
+                    "transfer_case": case,
+                    "source_artifact": r["controller"],
+                    "picp_90": r["picp_90"],
+                    "mean_width": r["mean_width"],
+                    "true_soc_violation_rate": r["true_soc_violation_rate"],
+                    "true_soc_violation_severity_p95_mwh": r["true_soc_violation_severity_p95_mwh"],
+                    "cost_delta_pct": r["cost_delta_pct"],
+                }
+            )
 
 tbl = pd.DataFrame(rows)
 print(tbl.to_string(index=False))
@@ -54,15 +57,26 @@ print(f"CSV -> {csv_path}")
 
 # Update reports/publication files
 full = df[df["scenario"].isin(["drift_combo", "nominal", "dropout"])].copy()
-cols = ["scenario", "seed", "controller", "picp_90", "mean_interval_width",
-        "true_soc_violation_rate", "true_soc_violation_severity_p95_mwh",
-        "cost_delta_pct", "region"]
+cols = [
+    "scenario",
+    "seed",
+    "controller",
+    "picp_90",
+    "mean_interval_width",
+    "true_soc_violation_rate",
+    "true_soc_violation_severity_p95_mwh",
+    "cost_delta_pct",
+    "region",
+]
 full_out = full[cols].copy()
-full_out.rename(columns={
-    "scenario": "transfer_case",
-    "controller": "source_artifact",
-    "mean_interval_width": "mean_width",
-}, inplace=True)
+full_out.rename(
+    columns={
+        "scenario": "transfer_case",
+        "controller": "source_artifact",
+        "mean_interval_width": "mean_width",
+    },
+    inplace=True,
+)
 full_out["transfer_case"] = full_out["region"] + "_" + full_out["transfer_case"]
 full_out.drop(columns=["region"], inplace=True)
 full_out.to_csv(REPO / "reports/publication/transfer_stress.csv", index=False, float_format="%.6f")
@@ -87,18 +101,20 @@ lines = [
 for _, row in tbl.iterrows():
     case = str(row["transfer_case"]).replace("_", r"\_")
     ctrl = str(row["source_artifact"]).replace("_", r"\_")
-    picp = f'{float(row["picp_90"]):.3f}'
-    width = f'{float(row["mean_width"]):.1f}'
-    viol = f'{float(row["true_soc_violation_rate"]):.4f}'
-    sev = f'{float(row["true_soc_violation_severity_p95_mwh"]):.3f}'
-    cost = f'{float(row["cost_delta_pct"]):.3f}'
+    picp = f"{float(row['picp_90']):.3f}"
+    width = f"{float(row['mean_width']):.1f}"
+    viol = f"{float(row['true_soc_violation_rate']):.4f}"
+    sev = f"{float(row['true_soc_violation_severity_p95_mwh']):.3f}"
+    cost = f"{float(row['cost_delta_pct']):.3f}"
     lines.append(f"{case} & {ctrl} & {picp} & {width} & {viol} & {sev} & {cost} \\\\")
-lines.extend([
-    r"\bottomrule",
-    r"\end{tabular}",
-    r"}",
-    r"\end{table}",
-])
+lines.extend(
+    [
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"}",
+        r"\end{table}",
+    ]
+)
 
 tex_path = REPO / "paper/assets/tables/generated/tbl04_transfer_stress.tex"
 tex_path.write_text("\n".join(lines), encoding="utf-8")

@@ -4,9 +4,11 @@ Paper 5 first domain: two or more batteries sharing feeder capacity.
 Local DC3S certificates do not auto-compose — joint net power must
 respect the shared transformer limit.
 """
+
 from __future__ import annotations
 
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -30,7 +32,7 @@ class SharedFeederPlant:
         self._last_executed: list[Mapping[str, Any]] = []
 
     def reset(self, seed: int = 42) -> Mapping[str, Any]:
-        rng = np.random.default_rng(seed)
+        np.random.default_rng(seed)
         self._socs = []
         self._last_net = []
         for b in self._batteries:
@@ -62,22 +64,21 @@ class SharedFeederPlant:
 
         charges = []
         discharges = []
-        for i, a in enumerate(actions):
+        for a in actions:
             c = max(0.0, float(a.get("charge_mw", 0)))
             d = max(0.0, float(a.get("discharge_mw", 0)))
             charges.append(c)
             discharges.append(d)
 
         # Shared constraint: total net export <= feeder_capacity
-        total_net = sum(d - c for c, d in zip(charges, discharges))
+        total_net = sum(d - c for c, d in zip(charges, discharges, strict=False))
         if total_net > self._feeder_capacity + 1e-9:
             scale = self._feeder_capacity / total_net
             charges = [c * scale for c in charges]
             discharges = [d * scale for d in discharges]
 
         self._last_executed = [
-            {"charge_mw": c, "discharge_mw": d}
-            for c, d in zip(charges, discharges)
+            {"charge_mw": c, "discharge_mw": d} for c, d in zip(charges, discharges, strict=False)
         ]
 
         # Update SOCs

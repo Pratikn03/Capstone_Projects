@@ -1,4 +1,5 @@
 """Comprehensive tests for DC3S guarantee checks and safety filter theory."""
+
 from __future__ import annotations
 
 import pytest
@@ -67,23 +68,43 @@ class TestPowerBounds:
 
 class TestNextSoc:
     def test_charge_increases(self):
-        soc_val = next_soc(current_soc=50.0, action={"charge_mw": 10.0, "discharge_mw": 0.0},
-                            dt_hours=1.0, charge_efficiency=0.95, discharge_efficiency=0.95)
+        soc_val = next_soc(
+            current_soc=50.0,
+            action={"charge_mw": 10.0, "discharge_mw": 0.0},
+            dt_hours=1.0,
+            charge_efficiency=0.95,
+            discharge_efficiency=0.95,
+        )
         assert soc_val == pytest.approx(50.0 + 0.95 * 10.0)
 
     def test_discharge_decreases(self):
-        soc_val = next_soc(current_soc=50.0, action={"charge_mw": 0.0, "discharge_mw": 10.0},
-                            dt_hours=1.0, charge_efficiency=0.95, discharge_efficiency=0.95)
+        soc_val = next_soc(
+            current_soc=50.0,
+            action={"charge_mw": 0.0, "discharge_mw": 10.0},
+            dt_hours=1.0,
+            charge_efficiency=0.95,
+            discharge_efficiency=0.95,
+        )
         assert soc_val == pytest.approx(50.0 - 10.0 / 0.95)
 
     def test_no_action_preserves(self):
-        soc_val = next_soc(current_soc=50.0, action={"charge_mw": 0.0, "discharge_mw": 0.0},
-                            dt_hours=1.0, charge_efficiency=0.95, discharge_efficiency=0.95)
+        soc_val = next_soc(
+            current_soc=50.0,
+            action={"charge_mw": 0.0, "discharge_mw": 0.0},
+            dt_hours=1.0,
+            charge_efficiency=0.95,
+            discharge_efficiency=0.95,
+        )
         assert soc_val == pytest.approx(50.0)
 
     def test_dt_hours_scaling(self):
-        soc_val = next_soc(current_soc=50.0, action={"charge_mw": 10.0, "discharge_mw": 0.0},
-                            dt_hours=0.5, charge_efficiency=1.0, discharge_efficiency=1.0)
+        soc_val = next_soc(
+            current_soc=50.0,
+            action={"charge_mw": 10.0, "discharge_mw": 0.0},
+            dt_hours=0.5,
+            charge_efficiency=1.0,
+            discharge_efficiency=1.0,
+        )
         assert soc_val == pytest.approx(50.0 + 5.0)
 
 
@@ -93,20 +114,20 @@ class TestSocInvariance:
 
     def test_exceed_max_fails(self):
         assert not check_soc_invariance(
-            89.0, {"charge_mw": 50.0, "discharge_mw": 0.0},
+            89.0,
+            {"charge_mw": 50.0, "discharge_mw": 0.0},
             _constraints(charge_efficiency=1.0),
         )
 
     def test_below_min_fails(self):
         assert not check_soc_invariance(
-            11.0, {"charge_mw": 0.0, "discharge_mw": 50.0},
+            11.0,
+            {"charge_mw": 0.0, "discharge_mw": 50.0},
             _constraints(discharge_efficiency=1.0),
         )
 
     def test_boundary_ok(self):
-        assert check_soc_invariance(
-            50.0, {"charge_mw": 0.0, "discharge_mw": 0.0}, _constraints()
-        )
+        assert check_soc_invariance(50.0, {"charge_mw": 0.0, "discharge_mw": 0.0}, _constraints())
 
 
 class TestEvaluateGuaranteeChecks:
@@ -196,7 +217,10 @@ class TestTightenedSocInvariance:
         action = {"charge_mw": 5.0, "discharge_mw": 0.0}
         basic = check_soc_invariance(40.0, action, _constraints())
         tight = check_tightened_soc_invariance(
-            current_soc_obs=40.0, action=action, constraints=_constraints(), error_bound_mwh=0.0,
+            current_soc_obs=40.0,
+            action=action,
+            constraints=_constraints(),
+            error_bound_mwh=0.0,
         )
         assert tight["observed_safe"] is basic
         assert tight["true_safe_if_bound_holds"] is basic

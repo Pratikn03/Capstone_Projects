@@ -1,11 +1,12 @@
 """Download SMARD generation mix and compute hourly carbon intensity."""
+
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Iterable
 import sys
+from collections.abc import Iterable
+from datetime import UTC, datetime
+from pathlib import Path
 
 import pandas as pd
 import yaml
@@ -16,7 +17,6 @@ if str(repo_root / "src") not in sys.path:
 
 from orius.utils.logging import get_logger
 from orius.utils.net import get_session
-
 
 SMARD_BASE = "https://www.smard.de/app/chart_data"
 
@@ -39,7 +39,7 @@ SMARD_FILTERS = {
 
 def _to_ms(dt: datetime) -> int:
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     return int(dt.timestamp() * 1000)
 
 
@@ -88,7 +88,9 @@ def _fetch_index(session, filter_id: str, region: str, resolution: str = "hour")
     return [int(x) for x in stamps]
 
 
-def _fetch_series(session, filter_id: str, region: str, resolution: str, timestamp: int) -> list[tuple[int, float]]:
+def _fetch_series(
+    session, filter_id: str, region: str, resolution: str, timestamp: int
+) -> list[tuple[int, float]]:
     url = f"{SMARD_BASE}/{filter_id}/{region}/{filter_id}_{region}_{resolution}_{timestamp}.json"
     resp = session.get(url, timeout=60)
     resp.raise_for_status()
@@ -148,8 +150,12 @@ def main() -> None:
     ap.add_argument("--start", required=True, help="Start datetime (ISO 8601, UTC)")
     ap.add_argument("--end", required=True, help="End datetime (ISO 8601, UTC)")
     ap.add_argument("--out", default="data/raw/carbon_signals.csv")
-    ap.add_argument("--factors", default="configs/carbon_factors.yaml", help="YAML file with emission factors")
-    ap.add_argument("--include-pumped", action="store_true", help="Include pumped storage in total generation")
+    ap.add_argument(
+        "--factors", default="configs/carbon_factors.yaml", help="YAML file with emission factors"
+    )
+    ap.add_argument(
+        "--include-pumped", action="store_true", help="Include pumped storage in total generation"
+    )
     ap.add_argument("--cache-dir", default=None, help="Optional cache directory for raw series")
     ap.add_argument("--retries", type=int, default=3, help="HTTP retry attempts")
     ap.add_argument("--backoff", type=float, default=0.5, help="Retry backoff factor (seconds)")

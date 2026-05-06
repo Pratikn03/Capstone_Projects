@@ -8,9 +8,9 @@ Outputs:
   - reports/publication/blackout_study.csv
   - reports/publication/fig_blackout_halflife.png
 """
+
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -20,18 +20,22 @@ for p in (REPO_ROOT, REPO_ROOT / "src"):
         sys.path.insert(0, str(p))
 
 import os
+
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from orius.cpsbench_iot.scenarios import generate_episode
 from orius.cpsbench_iot.plant import BatteryPlant
 from orius.cpsbench_iot.runner import (
-    _load_optimization_cfg, _load_dc3s_cfg, _battery_constraints,
+    _battery_constraints,
+    _load_dc3s_cfg,
+    _load_optimization_cfg,
 )
+from orius.cpsbench_iot.scenarios import generate_episode
 
 
 def run_blackout_study(
@@ -45,14 +49,18 @@ def run_blackout_study(
         blackout_durations = [0, 1, 4, 12, 24, 48]
 
     from orius.cpsbench_iot.runner import (
-        _load_dc3s_cfg, _DC3SLoopState, _controller_step_dc3s,
-        _to_telemetry_events, _soc_fault_config_for_episode,
+        _controller_step_dc3s,
+        _DC3SLoopState,
+        _soc_fault_config_for_episode,
+        _to_telemetry_events,
     )
-    from orius.dc3s.drift import PageHinkleyDetector
     from orius.cpsbench_iot.telemetry_soc import SOCTelemetryChannel
+    from orius.dc3s.drift import PageHinkleyDetector
 
     x_obs, x_true, event_log = generate_episode(
-        scenario=scenario, seed=seed, horizon=horizon,
+        scenario=scenario,
+        seed=seed,
+        horizon=horizon,
     )
     optimization_cfg = _load_optimization_cfg()
     dc3s_cfg = _load_dc3s_cfg()
@@ -77,7 +85,10 @@ def run_blackout_study(
     )
     soc_channel_pre = SOCTelemetryChannel(
         _soc_fault_config_for_episode(
-            scenario=scenario, event_log=event_log, seed=seed, fault_overrides=None,
+            scenario=scenario,
+            event_log=event_log,
+            seed=seed,
+            fault_overrides=None,
         )
     )
     dc3s_state = _DC3SLoopState(
@@ -93,16 +104,20 @@ def run_blackout_study(
         current_true_soc = float(plant_pre.soc_mwh)
         observed_soc, _ = soc_channel_pre.observe(current_true_soc)
         step = _controller_step_dc3s(
-            load_window=load_obs[t:n], renew_window=renew_obs[t:n],
-            price_window=price[t:n], carbon_window=carbon[t:n],
+            load_window=load_obs[t:n],
+            renew_window=renew_obs[t:n],
+            price_window=price[t:n],
+            carbon_window=carbon[t:n],
             load_true_t=float(load_true[t]),
             observed_soc_mwh=float(observed_soc),
             current_true_soc_mwh=current_true_soc,
             telemetry_event=telemetry_events[t],
-            optimization_cfg=optimization_cfg, dc3s_cfg=dc3s_cfg,
+            optimization_cfg=optimization_cfg,
+            dc3s_cfg=dc3s_cfg,
             state=dc3s_state,
             command_id=f"blackout-{seed}-{t:04d}",
-            controller_name="dc3s_ftit", law_override="ftit_ro",
+            controller_name="dc3s_ftit",
+            law_override="ftit_ro",
         )
         last_safe_charge = float(step["safe_charge_mw"])
         last_safe_discharge = float(step["safe_discharge_mw"])
@@ -126,7 +141,7 @@ def run_blackout_study(
         coverage_count = 0
         total_after = min(duration, horizon - freeze_step)
 
-        for dt_step in range(total_after):
+        for _dt_step in range(total_after):
             plant.step(charge_mw=last_safe_charge, discharge_mw=last_safe_discharge)
             viol = plant.violation()
             if viol["violated"]:
@@ -139,17 +154,19 @@ def run_blackout_study(
         sev_p95 = float(np.quantile(severities, 0.95)) if severities else 0.0
         coverage = coverage_count / max(total_after, 1)
 
-        rows.append({
-            "blackout_hours": duration,
-            "frozen_charge_mw": round(last_safe_charge, 2),
-            "frozen_discharge_mw": round(last_safe_discharge, 2),
-            "soc_at_freeze_mwh": round(soc_at_freeze, 2),
-            "tsvr_pct": round(tsvr * 100, 2),
-            "sev_p95_mwh": round(sev_p95, 3),
-            "coverage_pct": round(coverage * 100, 1),
-            "total_steps": total_after,
-            "violations": violations,
-        })
+        rows.append(
+            {
+                "blackout_hours": duration,
+                "frozen_charge_mw": round(last_safe_charge, 2),
+                "frozen_discharge_mw": round(last_safe_discharge, 2),
+                "soc_at_freeze_mwh": round(soc_at_freeze, 2),
+                "tsvr_pct": round(tsvr * 100, 2),
+                "sev_p95_mwh": round(sev_p95, 3),
+                "coverage_pct": round(coverage * 100, 1),
+                "total_steps": total_after,
+                "violations": violations,
+            }
+        )
 
     return pd.DataFrame(rows)
 

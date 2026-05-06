@@ -1,4 +1,5 @@
 """Residual-stream monitoring for uncertainty validity state."""
+
 from __future__ import annotations
 
 from collections import deque
@@ -47,7 +48,9 @@ class ResidualValidityMonitor:
 
         # Separate telemetry vs uncertainty validity diagnostics.
         telemetry_bad = bool(telemetry_degraded)
-        uq_bad = bool(drift.get("drift", False) or err_rate >= self.error_rate_threshold or subgroup_gap > 0.05)
+        uq_bad = bool(
+            drift.get("drift", False) or err_rate >= self.error_rate_threshold or subgroup_gap > 0.05
+        )
 
         score = 1.0
         score -= min(max(norm / 5.0, 0.0), 0.35)
@@ -69,7 +72,13 @@ class ResidualValidityMonitor:
         else:
             self._status_streak = 1
             self._last_status = status
-        confirmed_status = status if self._status_streak >= max(1, int(self.sustained_steps)) else "watch" if status != "nominal" else "nominal"
+        confirmed_status = (
+            status
+            if self._status_streak >= max(1, int(self.sustained_steps))
+            else "watch"
+            if status != "nominal"
+            else "nominal"
+        )
 
         if telemetry_bad and uq_bad:
             root_cause = "telemetry_and_uq"

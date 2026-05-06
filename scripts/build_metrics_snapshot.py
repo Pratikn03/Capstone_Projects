@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Build a frozen documentation metrics snapshot from report artifacts."""
+
 from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -18,12 +19,8 @@ def _read_csv(path: Path) -> pd.DataFrame:
 
 
 def _latest_common_run_id(de_research: pd.DataFrame, us_research: pd.DataFrame) -> str:
-    de_runs = set(
-        de_research.loc[de_research["row_type"] == "run_summary", "run_id"].astype(str).tolist()
-    )
-    us_runs = set(
-        us_research.loc[us_research["row_type"] == "run_summary", "run_id"].astype(str).tolist()
-    )
+    de_runs = set(de_research.loc[de_research["row_type"] == "run_summary", "run_id"].astype(str).tolist())
+    us_runs = set(us_research.loc[us_research["row_type"] == "run_summary", "run_id"].astype(str).tolist())
     common = de_runs.intersection(us_runs)
     if not common:
         raise RuntimeError("No common run_id found between DE and US research summary rows")
@@ -51,7 +48,7 @@ def _source(path: Path) -> dict[str, Any]:
     stat = path.stat()
     return {
         "path": str(path),
-        "modified_utc": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+        "modified_utc": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
         "size_bytes": int(stat.st_size),
     }
 
@@ -76,7 +73,7 @@ def build_snapshot(run_id: str | None, output: Path) -> dict[str, Any]:
 
     payload = {
         "frozen_run_id": resolved_run,
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "sources": {
             "impact_de": _source(imp_de_path),
             "impact_us": _source(imp_us_path),

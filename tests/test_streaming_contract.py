@@ -1,4 +1,5 @@
 """Streaming schema contract tests."""
+
 from orius.streaming.schemas import OPSDTelemetryEvent
 
 

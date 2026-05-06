@@ -2,14 +2,15 @@
 
 Hardware abstraction, replay-to-hardware bridge, fault injector.
 """
+
 from .hil_hooks import (
-    HardwareAbstraction,
     FaultInjector,
+    HardwareAbstraction,
     ReplayToHardwareBridge,
 )
 
 __all__ = [
-    "HardwareAbstraction",
     "FaultInjector",
+    "HardwareAbstraction",
     "ReplayToHardwareBridge",
 ]

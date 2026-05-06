@@ -1,9 +1,10 @@
 """Generate decision robustness and metrics reports using real dispatch evaluation."""
+
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -85,7 +86,9 @@ def _conformal_bounds(target: str, yhat: np.ndarray, cfg: dict) -> dict | None:
     return {"lower": lower, "upper": upper}
 
 
-def _check_bounds(name: str, arr: np.ndarray, lower: float | None, upper: float | None, tol: float = 1e-6) -> list[str]:
+def _check_bounds(
+    name: str, arr: np.ndarray, lower: float | None, upper: float | None, tol: float = 1e-6
+) -> list[str]:
     issues = []
     if lower is not None and np.any(arr < lower - tol):
         issues.append(f"{name} below lower bound")
@@ -169,7 +172,9 @@ def main() -> None:
 
     load_bounds = _conformal_bounds("load_mw", f_load, unc_cfg) or _bounds_from_quantiles(load_pred, f_load)
     wind_bounds = _conformal_bounds("wind_mw", f_wind, unc_cfg) or _bounds_from_quantiles(wind_pred, f_wind)
-    solar_bounds = _conformal_bounds("solar_mw", f_solar, unc_cfg) or _bounds_from_quantiles(solar_pred, f_solar)
+    solar_bounds = _conformal_bounds("solar_mw", f_solar, unc_cfg) or _bounds_from_quantiles(
+        solar_pred, f_solar
+    )
 
     renew_bounds = None
     if wind_bounds and solar_bounds:
@@ -202,7 +207,11 @@ def main() -> None:
     impact = impact_summary(baseline, plan)
     regret = plan.get("expected_cost_usd", 0.0) - oracle.get("expected_cost_usd", 0.0)
 
-    note = "intervals missing; risk mode disabled" if bool(risk_cfg.get("enabled", False)) and not use_risk else "ok"
+    note = (
+        "intervals missing; risk mode disabled"
+        if bool(risk_cfg.get("enabled", False)) and not use_risk
+        else "ok"
+    )
     lines = [
         "# Decision Robustness Report\n",
         f"- Horizon: {horizon} hours\n",

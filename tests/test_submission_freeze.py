@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import csv
 import json
 from pathlib import Path
 
@@ -43,8 +42,14 @@ def test_build_tables_formats_missing_values_as_dashes(tmp_path: Path) -> None:
             }
         },
     )
-    _write_json(de_uncertainty / "load_mw_conformal.json", {"meta": {"global_coverage": 0.88, "global_mean_width": 100.0}})
-    _write_json(us_uncertainty / "load_mw_conformal.json", {"meta": {"global_coverage": 0.89, "global_mean_width": 120.0}})
+    _write_json(
+        de_uncertainty / "load_mw_conformal.json",
+        {"meta": {"global_coverage": 0.88, "global_mean_width": 100.0}},
+    )
+    _write_json(
+        us_uncertainty / "load_mw_conformal.json",
+        {"meta": {"global_coverage": 0.89, "global_mean_width": 120.0}},
+    )
 
     status = baseline.build_tables(
         out_dir=out_dir,
@@ -175,9 +180,13 @@ def test_stage_verify_uses_run_manifest_paths(tmp_path: Path, monkeypatch) -> No
     verification = r1.stage_verify(release_id)
 
     assert all(detail["passed"] for detail in verification.values())
-    report = json.loads((tmp_path / "reports" / "runs" / f"{release_id}_verification.json").read_text(encoding="utf-8"))
+    report = json.loads(
+        (tmp_path / "reports" / "runs" / f"{release_id}_verification.json").read_text(encoding="utf-8")
+    )
     assert report["all_pass"] is True
     manifest = json.loads(
-        (tmp_path / "artifacts" / "runs" / "de" / release_id / "registry" / "run_manifest.json").read_text(encoding="utf-8")
+        (tmp_path / "artifacts" / "runs" / "de" / release_id / "registry" / "run_manifest.json").read_text(
+            encoding="utf-8"
+        )
     )
     assert manifest["accepted"] is True

@@ -8,23 +8,22 @@ This script is intentionally conservative:
   requested.
 - It does not attempt to bypass provider/license-gated AV downloads.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import subprocess
-import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = REPO_ROOT / "reports" / "data_expansion" / "next_run"
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _run(cmd: list[str]) -> subprocess.CompletedProcess[str]:
@@ -73,11 +72,7 @@ def _count_files(path: Path, pattern: str = "*") -> int:
 def _count_parquet_rows(path: Path) -> int | None:
     if not path.exists():
         return None
-    code = (
-        "import pandas as pd, sys; "
-        "p=sys.argv[1]; "
-        "print(len(pd.read_parquet(p)))"
-    )
+    code = "import pandas as pd, sys; p=sys.argv[1]; print(len(pd.read_parquet(p)))"
     result = _run([str(REPO_ROOT / ".venv" / "bin" / "python"), "-c", code, str(path)])
     if result.returncode != 0:
         return None
@@ -218,7 +213,9 @@ def build_manifest(args: argparse.Namespace) -> dict[str, Any]:
                 "total_size": _du(REPO_ROOT / "data" / "orius_av"),
                 "waymo_raw_size": _du(av_raw),
                 "processed_size": _du(av_processed),
-                "waymo_validation_shards_present": _count_files(av_validation, "validation_tfexample.tfrecord-*"),
+                "waymo_validation_shards_present": _count_files(
+                    av_validation, "validation_tfexample.tfrecord-*"
+                ),
                 "processed_training_rows": _count_parquet_rows(av_features),
             },
             "healthcare": {

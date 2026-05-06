@@ -14,6 +14,7 @@ Then writes publication-facing summaries to:
 And records everything in:
     reports/publication/deployment_evidence_manifest.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -21,8 +22,7 @@ import hashlib
 import json
 import math
 import sys
-import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -40,7 +40,7 @@ def _sha256(path: Path) -> str:
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 # ── 1. Latency benchmark ─────────────────────────────────────────────────────
@@ -118,7 +118,9 @@ def generate_latency(release_dir: Path, *, iterations: int = 10_000, warmup: int
     pub_dir = REPO_ROOT / "reports" / "publication"
     pub_dir.mkdir(parents=True, exist_ok=True)
     (pub_dir / "dc3s_latency_summary.csv").write_text(csv_path.read_text(encoding="utf-8"), encoding="utf-8")
-    (pub_dir / "dc3s_latency_summary.json").write_text(json_path.read_text(encoding="utf-8"), encoding="utf-8")
+    (pub_dir / "dc3s_latency_summary.json").write_text(
+        json_path.read_text(encoding="utf-8"), encoding="utf-8"
+    )
 
     # Copy tex fragment to paper assets
     paper_gen = REPO_ROOT / "paper" / "assets" / "tables" / "generated"
@@ -144,7 +146,7 @@ def generate_streaming_validation(release_dir: Path) -> dict[str, Any]:
     # Use validation rules matching the consumer's ValidationConfig defaults
     np.random.seed(42)
     n_events = 168  # one week of hourly events
-    base_ts = datetime(2025, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    base_ts = datetime(2025, 1, 1, 0, 0, 0, tzinfo=UTC)
     events = []
     validation_failures = 0
     cadence_seconds = 3600
@@ -172,7 +174,11 @@ def generate_streaming_validation(release_dir: Path) -> dict[str, Any]:
 
         # Validate against consumer rules
         valid = True
-        for key in ["DE_load_actual_entsoe_transparency", "DE_wind_generation_actual", "DE_solar_generation_actual"]:
+        for key in [
+            "DE_load_actual_entsoe_transparency",
+            "DE_wind_generation_actual",
+            "DE_solar_generation_actual",
+        ]:
             val = event.get(key, 0)
             if val < min_mw or val > max_mw:
                 valid = False
@@ -181,7 +187,11 @@ def generate_streaming_validation(release_dir: Path) -> dict[str, Any]:
                     valid = False
         if not valid:
             validation_failures += 1
-        for key in ["DE_load_actual_entsoe_transparency", "DE_wind_generation_actual", "DE_solar_generation_actual"]:
+        for key in [
+            "DE_load_actual_entsoe_transparency",
+            "DE_wind_generation_actual",
+            "DE_solar_generation_actual",
+        ]:
             val = event.get(key)
             if val is not None:
                 last_values[key] = float(val)
@@ -201,7 +211,11 @@ def generate_streaming_validation(release_dir: Path) -> dict[str, Any]:
         "checkpoint_present": True,
         "cadence_seconds": cadence_seconds,
         "cadence_tolerance_seconds": cadence_tolerance_seconds,
-        "signals_validated": ["DE_load_actual_entsoe_transparency", "DE_wind_generation_actual", "DE_solar_generation_actual"],
+        "signals_validated": [
+            "DE_load_actual_entsoe_transparency",
+            "DE_wind_generation_actual",
+            "DE_solar_generation_actual",
+        ],
         "replay_mode": "deterministic_synthetic",
         "schema": "OPSDTelemetryEvent",
     }
@@ -211,7 +225,7 @@ def generate_streaming_validation(release_dir: Path) -> dict[str, Any]:
 
     csv_rows = ["metric,value"]
     for k, v in summary.items():
-        if isinstance(v, (str, int, float, bool)):
+        if isinstance(v, str | int | float | bool):
             csv_rows.append(f"{k},{v}")
     csv_path = out_dir / "streaming_validation_table.csv"
     csv_path.write_text("\n".join(csv_rows) + "\n", encoding="utf-8")
@@ -229,9 +243,9 @@ def generate_streaming_validation(release_dir: Path) -> dict[str, Any]:
         f"| Last timestamp | {summary['last_timestamp']} |",
         f"| Validation failures | {validation_failures} |",
         f"| Monotonic ordering | {monotonic} |",
-        f"| Checkpoint present | True |",
+        "| Checkpoint present | True |",
         f"| Cadence (s) | {cadence_seconds} |",
-        f"| Schema | OPSDTelemetryEvent |",
+        "| Schema | OPSDTelemetryEvent |",
         "",
         "All 168 hourly events passed schema, range, and cadence validation.",
     ]
@@ -240,7 +254,9 @@ def generate_streaming_validation(release_dir: Path) -> dict[str, Any]:
 
     pub_dir = REPO_ROOT / "reports" / "publication"
     pub_dir.mkdir(parents=True, exist_ok=True)
-    (pub_dir / "streaming_validation_summary.json").write_text(json_path.read_text(encoding="utf-8"), encoding="utf-8")
+    (pub_dir / "streaming_validation_summary.json").write_text(
+        json_path.read_text(encoding="utf-8"), encoding="utf-8"
+    )
 
     return {
         "family": "streaming",
@@ -264,24 +280,34 @@ def generate_step_trace(release_dir: Path) -> dict[str, Any]:
 
     np.random.seed(42)
     n_steps = 12
-    base_ts = datetime(2025, 6, 15, 0, 0, 0, tzinfo=timezone.utc)
+    base_ts = datetime(2025, 6, 15, 0, 0, 0, tzinfo=UTC)
     drift_onset = 3  # drift starts at step 4
 
     # Configuration matching the locked DC3S
     dc3s_cfg = {
-        "k_q": 0.8, "k_drift": 0.6, "infl_max": 3.0,
+        "k_q": 0.8,
+        "k_drift": 0.6,
+        "infl_max": 3.0,
         "cooldown_smoothing": 0.0,
         "reliability": {"min_w": 0.05},
         "shield": {"mode": "projection", "reserve_soc_pct_drift": 0.08},
     }
     constraints = {
-        "capacity_mwh": 100.0, "min_soc_mwh": 10.0, "max_soc_mwh": 90.0,
-        "max_power_mw": 20.0, "max_charge_mw": 20.0, "max_discharge_mw": 20.0,
-        "charge_efficiency": 0.95, "discharge_efficiency": 0.95,
-        "last_net_mw": 0.0, "ramp_mw": 20.0, "time_step_hours": 1.0,
+        "capacity_mwh": 100.0,
+        "min_soc_mwh": 10.0,
+        "max_soc_mwh": 90.0,
+        "max_power_mw": 20.0,
+        "max_charge_mw": 20.0,
+        "max_discharge_mw": 20.0,
+        "charge_efficiency": 0.95,
+        "discharge_efficiency": 0.95,
+        "last_net_mw": 0.0,
+        "ramp_mw": 20.0,
+        "time_step_hours": 1.0,
     }
     detector = PageHinkleyDetector.from_state(
-        None, cfg={"ph_delta": 0.01, "ph_lambda": 5.0, "warmup_steps": 3, "cooldown_steps": 24},
+        None,
+        cfg={"ph_delta": 0.01, "ph_lambda": 5.0, "warmup_steps": 3, "cooldown_steps": 24},
     )
 
     current_soc = 50.0
@@ -300,14 +326,23 @@ def generate_step_trace(release_dir: Path) -> dict[str, Any]:
         observed_renewables = true_renewables * (0.72 if drift_active else 1.0)
 
         load_true = 52.0 + 6.0 * math.sin(2 * math.pi * hour / 24 - 0.5)
-        load_observed = load_true + (np.random.normal(0, 0.5) if not drift_active else np.random.normal(1.5, 0.8))
+        load_observed = load_true + (
+            np.random.normal(0, 0.5) if not drift_active else np.random.normal(1.5, 0.8)
+        )
 
-        event = {"ts_utc": ts.isoformat(), "load_mw": float(load_observed), "renewables_mw": float(observed_renewables)}
+        event = {
+            "ts_utc": ts.isoformat(),
+            "load_mw": float(load_observed),
+            "renewables_mw": float(observed_renewables),
+        }
 
         w_t, quality_flags = compute_reliability(
-            event, last_event, expected_cadence_s=3600.0,
+            event,
+            last_event,
+            expected_cadence_s=3600.0,
             reliability_cfg=dc3s_cfg.get("reliability", {}),
-            adaptive_state={}, ftit_cfg={},
+            adaptive_state={},
+            ftit_cfg={},
         )
 
         residual = abs(load_true - load_observed)
@@ -317,7 +352,11 @@ def generate_step_trace(release_dir: Path) -> dict[str, Any]:
         yhat = np.asarray([load_observed], dtype=float)
         q = np.asarray([5.0], dtype=float)
         lower, upper, unc_meta = build_uncertainty_set(
-            yhat=yhat, q=q, w_t=w_t, drift_flag=drift_flag, cfg=dc3s_cfg,
+            yhat=yhat,
+            q=q,
+            w_t=w_t,
+            drift_flag=drift_flag,
+            cfg=dc3s_cfg,
         )
         inflation = float(unc_meta.get("inflation", 1.0))
 
@@ -446,22 +485,32 @@ def generate_shadow_artifact(release_dir: Path) -> dict[str, Any]:
 
     np.random.seed(123)
     n_commands = 24
-    base_ts = datetime(2025, 3, 1, 0, 0, 0, tzinfo=timezone.utc)
+    base_ts = datetime(2025, 3, 1, 0, 0, 0, tzinfo=UTC)
 
     dc3s_cfg = {
-        "k_q": 0.8, "k_drift": 0.6, "infl_max": 3.0,
+        "k_q": 0.8,
+        "k_drift": 0.6,
+        "infl_max": 3.0,
         "cooldown_smoothing": 0.0,
         "reliability": {"min_w": 0.05},
         "shield": {"mode": "projection", "reserve_soc_pct_drift": 0.08},
     }
     constraints = {
-        "capacity_mwh": 100.0, "min_soc_mwh": 10.0, "max_soc_mwh": 90.0,
-        "max_power_mw": 20.0, "max_charge_mw": 20.0, "max_discharge_mw": 20.0,
-        "charge_efficiency": 0.95, "discharge_efficiency": 0.95,
-        "last_net_mw": 0.0, "ramp_mw": 20.0, "time_step_hours": 1.0,
+        "capacity_mwh": 100.0,
+        "min_soc_mwh": 10.0,
+        "max_soc_mwh": 90.0,
+        "max_power_mw": 20.0,
+        "max_charge_mw": 20.0,
+        "max_discharge_mw": 20.0,
+        "charge_efficiency": 0.95,
+        "discharge_efficiency": 0.95,
+        "last_net_mw": 0.0,
+        "ramp_mw": 20.0,
+        "time_step_hours": 1.0,
     }
     detector = PageHinkleyDetector.from_state(
-        None, cfg={"ph_delta": 0.01, "ph_lambda": 5.0, "warmup_steps": 3, "cooldown_steps": 24},
+        None,
+        cfg={"ph_delta": 0.01, "ph_lambda": 5.0, "warmup_steps": 3, "cooldown_steps": 24},
     )
 
     current_soc = 50.0
@@ -479,9 +528,12 @@ def generate_shadow_artifact(release_dir: Path) -> dict[str, Any]:
         event = {"ts_utc": ts.isoformat(), "load_mw": float(load), "renewables_mw": float(renewables)}
 
         w_t, _ = compute_reliability(
-            event, last_event, expected_cadence_s=3600.0,
+            event,
+            last_event,
+            expected_cadence_s=3600.0,
             reliability_cfg=dc3s_cfg.get("reliability", {}),
-            adaptive_state={}, ftit_cfg={},
+            adaptive_state={},
+            ftit_cfg={},
         )
         residual = abs(float(np.random.normal(0, 1)))
         drift_info = detector.update(residual)
@@ -490,7 +542,11 @@ def generate_shadow_artifact(release_dir: Path) -> dict[str, Any]:
         yhat = np.asarray([load], dtype=float)
         q = np.asarray([5.0], dtype=float)
         lower, upper, unc_meta = build_uncertainty_set(
-            yhat=yhat, q=q, w_t=w_t, drift_flag=drift_flag, cfg=dc3s_cfg,
+            yhat=yhat,
+            q=q,
+            w_t=w_t,
+            drift_flag=drift_flag,
+            cfg=dc3s_cfg,
         )
 
         net_demand = load - renewables
@@ -573,11 +629,11 @@ def generate_shadow_artifact(release_dir: Path) -> dict[str, Any]:
         f"| Commands observed | {n_commands} |",
         f"| Recommendations emitted | {n_commands} |",
         f"| ACK count | {ack_count} |",
-        f"| NACK count | 0 |",
-        f"| applied=false confirmed | Yes |",
-        f"| Hold / timeout events | 0 / 0 |",
+        "| NACK count | 0 |",
+        "| applied=false confirmed | Yes |",
+        "| Hold / timeout events | 0 / 0 |",
         f"| Interventions | {interventions} |",
-        f"| Certificate completeness | 100% |",
+        "| Certificate completeness | 100% |",
     ]
     md_path = out_dir / "shadow_summary.md"
     md_path.write_text("\n".join(md_lines) + "\n", encoding="utf-8")
@@ -632,6 +688,7 @@ def generate_calibration_governance(release_dir: Path) -> dict[str, Any]:
     # Write CSV
     import csv
     import io
+
     buf = io.StringIO()
     if rows:
         writer = csv.DictWriter(buf, fieldnames=list(rows[0].keys()))
@@ -663,8 +720,12 @@ def generate_calibration_governance(release_dir: Path) -> dict[str, Any]:
     # Copy to publication
     pub_dir = REPO_ROOT / "reports" / "publication"
     pub_dir.mkdir(parents=True, exist_ok=True)
-    (pub_dir / "reliability_group_coverage.csv").write_text(csv_path.read_text(encoding="utf-8"), encoding="utf-8")
-    (pub_dir / "reliability_group_coverage.json").write_text(json_path.read_text(encoding="utf-8"), encoding="utf-8")
+    (pub_dir / "reliability_group_coverage.csv").write_text(
+        csv_path.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (pub_dir / "reliability_group_coverage.json").write_text(
+        json_path.read_text(encoding="utf-8"), encoding="utf-8"
+    )
 
     return {
         "family": "calibration",
@@ -740,8 +801,7 @@ def generate_evidence_map(release_dir: Path) -> dict[str, Any]:
         "\\resizebox{\\textwidth}{!}{\\begin{tabular}{llll}\n"
         "\\toprule\n"
         "Surface & Code & Artifact & Paper claim \\\\\n"
-        "\\midrule\n"
-        + "\n".join(tex_rows) + "\n"
+        "\\midrule\n" + "\n".join(tex_rows) + "\n"
         "\\bottomrule\n"
         "\\end{tabular}}\n"
         "\\end{table*}\n"
@@ -753,7 +813,9 @@ def generate_evidence_map(release_dir: Path) -> dict[str, Any]:
 
     pub_dir = REPO_ROOT / "reports" / "publication"
     pub_dir.mkdir(parents=True, exist_ok=True)
-    (pub_dir / "deployment_evidence_map.json").write_text(json_path.read_text(encoding="utf-8"), encoding="utf-8")
+    (pub_dir / "deployment_evidence_map.json").write_text(
+        json_path.read_text(encoding="utf-8"), encoding="utf-8"
+    )
 
     return {
         "family": "evidence_map",
@@ -821,13 +883,14 @@ def main() -> int:
     parser.add_argument("--iterations", type=int, default=10_000, help="Benchmark iterations")
     args = parser.parse_args()
 
-    rid = args.release_id or ("R1_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
+    rid = args.release_id or ("R1_" + datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ"))
     try:
         run_deployment_evidence(rid, iterations=args.iterations)
         return 0
     except Exception as exc:
         print(f"\n❌ Deployment evidence generation failed: {exc}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         return 1
 

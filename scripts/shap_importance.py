@@ -10,17 +10,18 @@ Usage:
   python scripts/shap_importance.py --region de
   python scripts/shap_importance.py --region us
 """
+
 from __future__ import annotations
 
 import argparse
 import json
-import pickle
 import sys
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,15 +31,23 @@ REPO = Path(__file__).resolve().parents[1]
 if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
+from orius.release.artifact_loader import load_pickle_artifact
+
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 STYLE = {
     "font.family": "serif",
     "font.serif": ["Times New Roman", "DejaVu Serif"],
-    "font.size": 12, "axes.titlesize": 14, "axes.labelsize": 12,
-    "xtick.labelsize": 10, "ytick.labelsize": 10, "legend.fontsize": 10,
-    "figure.dpi": 300, "savefig.dpi": 300, "savefig.bbox": "tight",
+    "font.size": 12,
+    "axes.titlesize": 14,
+    "axes.labelsize": 12,
+    "xtick.labelsize": 10,
+    "ytick.labelsize": 10,
+    "legend.fontsize": 10,
+    "figure.dpi": 300,
+    "savefig.dpi": 300,
+    "savefig.bbox": "tight",
     "lines.linewidth": 1.5,
 }
 plt.rcParams.update(STYLE)
@@ -87,8 +96,7 @@ def load_gbm_bundle(path: Path) -> dict | None:
     """Load a pickled GBM model bundle."""
     if not path.exists():
         return None
-    with open(path, "rb") as f:
-        return pickle.load(f)
+    return load_pickle_artifact(path)
 
 
 def _find_gbm_path(models_dir: Path, target: str) -> Path | None:
@@ -124,7 +132,7 @@ def shap_for_target(
     available = [c for c in feat_cols if c in df.columns]
     X = df[available].to_numpy()
     n = len(X)
-    X_test = X[int(n * 0.85):]
+    X_test = X[int(n * 0.85) :]
 
     # Subsample for performance.
     rng = np.random.default_rng(42)
@@ -164,8 +172,12 @@ def plot_shap_summary(
         show=False,
         plot_type="dot",
     )
-    plt.title(f"SHAP Feature Importance — {TARGET_LABELS.get(target, target)}\n({region.label})",
-              fontsize=14, fontweight="bold", pad=15)
+    plt.title(
+        f"SHAP Feature Importance — {TARGET_LABELS.get(target, target)}\n({region.label})",
+        fontsize=14,
+        fontweight="bold",
+        pad=15,
+    )
     plt.tight_layout()
 
     out_path = region.figures_dir / f"shap_summary_{target}.png"
@@ -195,8 +207,11 @@ def plot_shap_bar(
     ax.set_yticks(range(len(names)))
     ax.set_yticklabels(names[::-1])
     ax.set_xlabel("Mean |SHAP value|", fontweight="bold")
-    ax.set_title(f"Top-{top_k} Features — {TARGET_LABELS.get(target, target)}\n({region.label})",
-                 fontsize=14, fontweight="bold")
+    ax.set_title(
+        f"Top-{top_k} Features — {TARGET_LABELS.get(target, target)}\n({region.label})",
+        fontsize=14,
+        fontweight="bold",
+    )
     ax.grid(axis="x", alpha=0.3)
     plt.tight_layout()
 
@@ -221,11 +236,13 @@ def save_importance_table(
 
     rows = []
     for rank, i in enumerate(order, 1):
-        rows.append({
-            "rank": rank,
-            "feature": feature_names[i],
-            "mean_abs_shap": round(float(mean_abs[i]), 6),
-        })
+        rows.append(
+            {
+                "rank": rank,
+                "feature": feature_names[i],
+                "mean_abs_shap": round(float(mean_abs[i]), 6),
+            }
+        )
 
     df = pd.DataFrame(rows)
     out_path = region.tables_dir / f"shap_importance_{target}.csv"
@@ -236,9 +253,9 @@ def save_importance_table(
 
 def run_region(region: RegionConfig):
     """Run SHAP analysis for all targets in a region."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"SHAP Analysis — {region.label}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if not region.features_path.exists():
         print(f"  [skip] Features not found: {region.features_path}")
@@ -268,8 +285,9 @@ def run_region(region: RegionConfig):
 
 def main():
     parser = argparse.ArgumentParser(description="SHAP Feature Importance Analysis")
-    parser.add_argument("--region", choices=["de", "us", "all"], default="all",
-                        help="Region to analyze (default: all)")
+    parser.add_argument(
+        "--region", choices=["de", "us", "all"], default="all", help="Region to analyze (default: all)"
+    )
     args = parser.parse_args()
 
     regions = _get_regions()

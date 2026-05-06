@@ -57,7 +57,7 @@ export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps)
   const peakShavingPct = summary?.peak_shaving_pct ?? null;
   const peakShavingMw = summary?.peak_shaving_mw ?? null;
   const formatMaybe = (value: number | null | undefined, formatter: (value: number) => string) =>
-    typeof value === 'number' && Number.isFinite(value) ? formatter(value) : 'N/A';
+    typeof value === 'number' && Number.isFinite(value) ? formatter(value) : 'Pending';
 
   const selectedPoint = data && selectedIdx !== null ? data[selectedIdx] : null;
   const bestCostPoint = data?.length ? data.reduce((a, b) => (a.total_cost_eur < b.total_cost_eur ? a : b)) : null;
@@ -80,33 +80,33 @@ export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps)
       transition={{ duration: 0.4 }}
       className="w-full glass-panel rounded-xl overflow-hidden"
     >
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/6">
-        <div className="flex items-center gap-3">
-          <h3 className="text-sm font-semibold text-white">Cost–Carbon Trade-off</h3>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-3.5 border-b border-white/6">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
+          <h3 className="text-sm font-semibold text-white">Publication Trade-off Frontier</h3>
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-energy-primary/10 text-energy-primary border border-energy-primary/20">
-            Pareto Frontier
+            Cost / Carbon Evidence
           </span>
         </div>
         <span className="text-xs text-slate-500">{zoneId}</span>
       </div>
 
       {/* KPI row */}
-      <div className="grid grid-cols-3 gap-4 px-5 pt-4">
+      <div className="grid grid-cols-1 gap-3 px-5 pt-4 sm:grid-cols-3 sm:gap-4">
         <div className="text-center p-3 rounded-lg bg-white/3">
           <div className="text-lg font-bold text-energy-primary stat-value">{formatMaybe(costSavingsPct, formatPercent)}</div>
-          <div className="text-[10px] text-slate-500 mt-0.5">Cost Savings</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">Cost Delta</div>
           <div className="text-xs text-slate-400 font-mono">
-            {costSavingsUsd !== null ? formatCurrency(costSavingsUsd, 'USD') : 'N/A'}
+            {costSavingsUsd !== null ? formatCurrency(costSavingsUsd, 'USD') : 'Pending'}
           </div>
         </div>
         <div className="text-center p-3 rounded-lg bg-white/3">
           <div className="text-lg font-bold text-energy-primary stat-value">{formatMaybe(carbonReductionPct, formatPercent)}</div>
-          <div className="text-[10px] text-slate-500 mt-0.5">Carbon Reduction</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">Carbon Delta</div>
           <div className="text-xs text-slate-400 font-mono">{formatMaybe(carbonTons, (value) => `${value.toFixed(1)} tCO₂`)}</div>
         </div>
         <div className="text-center p-3 rounded-lg bg-white/3">
           <div className="text-lg font-bold text-energy-info stat-value">{formatMaybe(peakShavingPct, formatPercent)}</div>
-          <div className="text-[10px] text-slate-500 mt-0.5">Peak Shaving</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">Peak Constraint Relief</div>
           <div className="text-xs text-slate-400 font-mono">{formatMaybe(peakShavingMw, formatMW)}</div>
         </div>
       </div>
@@ -167,7 +167,7 @@ export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps)
           </ResponsiveContainer>
         ) : (
           <div className="h-full flex items-center justify-center text-slate-500 text-xs">
-            No Pareto data available
+            No trade-off artifact available
           </div>
         )}
       </div>
@@ -209,7 +209,7 @@ export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps)
                   <div className="text-amber-400 font-mono">
                     {bestCostPoint
                       ? `+€${((selectedPoint.total_cost_eur - bestCostPoint.total_cost_eur) / 1000).toFixed(0)}k`
-                      : 'N/A'}
+                      : 'Pending'}
                     {bestCostPoint
                       ? ` / −${((bestCostPoint.total_carbon_kg - selectedPoint.total_carbon_kg) / 1000).toFixed(1)}t`
                       : ''}

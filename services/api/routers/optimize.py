@@ -1,8 +1,9 @@
 """API router: optimize."""
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, Literal
+from typing import Any, Literal
 
 import yaml
 from fastapi import APIRouter, HTTPException, Security
@@ -17,26 +18,26 @@ router = APIRouter()
 
 
 class IntervalBounds(BaseModel):
-    lower: Optional[Union[float, List[float]]] = None
-    upper: Optional[Union[float, List[float]]] = None
+    lower: float | list[float] | None = None
+    upper: float | list[float] | None = None
 
 
 class OptimizeRequest(BaseModel):
-    forecast_load_mw: Union[float, List[float]]
-    forecast_renewables_mw: Union[float, List[float]]
-    forecast_price_eur_mwh: Optional[Union[float, List[float]]] = None
-    forecast_carbon_kg_per_mwh: Optional[Union[float, List[float]]] = None
-    load_interval: Optional[IntervalBounds] = None
-    renewables_interval: Optional[IntervalBounds] = None
+    forecast_load_mw: float | list[float]
+    forecast_renewables_mw: float | list[float]
+    forecast_price_eur_mwh: float | list[float] | None = None
+    forecast_carbon_kg_per_mwh: float | list[float] | None = None
+    load_interval: IntervalBounds | None = None
+    renewables_interval: IntervalBounds | None = None
     optimization_mode: Literal["robust", "deterministic"] = "robust"
-    config: Optional[Dict[str, Any]] = None
+    config: dict[str, Any] | None = None
 
 
 class OptimizeResponse(BaseModel):
-    dispatch_plan: Dict[str, Any]
-    expected_cost_usd: Optional[float] = None
-    carbon_kg: Optional[float] = None
-    carbon_cost_usd: Optional[float] = None
+    dispatch_plan: dict[str, Any]
+    expected_cost_usd: float | None = None
+    carbon_kg: float | None = None
+    carbon_cost_usd: float | None = None
 
 
 def _load_cfg() -> dict:
@@ -49,10 +50,10 @@ def _load_cfg() -> dict:
 
 
 def _resolve_interval(
-    forecast: Union[float, List[float]],
-    interval: Optional[IntervalBounds],
+    forecast: float | list[float],
+    interval: IntervalBounds | None,
     label: str,
-) -> tuple[Union[float, List[float]], Union[float, List[float]]]:
+) -> tuple[float | list[float], float | list[float]]:
     if interval is None:
         return forecast, forecast
     if interval.lower is None or interval.upper is None:
@@ -68,8 +69,14 @@ def _build_robust_config(cfg: dict[str, Any]) -> RobustDispatchConfig:
     max_power = float(battery.get("max_power_mw", 50.0))
     max_charge = float(battery.get("max_charge_mw", max_power))
     max_discharge = float(battery.get("max_discharge_mw", max_power))
-    charge_eff = float(battery.get("charge_efficiency", battery.get("efficiency", battery.get("efficiency_regime_a", 0.95))))
-    discharge_eff = float(battery.get("discharge_efficiency", battery.get("efficiency", battery.get("efficiency_regime_a", 0.95))))
+    charge_eff = float(
+        battery.get("charge_efficiency", battery.get("efficiency", battery.get("efficiency_regime_a", 0.95)))
+    )
+    discharge_eff = float(
+        battery.get(
+            "discharge_efficiency", battery.get("efficiency", battery.get("efficiency_regime_a", 0.95))
+        )
+    )
 
     return RobustDispatchConfig(
         battery_capacity_mwh=capacity,

@@ -1,13 +1,14 @@
 """Generic risk-bound helpers for degraded-observation safety."""
+
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 import numpy as np
 from scipy.stats import norm as _norm
-
 
 RISK_ENVELOPE_ASSUMPTIONS: tuple[str, ...] = (
     "A theorem-local predictable per-step residual-risk budget is available.",
@@ -187,10 +188,7 @@ def build_t3a_contract_summary(
         _contract_check(
             "step_formula",
             abs(float(step_risk_bound) - expected_step) <= 1e-9,
-            (
-                f"Observed step bound={float(step_risk_bound):.6f} matches "
-                f"alpha*(1-w_t)={expected_step:.6f}."
-            ),
+            (f"Observed step bound={float(step_risk_bound):.6f} matches alpha*(1-w_t)={expected_step:.6f}."),
         ),
         _contract_check(
             "episode_formula",
@@ -313,6 +311,7 @@ def minimum_reliability_for_target(
     w_required = float(min(1.0, max(0.0, 1.0 - target_tsvr / alpha)))
     if capacity_threshold is not None and w_required < capacity_threshold:
         import warnings
+
         warnings.warn(
             f"Required w={w_required:.4f} is below the information-theoretic "
             f"critical capacity threshold w*={capacity_threshold:.4f}. "
@@ -332,6 +331,7 @@ def minimum_reliability_for_target(
 # This function checks the contract empirically against held-out data and
 # returns a calibrated w_t with a finite-sample correction so that the bound
 # holds with probability ≥ 1-delta.
+
 
 def calibration_contract_verify(
     oqe_scores: np.ndarray | list[float],
@@ -380,7 +380,6 @@ def calibration_contract_verify(
         delta               — Confidence level used.
         theorem_note        — Plain-language status of the calibration contract.
     """
-    import math as _math
 
     w = _as_flat_float_array(oqe_scores, name="oqe_scores")
     c = _as_flat_float_array(coverage_indicators, name="coverage_indicators")
@@ -405,12 +404,20 @@ def calibration_contract_verify(
         w_bin = float(np.mean(w[mask])) if n_k > 0 else float(0.5 * (lo + hi))
 
         if n_k == 0:
-            bins.append({
-                "bin": k, "w_lo": lo, "w_hi": hi, "n": 0,
-                "w_mean": w_bin, "empirical_coverage": float("nan"),
-                "cp_lower": float("nan"), "passed": False,
-                "correction_factor": 1.0, "note": "empty bin",
-            })
+            bins.append(
+                {
+                    "bin": k,
+                    "w_lo": lo,
+                    "w_hi": hi,
+                    "n": 0,
+                    "w_mean": w_bin,
+                    "empirical_coverage": float("nan"),
+                    "cp_lower": float("nan"),
+                    "passed": False,
+                    "correction_factor": 1.0,
+                    "note": "empty bin",
+                }
+            )
             all_pass = False
             correction_factors.append(1.0)
             continue
@@ -421,6 +428,7 @@ def calibration_contract_verify(
         # Clopper-Pearson lower confidence bound P(X ≥ n_covered | n_k, p) ≤ delta/2
         # Using the Beta distribution: CP_lower = Beta(delta/2; n_covered, n_k-n_covered+1)
         from scipy.stats import beta as _beta  # type: ignore[import]
+
         cp_lower = float(_beta.ppf(delta / 2.0, max(n_covered, 1), n_k - n_covered + 1))
 
         passed = cp_lower >= w_bin - float(tolerance)
@@ -431,13 +439,20 @@ def calibration_contract_verify(
         corr = min(1.0, cp_lower / max(w_bin, 1e-9)) if not passed else 1.0
         correction_factors.append(float(corr))
 
-        bins.append({
-            "bin": k, "w_lo": lo, "w_hi": hi, "n": n_k,
-            "w_mean": w_bin, "empirical_coverage": emp_cov,
-            "cp_lower": cp_lower, "passed": passed,
-            "correction_factor": float(corr),
-            "note": "pass" if passed else f"coverage {emp_cov:.3f} < w_bin {w_bin:.3f}",
-        })
+        bins.append(
+            {
+                "bin": k,
+                "w_lo": lo,
+                "w_hi": hi,
+                "n": n_k,
+                "w_mean": w_bin,
+                "empirical_coverage": emp_cov,
+                "cp_lower": cp_lower,
+                "passed": passed,
+                "correction_factor": float(corr),
+                "note": "pass" if passed else f"coverage {emp_cov:.3f} < w_bin {w_bin:.3f}",
+            }
+        )
 
     # Global correction: take the minimum bin correction factor
     global_correction = float(min(correction_factors)) if correction_factors else 1.0
@@ -446,8 +461,8 @@ def calibration_contract_verify(
     theorem_note = (
         "Calibration contract satisfied: w_t is a valid lower bound on P(true_state ∈ U_t). "
         "The TSVR ≤ α(1-w̄) bound is formally justified."
-        if all_pass else
-        f"Calibration contract violated in {sum(1 for b in bins if not b['passed'])} bin(s). "
+        if all_pass
+        else f"Calibration contract violated in {sum(1 for b in bins if not b['passed'])} bin(s). "
         f"Correction factor {global_correction:.3f} applied. "
         "Re-run OQE calibration or widen the uncertainty set."
     )
@@ -515,10 +530,7 @@ def pac_validity_horizon_bound(
     epsilon_conformal = math.sqrt(math.log(4.0 / delta) / (2.0 * n_eff))
 
     z = _norm.ppf(1.0 - delta / 4.0)
-    if sigma_d > 0 and z > 0:
-        H_conservative = int(math.floor((margin / (sigma_d * z)) ** 2))
-    else:
-        H_conservative = 0
+    H_conservative = int(math.floor((margin / (sigma_d * z)) ** 2)) if sigma_d > 0 and z > 0 else 0
 
     total_failure_prob = alpha + epsilon_conformal + delta / 2.0
     validity_lower_bound = max(0.0, 1.0 - total_failure_prob)
@@ -675,9 +687,13 @@ def pac_trajectory_safety_certificate(
             f"P(safe trajectory) >= {trajectory_safety_prob:.6f}.  "
             f"H_max certifiable at confidence 1-delta = {H_max}.  "
             f"Non-vacuous horizon threshold = {H_max_nonvacuous}."
-            + (f"  WARNING: w_bar={w_bar:.4f} is below capacity threshold "
-               f"{capacity_threshold:.4f}; this is an information-theoretic limit, "
-               "not a finite-sample artifact." if below_capacity else "")
+            + (
+                f"  WARNING: w_bar={w_bar:.4f} is below capacity threshold "
+                f"{capacity_threshold:.4f}; this is an information-theoretic limit, "
+                "not a finite-sample artifact."
+                if below_capacity
+                else ""
+            )
         ),
         "assumptions_used": assumptions,
     }

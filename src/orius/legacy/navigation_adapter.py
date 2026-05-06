@@ -1,8 +1,10 @@
 """Navigation domain adapter for the ORIUS universal runtime."""
+
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from orius.dc3s.certificate import make_certificate
 from orius.dc3s.domain_adapter import DomainAdapter
@@ -65,10 +67,7 @@ class NavigationDomainAdapter(DomainAdapter):
         hi = self._arena_size - self._boundary_margin
         if not (lo <= x <= hi and lo <= y <= hi):
             return False
-        for cx, cy in self._obstacle_centres:
-            if math.hypot(x - cx, y - cy) < self._obstacle_radius:
-                return False
-        return True
+        return all(math.hypot(x - cx, y - cy) >= self._obstacle_radius for cx, cy in self._obstacle_centres)
 
     def true_constraint_violated(self, state: Mapping[str, Any]) -> bool | None:
         return not self._in_safe_region(_f(state.get("x"), 0.0), _f(state.get("y"), 0.0))
@@ -86,10 +85,7 @@ class NavigationDomainAdapter(DomainAdapter):
         hi = self._arena_size - self._boundary_margin
         boundary_margin = min(x - lo, hi - x, y - lo, hi - y)
         obstacle_margin = min(
-            (
-                math.hypot(x - cx, y - cy) - self._obstacle_radius
-                for cx, cy in self._obstacle_centres
-            ),
+            (math.hypot(x - cx, y - cy) - self._obstacle_radius for cx, cy in self._obstacle_centres),
             default=boundary_margin,
         )
         return float(min(boundary_margin, obstacle_margin))
@@ -227,8 +223,14 @@ class NavigationDomainAdapter(DomainAdapter):
 
         orig_ax = _f(candidate_action.get("ax"), 0.0)
         orig_ay = _f(candidate_action.get("ay"), 0.0)
-        ax = max(_f(tightened_set.get("ax_lower"), -self._speed_limit), min(_f(tightened_set.get("ax_upper"), self._speed_limit), orig_ax))
-        ay = max(_f(tightened_set.get("ay_lower"), -self._speed_limit), min(_f(tightened_set.get("ay_upper"), self._speed_limit), orig_ay))
+        ax = max(
+            _f(tightened_set.get("ax_lower"), -self._speed_limit),
+            min(_f(tightened_set.get("ax_upper"), self._speed_limit), orig_ax),
+        )
+        ay = max(
+            _f(tightened_set.get("ay_lower"), -self._speed_limit),
+            min(_f(tightened_set.get("ay_upper"), self._speed_limit), orig_ay),
+        )
 
         speed_limit = _f(cstr.get("max_speed", cstr.get("speed_limit")), self._speed_limit)
         arena_min = _f(cstr.get("arena_min"), self._boundary_margin)
@@ -293,9 +295,7 @@ class NavigationDomainAdapter(DomainAdapter):
             "repair_surface": str(tightened_set.get("projection_surface", "arena_obstacle_projection")),
         }
         if repaired:
-            meta["intervention_reason"] = (
-                ",".join(reason_parts) if reason_parts else "arena_bound_clamp"
-            )
+            meta["intervention_reason"] = ",".join(reason_parts) if reason_parts else "arena_bound_clamp"
         return {"ax": float(ax), "ay": float(ay)}, meta
 
     def emit_certificate(
@@ -317,7 +317,9 @@ class NavigationDomainAdapter(DomainAdapter):
         guarantee_meta: Mapping[str, Any] | None = None,
     ) -> Mapping[str, Any]:
         intervened = bool(repair_meta.get("repaired")) if isinstance(repair_meta, Mapping) else None
-        intervention_reason = repair_meta.get("intervention_reason") if isinstance(repair_meta, Mapping) else None
+        intervention_reason = (
+            repair_meta.get("intervention_reason") if isinstance(repair_meta, Mapping) else None
+        )
         reliability_w = float(reliability.get("w_t", reliability.get("w", 1.0)))
         drift_flag = bool(drift.get("drift", False))
         inflation = float(uncertainty.get("meta", {}).get("inflation", 1.0))

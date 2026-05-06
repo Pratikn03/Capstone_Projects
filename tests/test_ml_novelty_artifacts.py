@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import csv
-import duckdb
 import json
 import re
 from pathlib import Path
 
-from scripts.build_three_domain_ml_artifacts import CENTRAL_NOVELTY_SENTENCE
+import duckdb
 
+from scripts.build_three_domain_ml_artifacts import CENTRAL_NOVELTY_SENTENCE
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION = REPO_ROOT / "reports" / "publication"
@@ -33,6 +33,8 @@ def test_three_domain_ml_bundle_exists() -> None:
     required = [
         PUBLICATION / "three_domain_ml_benchmark.csv",
         PUBLICATION / "three_domain_ml_benchmark_summary.json",
+        PUBLICATION / "three_domain_forecast_calibration_runtime_evidence.csv",
+        PUBLICATION / "three_domain_forecast_calibration_runtime_evidence.json",
         PUBLICATION / "three_domain_reliability_calibration.csv",
         PUBLICATION / "three_domain_grouped_coverage.csv",
         PUBLICATION / "three_domain_grouped_width.csv",
@@ -83,6 +85,139 @@ def test_three_domain_benchmark_has_exact_domains_and_ci_fields() -> None:
             assert row[field] != ""
 
 
+def _csv_rows(path: Path) -> list[dict[str, str]]:
+    return list(csv.DictReader(path.open()))
+
+
+def _csv_record_count(path: Path) -> int:
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return max(sum(1 for _ in handle) - 1, 0)
+
+
+def _uniform_evidence_rows() -> dict[str, dict[str, str]]:
+    rows = _csv_rows(PUBLICATION / "three_domain_forecast_calibration_runtime_evidence.csv")
+    return {row["domain"]: row for row in rows}
+
+
+def test_uniform_evidence_table_has_exact_domains_and_numeric_schema() -> None:
+    rows = _uniform_evidence_rows()
+    assert set(rows) == {
+        "Battery Energy Storage",
+        "Autonomous Vehicles",
+        "Medical and Healthcare Monitoring",
+    }
+    numeric_fields = (
+        "forecast_coverage",
+        "forecast_interval_width",
+        "calibration_bucket_count",
+        "calibration_min_coverage",
+        "calibration_min_bucket_n",
+        "runtime_trace_rows",
+        "orius_runtime_rows",
+        "baseline_tsvr",
+        "orius_tsvr",
+        "oasg",
+        "intervention_rate",
+        "fallback_activation_rate",
+        "certificate_valid_rate",
+        "t11_pass_rate",
+        "domain_postcondition_pass_rate",
+        "runtime_witness_pass_rate",
+    )
+    for row in rows.values():
+        for field in numeric_fields:
+            assert row[field] != "", field
+            float(row[field])
+        assert row["strict_runtime_gate"] in {"True", "False"}
+        assert row["claim_boundary"]
+
+    payload = json.loads(
+        (PUBLICATION / "three_domain_forecast_calibration_runtime_evidence.json").read_text()
+    )
+    assert payload["row_count"] == 3
+    assert {row["domain"] for row in payload["rows"]} == set(rows)
+
+
+def test_uniform_evidence_av_is_nuplan_only() -> None:
+    av = _uniform_evidence_rows()["Autonomous Vehicles"]
+    assert av["active_dataset"] == "nuPlan all-zip grouped replay"
+    assert av["forecast_source"] == "reports/orius_av/nuplan_allzip_grouped/training_summary.csv"
+    assert av["forecast_target"] == "ego_speed_mps_1s"
+    forbidden = ("Waymo Motion", "reports/av/week2_metrics.json", "waymo")
+    joined = " ".join(av.values())
+    for token in forbidden:
+        assert token not in joined
+
+
+def test_uniform_evidence_postcondition_rates_match_runtime_authorities() -> None:
+    rows = _uniform_evidence_rows()
+    battery_trace_rows = [
+        row
+        for row in _csv_rows(REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_traces.csv")
+        if row["controller_label"] == "heuristic:dc3s_ftit"
+    ]
+    battery_pass = sum(row["true_constraint_violated"] == "False" for row in battery_trace_rows) / len(
+        battery_trace_rows
+    )
+    assert rows["Battery Energy Storage"]["postcondition_basis"] == "battery_true_state_witness_postcondition"
+    assert float(rows["Battery Energy Storage"]["domain_postcondition_pass_rate"]) == round(battery_pass, 6)
+
+    witness = json.loads((PUBLICATION / "domain_runtime_contract_summary.json").read_text())["domains"]
+    for domain, witness_key in {
+        "Autonomous Vehicles": "av",
+        "Medical and Healthcare Monitoring": "healthcare",
+    }.items():
+        assert float(rows[domain]["domain_postcondition_pass_rate"]) == round(
+            float(witness[witness_key]["postcondition_pass_rate"]),
+            6,
+        )
+        assert float(rows[domain]["runtime_witness_pass_rate"]) == round(
+            float(witness[witness_key]["witness_pass_rate"]),
+            6,
+        )
+
+
+def test_uniform_evidence_runtime_rows_match_promoted_sources() -> None:
+    rows = _uniform_evidence_rows()
+    battery_summary = {
+        row["controller"]: row
+        for row in _csv_rows(REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_summary.csv")
+    }
+    av_summary = {
+        row["controller"]: row
+        for row in _csv_rows(
+            REPO_ROOT
+            / "reports"
+            / "orius_av"
+            / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+            / "runtime_summary.csv"
+        )
+    }
+    healthcare_summary = {
+        row["controller"]: row
+        for row in _csv_rows(REPO_ROOT / "reports" / "healthcare" / "runtime_summary.csv")
+    }
+
+    assert int(rows["Battery Energy Storage"]["runtime_trace_rows"]) == _csv_record_count(
+        REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_traces.csv"
+    )
+    assert int(rows["Battery Energy Storage"]["orius_runtime_rows"]) == int(
+        float(battery_summary["heuristic:dc3s_ftit"]["n_steps"])
+    )
+    assert int(rows["Autonomous Vehicles"]["runtime_trace_rows"]) == sum(
+        int(float(row["n_steps"])) for row in av_summary.values()
+    )
+    assert int(rows["Autonomous Vehicles"]["orius_runtime_rows"]) == int(
+        float(av_summary["orius"]["n_steps"])
+    )
+    assert int(rows["Medical and Healthcare Monitoring"]["runtime_trace_rows"]) == _csv_record_count(
+        REPO_ROOT / "reports" / "healthcare" / "runtime_traces.csv"
+    )
+    assert int(rows["Medical and Healthcare Monitoring"]["orius_runtime_rows"]) == int(
+        float(healthcare_summary["orius"]["n_steps"])
+    )
+
+
 def test_baseline_suite_has_required_families_for_each_domain() -> None:
     rows = list(csv.DictReader((PUBLICATION / "three_domain_baseline_suite.csv").open()))
     required = {
@@ -112,7 +247,9 @@ def test_baseline_suite_has_required_families_for_each_domain() -> None:
         assert by_domain[domain] == required
     assert battery_rows
     assert all(row["surface_role"] == "witness_row_comparator" for row in battery_rows)
-    assert all(row["metric_surface"] in {"locked_publication_witness", "runtime_denominator"} for row in battery_rows)
+    assert all(
+        row["metric_surface"] in {"locked_publication_witness", "runtime_denominator"} for row in battery_rows
+    )
     assert all("proxy" not in row["evidence_status"] for row in battery_rows)
     assert av_healthcare_rows
     assert all(row["surface_role"] == "runtime_native_domain_comparator" for row in av_healthcare_rows)

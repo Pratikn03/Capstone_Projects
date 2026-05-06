@@ -16,6 +16,7 @@ behaves as specified in the PDF:
 Usage:
     python scripts/prove_framework.py [--verbose]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -39,8 +40,8 @@ def _check(name: str, ok: bool, detail: str = ""):
 
 def prove_dc3s_pipeline():
     """Check 1: run_dc3s_step produces valid results."""
-    from orius.dc3s.pipeline import run_dc3s_step
     from orius.dc3s import BatteryDomainAdapter, PageHinkleyDetector
+    from orius.dc3s.pipeline import run_dc3s_step
 
     class _S:
         current_soc_mwh = 5000.0
@@ -61,17 +62,25 @@ def prove_dc3s_pipeline():
         state=_S(),
         drift_detector=detector,
         residual=10.0,
-        cfg={"k_quality": 0.5, "k_drift": 0.3, "k_sensitivity": 0.05,
-             "infl_max": 2.0, "expected_cadence_s": 3600,
-             "reliability": {"min_w": 0.05}},
+        cfg={
+            "k_quality": 0.5,
+            "k_drift": 0.3,
+            "k_sensitivity": 0.05,
+            "infl_max": 2.0,
+            "expected_cadence_s": 3600,
+            "reliability": {"min_w": 0.05},
+        },
     )
 
     ok = True
     ok &= _check("run_dc3s_step returns certificate", "certificate" in result)
     ok &= _check("run_dc3s_step returns safe_action", "safe_action" in result)
     ok &= _check("Certificate has hash", bool(result["certificate"].get("certificate_hash")))
-    ok &= _check("Reliability w_t in [0,1]", 0.0 <= result["reliability_w"] <= 1.0,
-                  f"w_t={result['reliability_w']:.3f}")
+    ok &= _check(
+        "Reliability w_t in [0,1]",
+        0.0 <= result["reliability_w"] <= 1.0,
+        f"w_t={result['reliability_w']:.3f}",
+    )
     return ok
 
 
@@ -106,15 +115,18 @@ def prove_l2_projection():
         c = safe["charge_mw"]
         d = safe["discharge_mw"]
         # Must be non-negative
-        ok &= _check(f"L2[{i}] non-negative", c >= -1e-9 and d >= -1e-9,
-                      f"c={c:.2f}, d={d:.2f}") if i < 5 else (c >= -1e-9 and d >= -1e-9)
+        ok &= (
+            _check(f"L2[{i}] non-negative", c >= -1e-9 and d >= -1e-9, f"c={c:.2f}, d={d:.2f}")
+            if i < 5
+            else (c >= -1e-9 and d >= -1e-9)
+        )
         # Mutual exclusion
-        ok &= (c < 1e-9 or d < 1e-9)
+        ok &= c < 1e-9 or d < 1e-9
         # Power bounds
-        ok &= (c <= 200.0 + 1e-9 and d <= 200.0 + 1e-9)
+        ok &= c <= 200.0 + 1e-9 and d <= 200.0 + 1e-9
         # SOC feasibility
         next_soc = soc + 0.95 * c - d / 0.95
-        ok &= (next_soc >= -1e-6 and next_soc <= 10000.0 + 1e-6)
+        ok &= next_soc >= -1e-6 and next_soc <= 10000.0 + 1e-6
 
     _check("L2 projection: 100 random inputs all feasible", ok)
     return ok
@@ -126,16 +138,11 @@ def prove_rac_cert_params():
 
     cfg = RACCertConfig()
     ok = True
-    ok &= _check("beta_reliability = 0.5", cfg.beta_reliability == 0.5,
-                  f"got {cfg.beta_reliability}")
-    ok &= _check("beta_sensitivity = 0.3", cfg.beta_sensitivity == 0.3,
-                  f"got {cfg.beta_sensitivity}")
-    ok &= _check("k_sensitivity = 0.05", cfg.k_sensitivity == 0.05,
-                  f"got {cfg.k_sensitivity}")
-    ok &= _check("infl_max = 2.0", cfg.infl_max == 2.0,
-                  f"got {cfg.infl_max}")
-    ok &= _check("max_q_multiplier = 2.0", cfg.max_q_multiplier == 2.0,
-                  f"got {cfg.max_q_multiplier}")
+    ok &= _check("beta_reliability = 0.5", cfg.beta_reliability == 0.5, f"got {cfg.beta_reliability}")
+    ok &= _check("beta_sensitivity = 0.3", cfg.beta_sensitivity == 0.3, f"got {cfg.beta_sensitivity}")
+    ok &= _check("k_sensitivity = 0.05", cfg.k_sensitivity == 0.05, f"got {cfg.k_sensitivity}")
+    ok &= _check("infl_max = 2.0", cfg.infl_max == 2.0, f"got {cfg.infl_max}")
+    ok &= _check("max_q_multiplier = 2.0", cfg.max_q_multiplier == 2.0, f"got {cfg.max_q_multiplier}")
     return ok
 
 
@@ -143,9 +150,7 @@ def prove_adaptive_drift():
     """Check 4: Adaptive drift detector catches injected drift."""
     from orius.dc3s.drift import AdaptivePageHinkleyDetector
 
-    detector = AdaptivePageHinkleyDetector(
-        base_threshold=3.0, warmup_steps=20, cooldown_steps=5
-    )
+    detector = AdaptivePageHinkleyDetector(base_threshold=3.0, warmup_steps=20, cooldown_steps=5)
     # Feed stable residuals then inject a shift
     rng = np.random.default_rng(99)
     for _ in range(30):
@@ -165,7 +170,7 @@ def prove_adaptive_drift():
 
 def prove_certificate_chain():
     """Check 5: Certificate hash chain is consistent."""
-    from orius.dc3s.certificate import make_certificate, compute_config_hash
+    from orius.dc3s.certificate import compute_config_hash, make_certificate
 
     certs = []
     prev_hash = None
@@ -189,7 +194,7 @@ def prove_certificate_chain():
 
     ok = True
     for i in range(1, len(certs)):
-        ok &= (certs[i]["prev_hash"] == certs[i - 1]["certificate_hash"])
+        ok &= certs[i]["prev_hash"] == certs[i - 1]["certificate_hash"]
     ok &= _check("Certificate chain: 5-step hash chain valid", ok)
     return ok
 
@@ -221,15 +226,18 @@ def prove_dispatch_optimizer():
     ok &= _check("Optimizer returns grid_mw", "grid_mw" in result)
     ok &= _check("Optimizer returns soc_mwh", "soc_mwh" in result)
     soc = result["soc_mwh"]
-    ok &= _check("SOC stays in bounds", all(0 <= s <= 10000.0 + 1e-3 for s in soc),
-                  f"min={min(soc):.1f}, max={max(soc):.1f}")
+    ok &= _check(
+        "SOC stays in bounds",
+        all(0 <= s <= 10000.0 + 1e-3 for s in soc),
+        f"min={min(soc):.1f}, max={max(soc):.1f}",
+    )
     return ok
 
 
 def prove_dl_architecture():
     """Check 7: Deep learning model defaults match PDF."""
-    from orius.forecasting.dl_patchtst import PatchTSTForecaster
     from orius.forecasting.dl_lstm import LSTMForecaster
+    from orius.forecasting.dl_patchtst import PatchTSTForecaster
 
     ok = True
     # PatchTST defaults
@@ -249,11 +257,17 @@ def prove_half_life():
     from orius.dc3s.temporal_theorems import certificate_half_life
 
     result = certificate_half_life(tau_t=100, decay_rate=0.5)
-    ok = _check("Half-life at decay=0.5 equals tau_t", result["half_life_steps"] == 100,
-                f"got {result['half_life_steps']}")
+    ok = _check(
+        "Half-life at decay=0.5 equals tau_t",
+        result["half_life_steps"] == 100,
+        f"got {result['half_life_steps']}",
+    )
     result2 = certificate_half_life(tau_t=100, decay_rate=0.25)
-    ok &= _check("Half-life at decay=0.25 < tau_t", result2["half_life_steps"] < 100,
-                  f"got {result2['half_life_steps']}")
+    ok &= _check(
+        "Half-life at decay=0.25 < tau_t",
+        result2["half_life_steps"] < 100,
+        f"got {result2['half_life_steps']}",
+    )
     return ok
 
 
@@ -273,9 +287,9 @@ def main():
         ("Certificate Half-Life", prove_half_life),
     ]
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("ORIUS Framework Proof — End-to-End Verification")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     passed = 0
     failed = 0
@@ -293,9 +307,9 @@ def main():
             failed += 1
 
     total = passed + failed
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Results: {passed}/{total} checks passed, {failed} failed")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     return 0 if failed == 0 else 1
 

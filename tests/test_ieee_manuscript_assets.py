@@ -6,7 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ALLOWED_CLAIM_STATUSES = {
     "current_repo_supported",
@@ -53,7 +52,9 @@ def test_ieee_main_keeps_conclusion_before_bibliography_without_appendix_afterwa
 
 def test_ieee_main_includes_all_six_domain_rows() -> None:
     main_tex = (REPO_ROOT / "paper" / "ieee" / "orius_ieee_main.tex").read_text(encoding="utf-8")
-    domain_section = (REPO_ROOT / "paper" / "ieee" / "sections" / "ieee_domain_instantiations.tex").read_text(encoding="utf-8")
+    domain_section = (REPO_ROOT / "paper" / "ieee" / "sections" / "ieee_domain_instantiations.tex").read_text(
+        encoding="utf-8"
+    )
 
     assert r"\input{sections/ieee_battery_witness.tex}" in main_tex
     assert r"\input{sections/ieee_domain_instantiations.tex}" in main_tex
@@ -150,8 +151,12 @@ def test_ieee_log_records_review_ready_double_column_page_count() -> None:
 
 def test_professor_ieee_family_exists_and_uses_separate_main_and_appendices() -> None:
     main_tex = (REPO_ROOT / "paper" / "ieee" / "orius_ieee_professor_main.tex").read_text(encoding="utf-8")
-    app_a_tex = (REPO_ROOT / "paper" / "ieee" / "orius_ieee_professor_appendix_a.tex").read_text(encoding="utf-8")
-    app_b_tex = (REPO_ROOT / "paper" / "ieee" / "orius_ieee_professor_appendix_b.tex").read_text(encoding="utf-8")
+    app_a_tex = (REPO_ROOT / "paper" / "ieee" / "orius_ieee_professor_appendix_a.tex").read_text(
+        encoding="utf-8"
+    )
+    app_b_tex = (REPO_ROOT / "paper" / "ieee" / "orius_ieee_professor_appendix_b.tex").read_text(
+        encoding="utf-8"
+    )
 
     assert r"\documentclass[10pt,journal]{IEEEtran}" in main_tex
     assert r"\documentclass[10pt,journal,onecolumn]{IEEEtran}" in app_a_tex

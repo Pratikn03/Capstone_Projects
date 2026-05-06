@@ -1,4 +1,5 @@
 """Comprehensive tests for DC3S calibration / uncertainty inflation."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -98,15 +99,15 @@ class TestBuildUncertaintySet:
 
     def test_base_lower_upper_variant(self):
         cfg = {"k_q": 0.8, "k_drift": 0.6, "infl_max": 3.0}
-        lo, hi, meta = build_uncertainty_set(
-            100.0, 10.0, 1.0, False, cfg, base_lower=85.0, base_upper=115.0
-        )
+        lo, hi, meta = build_uncertainty_set(100.0, 10.0, 1.0, False, cfg, base_lower=85.0, base_upper=115.0)
         assert lo.shape[0] == 1
         assert hi.shape[0] == 1
 
     def test_ambiguity_widening(self):
         cfg = {
-            "k_q": 0.0, "k_drift": 0.0, "infl_max": 3.0,
+            "k_q": 0.0,
+            "k_drift": 0.0,
+            "infl_max": 3.0,
             "ambiguity": {"lambda_mw": 10.0, "min_w": 0.05, "max_extra": 1.0},
         }
         lo, hi, meta = build_uncertainty_set(100.0, 10.0, 0.5, False, cfg)
@@ -131,8 +132,18 @@ class TestBuildUncertaintySet:
     def test_meta_fields_all_present(self):
         cfg = {"k_q": 0.8, "k_drift": 0.6, "infl_max": 3.0}
         _, _, meta = build_uncertainty_set(100.0, 10.0, 0.8, False, cfg)
-        required = {"w_t_raw", "w_t_used", "inflation", "inflation_raw", "k_quality", "k_drift",
-                     "drift_flag", "infl_max", "interval_width", "inflation_rule"}
+        required = {
+            "w_t_raw",
+            "w_t_used",
+            "inflation",
+            "inflation_raw",
+            "k_quality",
+            "k_drift",
+            "drift_flag",
+            "infl_max",
+            "interval_width",
+            "inflation_rule",
+        }
         assert required <= set(meta.keys())
 
     def test_array_yhat_and_q(self):
@@ -150,9 +161,7 @@ class TestBuildUncertaintySet:
 class TestBuildUncertaintySetKappa:
     def test_kappa_formula(self):
         cfg = {"reliability": {"min_w": 0.05}, "infl_max": 5.0}
-        lo, hi, meta = build_uncertainty_set_kappa(
-            100.0, 10.0, 0.5, False, cfg, sigma_sq=4.0, delta=0.05
-        )
+        lo, hi, meta = build_uncertainty_set_kappa(100.0, 10.0, 0.5, False, cfg, sigma_sq=4.0, delta=0.05)
         assert meta["inflation_law"] == "kappa"
         assert meta["kappa"] > 1.0
 

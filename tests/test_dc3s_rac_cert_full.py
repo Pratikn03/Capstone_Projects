@@ -1,7 +1,6 @@
 """Comprehensive tests for DC3S RAC-Cert module."""
-from __future__ import annotations
 
-import json
+from __future__ import annotations
 
 import numpy as np
 import pytest
@@ -65,14 +64,16 @@ class TestComputeQMultiplier:
 class TestComputeInflation:
     def test_identity_at_perfect(self):
         cfg = RACCertConfig()
-        infl, _ = compute_inflation(w_t=1.0, drift_flag=False, sensitivity_norm=0.0,
-                                     k_quality=0.8, k_drift=0.6, cfg=cfg)
+        infl, _ = compute_inflation(
+            w_t=1.0, drift_flag=False, sensitivity_norm=0.0, k_quality=0.8, k_drift=0.6, cfg=cfg
+        )
         assert infl == pytest.approx(1.0)
 
     def test_components_add_up(self):
         cfg = RACCertConfig(k_sensitivity=0.4, infl_max=10.0)
-        infl, meta = compute_inflation(w_t=0.5, drift_flag=True, sensitivity_norm=0.5,
-                                        k_quality=0.8, k_drift=0.6, cfg=cfg)
+        infl, meta = compute_inflation(
+            w_t=0.5, drift_flag=True, sensitivity_norm=0.5, k_quality=0.8, k_drift=0.6, cfg=cfg
+        )
         expected = 1.0 + 0.8 * 0.5 + 0.6 + 0.4 * 0.5
         assert infl == pytest.approx(expected)
         assert meta["quality"] == pytest.approx(0.8 * 0.5)
@@ -80,8 +81,9 @@ class TestComputeInflation:
 
     def test_clipped_by_infl_max(self):
         cfg = RACCertConfig(infl_max=2.0)
-        infl, _ = compute_inflation(w_t=0.0, drift_flag=True, sensitivity_norm=1.0,
-                                     k_quality=5.0, k_drift=5.0, cfg=cfg)
+        infl, _ = compute_inflation(
+            w_t=0.0, drift_flag=True, sensitivity_norm=1.0, k_quality=5.0, k_drift=5.0, cfg=cfg
+        )
         assert infl == pytest.approx(2.0)
 
 
@@ -89,21 +91,25 @@ class TestComputeDispatchSensitivity:
     def test_constant_dispatch_zero_sens(self):
         def probe(load):
             return 5.0, 0.0
-        sens = compute_dispatch_sensitivity(load_window=np.array([100.0, 200.0]),
-                                             dispatch_probe=probe, sens_eps_mw=25.0)
+
+        sens = compute_dispatch_sensitivity(
+            load_window=np.array([100.0, 200.0]), dispatch_probe=probe, sens_eps_mw=25.0
+        )
         assert sens == pytest.approx(0.0)
 
     def test_varying_dispatch_positive_sens(self):
         def probe(load):
             return 0.0, float(load[0]) * 0.1
-        sens = compute_dispatch_sensitivity(load_window=np.array([100.0]),
-                                             dispatch_probe=probe, sens_eps_mw=25.0)
+
+        sens = compute_dispatch_sensitivity(
+            load_window=np.array([100.0]), dispatch_probe=probe, sens_eps_mw=25.0
+        )
         assert sens > 0.0
 
     def test_empty_window(self):
-        sens = compute_dispatch_sensitivity(load_window=np.array([]),
-                                             dispatch_probe=lambda x: (0.0, 0.0),
-                                             sens_eps_mw=25.0)
+        sens = compute_dispatch_sensitivity(
+            load_window=np.array([]), dispatch_probe=lambda x: (0.0, 0.0), sens_eps_mw=25.0
+        )
         assert sens == 0.0
 
 

@@ -1,11 +1,11 @@
 """Shared JSON-safe serialization helpers for API responses."""
+
 from __future__ import annotations
 
 from typing import Any
 
-from fastapi.encoders import jsonable_encoder
 import numpy as np
-
+from fastapi.encoders import jsonable_encoder
 
 _CUSTOM_ENCODERS = {
     np.ndarray: lambda value: value.tolist(),

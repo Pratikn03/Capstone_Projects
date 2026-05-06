@@ -4,6 +4,7 @@
 Temporarily corrupts C001 canonical_value (2.0.0 -> 9.9.9), runs validator,
 captures output to reports/claim_validator_negative_test.log, then restores.
 """
+
 from __future__ import annotations
 
 import subprocess

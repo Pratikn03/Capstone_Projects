@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build the publication dataset summary table from dashboard profile locks."""
+
 from __future__ import annotations
 
 import argparse
@@ -9,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = REPO_ROOT / "reports" / "publication" / "tables" / "table1_dataset_summary.csv"
@@ -66,7 +66,11 @@ def _compute_stats_from_features(path: Path, code: str, label: str) -> dict[str,
         if signal in df.columns:
             target_summary[signal] = {"present": True}
             missing_pct[signal] = float(df[signal].isna().mean() * 100.0)
-    ts = pd.to_datetime(df["timestamp"], utc=True, errors="coerce") if "timestamp" in df.columns else pd.Series([], dtype="datetime64[ns, UTC]")
+    ts = (
+        pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
+        if "timestamp" in df.columns
+        else pd.Series([], dtype="datetime64[ns, UTC]")
+    )
     return {
         "label": label,
         "rows": int(len(df)),
@@ -100,7 +104,9 @@ def build_dataset_summary_rows() -> list[dict[str, Any]]:
         dataset_key = str(spec["code"])
         country = str(spec.get("country", stats.get("country", dataset_key)))
         date_range = stats.get("date_range", {}) if isinstance(stats.get("date_range"), dict) else {}
-        target_summaries = stats.get("targets_summary", {}) if isinstance(stats.get("targets_summary"), dict) else {}
+        target_summaries = (
+            stats.get("targets_summary", {}) if isinstance(stats.get("targets_summary"), dict) else {}
+        )
         total_rows = int(stats.get("rows", 0) or 0)
         missing_pct = stats.get("missing_pct", {}) if isinstance(stats.get("missing_pct"), dict) else {}
         for signal in ("load_mw", "wind_mw", "solar_mw"):
@@ -133,7 +139,17 @@ def main() -> None:
     with output_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(
             handle,
-            fieldnames=["DatasetKey", "Dataset", "Country", "Start", "End", "Rows", "Signal", "Non-Null", "Coverage%"],
+            fieldnames=[
+                "DatasetKey",
+                "Dataset",
+                "Country",
+                "Start",
+                "End",
+                "Rows",
+                "Signal",
+                "Non-Null",
+                "Coverage%",
+            ],
         )
         writer.writeheader()
         writer.writerows(rows)

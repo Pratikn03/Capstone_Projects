@@ -1,9 +1,10 @@
 """API router: forecast."""
+
 from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 import yaml
@@ -28,7 +29,7 @@ def _load_cfg(path: str | Path = "configs/forecast.yaml") -> dict:
     return yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
 
 
-def _resolve_model_path(target: str, cfg: dict) -> Optional[Path]:
+def _resolve_model_path(target: str, cfg: dict) -> Path | None:
     explicit = cfg.get("models", {}).get(target)
     if explicit:
         p = Path(explicit)
@@ -49,20 +50,20 @@ def _resolve_model_path(target: str, cfg: dict) -> Optional[Path]:
 
 
 @lru_cache(maxsize=16)
-def _cached_bundle(path: str) -> Dict[str, Any]:
+def _cached_bundle(path: str) -> dict[str, Any]:
     return load_model_bundle(path)
 
 
 class ForecastResponse(BaseModel):
     generated_at: str
     horizon_hours: int
-    forecasts: Dict[str, Any]
-    meta: Dict[str, Any] = Field(default_factory=dict)
+    forecasts: dict[str, Any]
+    meta: dict[str, Any] = Field(default_factory=dict)
 
 
 @router.get("", response_model=ForecastResponse)
 def get_forecast(
-    targets: Optional[str] = Query(default=None, description="Comma-separated targets"),
+    targets: str | None = Query(default=None, description="Comma-separated targets"),
     horizon: int = Query(default=24, ge=1, le=168),
     api_key: str = Security(get_api_key),
 ):
@@ -80,7 +81,7 @@ def get_forecast(
     df = pd.read_parquet(features_path)
     req_targets = [t.strip() for t in targets.split(",")] if targets else ["load_mw", "wind_mw", "solar_mw"]
 
-    results: Dict[str, Any] = {}
+    results: dict[str, Any] = {}
     missing = []
     for tgt in req_targets:
         model_path = _resolve_model_path(tgt, cfg)

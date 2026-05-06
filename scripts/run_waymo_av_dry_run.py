@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run the 1k-scenario Stage 1–5 Waymo AV dry run."""
+
 from __future__ import annotations
 
 import argparse
@@ -14,7 +15,6 @@ from orius.av_waymo import (
     run_runtime_dry_run,
     train_dry_run_models,
 )
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RAW = REPO_ROOT / "data" / "orius_av" / "raw" / "waymo_motion" / "validation"

@@ -1,4 +1,5 @@
 """Tests for the capacity estimation module (KSG MI, FaultChannelModel, Blahut-Arimoto)."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -12,7 +13,6 @@ from orius.universal_theory.capacity_estimation import (
 
 
 class TestKSGMutualInformation:
-
     def test_gaussian_known_mi(self) -> None:
         rng = np.random.default_rng(42)
         n = 2000
@@ -44,7 +44,6 @@ class TestKSGMutualInformation:
 
 
 class TestFaultChannelModel:
-
     def test_no_fault_high_capacity(self) -> None:
         ch = FaultChannelModel(erasure_prob=0.0, delay_steps=0, noise_std=0.0)
         assert ch.capacity() > 1e5
@@ -78,7 +77,6 @@ class TestFaultChannelModel:
 
 
 class TestBlahutArimoto:
-
     def test_converges(self) -> None:
         p_yx = np.array([[0.9, 0.1], [0.1, 0.9]])
         distortion = np.array([[0.0, 1.0], [1.0, 0.0]])

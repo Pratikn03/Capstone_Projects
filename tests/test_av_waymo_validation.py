@@ -1,4 +1,5 @@
 """Validation tests for the scenario-native Waymo AV surface."""
+
 from __future__ import annotations
 
 import json
@@ -25,7 +26,9 @@ def _repeat_per_actor(actor_values: list[list[float | int]], steps: int) -> list
     return flat
 
 
-def _make_scenario_features(*, break_timestamps: bool = False, pad_actor0_tail_steps: int = 0) -> dict[str, list[float | int | bytes]]:
+def _make_scenario_features(
+    *, break_timestamps: bool = False, pad_actor0_tail_steps: int = 0
+) -> dict[str, list[float | int | bytes]]:
     actor_count = 3
     total_steps = 91
     timestamps = [step * 100_000 for step in range(total_steps)]
@@ -164,7 +167,9 @@ def test_build_validation_surface_materializes_stage2_artifacts(tmp_path: Path) 
 
 def test_validation_flags_broken_timestamps() -> None:
     payload = serialize_example_features(_make_scenario_features(break_timestamps=True))
-    scenario = decode_motion_scenario(parse_example_bytes(payload), shard_id="validation-00000", record_index=0)
+    scenario = decode_motion_scenario(
+        parse_example_bytes(payload), shard_id="validation-00000", record_index=0
+    )
     validation = validate_scenario(scenario)
 
     assert validation.timestamps_monotone is False
@@ -173,7 +178,9 @@ def test_validation_flags_broken_timestamps() -> None:
 
 def test_validation_ignores_padded_negative_actor_timestamps() -> None:
     payload = serialize_example_features(_make_scenario_features(pad_actor0_tail_steps=5))
-    scenario = decode_motion_scenario(parse_example_bytes(payload), shard_id="validation-00000", record_index=0)
+    scenario = decode_motion_scenario(
+        parse_example_bytes(payload), shard_id="validation-00000", record_index=0
+    )
     validation = validate_scenario(scenario)
 
     assert scenario["timestamps_us"][-1] == 9_000_000

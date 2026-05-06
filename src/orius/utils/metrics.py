@@ -9,14 +9,15 @@ This module provides standard metrics for evaluating time series forecasts:
 
 All functions accept numpy arrays or lists and return Python floats.
 """
+
 import numpy as np
 
 
 def rmse(y_true, y_pred) -> float:
     """Root Mean Squared Error.
-    
+
     RMSE = sqrt(mean((y_true - y_pred)²))
-    
+
     Penalizes large deviations more than small ones due to squaring.
     Useful when large errors are particularly undesirable.
     """
@@ -27,9 +28,9 @@ def rmse(y_true, y_pred) -> float:
 
 def mae(y_true, y_pred) -> float:
     """Mean Absolute Error.
-    
+
     MAE = mean(|y_true - y_pred|)
-    
+
     More robust to outliers than RMSE. Represents average absolute deviation.
     """
     y_true = np.asarray(y_true)
@@ -39,9 +40,9 @@ def mae(y_true, y_pred) -> float:
 
 def r2_score(y_true, y_pred) -> float:
     """Coefficient of determination (R²).
-    
+
     R² = 1 - SS_res / SS_tot
-    
+
     Measures proportion of variance explained by the model.
     R² = 1 is perfect prediction; R² = 0 means model predicts the mean.
     """
@@ -56,9 +57,9 @@ def r2_score(y_true, y_pred) -> float:
 
 def smape(y_true, y_pred) -> float:
     """Symmetric Mean Absolute Percentage Error.
-    
+
     sMAPE = mean(2 * |y_pred - y_true| / (|y_true| + |y_pred|))
-    
+
     Bounded between 0 and 2 (or 0-200%). Symmetric: treats over/under
     predictions equally. Preferred over MAPE when values can be near zero.
     """
@@ -70,9 +71,9 @@ def smape(y_true, y_pred) -> float:
 
 def mape(y_true, y_pred) -> float:
     """Mean Absolute Percentage Error.
-    
+
     MAPE = mean(|y_true - y_pred| / |y_true|)
-    
+
     Intuitive percentage error. Caution: explodes when y_true approaches zero.
     Use safe denominator clipping to prevent division by zero.
     """
@@ -84,7 +85,7 @@ def mape(y_true, y_pred) -> float:
 
 def daylight_mape(y_true, y_pred) -> float:
     """MAPE computed only on daylight (non-zero) values.
-    
+
     For solar forecasting, this avoids the divide-by-zero issue at night
     by only computing MAPE when actual solar generation > 0.
     """

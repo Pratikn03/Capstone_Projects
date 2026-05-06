@@ -7,6 +7,7 @@ Example:
     --topic orius.opsd.v1 \
     --rate 50
 """
+
 import argparse
 import json
 import time

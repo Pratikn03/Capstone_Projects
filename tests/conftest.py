@@ -4,15 +4,17 @@ PyTest Configuration and Fixtures for ORIUS Tests.
 This module provides comprehensive test fixtures for unit tests,
 integration tests, and performance tests.
 """
+
 from __future__ import annotations
 
 import os
 import random
 import sys
 import tempfile
-from datetime import datetime, timedelta, timezone
+from collections.abc import Generator
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, Generator, List
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -29,6 +31,7 @@ random.seed(_GLOBAL_SEED)
 np.random.seed(_GLOBAL_SEED)
 try:
     import torch
+
     torch.manual_seed(_GLOBAL_SEED)
     torch.use_deterministic_algorithms(True, warn_only=True)
 except ImportError:
@@ -60,6 +63,7 @@ collect_ignore_glob = ["legacy/test_external_real_data_integration.py"]
 # CONFIGURATION FIXTURES
 # =============================================================================
 
+
 @pytest.fixture(scope="session")
 def project_root() -> Path:
     """Return the project root directory."""
@@ -89,6 +93,7 @@ def temp_dir() -> Generator[Path, None, None]:
 # DATA FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def sample_timestamp_range() -> pd.DatetimeIndex:
     """Create a sample timestamp range (1 week hourly)."""
@@ -104,51 +109,53 @@ def sample_load_data(sample_timestamp_range: pd.DatetimeIndex) -> pd.DataFrame:
     """Create sample load data for testing."""
     np.random.seed(42)
     n = len(sample_timestamp_range)
-    
+
     # Realistic load pattern with daily seasonality
     hours = np.arange(n)
     daily_pattern = 5000 * np.sin(2 * np.pi * hours / 24 - np.pi / 2)
     base_load = 45000
     noise = np.random.normal(0, 1000, n)
-    
-    return pd.DataFrame({
-        "timestamp": sample_timestamp_range,
-        "load_mw": base_load + daily_pattern + noise,
-        "wind_mw": np.abs(np.random.normal(3000, 1500, n)),
-        "solar_mw": np.maximum(0, 2000 * np.sin(2 * np.pi * hours / 24) + np.random.normal(0, 500, n)),
-        "price_eur_mwh": 50 + 20 * np.random.random(n),
-    })
+
+    return pd.DataFrame(
+        {
+            "timestamp": sample_timestamp_range,
+            "load_mw": base_load + daily_pattern + noise,
+            "wind_mw": np.abs(np.random.normal(3000, 1500, n)),
+            "solar_mw": np.maximum(0, 2000 * np.sin(2 * np.pi * hours / 24) + np.random.normal(0, 500, n)),
+            "price_eur_mwh": 50 + 20 * np.random.random(n),
+        }
+    )
 
 
 @pytest.fixture
 def sample_features_df(sample_load_data: pd.DataFrame) -> pd.DataFrame:
     """Create sample feature-engineered dataframe."""
     df = sample_load_data.copy()
-    
+
     # Add lag features
     for lag in [1, 24, 168]:
         df[f"load_mw_lag_{lag}"] = df["load_mw"].shift(lag)
         df[f"wind_mw_lag_{lag}"] = df["wind_mw"].shift(lag)
-    
+
     # Add rolling features
     df["load_mw_roll_24_mean"] = df["load_mw"].rolling(24).mean()
     df["load_mw_roll_24_std"] = df["load_mw"].rolling(24).std()
-    
+
     # Add calendar features
     df["hour"] = df["timestamp"].dt.hour
     df["dayofweek"] = df["timestamp"].dt.dayofweek
     df["month"] = df["timestamp"].dt.month
     df["is_weekend"] = df["dayofweek"].isin([5, 6]).astype(int)
-    
+
     return df.dropna()
 
 
 @pytest.fixture
-def sample_forecast_output() -> Dict[str, np.ndarray]:
+def sample_forecast_output() -> dict[str, np.ndarray]:
     """Create sample forecast output."""
     np.random.seed(42)
     horizon = 24
-    
+
     return {
         "predictions": np.random.normal(45000, 1000, horizon),
         "lower_bound": np.random.normal(43000, 1000, horizon),
@@ -158,11 +165,11 @@ def sample_forecast_output() -> Dict[str, np.ndarray]:
 
 
 @pytest.fixture
-def sample_optimization_input() -> Dict[str, Any]:
+def sample_optimization_input() -> dict[str, Any]:
     """Create sample optimization input."""
     horizon = 24
     np.random.seed(42)
-    
+
     return {
         "load_forecast": (45000 + np.random.normal(0, 1000, horizon)).tolist(),
         "wind_forecast": np.abs(np.random.normal(3000, 1000, horizon)).tolist(),
@@ -177,6 +184,7 @@ def sample_optimization_input() -> Dict[str, Any]:
 # =============================================================================
 # MODEL FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def mock_gbm_model() -> MagicMock:
@@ -203,19 +211,21 @@ def mock_forecast_service(mock_gbm_model: MagicMock) -> MagicMock:
 # API FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def api_client():
     """Create a test client for the FastAPI application."""
     from fastapi.testclient import TestClient
-    
+
     # Mock environment variables
     with patch.dict(os.environ, {"ORIUS_API_KEY": "test-key"}):
         from services.api.main import app
+
         yield TestClient(app)
 
 
 @pytest.fixture
-def api_headers() -> Dict[str, str]:
+def api_headers() -> dict[str, str]:
     """Return standard API headers for testing."""
     return {
         "Content-Type": "application/json",
@@ -227,8 +237,9 @@ def api_headers() -> Dict[str, str]:
 # CONFIGURATION FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
-def sample_battery_config() -> Dict[str, Any]:
+def sample_battery_config() -> dict[str, Any]:
     """Create sample battery configuration."""
     return {
         "capacity_mwh": 100.0,
@@ -244,7 +255,7 @@ def sample_battery_config() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_optimization_config(sample_battery_config: Dict[str, Any]) -> Dict[str, Any]:
+def sample_optimization_config(sample_battery_config: dict[str, Any]) -> dict[str, Any]:
     """Create sample optimization configuration."""
     return {
         "battery": sample_battery_config,
@@ -264,11 +275,12 @@ def sample_optimization_config(sample_battery_config: Dict[str, Any]) -> Dict[st
 # STREAMING FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
-def sample_kafka_message() -> Dict[str, Any]:
+def sample_kafka_message() -> dict[str, Any]:
     """Create a sample Kafka message."""
     return {
-        "utc_timestamp": datetime.now(timezone.utc).isoformat(),
+        "utc_timestamp": datetime.now(UTC).isoformat(),
         "load_mw": 45000.0,
         "wind_mw": 3000.0,
         "solar_mw": 2000.0,
@@ -288,11 +300,12 @@ def mock_kafka_consumer() -> MagicMock:
 # DATABASE FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def mock_duckdb_connection(temp_dir: Path) -> Generator[Any, None, None]:
     """Create a temporary DuckDB connection."""
     import duckdb
-    
+
     db_path = temp_dir / "test.duckdb"
     conn = duckdb.connect(str(db_path))
     yield conn
@@ -303,8 +316,9 @@ def mock_duckdb_connection(temp_dir: Path) -> Generator[Any, None, None]:
 # METRIC FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
-def sample_evaluation_results() -> Dict[str, float]:
+def sample_evaluation_results() -> dict[str, float]:
     """Create sample evaluation results."""
     return {
         "rmse": 271.2,
@@ -316,7 +330,7 @@ def sample_evaluation_results() -> Dict[str, float]:
 
 
 @pytest.fixture
-def sample_coverage_results() -> Dict[str, Any]:
+def sample_coverage_results() -> dict[str, Any]:
     """Create sample prediction interval coverage results."""
     return {
         "picp": 0.952,
@@ -329,6 +343,7 @@ def sample_coverage_results() -> Dict[str, Any]:
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
+
 
 def assert_dataframe_equal(df1: pd.DataFrame, df2: pd.DataFrame, rtol: float = 1e-5):
     """Assert two DataFrames are approximately equal."""
@@ -344,24 +359,19 @@ def assert_array_almost_equal(arr1: np.ndarray, arr2: np.ndarray, decimal: int =
 # PYTEST CONFIGURATION
 # =============================================================================
 
+
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
-    )
-    config.addinivalue_line(
-        "markers", "integration: marks tests requiring external services"
-    )
-    config.addinivalue_line(
-        "markers", "load: marks load/performance tests"
-    )
+    config.addinivalue_line("markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')")
+    config.addinivalue_line("markers", "integration: marks tests requiring external services")
+    config.addinivalue_line("markers", "load: marks load/performance tests")
 
 
 def pytest_collection_modifyitems(config, items):
     """Modify test collection based on markers."""
     if config.getoption("-m"):
         return
-    
+
     # Skip slow tests by default in CI
     if os.environ.get("CI"):
         skip_slow = pytest.mark.skip(reason="Skipping slow tests in CI")

@@ -7,6 +7,7 @@ Output: reports/paper3/runtime_linkage_trace.json
 Uses importlib to load temporal_theorems and graceful directly, avoiding the full
 orius package (which pulls numpy via dc3s/quality/ftit).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -83,13 +84,15 @@ def main() -> int:
     tau_t = result["tau_t"]
 
     # 2. Planner uses tau_t (certificate horizon), not fixed timer
-    actions = list(optimized_graceful(
-        last_action=last_action,
-        horizon_steps=tau_t,
-        soc_mwh=soc_mwh,
-        constraints=constraints,
-        sigma_d=sigma_d,
-    ))
+    actions = list(
+        optimized_graceful(
+            last_action=last_action,
+            horizon_steps=tau_t,
+            soc_mwh=soc_mwh,
+            constraints=constraints,
+            sigma_d=sigma_d,
+        )
+    )
 
     # 3. Fallback termination: should_expire when remaining <= 0
     expire_result = should_expire_certificate(tau_t=tau_t, steps_since_renewal=tau_t)
@@ -102,10 +105,24 @@ def main() -> int:
             {"step": i, "discharge_mw": round(a["discharge_mw"], 4), "charge_mw": round(a["charge_mw"], 4)}
             for i, a in enumerate(actions[:3])
         ]
-        + ([{"step": len(actions) - 1, "discharge_mw": round(actions[-1]["discharge_mw"], 4), "charge_mw": round(actions[-1]["charge_mw"], 4)}] if len(actions) > 3 else []),
+        + (
+            [
+                {
+                    "step": len(actions) - 1,
+                    "discharge_mw": round(actions[-1]["discharge_mw"], 4),
+                    "charge_mw": round(actions[-1]["charge_mw"], 4),
+                }
+            ]
+            if len(actions) > 3
+            else []
+        ),
         "taper_verified": (
-            (actions[0]["discharge_mw"] > actions[-1]["discharge_mw"] or actions[0]["charge_mw"] > actions[-1]["charge_mw"])
-            if len(actions) > 1 else True
+            (
+                actions[0]["discharge_mw"] > actions[-1]["discharge_mw"]
+                or actions[0]["charge_mw"] > actions[-1]["charge_mw"]
+            )
+            if len(actions) > 1
+            else True
         ),
         "fallback_termination": {
             "should_expire_after_tau_t_steps": expire_result["should_expire"],

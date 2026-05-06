@@ -8,18 +8,18 @@ Verifies:
   4. Frontier summary formatting
   5. Edge cases (T=1, alpha near 0/1, target_violations=0)
 """
+
 import math
 
 import numpy as np
 import pytest
 
 from orius.universal.reliability_safety_frontier import (
-    compute_frontier,
-    minimum_reliability_for_target,
-    is_dc3s_optimal,
     achieved_violation_rate,
+    compute_frontier,
     frontier_summary,
-    FrontierPoint,
+    is_dc3s_optimal,
+    minimum_reliability_for_target,
 )
 
 
@@ -37,8 +37,7 @@ class TestComputeFrontier:
         for p in points:
             expected = alpha * (1.0 - p.mean_reliability) * T
             assert abs(p.upper_bound - expected) < 1e-9, (
-                f"Upper bound mismatch at w̄={p.mean_reliability}: "
-                f"got {p.upper_bound}, expected {expected}"
+                f"Upper bound mismatch at w̄={p.mean_reliability}: got {p.upper_bound}, expected {expected}"
             )
 
     def test_upper_bound_monotone_decreasing_in_reliability(self):
@@ -47,7 +46,7 @@ class TestComputeFrontier:
         uppers = [p.upper_bound for p in points]
         for i in range(len(uppers) - 1):
             assert uppers[i] >= uppers[i + 1] - 1e-9, (
-                f"Upper bound not monotone at index {i}: {uppers[i]} < {uppers[i+1]}"
+                f"Upper bound not monotone at index {i}: {uppers[i]} < {uppers[i + 1]}"
             )
 
     def test_lower_bound_le_upper_bound(self):
@@ -146,22 +145,19 @@ class TestIsDC3SOptimal:
 
     def test_zero_violations_is_optimal(self):
         """Zero violations is always within the bound."""
-        assert is_dc3s_optimal(alpha=0.05, T=2000, observed_violations=0.0,
-                               mean_reliability=0.9)
+        assert is_dc3s_optimal(alpha=0.05, T=2000, observed_violations=0.0, mean_reliability=0.9)
 
     def test_violations_at_upper_bound_is_optimal(self):
         """Exactly at the upper bound (with default 2% tolerance) is optimal."""
         alpha, T, w_bar = 0.05, 2000, 0.9
         upper = alpha * (1.0 - w_bar) * T  # = 10.0
-        assert is_dc3s_optimal(alpha=alpha, T=T, observed_violations=upper,
-                               mean_reliability=w_bar)
+        assert is_dc3s_optimal(alpha=alpha, T=T, observed_violations=upper, mean_reliability=w_bar)
 
     def test_violations_far_above_bound_is_not_optimal(self):
         """Violations >> upper bound indicates a bug in the shield."""
         alpha, T, w_bar = 0.05, 2000, 0.9
         upper = alpha * (1.0 - w_bar) * T  # = 10.0
-        assert not is_dc3s_optimal(alpha=alpha, T=T, observed_violations=upper * 2.0,
-                                   mean_reliability=w_bar)
+        assert not is_dc3s_optimal(alpha=alpha, T=T, observed_violations=upper * 2.0, mean_reliability=w_bar)
 
     def test_tolerance_parameter(self):
         alpha, T, w_bar = 0.05, 2000, 0.9

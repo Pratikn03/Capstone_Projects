@@ -9,6 +9,7 @@ The active runtime program is intentionally limited to:
 This script produces the validation surfaces consumed by the publication and
 review pipeline without recreating any removed-domain rows or six-domain gates.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -16,7 +17,7 @@ import csv
 import json
 import math
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -47,10 +48,14 @@ from _dataset_registry import runtime_domain_configs
 REPO_ROOT = SCRIPT_DIR.parent
 BATTERY_REFERENCE_TABLE_CSV = REPO_ROOT / "reports" / "publication" / "dc3s_main_table.csv"
 PROMOTED_PER_CONTROLLER_CSV = REPO_ROOT / "reports" / "universal_orius_validation" / "per_controller_tsvr.csv"
-AV_RUNTIME_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+AV_RUNTIME_DIR = (
+    REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+)
 AV_RUNTIME_SUMMARY = AV_RUNTIME_DIR / "runtime_summary.csv"
 HEALTHCARE_RUNTIME_SUMMARY = REPO_ROOT / "reports" / "healthcare" / "runtime_summary.csv"
-DOMAIN_RUNTIME_CONTRACT_SUMMARY = REPO_ROOT / "reports" / "publication" / "domain_runtime_contract_summary.json"
+DOMAIN_RUNTIME_CONTRACT_SUMMARY = (
+    REPO_ROOT / "reports" / "publication" / "domain_runtime_contract_summary.json"
+)
 
 CONTROLLERS = [
     NominalController(),
@@ -98,7 +103,7 @@ _DOMAIN_HOLD_KEYS: dict[str, tuple[str, ...]] = {
 
 
 def _iso_step_timestamp(step: int) -> str:
-    ts = datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=step)
+    ts = datetime(2026, 1, 1, tzinfo=UTC) + timedelta(seconds=step)
     return ts.isoformat().replace("+00:00", "Z")
 
 
@@ -555,7 +560,9 @@ def _runtime_source_path(domain: str) -> Path:
     raise KeyError(domain)
 
 
-def _build_tracks(*, allow_support_tier: bool = False) -> tuple[list[BenchmarkAdapter], dict[str, str], list[str]]:
+def _build_tracks(
+    *, allow_support_tier: bool = False
+) -> tuple[list[BenchmarkAdapter], dict[str, str], list[str]]:
     del allow_support_tier
     vehicle_path = _runtime_dataset_path("vehicle")
     healthcare_path = _runtime_dataset_path("healthcare")
@@ -600,53 +607,61 @@ def main() -> int:
         return 1
 
     battery_metrics = _load_locked_battery_reference_metrics()
-    per_controller_rows: list[list[object]] = [[
-        "domain",
-        "controller",
-        "seed",
-        "tsvr",
-        "oasg",
-        "gdq",
-        "cva",
-    ]]
-    diagnostic_harness_rows: list[list[object]] = [[
-        "domain",
-        "controller",
-        "seed",
-        "tsvr",
-        "oasg",
-        "gdq",
-        "cva",
-        "metric_surface",
-        "diagnostic_only",
-        "claim_governs_from",
-    ]]
-    cross_domain_rows: list[list[object]] = [[
-        "domain",
-        "baseline_tsvr_mean",
-        "orius_tsvr_mean",
-        "orius_reduction_pct",
-        "validation_status",
-    ]]
-    domain_summary_rows: list[list[object]] = [[
-        "domain",
-        "validation_status",
-        "maturity_tier",
-        "source_dataset",
-        "baseline_tsvr_mean",
-        "orius_tsvr_mean",
-        "orius_reduction_pct",
-        "closure_target_ready",
-        "closure_blocker",
-        "metric_surface",
-        "runtime_source",
-        "n_steps",
-        "strict_runtime_gate",
-        "certificate_valid_rate",
-        "t11_pass_rate",
-        "postcondition_pass_rate",
-        "runtime_witness_pass_rate",
-    ]]
+    per_controller_rows: list[list[object]] = [
+        [
+            "domain",
+            "controller",
+            "seed",
+            "tsvr",
+            "oasg",
+            "gdq",
+            "cva",
+        ]
+    ]
+    diagnostic_harness_rows: list[list[object]] = [
+        [
+            "domain",
+            "controller",
+            "seed",
+            "tsvr",
+            "oasg",
+            "gdq",
+            "cva",
+            "metric_surface",
+            "diagnostic_only",
+            "claim_governs_from",
+        ]
+    ]
+    cross_domain_rows: list[list[object]] = [
+        [
+            "domain",
+            "baseline_tsvr_mean",
+            "orius_tsvr_mean",
+            "orius_reduction_pct",
+            "validation_status",
+        ]
+    ]
+    domain_summary_rows: list[list[object]] = [
+        [
+            "domain",
+            "validation_status",
+            "maturity_tier",
+            "source_dataset",
+            "baseline_tsvr_mean",
+            "orius_tsvr_mean",
+            "orius_reduction_pct",
+            "closure_target_ready",
+            "closure_blocker",
+            "metric_surface",
+            "runtime_source",
+            "n_steps",
+            "strict_runtime_gate",
+            "certificate_valid_rate",
+            "t11_pass_rate",
+            "postcondition_pass_rate",
+            "runtime_witness_pass_rate",
+        ]
+    ]
 
     domain_results: dict[str, dict[str, Any]] = {
         "battery": {
@@ -664,7 +679,15 @@ def main() -> int:
     portability_reports: dict[str, dict[str, Any]] = {}
 
     per_controller_rows.append(
-        ["battery", "nominal_locked_reference", "locked", battery_metrics["baseline_tsvr_mean"], 0.0, 0.0, 1.0]
+        [
+            "battery",
+            "nominal_locked_reference",
+            "locked",
+            battery_metrics["baseline_tsvr_mean"],
+            0.0,
+            0.0,
+            1.0,
+        ]
     )
     per_controller_rows.append(
         ["battery", "dc3s_locked_reference", "locked", battery_metrics["orius_tsvr_mean"], 0.0, 0.0, 1.0]
@@ -698,7 +721,9 @@ def main() -> int:
                 for offset in range(args.seeds):
                     seed = 2000 + offset
                     if controller.name == "dc3s":
-                        records = _run_domain_proof_episode(track, controller, seed=seed, horizon=args.horizon)
+                        records = _run_domain_proof_episode(
+                            track, controller, seed=seed, horizon=args.horizon
+                        )
                     else:
                         records = _run_episode(track, controller, seed=seed, horizon=args.horizon)
                     metrics = compute_all_metrics(records)
@@ -802,7 +827,9 @@ def main() -> int:
         "proof_validated_domains": proof_validated_domains,
         "evaluated_proof_candidates": [],
         "promoted_proof_candidates": [],
-        "proof_downgraded_domains": [domain for domain in DEFENDED_DOMAINS if domain not in proof_validated_domains],
+        "proof_downgraded_domains": [
+            domain for domain in DEFENDED_DOMAINS if domain not in proof_validated_domains
+        ],
         "locked_protocol": {
             "seeds": args.seeds,
             "horizon": args.horizon,
@@ -813,9 +840,7 @@ def main() -> int:
     }
     portability_validation_report = {
         "portability_validated_domains": [
-            domain
-            for domain, report in portability_reports.items()
-            if report["portability_pass"]
+            domain for domain, report in portability_reports.items() if report["portability_pass"]
         ],
         "shadow_synthetic_domains": [],
         "experimental_domains": [],
@@ -832,14 +857,20 @@ def main() -> int:
     evidence_pass = len(evidence_failure_reasons) == 0
     validation_report = {
         "domains_run": len(RUNTIME_DOMAIN_ORDER),
-        "domains_passed": len(RUNTIME_DOMAIN_ORDER) if harness_pass and evidence_pass else len(proof_validated_domains) + 1,
-        "domains_failed": 0 if harness_pass and evidence_pass else len(DEFENDED_DOMAINS) - len(proof_validated_domains),
+        "domains_passed": len(RUNTIME_DOMAIN_ORDER)
+        if harness_pass and evidence_pass
+        else len(proof_validated_domains) + 1,
+        "domains_failed": 0
+        if harness_pass and evidence_pass
+        else len(DEFENDED_DOMAINS) - len(proof_validated_domains),
         "failed_domains": [domain for domain in DEFENDED_DOMAINS if domain not in proof_validated_domains],
         "harness_pass": harness_pass,
         "evidence_pass": evidence_pass,
         "all_proof_domains_pass": evidence_pass,
         "portability_all_pass": portability_validation_report["portability_all_pass"],
-        "all_passed": harness_pass and evidence_pass and portability_validation_report["portability_all_pass"],
+        "all_passed": harness_pass
+        and evidence_pass
+        and portability_validation_report["portability_all_pass"],
         "reference_domain": REFERENCE_DOMAIN,
         "proof_domain": PROOF_DOMAIN,
         "proof_domains": DEFENDED_DOMAINS,
@@ -860,7 +891,9 @@ def main() -> int:
         "portability_validated_domains": portability_validation_report["portability_validated_domains"],
         "experimental_domains": [],
         "bounded_universal_target_domains": list(RUNTIME_DOMAIN_ORDER),
-        "bounded_universal_target_ready": all(result["closure_target_ready"] for result in domain_results.values()),
+        "bounded_universal_target_ready": all(
+            result["closure_target_ready"] for result in domain_results.values()
+        ),
         "portability_only_domains": [],
         "reference_domain_metric_surface": "locked_battery_reference_table",
         "reference_domain_metrics": battery_metrics,
@@ -895,7 +928,9 @@ def main() -> int:
         encoding="utf-8",
     )
     (out_dir / "validation_report.json").write_text(json.dumps(validation_report, indent=2), encoding="utf-8")
-    (out_dir / "proof_domain_report.json").write_text(json.dumps(proof_domain_report, indent=2), encoding="utf-8")
+    (out_dir / "proof_domain_report.json").write_text(
+        json.dumps(proof_domain_report, indent=2), encoding="utf-8"
+    )
     (out_dir / "portability_validation_report.json").write_text(
         json.dumps(portability_validation_report, indent=2),
         encoding="utf-8",

@@ -1,15 +1,15 @@
 """Submission-facing audit for the solo ORIUS thesis package."""
+
 from __future__ import annotations
 
 import hashlib
 import json
 import re
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from pathlib import Path
 import subprocess
 import sys
-
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLISH_DIR = REPO_ROOT / "reports" / "publish"
@@ -67,7 +67,9 @@ def _build_checks() -> list[CheckResult]:
     paper_log = REPO_ROOT / "paper" / "paper.log"
     metrics_manifest = _load_json(REPO_ROOT / "paper" / "metrics_manifest.json")
     release_manifest = _load_json(REPO_ROOT / "reports" / "publication" / "release_manifest.json")
-    artifact_appendix = (REPO_ROOT / "reports" / "publication" / "orius_artifact_appendix.md").read_text(encoding="utf-8")
+    artifact_appendix = (REPO_ROOT / "reports" / "publication" / "orius_artifact_appendix.md").read_text(
+        encoding="utf-8"
+    )
     paper_tex = (REPO_ROOT / "orius_book.tex").read_text(encoding="utf-8")
     monograph_text = _aggregate_monograph_text()
 
@@ -78,13 +80,19 @@ def _build_checks() -> list[CheckResult]:
     if pdf_ok:
         same = _sha256(paper_pdf) == _sha256(root_pdf)
         pdf_ok = pdf_ok and same
-        pdf_details = "paper/paper.pdf and repo-root paper.pdf exist and match" if same else "final PDFs differ"
+        pdf_details = (
+            "paper/paper.pdf and repo-root paper.pdf exist and match" if same else "final PDFs differ"
+        )
     else:
         pdf_details = "missing final PDF output"
     checks.append(CheckResult("Final PDF outputs", pdf_ok, pdf_details))
 
     log_text = paper_log.read_text(encoding="utf-8") if paper_log.exists() else ""
-    latex_bad = [token for token in ["LaTeX Error:", "undefined references", "undefined on input line", "Emergency stop"] if token in log_text]
+    latex_bad = [
+        token
+        for token in ["LaTeX Error:", "undefined references", "undefined on input line", "Emergency stop"]
+        if token in log_text
+    ]
     checks.append(
         CheckResult(
             "Compiled manuscript log",
@@ -104,7 +112,9 @@ def _build_checks() -> list[CheckResult]:
         )
     )
 
-    titlepage_hits = _scan_terms(REPO_ROOT / "frontmatter" / "titlepage.tex", ["draft", "committee", "advisor"])
+    titlepage_hits = _scan_terms(
+        REPO_ROOT / "frontmatter" / "titlepage.tex", ["draft", "committee", "advisor"]
+    )
     checks.append(
         CheckResult(
             "Solo title page mode",
@@ -119,7 +129,9 @@ def _build_checks() -> list[CheckResult]:
     checks.append(
         CheckResult(
             "Acknowledgments wording",
-            not ack_hits and "this thesis" in (REPO_ROOT / "frontmatter" / "acknowledgments.tex").read_text(encoding="utf-8").lower(),
+            not ack_hits
+            and "this thesis"
+            in (REPO_ROOT / "frontmatter" / "acknowledgments.tex").read_text(encoding="utf-8").lower(),
             "acknowledgments use thesis wording and contain no draft marker"
             if not ack_hits
             else f"acknowledgments contain banned terms: {ack_hits}",
@@ -164,7 +176,9 @@ def _build_checks() -> list[CheckResult]:
     bibliography_path = REPO_ROOT / "paper" / "bibliography" / "orius_monograph.bib"
     bib_entries = 0
     if bibliography_path.exists():
-        bib_entries = sum(1 for line in bibliography_path.read_text(encoding="utf-8").splitlines() if line.startswith("@"))
+        bib_entries = sum(
+            1 for line in bibliography_path.read_text(encoding="utf-8").splitlines() if line.startswith("@")
+        )
     checks.append(
         CheckResult(
             "Bibliography depth",
@@ -174,9 +188,7 @@ def _build_checks() -> list[CheckResult]:
     )
 
     legacy_root = "Pa" + "per"
-    legacy_program_pattern = re.compile(
-        legacy_root + r"(?:~|\s)?(?:1|2|3|4|5|6)\b"
-    )
+    legacy_program_pattern = re.compile(legacy_root + r"(?:~|\s)?(?:1|2|3|4|5|6)\b")
     lingering_program_refs = sorted(set(legacy_program_pattern.findall(monograph_text)))
     checks.append(
         CheckResult(
@@ -239,15 +251,12 @@ def _build_checks() -> list[CheckResult]:
 
 def _write_reports(checks: list[CheckResult]) -> None:
     PUBLISH_DIR.mkdir(parents=True, exist_ok=True)
-    generated_at = datetime.now(timezone.utc).isoformat()
+    generated_at = datetime.now(UTC).isoformat()
     payload = {
         "generated_at": generated_at,
         "mode": "solo_final_submission",
         "go": all(check.ok for check in checks),
-        "checks": [
-            {"name": check.name, "ok": check.ok, "details": check.details}
-            for check in checks
-        ],
+        "checks": [{"name": check.name, "ok": check.ok, "details": check.details} for check in checks],
     }
     JSON_REPORT.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 

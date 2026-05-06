@@ -1,16 +1,19 @@
 """Streaming consumer for Kafka/Redpanda ingestion."""
+
 from __future__ import annotations
+
+import contextlib
 import json
 import time
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 import duckdb
 from kafka import KafkaConsumer
 
-from .schemas import OPSDTelemetryEvent
 from .checkpoint import load_checkpoint, save_checkpoint
+from .schemas import OPSDTelemetryEvent
 
 
 @dataclass
@@ -51,8 +54,8 @@ class StreamingIngestConsumer:
     def __init__(self, cfg: AppConfig):
         self.cfg = cfg
         self.ckpt = load_checkpoint(cfg.checkpoint_path)
-        self._last_ts: Optional[datetime] = None
-        self._last_values: Dict[str, float] = {}
+        self._last_ts: datetime | None = None
+        self._last_values: dict[str, float] = {}
         self.validation = cfg.validation
         self.consumer = KafkaConsumer(
             cfg.kafka.topic,
@@ -79,7 +82,7 @@ class StreamingIngestConsumer:
             """
         )
 
-    def _validate(self, event_dict: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _validate(self, event_dict: dict[str, Any]) -> dict[str, Any] | None:
         try:
             evt = OPSDTelemetryEvent(**event_dict)
             normalized = evt.model_dump()
@@ -90,7 +93,7 @@ class StreamingIngestConsumer:
                 raise
             return None
 
-    def _parse_ts(self, value: str) -> Optional[datetime]:
+    def _parse_ts(self, value: str) -> datetime | None:
         if not value:
             return None
         try:
@@ -98,7 +101,7 @@ class StreamingIngestConsumer:
         except ValueError:
             return None
 
-    def _check_event(self, event_dict: Dict[str, Any]) -> None:
+    def _check_event(self, event_dict: dict[str, Any]) -> None:
         ts = self._parse_ts(event_dict.get("utc_timestamp"))
         if ts is None:
             raise ValueError("Invalid utc_timestamp; expected ISO-8601 string.")
@@ -136,7 +139,7 @@ class StreamingIngestConsumer:
             if val is not None:
                 self._last_values[key] = float(val)
 
-    def _write(self, event_dict: Dict[str, Any]) -> None:
+    def _write(self, event_dict: dict[str, Any]) -> None:
         norm = self._validate(event_dict)
         if norm is None:
             return
@@ -150,25 +153,21 @@ class StreamingIngestConsumer:
             # Parquet write can be added later: append partitioned parquet by date/hour.
             pass
 
-    def write_event(self, event_dict: Dict[str, Any]) -> None:
+    def write_event(self, event_dict: dict[str, Any]) -> None:
         """Persist one event after schema/rules validation."""
         self._write(event_dict)
 
     def close(self) -> None:
         """Close underlying Kafka and storage connections."""
-        try:
+        with contextlib.suppress(Exception):
             self.consumer.close()
-        except Exception:
-            pass
 
         con = getattr(self, "con", None)
         if con is not None:
-            try:
+            with contextlib.suppress(Exception):
                 con.close()
-            except Exception:
-                pass
 
-    def run_forever(self, max_messages: Optional[int] = None) -> None:
+    def run_forever(self, max_messages: int | None = None) -> None:
         count = 0
         for msg in self.consumer:
             event_dict = msg.value
@@ -183,7 +182,5 @@ class StreamingIngestConsumer:
                 break
 
         save_checkpoint(self.cfg.checkpoint_path, {"last_count": count, "last_ts": time.time()})
-        try:
+        with contextlib.suppress(Exception):
             self.consumer.commit()
-        except Exception:
-            pass

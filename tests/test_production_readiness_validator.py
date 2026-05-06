@@ -1,4 +1,5 @@
 """Regression tests for deployment-readiness gates."""
+
 from __future__ import annotations
 
 import json

@@ -1,4 +1,5 @@
 """Constraint checks for the dispatch optimizer."""
+
 import numpy as np
 
 from orius.optimizer import optimize_dispatch

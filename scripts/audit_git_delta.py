@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """Audit Git delta versus a baseline ref for publish traceability."""
+
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import fnmatch
 import json
-from pathlib import Path
 import subprocess
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -47,7 +47,11 @@ def _load_scope_globs(config_path: Path) -> list[str]:
     publish = payload.get("publish_audit") if isinstance(payload.get("publish_audit"), dict) else {}
     scope = publish.get("scope") if isinstance(publish.get("scope"), dict) else {}
     includes = scope.get("include") if isinstance(scope.get("include"), list) else None
-    return [str(x) for x in includes] if includes else ["src/orius/**", "services/api/**", "scripts/**", "configs/**", "iot/**"]
+    return (
+        [str(x) for x in includes]
+        if includes
+        else ["src/orius/**", "services/api/**", "scripts/**", "configs/**", "iot/**"]
+    )
 
 
 def _matches_scope(path: str, patterns: list[str]) -> tuple[bool, str]:
@@ -151,7 +155,7 @@ def build_delta_report(*, baseline_ref: str, config_path: Path) -> dict[str, Any
     out_scope_files = [x for x in files if not x.in_scope]
 
     payload = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "baseline_ref": baseline_ref,
         "baseline_commit": baseline_commit,
         "head_commit": head_commit,

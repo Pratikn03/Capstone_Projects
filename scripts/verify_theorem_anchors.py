@@ -3,6 +3,7 @@
 Verify that all T1-T8 theorem code anchors exist and are importable.
 Aligns PDF (paper) and system per orius-plan/theorem_to_evidence_map.md.
 """
+
 from __future__ import annotations
 
 import sys
@@ -48,7 +49,7 @@ ANCHORS = {
 def main() -> int:
     failed = []
     for tid, modules in ANCHORS.items():
-        for mod_path, desc in modules:
+        for mod_path, _desc in modules:
             try:
                 __import__(f"orius.{mod_path}")
             except Exception as e:

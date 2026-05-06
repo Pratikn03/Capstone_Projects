@@ -1,11 +1,12 @@
 """Serving configuration helpers for the API layer."""
+
 from __future__ import annotations
 
 import json
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 
@@ -29,7 +30,7 @@ def load_uncertainty_config(path: str | Path | None = None) -> dict:
     return _load_yaml(cfg_path)
 
 
-def get_conformal_path(target: str, cfg: Optional[dict] = None) -> Path:
+def get_conformal_path(target: str, cfg: dict | None = None) -> Path:
     cfg = cfg or load_uncertainty_config()
     artifacts_dir = Path(cfg.get("artifacts_dir", "artifacts/uncertainty"))
     return artifacts_dir / f"{target}_conformal.json"
@@ -55,7 +56,7 @@ def _read_int_env(name: str, default: int) -> int:
         return default
 
 
-def get_bms_config(cfg: Optional[dict] = None) -> dict:
+def get_bms_config(cfg: dict | None = None) -> dict:
     cfg = cfg or load_serving_config()
     bms_cfg = cfg.get("safety", {}).get("bms", {})
     return {
@@ -66,13 +67,13 @@ def get_bms_config(cfg: Optional[dict] = None) -> dict:
     }
 
 
-def get_watchdog_timeout(cfg: Optional[dict] = None) -> int:
+def get_watchdog_timeout(cfg: dict | None = None) -> int:
     cfg = cfg or load_serving_config()
     watchdog_cfg = cfg.get("safety", {}).get("watchdog", {})
     return _read_int_env("ORIUS_WATCHDOG_TIMEOUT_SECONDS", watchdog_cfg.get("timeout_seconds", 30))
 
 
-def _load_api_keys_from_env() -> Optional[Dict[str, Any]]:
+def _load_api_keys_from_env() -> dict[str, Any] | None:
     raw = os.getenv("ORIUS_API_KEYS")
     if not raw:
         return None
@@ -108,7 +109,7 @@ def is_auth_disabled_for_tests() -> bool:
 
 
 @lru_cache(maxsize=1)
-def get_api_keys(cfg: Optional[dict] = None) -> Dict[str, Any]:
+def get_api_keys(cfg: dict | None = None) -> dict[str, Any]:
     cfg = cfg or load_serving_config()
     env_keys = _load_api_keys_from_env()
     if env_keys is not None:

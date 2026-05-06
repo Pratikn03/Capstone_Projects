@@ -8,7 +8,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(os.environ.get("GRIDPULSE_REPO_ROOT", ".")).resolve()
 PYTHON = sys.executable
 

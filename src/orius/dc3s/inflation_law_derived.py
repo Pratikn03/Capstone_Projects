@@ -6,6 +6,7 @@ used in the DC3S pipeline.
 
 Complements ``calibration.py`` (runtime inflation) with the analytic form.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,8 +15,8 @@ import numpy as np
 
 __all__ = [
     "DerivedInflationResult",
-    "derived_k_q",
     "derived_inflation",
+    "derived_k_q",
     "inflation_curve",
     "verify_heuristic_vs_derived",
 ]

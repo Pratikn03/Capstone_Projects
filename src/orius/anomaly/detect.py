@@ -1,8 +1,9 @@
 """Anomaly detection: detect."""
+
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -24,7 +25,9 @@ def _load_config(cfg_path: str | Path | None) -> dict:
     return yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
 
 
-def _residual_z_flags(residuals: np.ndarray, window: int, z_threshold: float) -> tuple[np.ndarray, np.ndarray]:
+def _residual_z_flags(
+    residuals: np.ndarray, window: int, z_threshold: float
+) -> tuple[np.ndarray, np.ndarray]:
     if window <= 1:
         window = max(3, len(residuals) // 10)
     s = pd.Series(residuals)
@@ -39,9 +42,9 @@ def _residual_z_flags(residuals: np.ndarray, window: int, z_threshold: float) ->
 def detect_anomalies(
     actual: np.ndarray | list[float],
     forecast: np.ndarray | list[float],
-    features: Optional[pd.DataFrame | np.ndarray | list[list[float]]] = None,
+    features: pd.DataFrame | np.ndarray | list[list[float]] | None = None,
     config_path: str | Path | None = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Detect anomalies using residual z-score + optional Isolation Forest."""
     cfg = _load_config(config_path)
     actual = np.asarray(actual, dtype=float)
@@ -61,10 +64,7 @@ def detect_anomalies(
     iforest_flags = np.zeros_like(z_flags, dtype=bool)
 
     if iforest_enabled and features is not None:
-        if isinstance(features, pd.DataFrame):
-            X = features.to_numpy()
-        else:
-            X = np.asarray(features, dtype=float)
+        X = features.to_numpy() if isinstance(features, pd.DataFrame) else np.asarray(features, dtype=float)
 
         # augment with actual/forecast/residual for a stronger multivariate signal
         X_aug = np.column_stack([X, actual, forecast, residuals])

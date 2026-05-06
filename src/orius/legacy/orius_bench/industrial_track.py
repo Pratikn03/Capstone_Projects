@@ -10,11 +10,13 @@ Pass ``dataset_path`` to load the processed industrial ORIUS row.
 uses an action-conditioned surrogate anchored to the next real row rather than
 an unrelated synthetic plant.
 """
+
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -123,9 +125,7 @@ class IndustrialTrackAdapter(BenchmarkAdapter):
             delta_power = setpoint - float(real_current["power_mw"])
             self._power = float(setpoint)
             self._temp = float(
-                self._temp
-                + 0.18 * (float(real_next["temp_c"]) - self._temp)
-                + 0.07 * delta_power
+                self._temp + 0.18 * (float(real_next["temp_c"]) - self._temp) + 0.07 * delta_power
             )
             self._pressure = float(real_next["pressure_mbar"]) - 0.015 * delta_power
             self._episode_idx = min(self._episode_idx + 1, len(self._episode) - 1)

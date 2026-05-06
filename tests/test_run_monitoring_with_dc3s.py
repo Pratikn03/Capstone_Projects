@@ -1,17 +1,20 @@
 """Integration-style test for monitoring summary with DC3S health block."""
+
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pandas as pd
 
-from orius.dc3s.certificate import make_certificate, store_certificate
 import scripts.run_monitoring as run_monitoring
+from orius.dc3s.certificate import make_certificate, store_certificate
 
 
-def _seed_cert(db_path: Path, command_id: str, *, w: float, drift: bool, infl: float, intervened: bool) -> None:
+def _seed_cert(
+    db_path: Path, command_id: str, *, w: float, drift: bool, infl: float, intervened: bool
+) -> None:
     cert = make_certificate(
         command_id=command_id,
         device_id="dev-1",
@@ -76,10 +79,16 @@ dc3s:
     _seed_cert(db_path, "c2", w=0.40, drift=True, infl=2.4, intervened=True)
     _seed_cert(db_path, "c3", w=0.50, drift=True, infl=2.3, intervened=True)
 
-    train_df = pd.DataFrame({"timestamp": pd.date_range("2026-01-01", periods=12, freq="h"), "x": range(12), "load_mw": range(12)})
-    test_df = pd.DataFrame({"timestamp": pd.date_range("2026-01-02", periods=12, freq="h"), "x": range(12), "load_mw": range(12)})
+    train_df = pd.DataFrame(
+        {"timestamp": pd.date_range("2026-01-01", periods=12, freq="h"), "x": range(12), "load_mw": range(12)}
+    )
+    test_df = pd.DataFrame(
+        {"timestamp": pd.date_range("2026-01-02", periods=12, freq="h"), "x": range(12), "load_mw": range(12)}
+    )
     monkeypatch.setattr(run_monitoring, "_load_split", lambda: (train_df, test_df))
-    monkeypatch.setattr(run_monitoring, "compute_data_drift", lambda *args, **kwargs: {"drift": False, "columns": {}})
+    monkeypatch.setattr(
+        run_monitoring, "compute_data_drift", lambda *args, **kwargs: {"drift": False, "columns": {}}
+    )
 
     monkeypatch.setattr(sys, "argv", ["run_monitoring.py", "--disable-alerts"])
     run_monitoring.main()

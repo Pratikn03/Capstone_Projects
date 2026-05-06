@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Generate reports/repro_check.json with reproducibility and integrity status."""
+
 from __future__ import annotations
 
 import json
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -27,7 +28,7 @@ REQUIRED_PATHS = [
 
 def main() -> int:
     payload: dict = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "paths": {},
         "validator_pass": None,
         "sync_assets_pass": None,

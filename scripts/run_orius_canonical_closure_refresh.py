@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Refresh the canonical ORIUS three-domain closure lane."""
+
 from __future__ import annotations
 
 import argparse
 import json
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
@@ -18,7 +18,7 @@ PYTHON = sys.executable
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _run(label: str, cmd: list[str], logs_dir: Path) -> dict[str, Any]:
@@ -47,7 +47,9 @@ def main() -> int:
         help="Accepted for backward compatibility; both values refresh the same canonical 3-domain lane.",
     )
     parser.add_argument("--out", type=Path, default=REFRESH_DIR)
-    parser.add_argument("--external-root", type=Path, default=None, help="Accepted for compatibility but not required.")
+    parser.add_argument(
+        "--external-root", type=Path, default=None, help="Accepted for compatibility but not required."
+    )
     parser.add_argument("--train-missing", action="store_true", help="Accepted for compatibility.")
     parser.add_argument("--repair-invalid-splits", action="store_true", help="Accepted for compatibility.")
     parser.add_argument("--seeds", type=int, default=1, help="Accepted for compatibility.")
@@ -61,8 +63,26 @@ def main() -> int:
 
     steps = [
         _run("refresh_manifests", [PYTHON, "scripts/refresh_real_data_manifests.py"], logs_dir),
-        _run("validation", [PYTHON, "scripts/run_universal_orius_validation.py", "--out", "reports/universal_orius_validation"], logs_dir),
-        _run("training_audit", [PYTHON, "scripts/run_universal_training_audit.py", "--out", "reports/orius_framework_proof/training_audit"], logs_dir),
+        _run(
+            "validation",
+            [
+                PYTHON,
+                "scripts/run_universal_orius_validation.py",
+                "--out",
+                "reports/universal_orius_validation",
+            ],
+            logs_dir,
+        ),
+        _run(
+            "training_audit",
+            [
+                PYTHON,
+                "scripts/run_universal_training_audit.py",
+                "--out",
+                "reports/orius_framework_proof/training_audit",
+            ],
+            logs_dir,
+        ),
         _run(
             "domain_closure",
             [
@@ -86,10 +106,14 @@ def main() -> int:
         "submission_scope": "battery_av_healthcare",
         "steps": steps,
         "scorecard_path": str((PUBLICATION_DIR / "orius_submission_scorecard.csv").relative_to(REPO_ROOT)),
-        "closure_matrix_path": str((PUBLICATION_DIR / "orius_domain_closure_matrix.csv").relative_to(REPO_ROOT)),
+        "closure_matrix_path": str(
+            (PUBLICATION_DIR / "orius_domain_closure_matrix.csv").relative_to(REPO_ROOT)
+        ),
     }
     args.out.mkdir(parents=True, exist_ok=True)
-    (args.out / "closure_refresh_summary.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    (args.out / "closure_refresh_summary.json").write_text(
+        json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+    )
     print(json.dumps(payload, indent=2))
     return 0
 

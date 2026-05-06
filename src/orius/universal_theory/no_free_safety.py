@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 import numpy as np
 
@@ -72,7 +72,8 @@ def construct_counterexample(
         x_faulty = np.asarray(dynamics(x_faulty, action_faulty), dtype=float).reshape(-1) + disturbance
         observation_drift = np.full_like(shared_observation_state, 0.05 + 0.01 * step)
         shared_observation_state = (
-            np.asarray(dynamics(shared_observation_state, action_shared), dtype=float).reshape(-1) + observation_drift
+            np.asarray(dynamics(shared_observation_state, action_shared), dtype=float).reshape(-1)
+            + observation_drift
         )
         true_trajectory_clean.append(x_clean.copy())
         true_trajectory_faulty.append(x_faulty.copy())

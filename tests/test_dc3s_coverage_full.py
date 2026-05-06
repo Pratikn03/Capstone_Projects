@@ -1,4 +1,5 @@
 """Comprehensive tests for DC3S coverage theorem verification."""
+
 from __future__ import annotations
 
 import numpy as np

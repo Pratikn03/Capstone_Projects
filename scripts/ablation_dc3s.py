@@ -28,15 +28,14 @@ Outputs
 The table contains one row per (k_quality, k_drift, infl_max, scenario, seed)
 and summary statistics across seeds per param config.
 """
+
 from __future__ import annotations
 
 import argparse
-import json
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pandas as pd
 import yaml
 
@@ -47,16 +46,15 @@ if str(repo_root / "src") not in sys.path:
 from orius.cpsbench_iot.runner import run_suite
 from orius.dc3s.coverage_theorem import verify_inflation_geq_one
 
-
 # ---------------------------------------------------------------------------
 # Defaults (overridden by dc3s_ablation.yaml or CLI)
 # ---------------------------------------------------------------------------
-DEFAULT_K_QUALITY  = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2]
-DEFAULT_K_DRIFT    = [0.0, 0.3, 0.6, 0.9]
-DEFAULT_INFL_MAX   = [2.0, 3.0, 5.0]
-DEFAULT_SEEDS      = [11, 22, 33]
-DEFAULT_SCENARIOS  = ["nominal", "dropout", "spikes", "drift_combo"]
-DEFAULT_HORIZON    = 168
+DEFAULT_K_QUALITY = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2]
+DEFAULT_K_DRIFT = [0.0, 0.3, 0.6, 0.9]
+DEFAULT_INFL_MAX = [2.0, 3.0, 5.0]
+DEFAULT_SEEDS = [11, 22, 33]
+DEFAULT_SCENARIOS = ["nominal", "dropout", "spikes", "drift_combo"]
+DEFAULT_HORIZON = 168
 BASELINE_CONTROLLER = "dc3s_wrapped"
 REFERENCE_CONTROLLER = "naive_safe_clip"
 
@@ -72,15 +70,14 @@ def _load_ablation_cfg() -> dict[str, Any]:
 def _parse_args() -> argparse.Namespace:
     cfg = _load_ablation_cfg()
     p = argparse.ArgumentParser(description="DC³S ablation sweep over k_quality, k_drift, infl_max")
-    p.add_argument("--quick", action="store_true",
-                   help="Quick run: 2 seeds, 4 scenarios, small grid")
+    p.add_argument("--quick", action="store_true", help="Quick run: 2 seeds, 4 scenarios, small grid")
     p.add_argument("--k-quality", nargs="*", type=float, default=None)
-    p.add_argument("--k-drift",   nargs="*", type=float, default=None)
-    p.add_argument("--infl-max",  nargs="*", type=float, default=None)
-    p.add_argument("--seeds",     nargs="*", type=int,   default=None)
+    p.add_argument("--k-drift", nargs="*", type=float, default=None)
+    p.add_argument("--infl-max", nargs="*", type=float, default=None)
+    p.add_argument("--seeds", nargs="*", type=int, default=None)
     p.add_argument("--scenarios", nargs="*", default=None)
-    p.add_argument("--horizon",   type=int, default=None)
-    p.add_argument("--out-dir",   default=str(cfg.get("out_dir", "reports/publication")))
+    p.add_argument("--horizon", type=int, default=None)
+    p.add_argument("--out-dir", default=str(cfg.get("out_dir", "reports/publication")))
     return p.parse_args()
 
 
@@ -88,20 +85,20 @@ def _resolve_grid(args: argparse.Namespace, cfg: dict) -> dict[str, list]:
     """Merge CLI args > yaml config > hardcoded defaults."""
     if args.quick:
         return {
-            "k_quality":  [0.4, 0.8, 1.2],
-            "k_drift":    [0.0, 0.6],
-            "infl_max":   [2.0, 3.0],
-            "seeds":      [11, 22],
-            "scenarios":  ["nominal", "dropout", "drift_combo"],
-            "horizon":    84,
+            "k_quality": [0.4, 0.8, 1.2],
+            "k_drift": [0.0, 0.6],
+            "infl_max": [2.0, 3.0],
+            "seeds": [11, 22],
+            "scenarios": ["nominal", "dropout", "drift_combo"],
+            "horizon": 84,
         }
     return {
-        "k_quality": args.k_quality  or cfg.get("k_quality_values",  DEFAULT_K_QUALITY),
-        "k_drift":   args.k_drift    or cfg.get("k_drift_values",    DEFAULT_K_DRIFT),
-        "infl_max":  args.infl_max   or cfg.get("infl_max_values",   DEFAULT_INFL_MAX),
-        "seeds":     args.seeds      or cfg.get("seeds",             DEFAULT_SEEDS),
-        "scenarios": args.scenarios  or cfg.get("scenarios",         DEFAULT_SCENARIOS),
-        "horizon":   args.horizon    or int(cfg.get("horizon",       DEFAULT_HORIZON)),
+        "k_quality": args.k_quality or cfg.get("k_quality_values", DEFAULT_K_QUALITY),
+        "k_drift": args.k_drift or cfg.get("k_drift_values", DEFAULT_K_DRIFT),
+        "infl_max": args.infl_max or cfg.get("infl_max_values", DEFAULT_INFL_MAX),
+        "seeds": args.seeds or cfg.get("seeds", DEFAULT_SEEDS),
+        "scenarios": args.scenarios or cfg.get("scenarios", DEFAULT_SCENARIOS),
+        "horizon": args.horizon or int(cfg.get("horizon", DEFAULT_HORIZON)),
     }
 
 
@@ -119,8 +116,8 @@ def _run_one_config(
 
     dc3s_param_overrides = {
         "k_quality": k_quality,
-        "k_drift":   k_drift,
-        "infl_max":  infl_max,
+        "k_drift": k_drift,
+        "infl_max": infl_max,
     }
 
     # run_suite returns summary dict; we need per-row CSV data
@@ -143,8 +140,8 @@ def _run_one_config(
     if main_csv.exists() and main_csv.stat().st_size > 0:
         df = pd.read_csv(main_csv)
         df["k_quality"] = k_quality
-        df["k_drift"]   = k_drift
-        df["infl_max"]  = infl_max
+        df["k_drift"] = k_drift
+        df["infl_max"] = infl_max
         rows = df.to_dict(orient="records")
     else:
         # Fallback: build rows from summary dict
@@ -153,18 +150,20 @@ def _run_one_config(
                 if not isinstance(metrics, dict):
                     continue
                 for seed in grid["seeds"]:
-                    rows.append({
-                        "k_quality":   k_quality,
-                        "k_drift":     k_drift,
-                        "infl_max":    infl_max,
-                        "scenario":    scenario,
-                        "controller":  ctrl,
-                        "seed":        seed,
-                        "violation_rate":   metrics.get("violation_rate", float("nan")),
-                        "intervention_rate": metrics.get("intervention_rate", float("nan")),
-                        "mean_interval_width": metrics.get("mean_interval_width", float("nan")),
-                        "picp_90":     metrics.get("picp_90", float("nan")),
-                    })
+                    rows.append(
+                        {
+                            "k_quality": k_quality,
+                            "k_drift": k_drift,
+                            "infl_max": infl_max,
+                            "scenario": scenario,
+                            "controller": ctrl,
+                            "seed": seed,
+                            "violation_rate": metrics.get("violation_rate", float("nan")),
+                            "intervention_rate": metrics.get("intervention_rate", float("nan")),
+                            "mean_interval_width": metrics.get("mean_interval_width", float("nan")),
+                            "picp_90": metrics.get("picp_90", float("nan")),
+                        }
+                    )
     return rows
 
 
@@ -172,6 +171,7 @@ def _build_sensitivity_heatmap(df: pd.DataFrame, out_dir: Path) -> None:
     """Generate a heatmap of violation_rate vs k_quality × k_drift for dc3s_wrapped."""
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except ImportError:
@@ -182,11 +182,7 @@ def _build_sensitivity_heatmap(df: pd.DataFrame, out_dir: Path) -> None:
     if dc3s.empty:
         return
 
-    pivot = (
-        dc3s.groupby(["k_quality", "k_drift"])["violation_rate"]
-        .mean()
-        .unstack(level="k_drift")
-    )
+    pivot = dc3s.groupby(["k_quality", "k_drift"])["violation_rate"].mean().unstack(level="k_drift")
     if pivot.empty:
         return
 
@@ -217,7 +213,7 @@ def _build_summary_table(df: pd.DataFrame) -> pd.DataFrame:
     agg: dict[str, Any] = {}
     for col in available:
         agg[f"{col}_mean"] = (col, "mean")
-        agg[f"{col}_std"]  = (col, "std")
+        agg[f"{col}_std"] = (col, "std")
     agg["n_seeds"] = ("seed", "count") if "seed" in df.columns else (available[0], "count")
     summary = grouped.agg(**{k: pd.NamedAgg(column=v[0], aggfunc=v[1]) for k, v in agg.items()})
     return summary.reset_index()
@@ -225,17 +221,17 @@ def _build_summary_table(df: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> None:
     args = _parse_args()
-    cfg  = _load_ablation_cfg()
+    cfg = _load_ablation_cfg()
     grid = _resolve_grid(args, cfg)
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     k_quality_vals = grid["k_quality"]
-    k_drift_vals   = grid["k_drift"]
-    infl_max_vals  = grid["infl_max"]
+    k_drift_vals = grid["k_drift"]
+    infl_max_vals = grid["infl_max"]
     total = len(k_quality_vals) * len(k_drift_vals) * len(infl_max_vals)
 
-    print(f"\nDC³S Ablation Sweep")
+    print("\nDC³S Ablation Sweep")
     print(f"  Grid: k_quality={k_quality_vals}")
     print(f"        k_drift  ={k_drift_vals}")
     print(f"        infl_max ={infl_max_vals}")
@@ -250,7 +246,11 @@ def main() -> None:
         for k_d in k_drift_vals:
             for i_max in infl_max_vals:
                 done += 1
-                print(f"  [{done}/{total}] k_quality={k_q} k_drift={k_d} infl_max={i_max} ...", end=" ", flush=True)
+                print(
+                    f"  [{done}/{total}] k_quality={k_q} k_drift={k_d} infl_max={i_max} ...",
+                    end=" ",
+                    flush=True,
+                )
                 try:
                     rows = _run_one_config(k_q, k_d, i_max, grid, out_dir)
                     all_rows.extend(rows)
@@ -280,7 +280,11 @@ def main() -> None:
     _build_sensitivity_heatmap(df, out_dir)
 
     # Print top-10 configs by narrowest interval width at or above 90% coverage
-    dc3s_rows = df[df.get("controller", pd.Series(dtype=str)) == BASELINE_CONTROLLER] if "controller" in df.columns else df
+    dc3s_rows = (
+        df[df.get("controller", pd.Series(dtype=str)) == BASELINE_CONTROLLER]
+        if "controller" in df.columns
+        else df
+    )
     if not dc3s_rows.empty and "picp_90" in dc3s_rows.columns and "mean_interval_width" in dc3s_rows.columns:
         meets = dc3s_rows[pd.to_numeric(dc3s_rows["picp_90"], errors="coerce") >= 0.88]
         if not meets.empty:

@@ -1,4 +1,5 @@
 """Lightweight N-BEATS style forecaster for multi-feature energy sequences."""
+
 from __future__ import annotations
 
 import torch
@@ -6,7 +7,9 @@ import torch.nn as nn
 
 
 class _NBEATSBlock(nn.Module):
-    def __init__(self, input_dim: int, hidden_dim: int, horizon: int, dropout: float, n_quantiles: int = 1) -> None:
+    def __init__(
+        self, input_dim: int, hidden_dim: int, horizon: int, dropout: float, n_quantiles: int = 1
+    ) -> None:
         super().__init__()
         self.horizon = int(horizon)
         self.n_quantiles = max(1, int(n_quantiles))

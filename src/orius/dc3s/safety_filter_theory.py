@@ -1,8 +1,10 @@
 """Theory helpers for reliability-conditioned SOC tubes and one-step safety."""
+
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from .guarantee_checks import next_soc
 
@@ -51,7 +53,9 @@ def tightened_soc_bounds(
     so the runtime adds *model_error_mwh* on top of the base reliability /
     certificate margin before constructing the tightened safe set.
     """
-    base_margin = max(_f(q_rac_mwh, 0.0), 0.0) if q_rac_mwh is not None else max(_f(error_bound_mwh, 0.0), 0.0)
+    base_margin = (
+        max(_f(q_rac_mwh, 0.0), 0.0) if q_rac_mwh is not None else max(_f(error_bound_mwh, 0.0), 0.0)
+    )
     margin = base_margin + max(_f(model_error_mwh, 0.0), 0.0)
     lower = _f(min_soc_mwh, 0.0) + margin
     upper = _f(max_soc_mwh, lower) - margin
@@ -93,7 +97,9 @@ def check_tightened_soc_invariance(
         q_rac_mwh=q_rac_mwh,
         model_error_mwh=model_error_mwh,
     )
-    base_margin = max(_f(q_rac_mwh, 0.0), 0.0) if q_rac_mwh is not None else max(_f(error_bound_mwh, 0.0), 0.0)
+    base_margin = (
+        max(_f(q_rac_mwh, 0.0), 0.0) if q_rac_mwh is not None else max(_f(error_bound_mwh, 0.0), 0.0)
+    )
     absorbed_margin = base_margin + max(_f(model_error_mwh, 0.0), 0.0)
     projected_obs = next_soc(
         current_soc=float(current_soc_obs),
@@ -107,7 +113,8 @@ def check_tightened_soc_invariance(
     true_upper = projected_obs + float(absorbed_margin)
     true_safe = (
         true_lower >= _f(constraints.get("min_soc_mwh"), 0.0) - eps
-        and true_upper <= _f(constraints.get("max_soc_mwh"), _f(constraints.get("capacity_mwh"), current_soc_obs)) + eps
+        and true_upper
+        <= _f(constraints.get("max_soc_mwh"), _f(constraints.get("capacity_mwh"), current_soc_obs)) + eps
     )
     return {
         "error_bound_mwh": float(error_bound_mwh),

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Build shared closure artifacts for the battery + AV release lane."""
+
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import hashlib
 import json
 import os
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -19,24 +20,27 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in os.sys.path:
     os.sys.path.insert(0, str(SRC_DIR))
 
 from orius.certos.verification import load_certificates_from_duckdb, verify_certificates
-from orius.forecasting.uncertainty.shift_aware import summarize_weighted_recalibration, weighted_online_recalibration
-
+from orius.forecasting.uncertainty.shift_aware import (
+    summarize_weighted_recalibration,
+    weighted_online_recalibration,
+)
 
 DEFAULT_BATTERY_DIR = REPO_ROOT / "reports" / "battery_av" / "battery"
-DEFAULT_AV_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+DEFAULT_AV_DIR = (
+    REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+)
 DEFAULT_OVERALL_DIR = REPO_ROOT / "reports" / "battery_av" / "overall"
 DOCS_DIR = REPO_ROOT / "docs"
 CENTRAL_NOVELTY_SENTENCE = (
-    "ORIUS identifies OASG as the degraded-observation release hazard and "
-    "provides a reliability-aware runtime safety layer across Battery, AV, "
-    "and Healthcare."
+    "ORIUS provides a reliability-aware runtime safety layer for physical AI "
+    "under degraded observation, enforcing certificate-backed action release "
+    "through uncertainty coverage, repair, and fallback."
 )
 
 
@@ -45,7 +49,7 @@ def _is_appledouble(path: Path) -> bool:
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _sha256_file(path: Path) -> str:
@@ -149,17 +153,25 @@ def _build_executive_summary(
 ) -> str:
     battery_release = dict(release_summary.get("battery", {}))
     av_release = dict(release_summary.get("av", {}))
-    battery_runtime = _runtime_summary_row(battery_dir / "runtime_summary.csv", battery_release.get("canonical_controller", "deep:dc3s_wrapped"))
+    battery_runtime = _runtime_summary_row(
+        battery_dir / "runtime_summary.csv", battery_release.get("canonical_controller", "deep:dc3s_wrapped")
+    )
     av_baseline_runtime = _runtime_summary_row(av_dir / "runtime_summary.csv", "baseline")
-    av_orius_runtime = _runtime_summary_row(av_dir / "runtime_summary.csv", av_release.get("canonical_controller", "orius"))
+    av_orius_runtime = _runtime_summary_row(
+        av_dir / "runtime_summary.csv", av_release.get("canonical_controller", "orius")
+    )
     battery_artifact_count = _artifact_count(battery_dir / "artifact_manifest.json")
     av_artifact_count = _artifact_count(av_dir / "artifact_manifest.json")
-    battery_chain_valid = bool((((battery_release.get("certos") or {}).get("summary") or {}).get("chain_valid")))
-    av_chain_valid = bool((((av_release.get("certos") or {}).get("summary") or {}).get("chain_valid")))
-    battery_cert_rows = int((((battery_release.get("certos") or {}).get("summary") or {}).get("certificate_rows", 0)))
-    av_cert_rows = int((((av_release.get("certos") or {}).get("summary") or {}).get("certificate_rows", 0)))
-    battery_oasg = int(((battery_release.get("counterexamples") or {}).get("oasg_case_count", 0)))
-    av_oasg = int(((av_release.get("counterexamples") or {}).get("oasg_case_count", 0)))
+    battery_chain_valid = bool(
+        ((battery_release.get("certos") or {}).get("summary") or {}).get("chain_valid")
+    )
+    av_chain_valid = bool(((av_release.get("certos") or {}).get("summary") or {}).get("chain_valid"))
+    battery_cert_rows = int(
+        ((battery_release.get("certos") or {}).get("summary") or {}).get("certificate_rows", 0)
+    )
+    av_cert_rows = int(((av_release.get("certos") or {}).get("summary") or {}).get("certificate_rows", 0))
+    battery_oasg = int((battery_release.get("counterexamples") or {}).get("oasg_case_count", 0))
+    av_oasg = int((av_release.get("counterexamples") or {}).get("oasg_case_count", 0))
 
     lines = [
         "# ORIUS — Executive Summary",
@@ -229,10 +241,14 @@ def _build_claim_ledger(
 ) -> str:
     battery_release = dict(release_summary.get("battery", {}))
     av_release = dict(release_summary.get("av", {}))
-    battery_runtime = _runtime_summary_row(battery_dir / "runtime_summary.csv", battery_release.get("canonical_controller", "deep:dc3s_wrapped"))
+    battery_runtime = _runtime_summary_row(
+        battery_dir / "runtime_summary.csv", battery_release.get("canonical_controller", "deep:dc3s_wrapped")
+    )
     av_baseline_runtime = _runtime_summary_row(av_dir / "runtime_summary.csv", "baseline")
-    av_orius_runtime = _runtime_summary_row(av_dir / "runtime_summary.csv", av_release.get("canonical_controller", "orius"))
-    av_oasg = int(((av_release.get("counterexamples") or {}).get("oasg_case_count", 0)))
+    av_orius_runtime = _runtime_summary_row(
+        av_dir / "runtime_summary.csv", av_release.get("canonical_controller", "orius")
+    )
+    av_oasg = int((av_release.get("counterexamples") or {}).get("oasg_case_count", 0))
     lines = [
         "# ORIUS Claim Ledger — Battery + AV Submission Lane",
         "",
@@ -251,9 +267,9 @@ def _build_claim_ledger(
         "",
         "| ID | Claim | Governing Artifact |",
         "|----|-------|-------------------|",
-        f"| A1 | Battery remains the `reference` witness row in the current submission lane. | `publication_closure_override.json` |",
+        "| A1 | Battery remains the `reference` witness row in the current submission lane. | `publication_closure_override.json` |",
         f"| A2 | Battery canonical TSVR is {_pct_text(battery_runtime.get('tsvr'))} on {int(battery_release.get('runtime_rows_canonical_controller', 0)):,} canonical runtime rows. | `reports/battery_av/battery/runtime_summary.csv`, `release_summary.json` |",
-        f"| A3 | Battery CertOS chain is valid with {int((((battery_release.get('certos') or {}).get('summary') or {}).get('certificate_rows', 0))):,} certificates. | `reports/battery_av/battery/certos_verification_summary.json` |",
+        f"| A3 | Battery CertOS chain is valid with {int(((battery_release.get('certos') or {}).get('summary') or {}).get('certificate_rows', 0)):,} certificates. | `reports/battery_av/battery/certos_verification_summary.json` |",
         f"| A4 | AV remains the bounded `{override.get('vehicle', {}).get('resulting_tier', 'runtime_contract_closed')}` row. | `publication_closure_override.json` |",
         f"| A5 | AV baseline TSVR is {_pct_text(av_baseline_runtime.get('tsvr'))} and ORIUS TSVR is {_pct_text(av_orius_runtime.get('tsvr'))}. | `reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv` |",
         f"| A6 | AV runtime rows total = {int(av_release.get('runtime_rows_total', 0)):,}; canonical ORIUS rows = {int(av_release.get('runtime_rows_canonical_controller', 0)):,}. | `release_summary.json` |",
@@ -333,7 +349,9 @@ def _counterexample_bundle(
     work["observed_safe"] = pd.to_numeric(work["observed_margin"], errors="coerce").fillna(-np.inf) >= 0.0
     work["true_unsafe"] = pd.to_numeric(work["true_margin"], errors="coerce").fillna(np.inf) < 0.0
     work["oasg_case"] = work["observed_safe"] & work["true_unsafe"]
-    work["margin_gap"] = pd.to_numeric(work["observed_margin"], errors="coerce").fillna(0.0) - pd.to_numeric(work["true_margin"], errors="coerce").fillna(0.0)
+    work["margin_gap"] = pd.to_numeric(work["observed_margin"], errors="coerce").fillna(0.0) - pd.to_numeric(
+        work["true_margin"], errors="coerce"
+    ).fillna(0.0)
     work = work.sort_values(
         ["oasg_case", "margin_gap", "step_index"],
         ascending=[False, False, True],
@@ -473,7 +491,11 @@ def _build_shift_summary(
                     }
                 )
         baseline_summary = summarize_weighted_recalibration(
-            adaptive_df.assign(adaptive_covered=adaptive_df["base_covered"], adaptive_width=adaptive_df["base_width"], adaptive_factor=1.0)
+            adaptive_df.assign(
+                adaptive_covered=adaptive_df["base_covered"],
+                adaptive_width=adaptive_df["base_width"],
+                adaptive_factor=1.0,
+            )
         )
         adaptive_summary = summarize_weighted_recalibration(adaptive_df)
         overall_baseline["targets"][target] = baseline_summary.to_dict()
@@ -496,16 +518,24 @@ def _build_shift_summary(
         **overall_baseline,
         "overall": {
             "targets": len(baseline_rows),
-            "coverage_mean": float(np.mean([row["base_coverage"] for row in baseline_rows])) if baseline_rows else 0.0,
-            "width_mean": float(np.mean([row["base_mean_width"] for row in baseline_rows])) if baseline_rows else 0.0,
+            "coverage_mean": float(np.mean([row["base_coverage"] for row in baseline_rows]))
+            if baseline_rows
+            else 0.0,
+            "width_mean": float(np.mean([row["base_mean_width"] for row in baseline_rows]))
+            if baseline_rows
+            else 0.0,
         },
     }
     adaptive_payload = {
         **overall_adaptive,
         "overall": {
             "targets": len(adaptive_rows),
-            "coverage_mean": float(np.mean([row["adaptive_coverage"] for row in adaptive_rows])) if adaptive_rows else 0.0,
-            "width_mean": float(np.mean([row["adaptive_mean_width"] for row in adaptive_rows])) if adaptive_rows else 0.0,
+            "coverage_mean": float(np.mean([row["adaptive_coverage"] for row in adaptive_rows]))
+            if adaptive_rows
+            else 0.0,
+            "width_mean": float(np.mean([row["adaptive_mean_width"] for row in adaptive_rows]))
+            if adaptive_rows
+            else 0.0,
         },
     }
     baseline_path = out_dir / "shift_aware_baseline_summary.json"
@@ -592,8 +622,16 @@ def _build_domain_release(
     resolved, missing = _required_map(domain_dir, required_artifacts)
     summary_path = domain_dir / "summary.json"
     manifest_path = domain_dir / "artifact_manifest.json"
-    runtime_summary_path = Path(resolved["runtime_summary"]) if resolved.get("runtime_summary") else domain_dir / "runtime_summary.csv"
-    runtime_traces_path = Path(resolved["runtime_traces"]) if resolved.get("runtime_traces") else domain_dir / "runtime_traces.csv"
+    runtime_summary_path = (
+        Path(resolved["runtime_summary"])
+        if resolved.get("runtime_summary")
+        else domain_dir / "runtime_summary.csv"
+    )
+    runtime_traces_path = (
+        Path(resolved["runtime_traces"])
+        if resolved.get("runtime_traces")
+        else domain_dir / "runtime_traces.csv"
+    )
     runtime_rows_total, runtime_rows_canonical = _runtime_trace_counts(traces_df, summary_controller)
     figures = sorted(str(path) for path in domain_dir.rglob("*.png") if not _is_appledouble(path))
     tables = sorted(str(path) for path in domain_dir.rglob("*.csv") if not _is_appledouble(path))
@@ -617,7 +655,9 @@ def _build_domain_release(
     }
     _write_json(summary_path, summary_payload)
 
-    artifact_paths = {Path(path) for path in figures + tables if Path(path).exists() and not _is_appledouble(Path(path))}
+    artifact_paths = {
+        Path(path) for path in figures + tables if Path(path).exists() and not _is_appledouble(Path(path))
+    }
     for value in resolved.values():
         if value is not None and Path(value).exists():
             candidate = Path(value)
@@ -653,9 +693,9 @@ def _build_domain_release(
 
 def _publication_override_from_release(battery: dict[str, Any], av: dict[str, Any]) -> dict[str, Any]:
     av_complete = av.get("status") == "complete"
-    av_counterexamples = int(((av.get("counterexamples") or {}).get("oasg_case_count", 0)))
-    av_certos = ((av.get("certos") or {}).get("summary") or {})
-    battery_certos = ((battery.get("certos") or {}).get("summary") or {})
+    av_counterexamples = int((av.get("counterexamples") or {}).get("oasg_case_count", 0))
+    av_certos = (av.get("certos") or {}).get("summary") or {}
+    battery_certos = (battery.get("certos") or {}).get("summary") or {}
     return {
         "battery": {
             "adapter_correctness": "pass",
@@ -681,11 +721,21 @@ def _publication_override_from_release(battery: dict[str, Any], av: dict[str, An
             "certos_portability_status": "pass" if av_certos.get("chain_valid") and av_complete else "gated",
             "multi_agent_portability_status": "evaluated" if av_complete else "gated",
             "resulting_tier": "runtime_contract_closed" if av_complete else "proof_candidate_only",
-            "exact_blocker": "none" if av_complete else "canonical all-zip grouped nuPlan AV runtime closure artifacts are missing",
-            "maturity_state": "runtime_contract_closed_under_bounded_release_contract" if av_complete else "defended_row_pending_runtime_stage",
-            "maturity_evidence_basis": "AV all-zip grouped nuPlan runtime, counterexample, shift-aware, and CertOS artifacts" if av_complete else "bounded AV training artifacts exist, but the canonical all-zip grouped runtime/report surface is incomplete",
-            "maturity_primary_risk": "current closure remains bounded to the brake-hold release contract" if av_complete else "promotion outruns all-zip grouped nuPlan runtime evidence",
-            "maturity_next_action": "keep as defended bounded row while broader vehicle interaction remains open" if av_complete else "finish canonical all-zip grouped nuPlan runtime/report artifacts before promotion-facing summaries advance",
+            "exact_blocker": "none"
+            if av_complete
+            else "canonical all-zip grouped nuPlan AV runtime closure artifacts are missing",
+            "maturity_state": "runtime_contract_closed_under_bounded_release_contract"
+            if av_complete
+            else "defended_row_pending_runtime_stage",
+            "maturity_evidence_basis": "AV all-zip grouped nuPlan runtime, counterexample, shift-aware, and CertOS artifacts"
+            if av_complete
+            else "bounded AV training artifacts exist, but the canonical all-zip grouped runtime/report surface is incomplete",
+            "maturity_primary_risk": "current closure remains bounded to the brake-hold release contract"
+            if av_complete
+            else "promotion outruns all-zip grouped nuPlan runtime evidence",
+            "maturity_next_action": "keep as defended bounded row while broader vehicle interaction remains open"
+            if av_complete
+            else "finish canonical all-zip grouped nuPlan runtime/report artifacts before promotion-facing summaries advance",
             "oasg_case_count": av_counterexamples,
         },
     }
@@ -716,13 +766,21 @@ def build_closure(
         "key_report": "summary.json",
     }
 
-    battery_traces_all = pd.read_csv(battery_dir / "runtime_traces.csv") if (battery_dir / "runtime_traces.csv").exists() else None
+    battery_traces_all = (
+        pd.read_csv(battery_dir / "runtime_traces.csv")
+        if (battery_dir / "runtime_traces.csv").exists()
+        else None
+    )
     battery_traces = battery_traces_all
     if battery_traces is not None and not battery_traces.empty:
-        battery_traces = battery_traces[battery_traces["controller_label"] == "deep:dc3s_wrapped"].reset_index(drop=True)
+        battery_traces = battery_traces[
+            battery_traces["controller_label"] == "deep:dc3s_wrapped"
+        ].reset_index(drop=True)
         battery_traces["reliability_bin"] = _reliability_bin(battery_traces["reliability_w"])
         battery_traces["drift_bin"] = _drift_bin(battery_traces["drift_score"])
-    av_traces_all = pd.read_csv(av_dir / "runtime_traces.csv") if (av_dir / "runtime_traces.csv").exists() else None
+    av_traces_all = (
+        pd.read_csv(av_dir / "runtime_traces.csv") if (av_dir / "runtime_traces.csv").exists() else None
+    )
     av_traces = av_traces_all
     if av_traces is not None and not av_traces.empty:
         av_traces = av_traces[av_traces["controller"] == "orius"].reset_index(drop=True)
@@ -788,8 +846,16 @@ def build_closure(
         if av_traces is not None and not av_traces.empty
         else None
     )
-    battery_certos = _certos_outputs(battery_dir / "battery_runtime.duckdb", battery_dir) if (battery_dir / "battery_runtime.duckdb").exists() else None
-    av_certos = _certos_outputs(av_dir / "dc3s_av_waymo_dryrun.duckdb", av_dir) if (av_dir / "dc3s_av_waymo_dryrun.duckdb").exists() else None
+    battery_certos = (
+        _certos_outputs(battery_dir / "battery_runtime.duckdb", battery_dir)
+        if (battery_dir / "battery_runtime.duckdb").exists()
+        else None
+    )
+    av_certos = (
+        _certos_outputs(av_dir / "dc3s_av_waymo_dryrun.duckdb", av_dir)
+        if (av_dir / "dc3s_av_waymo_dryrun.duckdb").exists()
+        else None
+    )
 
     battery_release = _build_domain_release(
         domain_key="battery",

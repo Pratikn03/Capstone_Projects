@@ -8,10 +8,12 @@ transitions and eventual recovery. Outputs CSV + summary JSON.
 Usage:
     python scripts/run_certos_lifecycle.py [--steps 96] [--out reports/certos]
 """
+
 from __future__ import annotations
 
 import argparse
 import csv
+import itertools
 import json
 from collections import Counter
 from pathlib import Path
@@ -67,20 +69,22 @@ def main() -> None:
 
         invariant_ok = rt.check_invariants(state)
 
-        rows.append({
-            "step": t,
-            "validity_horizon": state.validity_horizon,
-            "status": state.status,
-            "lifecycle_op": state.lifecycle_op,
-            "validation_passed": state.validation_passed,
-            "hash_chain_ok": state.hash_chain_ok,
-            "cert_hash": state.cert_hash or "",
-            "prev_hash": state.prev_hash or "",
-            "discharge_mw": discharge,
-            "soc_mwh": round(soc, 2),
-            "fallback": state.fallback_active,
-            "invariant_violations": ",".join(invariant_ok) if invariant_ok else "none",
-        })
+        rows.append(
+            {
+                "step": t,
+                "validity_horizon": state.validity_horizon,
+                "status": state.status,
+                "lifecycle_op": state.lifecycle_op,
+                "validation_passed": state.validation_passed,
+                "hash_chain_ok": state.hash_chain_ok,
+                "cert_hash": state.cert_hash or "",
+                "prev_hash": state.prev_hash or "",
+                "discharge_mw": discharge,
+                "soc_mwh": round(soc, 2),
+                "fallback": state.fallback_active,
+                "invariant_violations": ",".join(invariant_ok) if invariant_ok else "none",
+            }
+        )
 
     # Write CSV
     csv_path = out / "certos_lifecycle.csv"
@@ -101,7 +105,7 @@ def main() -> None:
     n_fallback = sum(1 for r in rows if r["status"] == "fallback")
     fallback_to_valid = sum(
         1
-        for prev, curr in zip(rows, rows[1:])
+        for prev, curr in itertools.pairwise(rows)
         if prev["status"] == "fallback" and curr["status"] == "valid"
     )
     raw_ops = Counter(entry["op"] for entry in rt.raw_audit_log)
@@ -115,7 +119,11 @@ def main() -> None:
         "raw_audit_entries": len(rt.raw_audit_log),
         "hash_chain_ok": all(r["hash_chain_ok"] for r in rows),
         "validation_events": raw_ops.get("VALIDATE", 0),
-        "validation_failures": sum(1 for entry in rt.raw_audit_log if entry["op"] == "VALIDATE" and not entry.get("meta", {}).get("result", False)),
+        "validation_failures": sum(
+            1
+            for entry in rt.raw_audit_log
+            if entry["op"] == "VALIDATE" and not entry.get("meta", {}).get("result", False)
+        ),
         "issue_events": raw_ops.get("ISSUE", 0),
         "renew_events": raw_ops.get("RENEW", 0),
         "expire_events": raw_ops.get("EXPIRE", 0),

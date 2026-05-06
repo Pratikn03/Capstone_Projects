@@ -4,24 +4,29 @@
 This script does not synthesize telemetry. It summarizes stress/fault families
 already present in the native runtime/HIL/replay traces.
 """
+
 from __future__ import annotations
 
 import argparse
-from contextlib import suppress
 import csv
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import json
+from collections.abc import Iterable, Mapping
+from contextlib import suppress
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 import pandas as pd
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = REPO_ROOT / "reports" / "predeployment_freeze" / "runtime_stress"
-CLAIM_BOUNDARY = "Real runtime/replay/HIL stress summary only; not synthetic and not field deployment evidence."
-AV_RUNTIME_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+CLAIM_BOUNDARY = (
+    "Real runtime/replay/HIL stress summary only; not synthetic and not field deployment evidence."
+)
+AV_RUNTIME_DIR = (
+    REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+)
 
 
 @dataclass(frozen=True)
@@ -161,7 +166,9 @@ def _summary_rows_for_domain(spec: DomainStressSpec, frame: pd.DataFrame) -> lis
     return rows
 
 
-def _trace_rows_for_domain(spec: DomainStressSpec, frame: pd.DataFrame, *, limit_per_fault: int = 5) -> list[dict[str, Any]]:
+def _trace_rows_for_domain(
+    spec: DomainStressSpec, frame: pd.DataFrame, *, limit_per_fault: int = 5
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for fault_family, group in frame.groupby("fault_family", dropna=False):
         sample = group.head(limit_per_fault).reset_index(drop=True)
@@ -176,7 +183,8 @@ def _trace_rows_for_domain(spec: DomainStressSpec, frame: pd.DataFrame, *, limit
                     "source_surface": _repo_rel(spec.runtime_traces),
                     "synthetic_source": False,
                     "certificate_valid": bool(row.get("certificate_valid", False)),
-                    "fallback_or_intervention": bool(row.get("fallback_used", False)) or bool(row.get("intervened", False)),
+                    "fallback_or_intervention": bool(row.get("fallback_used", False))
+                    or bool(row.get("intervened", False)),
                     "true_constraint_violated": bool(row.get("true_constraint_violated", False)),
                     "claim_boundary": CLAIM_BOUNDARY,
                 }
@@ -200,7 +208,7 @@ def build_runtime_stress_artifacts(out_dir: Path = DEFAULT_OUT) -> dict[str, Any
     _write_csv(summary_path, summary_rows)
     _write_csv(traces_path, trace_rows)
     manifest = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "status": "real_runtime_stress_not_deployment",
         "claim_boundary": CLAIM_BOUNDARY,
         "domains": [spec.domain_label for spec in DOMAIN_SPECS],
@@ -225,11 +233,7 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
     manifest = build_runtime_stress_artifacts(args.out)
-    print(
-        "[runtime-stress] "
-        f"all_passed={manifest['all_passed']} "
-        f"summary={manifest['summary_csv']}"
-    )
+    print(f"[runtime-stress] all_passed={manifest['all_passed']} summary={manifest['summary_csv']}")
     return 0 if manifest["all_passed"] else 1
 
 

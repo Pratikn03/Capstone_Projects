@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """Evaluate whether the repo may honestly claim Phases 3/4/6 are closed."""
+
 from __future__ import annotations
 
 import argparse
 import csv
 import json
 import sys
-from pathlib import Path
 
 from _active_theorem_program import REPORTS_DIR, build_active_theorem_audit_payload
-
 
 FINDINGS_CSV = REPORTS_DIR / "external_proof_audit_findings.csv"
 STATUS_JSON = REPORTS_DIR / "phase_3_4_6_closure_status.json"
@@ -60,7 +59,11 @@ def build_status() -> dict[str, object]:
             continue
         disposition = str(finding.get("disposition", "")).strip().lower()
         status = str(finding.get("status", "")).strip().lower()
-        if disposition in {"", "pending_external_review"} or status in {"", "pending_external_review", "open"}:
+        if disposition in {"", "pending_external_review"} or status in {
+            "",
+            "pending_external_review",
+            "open",
+        }:
             phase6_blockers.append(
                 {
                     "theorem_id": theorem_id,
@@ -103,10 +106,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"- {blocker['theorem_id']}: {blocker['reason']}")
         return 1
 
-    print(
-        "[verify_phase_346_closure] "
-        + ("PASS" if bool(status["overall_ready"]) else "INCOMPLETE")
-    )
+    print("[verify_phase_346_closure] " + ("PASS" if bool(status["overall_ready"]) else "INCOMPLETE"))
     return 0
 
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Generate Priority-3 evidence artifacts."""
+
 from __future__ import annotations
 
-from pathlib import Path
 import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -108,4 +109,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

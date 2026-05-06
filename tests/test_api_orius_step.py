@@ -3,15 +3,17 @@
 Phase 4 of ORIUS gap-closing plan.
 Tests health check, the canonical three supported domains, and error handling.
 """
+
 from __future__ import annotations
 
 import json
+
 import pytest
 from fastapi.testclient import TestClient
 
+from orius.api.app import app
 from services.api.config import get_api_keys
 from services.api.security import API_KEY_NAME
-from orius.api.app import app
 
 client = TestClient(app, raise_server_exceptions=False)
 HEADERS = {API_KEY_NAME: "orius-api-test-key"}
@@ -36,8 +38,9 @@ class TestHealthEndpoint:
 
 
 class TestStepEndpointBasic:
-    def _step(self, domain: str, state: dict, candidate_action: dict | None = None,
-              constraints: dict | None = None) -> dict:
+    def _step(
+        self, domain: str, state: dict, candidate_action: dict | None = None, constraints: dict | None = None
+    ) -> dict:
         payload = {
             "domain": domain,
             "state": state,
@@ -112,22 +115,30 @@ class TestStepEndpointBasic:
     def test_domain_case_insensitive(self):
         """Domain name should be case-insensitive."""
         for name in ("HEALTHCARE", "Healthcare", "healthcare"):
-            resp = client.post("/step", json={
-                "domain": name,
-                "state": {"spo2_pct": 92.0, "hr_bpm": 70.0, "respiratory_rate": 14.0},
-                "candidate_action": {},
-                "constraints": {},
-            }, headers=HEADERS)
+            resp = client.post(
+                "/step",
+                json={
+                    "domain": name,
+                    "state": {"spo2_pct": 92.0, "hr_bpm": 70.0, "respiratory_rate": 14.0},
+                    "candidate_action": {},
+                    "constraints": {},
+                },
+                headers=HEADERS,
+            )
             assert resp.status_code == 200, f"Failed for domain='{name}'"
 
 
 class TestStepEndpointErrors:
     def test_unsupported_domain_returns_400(self):
-        resp = client.post("/step", json={
-            "domain": "quantum_teleporter",
-            "state": {},
-            "candidate_action": {},
-        }, headers=HEADERS)
+        resp = client.post(
+            "/step",
+            json={
+                "domain": "quantum_teleporter",
+                "state": {},
+                "candidate_action": {},
+            },
+            headers=HEADERS,
+        )
         assert resp.status_code == 400
         assert "unsupported" in resp.json()["detail"].lower()
 
@@ -136,10 +147,14 @@ class TestStepEndpointErrors:
         assert resp.status_code == 422
 
     def test_quantile_out_of_range_returns_422(self):
-        resp = client.post("/step", json={
-            "domain": "healthcare",
-            "state": {"spo2_pct": 92.0, "hr_bpm": 70.0, "respiratory_rate": 14.0},
-            "candidate_action": {},
-            "quantile": 150.0,  # out of range [1, 99]
-        }, headers=HEADERS)
+        resp = client.post(
+            "/step",
+            json={
+                "domain": "healthcare",
+                "state": {"spo2_pct": 92.0, "hr_bpm": 70.0, "respiratory_rate": 14.0},
+                "candidate_action": {},
+                "quantile": 150.0,  # out of range [1, 99]
+            },
+            headers=HEADERS,
+        )
         assert resp.status_code == 422

@@ -1,19 +1,19 @@
 """Strict NA audit for processed data, report tables, and audit DBs."""
+
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import fnmatch
 import json
-from pathlib import Path
 import sys
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import duckdb
 import pandas as pd
 import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -78,7 +78,9 @@ def _is_excluded(source_key: str, exclude_globs: list[str]) -> bool:
     return any(fnmatch.fnmatch(source_key, pattern) for pattern in exclude_globs)
 
 
-def _allowed_max_ratio(source_key: str, column: str, rules: list[AllowRule], default_max_ratio: float) -> float:
+def _allowed_max_ratio(
+    source_key: str, column: str, rules: list[AllowRule], default_max_ratio: float
+) -> float:
     effective = default_max_ratio
     for rule in rules:
         if not fnmatch.fnmatch(source_key, rule.path_glob):
@@ -88,7 +90,9 @@ def _allowed_max_ratio(source_key: str, column: str, rules: list[AllowRule], def
     return effective
 
 
-def _scan_dataframe(df: pd.DataFrame, source_key: str, source_type: str, table: str | None = None) -> list[dict[str, Any]]:
+def _scan_dataframe(
+    df: pd.DataFrame, source_key: str, source_type: str, table: str | None = None
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     n_rows = int(len(df))
     if n_rows == 0:
@@ -115,7 +119,9 @@ def _duckdb_noncanonical_mask(df: pd.DataFrame) -> pd.Series:
     status_like = [
         column
         for column in df.columns
-        if any(marker in str(column).lower() for marker in ("status", "surface", "closure", "tier", "canonical"))
+        if any(
+            marker in str(column).lower() for marker in ("status", "surface", "closure", "tier", "canonical")
+        )
     ]
     for column in status_like:
         values = df[column].astype(str).str.strip().str.lower()
@@ -260,7 +266,12 @@ def run_na_audit(
 
     if not df.empty:
         allowed_max = [
-            _allowed_max_ratio(source_key=str(r.source_key), column=str(r.column), rules=rules, default_max_ratio=default_max_ratio)
+            _allowed_max_ratio(
+                source_key=str(r.source_key),
+                column=str(r.column),
+                rules=rules,
+                default_max_ratio=default_max_ratio,
+            )
             for r in df.itertuples(index=False)
         ]
         df["allowed_max_ratio"] = allowed_max
@@ -273,7 +284,7 @@ def run_na_audit(
 
     violations_df = df[df["status"] == "violation"] if not df.empty else df
     summary = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "strict": strict,
         "default_max_ratio": default_max_ratio,
         "excluded_globs": excludes,
@@ -282,9 +293,7 @@ def run_na_audit(
         "violations": int(len(violations_df)),
         "fail": bool(strict and len(violations_df) > 0),
         "top_violations": (
-            violations_df.sort_values("na_ratio", ascending=False)
-            .head(50)
-            .to_dict(orient="records")
+            violations_df.sort_values("na_ratio", ascending=False).head(50).to_dict(orient="records")
             if not violations_df.empty
             else []
         ),

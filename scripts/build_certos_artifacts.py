@@ -10,10 +10,12 @@ Produces:
 
 Runs run_certos_lifecycle and augments outputs.
 """
+
 from __future__ import annotations
 
 import argparse
 import csv as csv_mod
+import itertools
 import json
 import subprocess
 import sys
@@ -60,7 +62,9 @@ def main() -> int:
     rows = list(csv_mod.DictReader(open(csv_path)))
     summary = json.loads(summary_path.read_text()) if summary_path.exists() else {}
     audit_path = out / "audit_ops.jsonl"
-    raw_audit = [json.loads(line) for line in audit_path.read_text().splitlines()] if audit_path.exists() else []
+    raw_audit = (
+        [json.loads(line) for line in audit_path.read_text().splitlines()] if audit_path.exists() else []
+    )
     step_audit = {}
     for entry in raw_audit:
         step_audit.setdefault(int(entry["step"]), []).append(entry)
@@ -106,7 +110,9 @@ def main() -> int:
     # latency_report.csv
     steps_per_sec = len(rows) / elapsed if elapsed > 0 else 0
     step_ms = 1000 * elapsed / len(rows) if rows else 0
-    pd_latency = f"metric,value\nstep_latency_ms,{step_ms:.2f}\nthroughput_steps_per_sec,{steps_per_sec:.2f}\n"
+    pd_latency = (
+        f"metric,value\nstep_latency_ms,{step_ms:.2f}\nthroughput_steps_per_sec,{steps_per_sec:.2f}\n"
+    )
     (out / "latency_report.csv").write_text(pd_latency)
 
     # recovery_report.md
@@ -114,7 +120,7 @@ def main() -> int:
     n_valid = sum(1 for row in rows if row["status"] == "valid")
     recovery_transitions = sum(
         1
-        for prev, curr in zip(rows, rows[1:])
+        for prev, curr in itertools.pairwise(rows)
         if prev["status"] == "fallback" and curr["status"] == "valid"
     )
     (out / "recovery_report.md").write_text(
@@ -167,7 +173,7 @@ def main() -> int:
             f"- Recovery transitions from runtime truth: {recovery_transitions}\n"
         )
     except ValueError:
-        pass  # Output outside repo (e.g. test fixture); skip linkage write
+        print("Skipping claim linkage write for output outside repository")
 
     print(f"CertOS artifacts -> {out}")
     return 0

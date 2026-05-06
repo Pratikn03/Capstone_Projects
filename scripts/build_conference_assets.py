@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build lightweight conference-paper figures and dataset cards from publication artifacts."""
+
 from __future__ import annotations
 
 import argparse
@@ -14,7 +15,6 @@ os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT_DIR = REPO_ROOT / "reports" / "publication"
@@ -73,7 +73,9 @@ def build_dataset_cards(dataset_summary_path: Path, out_dir: Path) -> dict[str, 
         first = sub.iloc[0]
         meta = DATASET_META.get(str(dataset_key), {})
         stats = _read_json(Path(str(meta.get("stats_path", "")))) if meta.get("stats_path") else {}
-        provenance = _read_json(Path(str(meta.get("provenance_path", "")))) if meta.get("provenance_path") else {}
+        provenance = (
+            _read_json(Path(str(meta.get("provenance_path", "")))) if meta.get("provenance_path") else {}
+        )
         rows.append(
             {
                 "dataset_key": str(dataset_key),
@@ -84,7 +86,9 @@ def build_dataset_cards(dataset_summary_path: Path, out_dir: Path) -> dict[str, 
                 "date_end": str(first["End"]),
                 "targets": ",".join(sorted(sub["Signal"].astype(str).unique().tolist())),
                 "min_coverage_pct": float(pd.to_numeric(sub["Coverage%"], errors="coerce").min()),
-                "feature_count": stats.get("total_features") or stats.get("feature_count") or provenance.get("columns"),
+                "feature_count": stats.get("total_features")
+                or stats.get("feature_count")
+                or provenance.get("columns"),
                 "columns": stats.get("columns") or provenance.get("columns"),
                 "source": meta.get("source"),
                 "weather_source": provenance.get("weather_source") or meta.get("weather_source") or "n/a",
@@ -120,31 +124,37 @@ def build_dataset_cards(dataset_summary_path: Path, out_dir: Path) -> dict[str, 
     ncols = 2 if n_cards > 1 else 1
     nrows = max(1, (n_cards + ncols - 1) // ncols)
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(13, 3.8 * nrows))
-    if not isinstance(axes, (list, tuple)):
-        axes_iter = [axes]
-    else:
-        axes_iter = list(axes)
+    axes_iter = [axes] if not isinstance(axes, list | tuple) else list(axes)
     flat_axes = []
     for ax in axes_iter:
-        if isinstance(ax, (list, tuple)):
+        if isinstance(ax, list | tuple):
             flat_axes.extend(ax)
         else:
             flat_axes.append(ax)
     if hasattr(axes, "flat"):
         flat_axes = list(axes.flat)
 
-    for ax, row in zip(flat_axes, cards_df.to_dict(orient="records")):
+    for ax, row in zip(flat_axes, cards_df.to_dict(orient="records"), strict=False):
         ax.axis("off")
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
-        ax.add_patch(plt.Rectangle((0.02, 0.05), 0.96, 0.90, facecolor="#f7f7f4", edgecolor="#2e3d30", linewidth=1.5))
+        ax.add_patch(
+            plt.Rectangle((0.02, 0.05), 0.96, 0.90, facecolor="#f7f7f4", edgecolor="#2e3d30", linewidth=1.5)
+        )
         ax.text(0.05, 0.88, row["dataset_label"], fontsize=14, fontweight="bold", color="#1f2d1f")
-        ax.text(0.05, 0.79, f"Key: {row['dataset_key']}  |  Country: {row['country']}", fontsize=10, color="#334")
+        ax.text(
+            0.05, 0.79, f"Key: {row['dataset_key']}  |  Country: {row['country']}", fontsize=10, color="#334"
+        )
         ax.text(0.05, 0.67, f"Rows: {row['rows']:,}", fontsize=11)
         ax.text(0.05, 0.58, f"Range: {row['date_start']} to {row['date_end']}", fontsize=11)
         ax.text(0.05, 0.49, f"Targets: {row['targets']}", fontsize=11)
         ax.text(0.05, 0.40, f"Min coverage: {row['min_coverage_pct']:.2f}%", fontsize=11)
-        ax.text(0.05, 0.31, f"Features: {row.get('feature_count') or 'n/a'}  |  Columns: {row.get('columns') or 'n/a'}", fontsize=11)
+        ax.text(
+            0.05,
+            0.31,
+            f"Features: {row.get('feature_count') or 'n/a'}  |  Columns: {row.get('columns') or 'n/a'}",
+            fontsize=11,
+        )
         ax.text(0.05, 0.22, f"Source: {row.get('source') or 'n/a'}", fontsize=11)
         if row.get("weather_source"):
             ax.text(0.05, 0.13, f"Weather: {row['weather_source']}", fontsize=10, color="#455")
@@ -234,8 +244,16 @@ def build_transfer_generalization(out_dir: Path) -> dict[str, Any]:
         return {"rows": int(len(plot_df)), "figure": str(fig_path), "source": str(summary_path)}
 
     transfer_df = pd.read_csv(transfer_path)
-    if "transfer_case" in transfer_df.columns and transfer_df["transfer_case"].astype(str).str.contains("pending_transfer_artifacts", na=False).any():
-        raise RuntimeError("transfer_stress.csv contains placeholder rows; cannot build transfer generalization figure")
+    if (
+        "transfer_case" in transfer_df.columns
+        and transfer_df["transfer_case"]
+        .astype(str)
+        .str.contains("pending_transfer_artifacts", na=False)
+        .any()
+    ):
+        raise RuntimeError(
+            "transfer_stress.csv contains placeholder rows; cannot build transfer generalization figure"
+        )
 
     agg = transfer_df.groupby(["transfer_case"], as_index=False).agg(
         picp_90=("picp_90", "mean"),
@@ -243,7 +261,12 @@ def build_transfer_generalization(out_dir: Path) -> dict[str, Any]:
     )
     fig, ax = plt.subplots(figsize=(9, 4.5))
     ax.plot(agg["transfer_case"].astype(str), agg["picp_90"], marker="o", label="PICP@90")
-    ax.plot(agg["transfer_case"].astype(str), agg["true_soc_violation_rate"], marker="s", label="True-SOC Violation Rate")
+    ax.plot(
+        agg["transfer_case"].astype(str),
+        agg["true_soc_violation_rate"],
+        marker="s",
+        label="True-SOC Violation Rate",
+    )
     ax.tick_params(axis="x", rotation=20)
     ax.grid(alpha=0.3)
     ax.legend()

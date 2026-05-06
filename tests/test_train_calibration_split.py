@@ -1,4 +1,5 @@
 """Tests for optional calibration split ratio parsing in training config."""
+
 from __future__ import annotations
 
 import pytest
@@ -7,7 +8,9 @@ from orius.forecasting.train import _resolve_split_cfg
 
 
 def test_resolve_split_cfg_defaults_calibration_ratio_zero() -> None:
-    train_ratio, val_ratio, test_ratio, calibration_ratio = _resolve_split_cfg({"splits": {"train_ratio": 0.7, "val_ratio": 0.15}})
+    train_ratio, val_ratio, test_ratio, calibration_ratio = _resolve_split_cfg(
+        {"splits": {"train_ratio": 0.7, "val_ratio": 0.15}}
+    )
     assert train_ratio == 0.7
     assert val_ratio == 0.15
     assert calibration_ratio == 0.0

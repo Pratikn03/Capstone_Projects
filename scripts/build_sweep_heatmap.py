@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build hyperparameter sweep heatmaps from sensitivity_grid.csv for thesis ch23."""
+
 from __future__ import annotations
 
 import sys
@@ -11,11 +12,12 @@ for p in (REPO_ROOT, REPO_ROOT / "src"):
         sys.path.insert(0, str(p))
 
 import os
+
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 
@@ -30,14 +32,11 @@ def main() -> None:
     if dc3s.empty:
         dc3s = df[df["controller"] == "dc3s_ftit"].copy()
 
-    agg = (
-        dc3s.groupby(["alpha0", "ph_lambda", "kappa_drift_penalty"], as_index=False)
-        .agg(
-            tsvr=("true_soc_violation_rate", "mean"),
-            ir=("intervention_rate", "mean"),
-            picp=("picp_90", "mean"),
-            width=("mean_interval_width", "mean"),
-        )
+    agg = dc3s.groupby(["alpha0", "ph_lambda", "kappa_drift_penalty"], as_index=False).agg(
+        tsvr=("true_soc_violation_rate", "mean"),
+        ir=("intervention_rate", "mean"),
+        picp=("picp_90", "mean"),
+        width=("mean_interval_width", "mean"),
     )
 
     kpen_values = sorted(agg["kappa_drift_penalty"].unique())
@@ -48,8 +47,13 @@ def main() -> None:
         sub = agg[agg["kappa_drift_penalty"] == kpen]
         pivot = sub.pivot_table(index="ph_lambda", columns="alpha0", values="tsvr")
         pivot = pivot.sort_index(ascending=False)
-        im = ax.imshow(pivot.values * 100, aspect="auto", cmap="RdYlGn_r",
-                       vmin=0, vmax=max(5.0, (agg["tsvr"].max() * 100) + 1))
+        im = ax.imshow(
+            pivot.values * 100,
+            aspect="auto",
+            cmap="RdYlGn_r",
+            vmin=0,
+            vmax=max(5.0, (agg["tsvr"].max() * 100) + 1),
+        )
         ax.set_xticks(range(len(pivot.columns)))
         ax.set_xticklabels([f"{v:.2f}" for v in pivot.columns])
         ax.set_yticks(range(len(pivot.index)))
@@ -60,8 +64,15 @@ def main() -> None:
         for i in range(len(pivot.index)):
             for j in range(len(pivot.columns)):
                 val = pivot.values[i, j] * 100
-                ax.text(j, i, f"{val:.1f}%", ha="center", va="center",
-                        color="white" if val > 2.5 else "black", fontsize=9)
+                ax.text(
+                    j,
+                    i,
+                    f"{val:.1f}%",
+                    ha="center",
+                    va="center",
+                    color="white" if val > 2.5 else "black",
+                    fontsize=9,
+                )
     fig.suptitle("True SOC Violation Rate (%) by Hyperparameter Setting — DC3S", fontsize=13)
     fig.colorbar(im, ax=axes[0, :], label="TSVR (%)", shrink=0.7)
     plt.tight_layout(rect=[0, 0, 0.92, 0.95])
@@ -76,8 +87,13 @@ def main() -> None:
         sub = agg[agg["kappa_drift_penalty"] == kpen]
         pivot = sub.pivot_table(index="ph_lambda", columns="alpha0", values="ir")
         pivot = pivot.sort_index(ascending=False)
-        im = ax.imshow(pivot.values * 100, aspect="auto", cmap="Blues",
-                       vmin=0, vmax=max(20.0, (agg["ir"].max() * 100) + 1))
+        im = ax.imshow(
+            pivot.values * 100,
+            aspect="auto",
+            cmap="Blues",
+            vmin=0,
+            vmax=max(20.0, (agg["ir"].max() * 100) + 1),
+        )
         ax.set_xticks(range(len(pivot.columns)))
         ax.set_xticklabels([f"{v:.2f}" for v in pivot.columns])
         ax.set_yticks(range(len(pivot.index)))
@@ -88,8 +104,15 @@ def main() -> None:
         for i in range(len(pivot.index)):
             for j in range(len(pivot.columns)):
                 val = pivot.values[i, j] * 100
-                ax.text(j, i, f"{val:.1f}%", ha="center", va="center",
-                        color="white" if val > 10 else "black", fontsize=9)
+                ax.text(
+                    j,
+                    i,
+                    f"{val:.1f}%",
+                    ha="center",
+                    va="center",
+                    color="white" if val > 10 else "black",
+                    fontsize=9,
+                )
     fig.suptitle("Intervention Rate (%) by Hyperparameter Setting — DC3S", fontsize=13)
     fig.colorbar(im, ax=axes[0, :], label="IR (%)", shrink=0.7)
     plt.tight_layout(rect=[0, 0, 0.92, 0.95])

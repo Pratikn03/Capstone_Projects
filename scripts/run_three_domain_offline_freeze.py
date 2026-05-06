@@ -1,38 +1,41 @@
 #!/usr/bin/env python3
 """Full offline predeployment training freeze for Battery, AV, and Healthcare."""
+
 from __future__ import annotations
 
 import argparse
-from contextlib import suppress
 import csv
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import hashlib
 import json
 import os
-from pathlib import Path
-import shutil
 import subprocess
 import sys
-from typing import Any, Iterable, Mapping
+from collections.abc import Iterable, Mapping
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import suppress
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from _dataset_registry import DATASET_REGISTRY, MAX_QUALITY_DEFAULTS  # noqa: E402
+from _dataset_registry import DATASET_REGISTRY, MAX_QUALITY_DEFAULTS
 
 PYTHON_BIN = sys.executable or ".venv/bin/python"
 MODEL_REQUEST = "gbm,lstm,tcn,nbeats,tft,patchtst"
 FULL_AV_GATE_NAME = "nuplan_full_av_gate.json"
 FREEZE_STATUS = "predeployment_not_deployed"
 NUPLAN_SURFACE = "nuplan_allzip_grouped_runtime_replay_surrogate"
-AV_RUNTIME_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+AV_RUNTIME_DIR = (
+    REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+)
 PROMOTED_RUNTIME_MAX_TSVR = 1e-3
 CLAIM_BOUNDARY = (
     "Predeployment offline freeze only: not road deployed, not live clinical deployed, "
@@ -69,7 +72,11 @@ FREEZE_DOMAINS: tuple[FreezeDomain, ...] = (
         dataset="AV",
         domain_key="av",
         domain_label="Autonomous Vehicles",
-        baseline_metrics=REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped" / "training_summary.csv",
+        baseline_metrics=REPO_ROOT
+        / "reports"
+        / "orius_av"
+        / "nuplan_allzip_grouped"
+        / "training_summary.csv",
         canonical_models_dir=REPO_ROOT / "artifacts" / "models_orius_av_nuplan_allzip_grouped",
         canonical_uncertainty_dir=REPO_ROOT / "artifacts" / "uncertainty" / "orius_av_nuplan_allzip_grouped",
         canonical_backtests_dir=REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped",
@@ -91,7 +98,7 @@ FREEZE_DOMAINS: tuple[FreezeDomain, ...] = (
 
 
 def generate_release_id() -> str:
-    return "PREDEPLOY_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return "PREDEPLOY_" + datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
 
 
 def _repo_rel(path: Path) -> str:
@@ -140,7 +147,10 @@ def _run(cmd: list[str], *, log_path: Path) -> bool:
     env.setdefault("MPLBACKEND", "Agg")
     with log_path.open("w", encoding="utf-8") as handle:
         handle.write("$ " + " ".join(cmd) + "\n\n")
-        result = subprocess.run(cmd, cwd=REPO_ROOT, env=env, text=True, stdout=handle, stderr=subprocess.STDOUT)
+        handle.flush()
+        result = subprocess.run(
+            cmd, cwd=REPO_ROOT, env=env, text=True, stdout=handle, stderr=subprocess.STDOUT
+        )
     return result.returncode == 0
 
 
@@ -185,13 +195,31 @@ def _runtime_cap_hours(max_runtime_hours: float | None) -> float | None:
     return float(max_runtime_hours)
 
 
+def _qmax_deep_cap_args(profile: str, n_trials: int | None) -> list[str]:
+    """Record the intentionally short deep-model schedule for QMAX smoke runs."""
+    if profile != "production-max-fast":
+        return []
+    if n_trials is None or int(n_trials) > 10 or int(n_trials) <= 0:
+        return []
+    return [
+        "--max-deep-epochs",
+        "2",
+        "--deep-patience",
+        "1",
+        "--deep-warmup-epochs",
+        "1",
+    ]
+
+
 def training_command(
     domain: FreezeDomain,
     release_id: str,
     *,
     profile: str,
     max_runtime_hours: float | None,
+    n_trials: int | None = None,
     freeze_dir: Path | None = None,
+    model_request: str = MODEL_REQUEST,
 ) -> list[str]:
     if domain.dataset == "AV":
         freeze_dir = freeze_dir or (REPO_ROOT / "reports" / "predeployment_freeze" / release_id)
@@ -216,7 +244,7 @@ def training_command(
         "--run-id",
         release_id,
         "--models",
-        MODEL_REQUEST,
+        model_request,
         "--profile",
         profile,
         "--tune",
@@ -227,10 +255,50 @@ def training_command(
     cap_hours = _runtime_cap_hours(max_runtime_hours)
     if cap_hours is not None:
         cmd.extend(["--max-runtime-hours", str(cap_hours)])
+    if n_trials is not None and int(n_trials) > 0:
+        cmd.extend(["--n-trials", str(int(n_trials))])
+    cmd.extend(_qmax_deep_cap_args(profile, n_trials))
     return cmd
 
 
-def promotion_command(domain: FreezeDomain, release_id: str) -> list[str]:
+def av_offline_training_command(
+    release_id: str,
+    *,
+    profile: str,
+    max_runtime_hours: float | None,
+    n_trials: int | None = None,
+    model_request: str = MODEL_REQUEST,
+) -> list[str]:
+    """Train the AV nuPlan offline forecasting surface without replacing the runtime gate."""
+    domain = next(item for item in FREEZE_DOMAINS if item.dataset == "AV")
+    cmd = [
+        PYTHON_BIN,
+        "scripts/train_dataset.py",
+        "--dataset",
+        "AV",
+        "--candidate-run",
+        "--run-id",
+        release_id,
+        "--models",
+        model_request,
+        "--profile",
+        profile,
+        "--tune",
+        "--target-metrics-file",
+        str(domain.baseline_metrics),
+    ]
+    cap_hours = _runtime_cap_hours(max_runtime_hours)
+    if cap_hours is not None:
+        cmd.extend(["--max-runtime-hours", str(cap_hours)])
+    if n_trials is not None and int(n_trials) > 0:
+        cmd.extend(["--n-trials", str(int(n_trials))])
+    cmd.extend(_qmax_deep_cap_args(profile, n_trials))
+    return cmd
+
+
+def promotion_command(
+    domain: FreezeDomain, release_id: str, *, model_request: str = MODEL_REQUEST
+) -> list[str]:
     if domain.dataset == "AV":
         return [
             PYTHON_BIN,
@@ -246,6 +314,8 @@ def promotion_command(domain: FreezeDomain, release_id: str) -> list[str]:
         "--run-id",
         release_id,
         "--reports-only",
+        "--models",
+        model_request,
         "--target-metrics-file",
         str(domain.baseline_metrics),
         "--promote-on-accept",
@@ -257,39 +327,95 @@ def downstream_commands(release_id: str, freeze_dir: Path) -> list[list[str]]:
         [PYTHON_BIN, "scripts/build_healthcare_runtime_artifacts.py"],
         [PYTHON_BIN, "scripts/build_nuplan_closed_loop_artifacts.py"],
         [PYTHON_BIN, "scripts/build_domain_runtime_contract_artifacts.py"],
-        [PYTHON_BIN, "scripts/run_universal_orius_validation.py", "--out", "reports/universal_orius_validation"],
+        [PYTHON_BIN, "scripts/validate_universal_contract_manifest.py"],
+        [
+            PYTHON_BIN,
+            "scripts/run_universal_orius_validation.py",
+            "--out",
+            "reports/universal_orius_validation",
+        ],
         [PYTHON_BIN, "scripts/build_equal_domain_artifact_discipline.py"],
         [PYTHON_BIN, "scripts/build_three_domain_ml_artifacts.py"],
-        [PYTHON_BIN, "scripts/run_predeployment_external_validation.py", "--out", "reports/predeployment_external_validation"],
-        [PYTHON_BIN, "scripts/build_three_domain_runtime_stress_artifacts.py", "--out", str(freeze_dir / "runtime_stress")],
-        [PYTHON_BIN, "scripts/run_universal_training_audit.py", "--out", "reports/orius_framework_proof/training_audit"],
+        [
+            PYTHON_BIN,
+            "scripts/run_predeployment_external_validation.py",
+            "--out",
+            "reports/predeployment_external_validation",
+        ],
+        [
+            PYTHON_BIN,
+            "scripts/build_three_domain_runtime_stress_artifacts.py",
+            "--out",
+            str(freeze_dir / "runtime_stress"),
+        ],
+        [
+            PYTHON_BIN,
+            "scripts/run_universal_training_audit.py",
+            "--out",
+            "reports/orius_framework_proof/training_audit",
+        ],
         [PYTHON_BIN, "scripts/run_universal_training_audit.py", "--out", "reports/universal_training_audit"],
         [PYTHON_BIN, "scripts/validate_equal_domain_artifact_discipline.py"],
         [PYTHON_BIN, "scripts/validate_theorem_surface.py"],
+        [PYTHON_BIN, "scripts/sync_impact_from_manifest.py"],
         [PYTHON_BIN, "scripts/validate_paper_claims.py"],
     ]
 
 
-def planned_commands(release_id: str, freeze_dir: Path, *, profile: str, max_runtime_hours: float | None) -> dict[str, Any]:
+def planned_commands(
+    release_id: str,
+    freeze_dir: Path,
+    *,
+    profile: str,
+    max_runtime_hours: float | None,
+    n_trials: int | None = None,
+    model_request: str = MODEL_REQUEST,
+    parallel_training: bool | None = None,
+) -> dict[str, Any]:
     cap_hours = _runtime_cap_hours(max_runtime_hours)
+    resolved_parallel_training = (
+        profile == "production-max-fast" if parallel_training is None else bool(parallel_training)
+    )
+    av_offline_training = (
+        av_offline_training_command(
+            release_id,
+            profile=profile,
+            max_runtime_hours=max_runtime_hours,
+            n_trials=n_trials,
+            model_request=model_request,
+        )
+        if profile == "production-max-fast"
+        else None
+    )
     return {
         "release_id": release_id,
         "profile": profile,
-        "model_request": MODEL_REQUEST,
+        "model_request": model_request,
         "runtime_cap_enabled": cap_hours is not None,
         "runtime_cap_hours": cap_hours,
+        "n_trials_override": int(n_trials) if n_trials is not None and int(n_trials) > 0 else None,
+        "parallel_training_enabled": resolved_parallel_training,
+        "parallel_training_datasets": [domain.dataset for domain in FREEZE_DOMAINS]
+        if resolved_parallel_training
+        else [],
         "nuplan_full_gate": str(nuplan_full_gate_path(freeze_dir)),
+        "av_offline_training": av_offline_training,
         "training": {
             domain.dataset: training_command(
                 domain,
                 release_id,
                 profile=profile,
                 max_runtime_hours=max_runtime_hours,
+                n_trials=n_trials,
                 freeze_dir=freeze_dir,
+                model_request=model_request,
             )
             for domain in FREEZE_DOMAINS
         },
-        "promotion": {domain.dataset: promotion_command(domain, release_id) for domain in FREEZE_DOMAINS},
+        "promotion": {
+            domain.dataset: promotion_command(domain, release_id, model_request=model_request)
+            for domain in FREEZE_DOMAINS
+        },
         "downstream": downstream_commands(release_id, freeze_dir),
     }
 
@@ -332,6 +458,12 @@ def _active_nuplan_writers() -> list[str]:
         output = subprocess.check_output(["ps", "-axo", "pid,ppid,etime,pcpu,pmem,command"], text=True)
     except Exception:
         return ["unable to inspect process table"]
+    editor_markers = (
+        "/Applications/PyCharm.app/",
+        "/Applications/Visual Studio Code.app/",
+        "Code Helper",
+        "Cursor.app",
+    )
     tokens = (
         "build_nuplan_av_surface",
         "processed_nuplan",
@@ -343,15 +475,21 @@ def _active_nuplan_writers() -> list[str]:
     for line in output.splitlines():
         if "ps -axo" in line or " rg " in line:
             continue
+        if any(marker in line for marker in editor_markers):
+            continue
         if any(token in line for token in tokens):
             rows.append(line.strip())
     return rows
 
 
-def _training_config_preflight(dataset: str) -> dict[str, Any]:
+def _training_config_preflight(dataset: str, *, model_request: str = MODEL_REQUEST) -> dict[str, Any]:
     cfg = DATASET_REGISTRY.get(dataset)
     if cfg is None:
-        return {"dataset": dataset, "exists": False, "blockers": [f"{dataset}: missing dataset registry entry"]}
+        return {
+            "dataset": dataset,
+            "exists": False,
+            "blockers": [f"{dataset}: missing dataset registry entry"],
+        }
     train_cfg = _read_yaml(REPO_ROOT / cfg.config_file)
     task_cfg = train_cfg.get("task", {}) if isinstance(train_cfg.get("task"), dict) else {}
     models_cfg = train_cfg.get("models", {}) if isinstance(train_cfg.get("models"), dict) else {}
@@ -385,7 +523,7 @@ def _training_config_preflight(dataset: str) -> dict[str, Any]:
         "splits_path": cfg.splits_path,
         "splits": split_meta,
         "targets": task_cfg.get("targets", []),
-        "models_requested": MODEL_REQUEST.split(","),
+        "models_requested": model_request.split(","),
         "models_enabled_in_config": enabled_models,
         "tuning_config": {
             "enabled": tuning_cfg.get("enabled"),
@@ -409,14 +547,27 @@ def domain_by_dataset(dataset: str) -> FreezeDomain:
 
 def _nuplan_preflight() -> dict[str, Any]:
     required_paths = {
-        "closed_loop_summary": REPO_ROOT / "reports" / "predeployment_external_validation" / "nuplan_closed_loop_summary.csv",
-        "closed_loop_traces": REPO_ROOT / "reports" / "predeployment_external_validation" / "nuplan_closed_loop_traces.csv",
-        "closed_loop_manifest": REPO_ROOT / "reports" / "predeployment_external_validation" / "nuplan_closed_loop_manifest.json",
+        "closed_loop_summary": REPO_ROOT
+        / "reports"
+        / "predeployment_external_validation"
+        / "nuplan_closed_loop_summary.csv",
+        "closed_loop_traces": REPO_ROOT
+        / "reports"
+        / "predeployment_external_validation"
+        / "nuplan_closed_loop_traces.csv",
+        "closed_loop_manifest": REPO_ROOT
+        / "reports"
+        / "predeployment_external_validation"
+        / "nuplan_closed_loop_manifest.json",
         "runtime_summary": AV_RUNTIME_DIR / "runtime_summary.csv",
         "runtime_traces": AV_RUNTIME_DIR / "runtime_traces.csv",
         "runtime_governance": AV_RUNTIME_DIR / "runtime_governance_summary.csv",
     }
-    blockers = [f"AV: missing {name} at {_repo_rel(path)}" for name, path in required_paths.items() if not path.exists()]
+    blockers = [
+        f"AV: missing {name} at {_repo_rel(path)}"
+        for name, path in required_paths.items()
+        if not path.exists()
+    ]
     summary = _read_csv_first_row(required_paths["closed_loop_summary"])
     if summary:
         if summary.get("validation_surface") != NUPLAN_SURFACE:
@@ -448,24 +599,27 @@ def write_preflight_manifest(
     plans: Mapping[str, Any],
     profile: str,
     max_runtime_hours: float | None,
+    n_trials: int | None = None,
+    model_request: str = MODEL_REQUEST,
 ) -> dict[str, Any]:
     cap_hours = _runtime_cap_hours(max_runtime_hours)
     domains = [
-        _training_config_preflight("DE"),
+        _training_config_preflight("DE", model_request=model_request),
         _nuplan_preflight(),
-        _training_config_preflight("HEALTHCARE"),
+        _training_config_preflight("HEALTHCARE", model_request=model_request),
     ]
     blockers = [finding for domain in domains for finding in domain.get("blockers", [])]
     manifest = {
         "release_id": release_id,
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "status": "preflight_passed" if not blockers else "preflight_blocked",
         "pass": not blockers,
         "profile": profile,
         "runtime_cap_enabled": cap_hours is not None,
         "runtime_cap_hours": cap_hours,
         "runtime_cap_policy": "uncapped" if cap_hours is None else f"{cap_hours} hours",
-        "model_families_requested": MODEL_REQUEST.split(","),
+        "n_trials_override": int(n_trials) if n_trials is not None and int(n_trials) > 0 else None,
+        "model_families_requested": model_request.split(","),
         "planned_training_commands": plans["training"],
         "planned_promotion_commands": plans["promotion"],
         "planned_downstream_commands": plans["downstream"],
@@ -556,7 +710,9 @@ def training_gate(domain: FreezeDomain, release_id: str, *, freeze_dir: Path | N
 def runtime_gate() -> dict[str, Any]:
     benchmark = pd.read_csv(REPO_ROOT / "reports" / "publication" / "three_domain_ml_benchmark.csv")
     equal = pd.read_csv(REPO_ROOT / "reports" / "publication" / "equal_domain_artifact_discipline.csv")
-    external = pd.read_csv(REPO_ROOT / "reports" / "predeployment_external_validation" / "external_validation_summary.csv")
+    external = pd.read_csv(
+        REPO_ROOT / "reports" / "predeployment_external_validation" / "external_validation_summary.csv"
+    )
     strict = bool(benchmark["strict_runtime_gate"].astype(bool).all())
     equal_pass = bool(equal["artifact_discipline_gate"].astype(bool).all())
     external_pass = bool(external["pass"].astype(bool).all())
@@ -594,8 +750,12 @@ def runtime_stress_gate(freeze_dir: Path) -> dict[str, Any]:
         "all_passed": bool(manifest.get("all_passed", False)),
         "domains": sorted(summary["domain"].unique().tolist()),
         "stress_families": sorted(summary["stress_family"].unique().tolist()),
-        "synthetic_source_count": int(summary["synthetic_source"].astype(bool).sum()) if "synthetic_source" in summary else -1,
-        "proxy_source_count": int(summary["proxy_source"].astype(bool).sum()) if "proxy_source" in summary else -1,
+        "synthetic_source_count": int(summary["synthetic_source"].astype(bool).sum())
+        if "synthetic_source" in summary
+        else -1,
+        "proxy_source_count": int(summary["proxy_source"].astype(bool).sum())
+        if "proxy_source" in summary
+        else -1,
         "pass": bool(
             manifest.get("all_passed", False)
             and set(summary["domain"]) == expected_domains
@@ -631,6 +791,9 @@ def _sha256(path: Path) -> str:
 def collect_hash_rows(release_id: str, freeze_dir: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     common_paths = [
+        REPO_ROOT / "reports" / "publication" / "orius_universal_contract_manifest.json",
+        REPO_ROOT / "reports" / "publication" / "domain_runtime_contract_summary.json",
+        REPO_ROOT / "reports" / "publication" / "domain_runtime_contract_witnesses.csv",
         REPO_ROOT / "reports" / "publication" / "three_domain_ml_benchmark.csv",
         REPO_ROOT / "reports" / "publication" / "equal_domain_artifact_discipline.csv",
         REPO_ROOT / "reports" / "universal_orius_validation",
@@ -664,7 +827,7 @@ def collect_hash_rows(release_id: str, freeze_dir: Path) -> list[dict[str, Any]]
                     "path": _repo_rel(path),
                     "sha256": _sha256(path),
                     "size_bytes": stat.st_size,
-                    "mtime_utc": datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat(),
+                    "mtime_utc": datetime.fromtimestamp(stat.st_mtime, UTC).isoformat(),
                 }
             )
     for path in _iter_files(common_paths):
@@ -676,7 +839,7 @@ def collect_hash_rows(release_id: str, freeze_dir: Path) -> list[dict[str, Any]]
                 "path": _repo_rel(path),
                 "sha256": _sha256(path),
                 "size_bytes": stat.st_size,
-                "mtime_utc": datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat(),
+                "mtime_utc": datetime.fromtimestamp(stat.st_mtime, UTC).isoformat(),
             }
         )
     return rows
@@ -702,17 +865,20 @@ def write_release_manifest(
 ) -> dict[str, Any]:
     manifest = {
         "release_id": release_id,
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "status": FREEZE_STATUS,
         "claim_boundary": CLAIM_BOUNDARY,
         "git_commit": _git_commit(),
         "dirty_worktree": _dirty_worktree(),
         "domains": [domain.domain_label for domain in FREEZE_DOMAINS],
         "datasets": [domain.dataset for domain in FREEZE_DOMAINS],
-        "model_families_requested": MODEL_REQUEST.split(","),
+        "model_families_requested": str(plans.get("model_request", MODEL_REQUEST)).split(","),
         "av_freeze_surface": NUPLAN_SURFACE,
+        "universal_contract_manifest": "reports/publication/orius_universal_contract_manifest.json",
+        "n_trials_override": plans.get("n_trials_override"),
         "nuplan_full_gate": plans.get("nuplan_full_gate"),
         "train_commands": plans["training"],
+        "av_offline_training_command": plans.get("av_offline_training"),
         "promotion_commands": plans["promotion"],
         "downstream_commands": plans["downstream"],
         "promoted_domains": [row["domain"] for row in training_gates if row["pass"]],
@@ -734,19 +900,76 @@ def write_release_manifest(
     return manifest
 
 
+def _run_training_stage(plans: Mapping[str, Any], logs_dir: Path) -> dict[str, bool]:
+    if not bool(plans.get("parallel_training_enabled", False)):
+        results: dict[str, bool] = {}
+        for domain in FREEZE_DOMAINS:
+            results[domain.dataset] = _run(
+                plans["training"][domain.dataset],
+                log_path=logs_dir / f"train_{domain.dataset.lower()}.log",
+            )
+        if plans.get("av_offline_training"):
+            results["AV_OFFLINE"] = _run(
+                list(plans["av_offline_training"]),
+                log_path=logs_dir / "train_av_offline.log",
+            )
+        return results
+
+    results = {}
+    with ThreadPoolExecutor(
+        max_workers=len(FREEZE_DOMAINS) + int(bool(plans.get("av_offline_training")))
+    ) as executor:
+        future_to_dataset = {
+            executor.submit(
+                _run,
+                plans["training"][domain.dataset],
+                log_path=logs_dir / f"train_{domain.dataset.lower()}.log",
+            ): domain.dataset
+            for domain in FREEZE_DOMAINS
+        }
+        if plans.get("av_offline_training"):
+            future_to_dataset[
+                executor.submit(
+                    _run,
+                    list(plans["av_offline_training"]),
+                    log_path=logs_dir / "train_av_offline.log",
+                )
+            ] = "AV_OFFLINE"
+        for future in as_completed(future_to_dataset):
+            dataset = future_to_dataset[future]
+            results[dataset] = bool(future.result())
+    return results
+
+
+def _blocking_training_results_passed(results: Mapping[str, bool]) -> bool:
+    """Only promoted freeze domains block release; AV_OFFLINE is auxiliary evidence."""
+    return all(bool(results.get(domain.dataset, False)) for domain in FREEZE_DOMAINS)
+
+
 def run_freeze(
     *,
     release_id: str,
     out_dir: Path,
     profile: str,
     max_runtime_hours: float | None,
+    n_trials: int | None = None,
+    model_request: str = MODEL_REQUEST,
+    parallel_training: bool | None = None,
     dry_run: bool = False,
     preflight_only: bool = False,
 ) -> dict[str, Any]:
     freeze_dir = out_dir / release_id
     freeze_dir.mkdir(parents=True, exist_ok=True)
     logs_dir = freeze_dir / "logs"
-    plans = planned_commands(release_id, freeze_dir, profile=profile, max_runtime_hours=max_runtime_hours)
+    plans = planned_commands(
+        release_id,
+        freeze_dir,
+        profile=profile,
+        max_runtime_hours=max_runtime_hours,
+        n_trials=n_trials,
+        model_request=model_request,
+        parallel_training=parallel_training,
+    )
     (freeze_dir / "planned_commands.json").write_text(json.dumps(plans, indent=2), encoding="utf-8")
     preflight = write_preflight_manifest(
         release_id=release_id,
@@ -754,6 +977,8 @@ def run_freeze(
         plans=plans,
         profile=profile,
         max_runtime_hours=max_runtime_hours,
+        n_trials=n_trials,
+        model_request=model_request,
     )
     _remove_appledouble_files(freeze_dir)
     if dry_run or preflight_only:
@@ -773,35 +998,53 @@ def run_freeze(
             "blockers": preflight["blockers"],
         }
 
-    train_results: dict[str, bool] = {}
-    for domain in FREEZE_DOMAINS:
-        train_results[domain.dataset] = _run(
-            plans["training"][domain.dataset],
-            log_path=logs_dir / f"train_{domain.dataset.lower()}.log",
-        )
-    if not all(train_results.values()):
+    train_results = _run_training_stage(plans, logs_dir)
+    if not _blocking_training_results_passed(train_results):
         return {"release_id": release_id, "all_passed": False, "stage": "training", "results": train_results}
 
     training_gates = [training_gate(domain, release_id, freeze_dir=freeze_dir) for domain in FREEZE_DOMAINS]
     if not all(row["pass"] for row in training_gates):
-        return {"release_id": release_id, "all_passed": False, "stage": "training_gates", "training_gates": training_gates}
+        return {
+            "release_id": release_id,
+            "all_passed": False,
+            "stage": "training_gates",
+            "training_gates": training_gates,
+        }
 
     for domain in FREEZE_DOMAINS:
-        ok = _run(plans["promotion"][domain.dataset], log_path=logs_dir / f"promote_{domain.dataset.lower()}.log")
+        ok = _run(
+            plans["promotion"][domain.dataset], log_path=logs_dir / f"promote_{domain.dataset.lower()}.log"
+        )
         if not ok:
-            return {"release_id": release_id, "all_passed": False, "stage": "promotion", "domain": domain.dataset}
+            return {
+                "release_id": release_id,
+                "all_passed": False,
+                "stage": "promotion",
+                "domain": domain.dataset,
+            }
 
     downstream_results: list[dict[str, Any]] = []
     for index, cmd in enumerate(plans["downstream"]):
         ok = _run(cmd, log_path=logs_dir / f"downstream_{index:02d}.log")
         downstream_results.append({"command": cmd, "pass": ok})
         if not ok:
-            return {"release_id": release_id, "all_passed": False, "stage": "downstream", "downstream": downstream_results}
+            return {
+                "release_id": release_id,
+                "all_passed": False,
+                "stage": "downstream",
+                "downstream": downstream_results,
+            }
 
     runtime = runtime_gate()
     stress = runtime_stress_gate(freeze_dir)
     if not runtime["pass"] or not stress["pass"]:
-        return {"release_id": release_id, "all_passed": False, "stage": "final_gates", "runtime": runtime, "stress": stress}
+        return {
+            "release_id": release_id,
+            "all_passed": False,
+            "stage": "final_gates",
+            "runtime": runtime,
+            "stress": stress,
+        }
 
     hash_rows = collect_hash_rows(release_id, freeze_dir)
     hash_paths = write_hash_lock(freeze_dir, hash_rows)
@@ -821,15 +1064,37 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run full three-domain offline predeployment freeze.")
     parser.add_argument("--release-id", default=None)
     parser.add_argument("--out", type=Path, default=REPO_ROOT / "reports" / "predeployment_freeze")
-    parser.add_argument("--profile", choices=["standard", "aggressive", "max"], default="aggressive")
+    parser.add_argument(
+        "--profile",
+        choices=["standard", "aggressive", "max", "production-max-fast"],
+        default="aggressive",
+    )
     parser.add_argument(
         "--max-runtime-hours",
         type=float,
         default=0.0,
         help="Optional timeout for each model-training invocation. Use 0 or omit for no timeout.",
     )
+    parser.add_argument(
+        "--n-trials",
+        type=int,
+        default=None,
+        help="Optional Optuna trial override for trainable datasets. AV nuPlan gate remains a separate validation gate.",
+    )
+    parser.add_argument(
+        "--models",
+        default=MODEL_REQUEST,
+        help="Comma-separated model families for trainable datasets and AV offline training.",
+    )
+    parser.add_argument(
+        "--sequential-training",
+        action="store_true",
+        help="Disable production-max-fast parallel training. Useful for laptop smoke runs.",
+    )
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--preflight-only", action="store_true", help="Write planned commands and preflight manifest only")
+    parser.add_argument(
+        "--preflight-only", action="store_true", help="Write planned commands and preflight manifest only"
+    )
     args = parser.parse_args()
 
     release_id = args.release_id or generate_release_id()
@@ -838,6 +1103,9 @@ def main() -> int:
         out_dir=args.out,
         profile=args.profile,
         max_runtime_hours=args.max_runtime_hours,
+        n_trials=args.n_trials,
+        model_request=args.models,
+        parallel_training=False if args.sequential_training else None,
         dry_run=args.dry_run,
         preflight_only=args.preflight_only,
     )

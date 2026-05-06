@@ -22,11 +22,12 @@ calibration_contract_check
     exchangeable (no detectable trend) and returns a corrected quantile with
     a finite-sample Bonferroni adjustment.
 """
+
 from __future__ import annotations
 
 import math
 from collections import deque
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -191,7 +192,7 @@ class OnlineCalibrator:
         }
 
     @classmethod
-    def from_state_dict(cls, state: dict) -> "OnlineCalibrator":
+    def from_state_dict(cls, state: dict) -> OnlineCalibrator:
         window_size = state.get("window_size")
         if window_size in (None, ""):
             window_size = max(len(state.get("residuals", [])), _MIN_WINDOW)
@@ -211,6 +212,7 @@ class OnlineCalibrator:
 # ---------------------------------------------------------------------------
 # One-shot calibration contract check
 # ---------------------------------------------------------------------------
+
 
 def calibration_contract_check(
     residuals: Sequence[float] | np.ndarray,

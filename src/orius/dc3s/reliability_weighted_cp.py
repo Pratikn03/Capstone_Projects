@@ -4,6 +4,7 @@ Extends standard split-conformal prediction by reweighting calibration
 residuals with inverse reliability scores, so degraded-sensor regimes
 produce wider prediction sets.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

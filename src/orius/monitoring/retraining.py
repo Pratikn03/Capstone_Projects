@@ -1,10 +1,11 @@
 """Monitoring: retraining decisions and drift checks."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -12,13 +13,13 @@ import yaml
 
 from orius.monitoring.data_drift import ks_drift
 from orius.monitoring.model_drift import metric_drift
-from orius.utils.metrics import rmse, mape
+from orius.utils.metrics import mape, rmse
 
 
 @dataclass
 class RetrainingDecision:
     retrain: bool
-    reasons: List[str]
+    reasons: list[str]
     last_trained_days_ago: int | None
 
 
@@ -53,7 +54,9 @@ def days_since(path: Path) -> int | None:
     return (datetime.now() - mtime).days
 
 
-def compute_data_drift(reference_df: pd.DataFrame, current_df: pd.DataFrame, feature_cols: List[str], p_value_threshold: float) -> Dict[str, Any]:
+def compute_data_drift(
+    reference_df: pd.DataFrame, current_df: pd.DataFrame, feature_cols: list[str], p_value_threshold: float
+) -> dict[str, Any]:
     """Run KS drift tests per feature and summarize whether any drifted."""
     drifted = {}
     for col in feature_cols:
@@ -67,7 +70,7 @@ def compute_data_drift(reference_df: pd.DataFrame, current_df: pd.DataFrame, fea
     return {"columns": drifted, "drift": any_drift}
 
 
-def compute_model_metrics_gbm(bundle: dict, df: pd.DataFrame, target: str) -> Dict[str, float]:
+def compute_model_metrics_gbm(bundle: dict, df: pd.DataFrame, target: str) -> dict[str, float]:
     """Compute simple metrics for a GBM bundle on a given dataframe."""
     feat_cols = bundle.get("feature_cols", [])
     if not feat_cols:
@@ -83,7 +86,9 @@ def compute_model_metrics_gbm(bundle: dict, df: pd.DataFrame, target: str) -> Di
     return {"rmse": rmse(y, pred), "mape": mape(y, pred)}
 
 
-def evaluate_model_drift(baseline_metric: float | None, current_metric: float | None, threshold: float) -> Dict[str, Any]:
+def evaluate_model_drift(
+    baseline_metric: float | None, current_metric: float | None, threshold: float
+) -> dict[str, Any]:
     """Decide if model performance degraded beyond a threshold."""
     if baseline_metric is None or current_metric is None:
         return {"drift": False, "ratio": None, "note": "missing metrics"}

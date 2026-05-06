@@ -38,12 +38,16 @@ def test_preview_fault_state_monotonicity():
     cfg = _cfg()
     clean = preview_fault_state(
         adaptive_state={},
-        fault_flags={key: False for key in ("dropout", "stale_sensor", "delay_jitter", "out_of_order", "spikes")},
+        fault_flags={
+            key: False for key in ("dropout", "stale_sensor", "delay_jitter", "out_of_order", "spikes")
+        },
         cfg=cfg,
     )
     noisy = preview_fault_state(
         adaptive_state={},
-        fault_flags={key: True for key in ("dropout", "stale_sensor", "delay_jitter", "out_of_order", "spikes")},
+        fault_flags={
+            key: True for key in ("dropout", "stale_sensor", "delay_jitter", "out_of_order", "spikes")
+        },
         cfg=cfg,
     )
     assert noisy["w_t"] < clean["w_t"]
@@ -53,13 +57,17 @@ def test_update_gamma_increases_and_tube_tightens_as_reliability_drops():
     cfg = _cfg()
     clean = update(
         adaptive_state={},
-        fault_flags={key: False for key in ("dropout", "stale_sensor", "delay_jitter", "out_of_order", "spikes")},
+        fault_flags={
+            key: False for key in ("dropout", "stale_sensor", "delay_jitter", "out_of_order", "spikes")
+        },
         constraints=_constraints(),
         cfg=cfg,
     )
     noisy = update(
         adaptive_state=clean["adaptive_state"],
-        fault_flags={key: True for key in ("dropout", "stale_sensor", "delay_jitter", "out_of_order", "spikes")},
+        fault_flags={
+            key: True for key in ("dropout", "stale_sensor", "delay_jitter", "out_of_order", "spikes")
+        },
         constraints=_constraints(),
         cfg=cfg,
         sigma2_observation=4.0,
@@ -83,7 +91,10 @@ def test_update_tracks_all_five_fault_components():
     ):
         out = update(
             adaptive_state={},
-            fault_flags={key: key == fault_key for key in ("dropout", "stale_sensor", "delay_jitter", "out_of_order", "spikes")},
+            fault_flags={
+                key: key == fault_key
+                for key in ("dropout", "stale_sensor", "delay_jitter", "out_of_order", "spikes")
+            },
             constraints=_constraints(),
             cfg=cfg,
         )

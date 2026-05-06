@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run the strict ORIUS camera-ready freeze lane and record its status."""
+
 from __future__ import annotations
 
 import argparse
@@ -9,17 +10,15 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from orius.data_pipeline.external_raw import get_strict_external_root
-
 
 PYTHON = sys.executable
 FREEZE_DIR = REPO_ROOT / "reports" / "camera_ready"
@@ -48,7 +47,7 @@ EXTERNAL_ROOT_TOKEN = "$ORIUS_EXTERNAL_DATA_ROOT"
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _read_csv_rows(path: Path) -> list[dict[str, str]]:
@@ -73,11 +72,11 @@ def _sanitize_path_token(value: str, *, external_root: Path) -> str:
         try:
             return f"{REPO_ROOT_TOKEN}/{candidate.relative_to(REPO_ROOT).as_posix()}"
         except ValueError:
-            pass
+            candidate = Path(value)
         try:
             return f"{EXTERNAL_ROOT_TOKEN}/{candidate.relative_to(external_root).as_posix()}"
         except ValueError:
-            pass
+            return value
     return value
 
 
@@ -100,7 +99,9 @@ def _sha256(path: Path) -> str:
 
 
 def _run_step(label: str, cmd: list[str], *, env: dict[str, str], logs_dir: Path) -> dict[str, Any]:
-    display_cmd = [_sanitize_path_token(part, external_root=Path(env["ORIUS_EXTERNAL_DATA_ROOT"])) for part in cmd]
+    display_cmd = [
+        _sanitize_path_token(part, external_root=Path(env["ORIUS_EXTERNAL_DATA_ROOT"])) for part in cmd
+    ]
     result = subprocess.run(
         cmd,
         cwd=REPO_ROOT,
@@ -204,14 +205,23 @@ def _build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         ("build_orius_ieee_assets", [PYTHON, "scripts/build_orius_ieee_assets.py"]),
         ("build_camera_ready_tables", [PYTHON, "scripts/build_camera_ready_tables.py"]),
         ("build_camera_ready_figures", [PYTHON, "scripts/build_camera_ready_figures.py"]),
-        ("verify_paper_manifest_camera_ready", [PYTHON, "scripts/verify_paper_manifest.py", "--camera-ready"]),
+        (
+            "verify_paper_manifest_camera_ready",
+            [PYTHON, "scripts/verify_paper_manifest.py", "--camera-ready"],
+        ),
         ("validate_paper_claims", [PYTHON, "scripts/validate_paper_claims.py"]),
-        ("test_thesis_package_assets", [PYTHON, "-m", "pytest", "-q", "tests/test_thesis_package_assets.py", "--no-cov"]),
+        (
+            "test_thesis_package_assets",
+            [PYTHON, "-m", "pytest", "-q", "tests/test_thesis_package_assets.py", "--no-cov"],
+        ),
         ("thesis_manuscript", ["make", "thesis-manuscript"]),
         ("review_compile", ["make", "review-compile"]),
         ("ieee_pack", ["make", "ieee-pack"]),
         ("ieee_prof_pack", ["make", "ieee-prof-pack"]),
-        ("verify_camera_ready_logs", [PYTHON, "scripts/verify_camera_ready_logs.py", "--waivers", str(args.warning_waivers)]),
+        (
+            "verify_camera_ready_logs",
+            [PYTHON, "scripts/verify_camera_ready_logs.py", "--waivers", str(args.warning_waivers)],
+        ),
     ]
 
 
@@ -236,11 +246,7 @@ def _closure_summary() -> dict[str, dict[str, str]]:
 
 
 def _remaining_program_gaps() -> list[dict[str, str]]:
-    return [
-        row
-        for row in _read_csv_rows(PROGRAM_GAP_PATH)
-        if row.get("severity") in {"critical", "high"}
-    ]
+    return [row for row in _read_csv_rows(PROGRAM_GAP_PATH) if row.get("severity") in {"critical", "high"}]
 
 
 def _write_outputs(
@@ -250,7 +256,7 @@ def _write_outputs(
     steps: list[dict[str, Any]],
     status: str,
     failure_step: str | None,
-    ) -> None:
+) -> None:
     scorecard = _scorecard_summary()
     closure_rows = _closure_summary()
     gap_rows = _remaining_program_gaps()
@@ -329,11 +335,15 @@ def main() -> int:
     parser.add_argument("--warning-waivers", type=Path, default=WAIVER_PATH)
     args = parser.parse_args()
 
-    args.external_root = (args.external_root.expanduser().resolve() if args.external_root is not None else get_strict_external_root())
+    args.external_root = (
+        args.external_root.expanduser().resolve()
+        if args.external_root is not None
+        else get_strict_external_root()
+    )
     args.warning_waivers = args.warning_waivers.expanduser().resolve()
 
     FREEZE_LOG_DIR.mkdir(parents=True, exist_ok=True)
-    freeze_run_id = f"camera_ready_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+    freeze_run_id = f"camera_ready_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}"
     run_env = os.environ.copy()
     run_env["ORIUS_EXTERNAL_DATA_ROOT"] = str(args.external_root)
 
@@ -358,7 +368,12 @@ def main() -> int:
             failure_step=failure_step,
         )
 
-    print(json.dumps({"freeze_run_id": freeze_run_id, "status": status, "failure_step": failure_step, "steps": steps}, indent=2))
+    print(
+        json.dumps(
+            {"freeze_run_id": freeze_run_id, "status": status, "failure_step": failure_step, "steps": steps},
+            indent=2,
+        )
+    )
     return 0 if status == "passed" else 1
 
 

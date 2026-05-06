@@ -1,12 +1,12 @@
 """API router: DC3S (Drift-Calibrated Conformal Safety Shield)."""
+
 from __future__ import annotations
 
-from copy import deepcopy
-from datetime import datetime, timezone
 import json
-import os
+from copy import deepcopy
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 from uuid import uuid4
 
 import numpy as np
@@ -36,34 +36,33 @@ from orius.iot.store import IoTLoopStore
 from orius.optimizer import optimize_dispatch
 from orius.optimizer.robust_dispatch import optimize_robust_dispatch
 from orius.safety.bms import SafetyLayer, SafetyViolation
+from orius.security.policy import certificate_signature_required, get_certificate_keys
 from orius.universal_theory.battery_instantiation import (
     certificate_expiration_bound,
     certificate_validity_horizon,
 )
 from services.api.config import get_bms_config, get_conformal_path, load_uncertainty_config
-from services.api.routers.forecast import _cached_bundle, _load_cfg as _load_forecast_cfg, _resolve_model_path
-from services.api.routers.optimize import _build_robust_config, _load_cfg as _load_optimize_cfg
+from services.api.routers.forecast import _cached_bundle, _resolve_model_path
+from services.api.routers.forecast import _load_cfg as _load_forecast_cfg
+from services.api.routers.optimize import _build_robust_config
+from services.api.routers.optimize import _load_cfg as _load_optimize_cfg
 from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
 
 
-def _truthy_env(name: str) -> bool:
-    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
-
-
-def _sign_certificate_if_configured(certificate: Dict[str, Any]) -> Dict[str, Any]:
+def _sign_certificate_if_configured(certificate: dict[str, Any]) -> dict[str, Any]:
     """Sign release certificates when a signing key is configured.
 
     Research/test runs may still emit unsigned certificates, but deployment-like
     runs can force fail-closed behavior with ORIUS_REQUIRE_CERT_SIGNATURE=1.
     """
-    if os.getenv("ORIUS_CERTIFICATE_SIGNING_KEY"):
+    if get_certificate_keys():
         return sign_certificate(certificate)
-    if _truthy_env("ORIUS_REQUIRE_CERT_SIGNATURE"):
+    if certificate_signature_required():
         raise HTTPException(
             status_code=500,
-            detail="ORIUS_REQUIRE_CERT_SIGNATURE is set but ORIUS_CERTIFICATE_SIGNING_KEY is missing.",
+            detail="certificate signing required but no ORIUS certificate key is configured.",
         )
     return certificate
 
@@ -72,9 +71,9 @@ class DC3SStepRequest(BaseModel):
     device_id: str
     zone_id: Literal["DE", "US"] = "DE"
     current_soc_mwh: float = Field(..., ge=0.0)
-    telemetry_event: Dict[str, Any] = Field(default_factory=dict)
-    last_actual_load_mw: Optional[float] = None
-    last_pred_load_mw: Optional[float] = None
+    telemetry_event: dict[str, Any] = Field(default_factory=dict)
+    last_actual_load_mw: float | None = None
+    last_pred_load_mw: float | None = None
     horizon: int = Field(default=24, ge=1, le=168)
     controller: Literal["deterministic", "robust", "heuristic"] = "deterministic"
     enqueue_iot: bool = False
@@ -88,31 +87,31 @@ class DispatchAction(BaseModel):
 
 
 class UncertaintyPayload(BaseModel):
-    lower: List[float]
-    upper: List[float]
-    meta: Dict[str, Any] = Field(default_factory=dict)
+    lower: list[float]
+    upper: list[float]
+    meta: dict[str, Any] = Field(default_factory=dict)
 
 
 class DC3SStepResponse(BaseModel):
     proposed_action: DispatchAction
     safe_action: DispatchAction
-    dispatch_plan: Optional[Dict[str, Any]] = None
+    dispatch_plan: dict[str, Any] | None = None
     uncertainty: UncertaintyPayload
     certificate_id: str
     command_id: str
     queued: bool = False
     queue_status: Literal["queued", "skipped", "failed"] = "skipped"
     intervened: bool = False
-    intervention_reason: Optional[str] = None
+    intervention_reason: str | None = None
     reliability_w: float
     drift_flag: bool
     inflation: float
     guarantee_checks_passed: bool
-    guarantee_fail_reasons: Optional[List[str]] = None
-    certificate: Optional[Dict[str, Any]] = None
+    guarantee_fail_reasons: list[str] | None = None
+    certificate: dict[str, Any] | None = None
 
 
-def _load_dc3s_cfg(path: str | Path = "configs/dc3s.yaml") -> Dict[str, Any]:
+def _load_dc3s_cfg(path: str | Path = "configs/dc3s.yaml") -> dict[str, Any]:
     cfg_path = Path(path)
     if not cfg_path.exists():
         raise HTTPException(status_code=500, detail=f"Missing DC3S config: {cfg_path}")
@@ -122,12 +121,12 @@ def _load_dc3s_cfg(path: str | Path = "configs/dc3s.yaml") -> Dict[str, Any]:
     return payload
 
 
-def _extract_ts(event: Dict[str, Any]) -> str:
+def _extract_ts(event: dict[str, Any]) -> str:
     for key in ("ts_utc", "utc_timestamp", "timestamp", "ts"):
         val = event.get(key)
         if isinstance(val, str) and val:
             return val
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _predict_target(
@@ -135,9 +134,9 @@ def _predict_target(
     target: str,
     horizon: int,
     features_df: pd.DataFrame,
-    forecast_cfg: Dict[str, Any],
+    forecast_cfg: dict[str, Any],
     required: bool,
-) -> tuple[np.ndarray, Optional[Path]]:
+) -> tuple[np.ndarray, Path | None]:
     model_path = _resolve_model_path(target, forecast_cfg)
     if model_path is None:
         if required:
@@ -175,14 +174,18 @@ def _resolve_conformal_q(target: str, horizon: int) -> np.ndarray:
             ),
         )
     else:
-        raise HTTPException(status_code=500, detail=f"Conformal artifact has no usable quantile for {target}.")
+        raise HTTPException(
+            status_code=500, detail=f"Conformal artifact has no usable quantile for {target}."
+        )
 
     if np.any(q < 0):
         raise HTTPException(status_code=500, detail=f"Conformal quantiles for {target} must be non-negative.")
     return q
 
 
-def _build_default_price_and_carbon(features_df: pd.DataFrame, horizon: int, opt_cfg: Dict[str, Any]) -> tuple[np.ndarray, np.ndarray]:
+def _build_default_price_and_carbon(
+    features_df: pd.DataFrame, horizon: int, opt_cfg: dict[str, Any]
+) -> tuple[np.ndarray, np.ndarray]:
     grid_cfg = opt_cfg.get("grid", {}) if isinstance(opt_cfg, dict) else {}
     default_price = float(grid_cfg.get("price_per_mwh", grid_cfg.get("price_usd_per_mwh", 70.0)))
     default_carbon = float(grid_cfg.get("carbon_kg_per_mwh", 400.0))
@@ -207,7 +210,7 @@ def _build_default_price_and_carbon(features_df: pd.DataFrame, horizon: int, opt
     )
 
 
-def _first_action(dispatch_plan: Dict[str, Any]) -> Dict[str, float]:
+def _first_action(dispatch_plan: dict[str, Any]) -> dict[str, float]:
     charge = dispatch_plan.get("battery_charge_mw", [0.0])
     discharge = dispatch_plan.get("battery_discharge_mw", [0.0])
     return {
@@ -216,14 +219,14 @@ def _first_action(dispatch_plan: Dict[str, Any]) -> Dict[str, float]:
     }
 
 
-def _load_features_df(forecast_cfg: Dict[str, Any]) -> pd.DataFrame:
+def _load_features_df(forecast_cfg: dict[str, Any]) -> pd.DataFrame:
     features_path = Path(forecast_cfg.get("data", {}).get("features_path", "data/processed/features.parquet"))
     if not features_path.exists():
         raise HTTPException(status_code=404, detail=f"Missing features file: {features_path}")
     return pd.read_parquet(features_path)
 
 
-def _derive_intervention_reason(repair_meta: Dict[str, Any], intervened: bool) -> str | None:
+def _derive_intervention_reason(repair_meta: dict[str, Any], intervened: bool) -> str | None:
     if not intervened:
         return None
     robust_meta = repair_meta.get("robust_meta")
@@ -234,7 +237,7 @@ def _derive_intervention_reason(repair_meta: Dict[str, Any], intervened: bool) -
     return "projection_clip"
 
 
-def _resolve_iot_mode(telemetry_event: Dict[str, Any]) -> str:
+def _resolve_iot_mode(telemetry_event: dict[str, Any]) -> str:
     event_mode = telemetry_event.get("mode")
     if isinstance(event_mode, str) and event_mode.strip():
         return event_mode.strip().lower()
@@ -263,7 +266,9 @@ def dc3s_step(req: DC3SStepRequest, api_key: str = Security(get_api_key)) -> DC3
     state_store = DC3SStateStore(duckdb_path=audit_path, table_name=state_table)
     try:
         state_key_target = "load_mw"
-        state_row = state_store.get(zone_id=req.zone_id, device_id=req.device_id, target=state_key_target) or {}
+        state_row = (
+            state_store.get(zone_id=req.zone_id, device_id=req.device_id, target=state_key_target) or {}
+        )
         adaptive_state = state_row.get("adaptive_state") or {}
         law = str(dc3s_cfg.get("law", "linear")).strip().lower()
         ftit_cfg = {**dict(dc3s_cfg.get("ftit", {})), "law": law}
@@ -287,8 +292,10 @@ def dc3s_step(req: DC3SStepRequest, api_key: str = Security(get_api_key)) -> DC3
             signal_history = list(adaptive_state.get("signal_history", []))
             # Extract latest signal value from telemetry
             event_signals = [
-                float(v) for k, v in (req.telemetry_event or {}).items()
-                if isinstance(v, (int, float)) and not isinstance(v, bool)
+                float(v)
+                for k, v in (req.telemetry_event or {}).items()
+                if isinstance(v, int | float)
+                and not isinstance(v, bool)
                 and k not in ("device_id", "zone_id", "target")
             ]
             if event_signals:
@@ -305,7 +312,7 @@ def dc3s_step(req: DC3SStepRequest, api_key: str = Security(get_api_key)) -> DC3
             adaptive_state["signal_history"] = signal_history[-50:]
 
         detector = PageHinkleyDetector.from_state(state_row.get("drift_state"), cfg=dc3s_cfg.get("drift", {}))
-        drift_info: Dict[str, Any] = {
+        drift_info: dict[str, Any] = {
             "drift": False,
             "score": 0.0,
             "count": detector.count,
@@ -517,10 +524,7 @@ def dc3s_step(req: DC3SStepRequest, api_key: str = Security(get_api_key)) -> DC3
         if runtime_mode == "active" and not guarantee_passed:
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    "DC3S guarantee checks failed in active mode: "
-                    + ",".join(guarantee_fail_reasons)
-                ),
+                detail=("DC3S guarantee checks failed in active mode: " + ",".join(guarantee_fail_reasons)),
             )
 
         try:
@@ -536,9 +540,15 @@ def dc3s_step(req: DC3SStepRequest, api_key: str = Security(get_api_key)) -> DC3
             raise HTTPException(status_code=400, detail=f"DC3S safe action violates BMS: {exc}") from exc
 
         command_id = str(uuid4())
-        model_hash = compute_model_hash([p for p in [load_model_path, wind_model_path, solar_model_path] if p is not None])
+        model_hash = compute_model_hash(
+            [p for p in [load_model_path, wind_model_path, solar_model_path] if p is not None]
+        )
         dc3s_cfg_path = Path("configs/dc3s.yaml")
-        config_bytes = dc3s_cfg_path.read_bytes() if dc3s_cfg_path.exists() else json.dumps(cfg_all, sort_keys=True).encode("utf-8")
+        config_bytes = (
+            dc3s_cfg_path.read_bytes()
+            if dc3s_cfg_path.exists()
+            else json.dumps(cfg_all, sort_keys=True).encode("utf-8")
+        )
         config_hash = compute_config_hash(config_bytes)
 
         certificate = make_certificate(
@@ -605,7 +615,9 @@ def dc3s_step(req: DC3SStepRequest, api_key: str = Security(get_api_key)) -> DC3
             target=state_key_target,
             last_timestamp=_extract_ts(req.telemetry_event),
             last_yhat=float(load_yhat[0]),
-            last_y_true=float(req.last_actual_load_mw) if req.last_actual_load_mw is not None else state_row.get("last_y_true"),
+            last_y_true=float(req.last_actual_load_mw)
+            if req.last_actual_load_mw is not None
+            else state_row.get("last_y_true"),
             drift_state=detector.to_state(),
             adaptive_state=adaptive_state_next,
             last_prev_hash=str(certificate.get("certificate_hash")),
@@ -641,7 +653,7 @@ def dc3s_step(req: DC3SStepRequest, api_key: str = Security(get_api_key)) -> DC3
 
 
 @router.get("/audit/{command_id}")
-def dc3s_audit(command_id: str, api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+def dc3s_audit(command_id: str, api_key: str = Security(get_api_key)) -> dict[str, Any]:
     verify_scope("read", api_key)
     cfg_all = _load_dc3s_cfg()
     dc3s_cfg = cfg_all["dc3s"]

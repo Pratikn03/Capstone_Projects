@@ -36,9 +36,11 @@ Usage::
     wrapped = wrap_adapter(my_adapter, "lagrangian", soft_margin=0.25)
     original = wrap_adapter(my_adapter, "dc3s")   # no-op, returns adapter
 """
+
 from __future__ import annotations
 
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping
+from typing import Any
 
 
 class _AdapterProxy:
@@ -203,7 +205,7 @@ class LagrangianWrapper(_AdapterProxy):
         # Widen numeric bounds by soft_margin fraction of the slack to constraint
         result: dict[str, Any] = {}
         for key, val in tightened.items():
-            if isinstance(val, (int, float)) and key in constraints:
+            if isinstance(val, int | float) and key in constraints:
                 try:
                     c_val = float(constraints[key])
                     t_val = float(val)
@@ -250,8 +252,7 @@ def wrap_adapter(adapter: Any, strategy: str, **kwargs: Any) -> Any:
     if strategy == "lagrangian":
         return LagrangianWrapper(adapter, soft_margin=float(kwargs.get("soft_margin", 0.25)))
     raise ValueError(
-        f"Unknown SOTA strategy: {strategy!r}. "
-        "Choose from: 'dc3s', 'tube_mpc', 'cbf', 'lagrangian'"
+        f"Unknown SOTA strategy: {strategy!r}. Choose from: 'dc3s', 'tube_mpc', 'cbf', 'lagrangian'"
     )
 
 
@@ -259,9 +260,9 @@ STRATEGIES: list[str] = ["dc3s", "tube_mpc", "cbf", "lagrangian"]
 """Ordered list of all supported SOTA comparison strategies."""
 
 STRATEGY_LABELS: dict[str, str] = {
-    "dc3s":       "DC3S (ORIUS)",
-    "tube_mpc":   "Tube MPC",
-    "cbf":        "CBF (observed state)",
+    "dc3s": "DC3S (ORIUS)",
+    "tube_mpc": "Tube MPC",
+    "cbf": "CBF (observed state)",
     "lagrangian": "Lagrangian Safe-RL",
 }
 """Display labels for each strategy, used in tables and figures."""

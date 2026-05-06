@@ -5,21 +5,22 @@ Handles three CSV schema eras:
   - 2018H2–2024H1: aggregate "from Solar" / "from Wind" columns
   - 2024H2+:       battery‑storage split columns
 """
+
 from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import zipfile
+from pathlib import Path
 
 import pandas as pd
 
 from orius.data_pipeline.build_features import (
-    add_time_features,
     add_domain_features,
     add_holiday_features,
     add_lags_rolls,
     add_price_carbon_features,
+    add_time_features,
 )
 
 # ---------------------------------------------------------------------------
@@ -108,20 +109,14 @@ def _read_balance_csv(path: Path, chunksize: int = 200_000):
     """Yield chunks from a balance CSV (handles zipped or plain files)."""
     if path.suffix == ".zip":
         with zipfile.ZipFile(path) as zf:
-            balance_name = next(
-                (n for n in zf.namelist() if n.endswith("-balance.csv")), None
-            )
+            balance_name = next((n for n in zf.namelist() if n.endswith("-balance.csv")), None)
             if not balance_name:
                 return
             with zf.open(balance_name) as f:
-                for chunk in pd.read_csv(
-                    f, usecols=lambda c: c in _ALL_USECOLS, chunksize=chunksize
-                ):
+                for chunk in pd.read_csv(f, usecols=lambda c: c in _ALL_USECOLS, chunksize=chunksize):
                     yield chunk
     else:
-        for chunk in pd.read_csv(
-            path, usecols=lambda c: c in _ALL_USECOLS, chunksize=chunksize
-        ):
+        for chunk in pd.read_csv(path, usecols=lambda c: c in _ALL_USECOLS, chunksize=chunksize):
             yield chunk
 
 
@@ -152,27 +147,34 @@ def _normalize(df: pd.DataFrame) -> pd.DataFrame:
 
     out = pd.DataFrame(
         {
-            "timestamp": pd.to_datetime(
-                df["UTC Time at End of Hour"], utc=True, errors="coerce"
-            ),
+            "timestamp": pd.to_datetime(df["UTC Time at End of Hour"], utc=True, errors="coerce"),
             "load_mw": pd.to_numeric(df[demand_col], errors="coerce"),
         }
     )
 
     # ── Wind ──────────────────────────────────────────────────────────
     # Priority: split (wo+w) → aggregate (Adjusted, then raw)
-    wind_wo = _pick(df, [
-        "Net Generation (MW) from Wind without Integrated Battery Storage (Adjusted)",
-        "Net Generation (MW) from Wind without Integrated Battery Storage",
-    ])
-    wind_w = _pick(df, [
-        "Net Generation (MW) from Wind with Integrated Battery Storage (Adjusted)",
-        "Net Generation (MW) from Wind with Integrated Battery Storage",
-    ])
-    wind_agg = _pick(df, [
-        "Net Generation (MW) from Wind (Adjusted)",
-        "Net Generation (MW) from Wind",
-    ])
+    wind_wo = _pick(
+        df,
+        [
+            "Net Generation (MW) from Wind without Integrated Battery Storage (Adjusted)",
+            "Net Generation (MW) from Wind without Integrated Battery Storage",
+        ],
+    )
+    wind_w = _pick(
+        df,
+        [
+            "Net Generation (MW) from Wind with Integrated Battery Storage (Adjusted)",
+            "Net Generation (MW) from Wind with Integrated Battery Storage",
+        ],
+    )
+    wind_agg = _pick(
+        df,
+        [
+            "Net Generation (MW) from Wind (Adjusted)",
+            "Net Generation (MW) from Wind",
+        ],
+    )
 
     if wind_wo or wind_w:
         out["wind_mw"] = _safe_numeric(df, wind_wo) + _safe_numeric(df, wind_w)
@@ -182,19 +184,28 @@ def _normalize(df: pd.DataFrame) -> pd.DataFrame:
         out["wind_mw"] = 0.0
 
     # ── Solar ─────────────────────────────────────────────────────────
-    solar_wo = _pick(df, [
-        "Net Generation (MW) from Solar without Integrated Battery Storage (Adjusted)",
-        "Net Generation (MW) from Solar without Integrated Battery Storage",
-    ])
-    solar_w = _pick(df, [
-        "Net Generation (MW) from Solar witho Integrated Battery Storage (Adjusted)",  # EIA typo
-        "Net Generation (MW) from Solar with Integrated Battery Storage (Adjusted)",
-        "Net Generation (MW) from Solar with Integrated Battery Storage",
-    ])
-    solar_agg = _pick(df, [
-        "Net Generation (MW) from Solar (Adjusted)",
-        "Net Generation (MW) from Solar",
-    ])
+    solar_wo = _pick(
+        df,
+        [
+            "Net Generation (MW) from Solar without Integrated Battery Storage (Adjusted)",
+            "Net Generation (MW) from Solar without Integrated Battery Storage",
+        ],
+    )
+    solar_w = _pick(
+        df,
+        [
+            "Net Generation (MW) from Solar witho Integrated Battery Storage (Adjusted)",  # EIA typo
+            "Net Generation (MW) from Solar with Integrated Battery Storage (Adjusted)",
+            "Net Generation (MW) from Solar with Integrated Battery Storage",
+        ],
+    )
+    solar_agg = _pick(
+        df,
+        [
+            "Net Generation (MW) from Solar (Adjusted)",
+            "Net Generation (MW) from Solar",
+        ],
+    )
 
     if solar_wo or solar_w:
         out["solar_mw"] = _safe_numeric(df, solar_wo) + _safe_numeric(df, solar_w)
@@ -208,8 +219,11 @@ def _normalize(df: pd.DataFrame) -> pd.DataFrame:
         ("coal_mw", "Net Generation (MW) from Coal (Adjusted)", "Net Generation (MW) from Coal"),
         ("gas_mw", "Net Generation (MW) from Natural Gas (Adjusted)", "Net Generation (MW) from Natural Gas"),
         ("nuclear_mw", "Net Generation (MW) from Nuclear (Adjusted)", "Net Generation (MW) from Nuclear"),
-        ("hydro_mw", "Net Generation (MW) from Hydropower Excluding Pumped Storage (Adjusted)",
-         "Net Generation (MW) from Hydropower Excluding Pumped Storage"),
+        (
+            "hydro_mw",
+            "Net Generation (MW) from Hydropower Excluding Pumped Storage (Adjusted)",
+            "Net Generation (MW) from Hydropower Excluding Pumped Storage",
+        ),
     ]:
         col = _pick(df, [adj, raw])
         if col:
@@ -222,16 +236,23 @@ def _normalize(df: pd.DataFrame) -> pd.DataFrame:
 # Weather: Open-Meteo historical archive for MISO region (Chicago)
 # ---------------------------------------------------------------------------
 def fetch_weather_openmeteo(
-    start: str, end: str,
-    lat: float = 41.88, lon: float = -87.63,
+    start: str,
+    end: str,
+    lat: float = 41.88,
+    lon: float = -87.63,
     out_path: Path | None = None,
 ) -> pd.DataFrame:
     """Download hourly weather from Open-Meteo archive API for MISO/Chicago."""
-    import urllib.request, json
+    import json
+    import urllib.request
 
     variables = [
-        "temperature_2m", "relative_humidity_2m", "precipitation",
-        "cloud_cover", "wind_speed_10m", "surface_pressure",
+        "temperature_2m",
+        "relative_humidity_2m",
+        "precipitation",
+        "cloud_cover",
+        "wind_speed_10m",
+        "surface_pressure",
         "shortwave_radiation",
     ]
     url = (
@@ -240,7 +261,6 @@ def fetch_weather_openmeteo(
         f"&start_date={start}&end_date={end}"
         f"&hourly={','.join(variables)}&timezone=UTC"
     )
-    print(f"  Fetching weather: {url[:120]}…")
     with urllib.request.urlopen(url, timeout=120) as resp:
         data = json.loads(resp.read().decode())
 
@@ -253,7 +273,6 @@ def fetch_weather_openmeteo(
     if out_path:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(out_path, index=False)
-        print(f"  Saved weather → {out_path} ({len(df)} rows)")
     return df
 
 
@@ -286,7 +305,6 @@ def build_eia930_features(
     if not files:
         raise FileNotFoundError(f"No EIA‑930 files found in {raw_dir}")
 
-    print(f"Reading {len(files)} files for BA={ba_filter} …")
     for f in files:
         file_rows = 0
         for chunk in _read_balance_csv(f):
@@ -297,7 +315,6 @@ def build_eia930_features(
             normed = _normalize(chunk)
             file_rows += len(normed)
             frames.append(normed)
-        print(f"  {f.name}: {file_rows:,} rows")
 
     if not frames:
         raise ValueError(f"No records for BA='{ba_filter}'. Check spelling.")
@@ -337,7 +354,6 @@ def build_eia930_features(
         date_max = df["timestamp"].max().strftime("%Y-%m-%d")
         try:
             if wx_cache.exists():
-                print("  Loading cached weather …")
                 wx = pd.read_csv(wx_cache)
                 wx["timestamp"] = pd.to_datetime(wx["timestamp"], utc=True)
             else:
@@ -352,9 +368,8 @@ def build_eia930_features(
             wx_cols = [c for c in df.columns if c.startswith("wx_")]
             for col in wx_cols:
                 df[col] = pd.to_numeric(df[col], errors="coerce").interpolate(limit=6)
-            print(f"  Merged {len(wx_cols)} weather features")
-        except Exception as e:
-            print(f"  ⚠ Weather fetch failed ({e}), continuing without weather")
+        except Exception as exc:
+            df.attrs["optional_weather_fetch_error"] = str(exc)
 
     # ── Lags / rolling stats ──────────────────────────────────────────
     lag_cols = list(core_cols)
@@ -385,10 +400,6 @@ def build_eia930_features(
         "carbon_source": ba_meta.get("carbon_source", "proxy_generation_mix"),
     }
     (out_dir / "dataset_provenance.json").write_text(json.dumps(provenance, indent=2), encoding="utf-8")
-    print(f"\n✅ Saved: {out_path}")
-    print(f"   Rows: {len(df):,}  |  Columns: {df.shape[1]}")
-    print(f"   Wind  non-zero: {(df['wind_mw'] > 0).mean():.1%}")
-    print(f"   Solar non-zero: {(df['solar_mw'] > 0).mean():.1%}")
     return df
 
 
@@ -405,8 +416,13 @@ def main():
     args = p.parse_args()
 
     build_eia930_features(
-        Path(args.in_dir), Path(args.out_dir), args.ba, args.start, args.end,
-        weather=not args.no_weather, holidays_country=args.holiday_country,
+        Path(args.in_dir),
+        Path(args.out_dir),
+        args.ba,
+        args.start,
+        args.end,
+        weather=not args.no_weather,
+        holidays_country=args.holiday_country,
     )
 
 

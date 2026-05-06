@@ -3,12 +3,11 @@
 Guards against staleness drift between the canonical lower-level reports
 and the promoted publication copies.
 """
+
 from __future__ import annotations
 
 import csv
 from pathlib import Path
-
-import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 

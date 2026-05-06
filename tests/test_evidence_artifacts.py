@@ -5,6 +5,7 @@ Paper 3: graceful_degradation_trace.csv
 Paper 6: certos_lifecycle.csv, certos_summary.json
 ORIUS-Bench: M7 (RL) in metrics_engine
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -50,10 +51,10 @@ def test_orius_bench_m7_recovery_latency() -> None:
     """ORIUS-Bench M7 (Recovery Latency) is defined and exported."""
     from orius.orius_bench.metrics_engine import (
         BenchmarkMetrics,
-        compute_recovery_latency,
+        StepRecord,
         compute_all_metrics,
+        compute_recovery_latency,
     )
-    from orius.orius_bench.metrics_engine import StepRecord
 
     # M7 exists in schema
     assert hasattr(BenchmarkMetrics, "__annotations__")
@@ -61,10 +62,18 @@ def test_orius_bench_m7_recovery_latency() -> None:
 
     # compute_recovery_latency works
     records = [
-        StepRecord(step=0, true_state={}, observed_state={}, action={}, soc_after=0.5, certificate_valid=True),
-        StepRecord(step=1, true_state={}, observed_state={}, action={}, soc_after=0.5, certificate_valid=False),
-        StepRecord(step=2, true_state={}, observed_state={}, action={}, soc_after=0.5, certificate_valid=False),
-        StepRecord(step=3, true_state={}, observed_state={}, action={}, soc_after=0.5, certificate_valid=True),
+        StepRecord(
+            step=0, true_state={}, observed_state={}, action={}, soc_after=0.5, certificate_valid=True
+        ),
+        StepRecord(
+            step=1, true_state={}, observed_state={}, action={}, soc_after=0.5, certificate_valid=False
+        ),
+        StepRecord(
+            step=2, true_state={}, observed_state={}, action={}, soc_after=0.5, certificate_valid=False
+        ),
+        StepRecord(
+            step=3, true_state={}, observed_state={}, action={}, soc_after=0.5, certificate_valid=True
+        ),
     ]
     rl = compute_recovery_latency(records)
     assert rl == 2.0  # 2 steps to recover

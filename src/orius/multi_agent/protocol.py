@@ -3,10 +3,12 @@
 Paper 5: Local certificates do not auto-compose. These protocols
 coordinate agents sharing feeder capacity.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from .margin_allocation import allocate_margins
 
@@ -52,11 +54,10 @@ class CentralizedCoordinatorProtocol(SharedConstraintProtocol):
         feeder_capacity_mw: float,
     ) -> Sequence[Mapping[str, Any]]:
         n = len(local_proposals)
-        margins = allocate_margins(feeder_capacity_mw, n, scheme=self._scheme)
+        allocate_margins(feeder_capacity_mw, n, scheme=self._scheme)
 
         total_net = sum(
-            float(p.get("discharge_mw", 0)) - float(p.get("charge_mw", 0))
-            for p in local_proposals
+            float(p.get("discharge_mw", 0)) - float(p.get("charge_mw", 0)) for p in local_proposals
         )
         if total_net <= feeder_capacity_mw + 1e-9:
             return list(local_proposals)
@@ -83,13 +84,8 @@ class DistributedNegotiationProtocol(SharedConstraintProtocol):
         feeder_capacity_mw: float,
     ) -> Sequence[Mapping[str, Any]]:
         n = len(local_proposals)
-        demands = [
-            float(p.get("discharge_mw", 0)) - float(p.get("charge_mw", 0))
-            for p in local_proposals
-        ]
-        margins = allocate_margins(
-            feeder_capacity_mw, n, scheme="demand", demands=demands
-        )
+        demands = [float(p.get("discharge_mw", 0)) - float(p.get("charge_mw", 0)) for p in local_proposals]
+        margins = allocate_margins(feeder_capacity_mw, n, scheme="demand", demands=demands)
 
         result = []
         for i, p in enumerate(local_proposals):

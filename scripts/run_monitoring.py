@@ -1,11 +1,12 @@
 """Generate a lightweight monitoring report (data drift + model drift + DC3S health)."""
+
 from __future__ import annotations
 
-from pathlib import Path
 import argparse
 import json
 import os
 import sys
+from pathlib import Path
 
 import pandas as pd
 
@@ -15,18 +16,18 @@ if str(repo_root) not in sys.path:
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from orius.monitoring.report import write_monitoring_report
-from orius.monitoring.alerts import send_webhook
-from orius.utils.logging import setup_logging
-from orius.monitoring.dc3s_health import compute_dc3s_health, load_dc3s_audit_config, load_dc3s_health_config
-from orius.monitoring.retraining import (
-    load_monitoring_config,
-    compute_data_drift,
-    evaluate_model_drift,
-    retraining_decision,
-    compute_model_metrics_gbm,
-)
 from orius.forecasting.predict import load_model_bundle
+from orius.monitoring.alerts import send_webhook
+from orius.monitoring.dc3s_health import compute_dc3s_health, load_dc3s_audit_config, load_dc3s_health_config
+from orius.monitoring.report import write_monitoring_report
+from orius.monitoring.retraining import (
+    compute_data_drift,
+    compute_model_metrics_gbm,
+    evaluate_model_drift,
+    load_monitoring_config,
+    retraining_decision,
+)
+from orius.utils.logging import setup_logging
 
 
 def _load_split() -> tuple[pd.DataFrame | None, pd.DataFrame | None]:
@@ -39,14 +40,16 @@ def _load_split() -> tuple[pd.DataFrame | None, pd.DataFrame | None]:
     if features_path.exists():
         df = pd.read_parquet(features_path).sort_values("timestamp")
         n = len(df)
-        return df.iloc[: int(n * 0.7)], df.iloc[int(n * 0.85):]
+        return df.iloc[: int(n * 0.7)], df.iloc[int(n * 0.85) :]
     return None, None
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--alert-webhook", default=None, help="Override ORIUS_ALERT_WEBHOOK for alerts")
-    parser.add_argument("--disable-alerts", action="store_true", help="Disable alerting even if webhook is set")
+    parser.add_argument(
+        "--disable-alerts", action="store_true", help="Disable alerting even if webhook is set"
+    )
     args = parser.parse_args()
 
     setup_logging()
@@ -149,8 +152,10 @@ def _maybe_alert(payload: dict) -> None:
     model_drift = payload.get("model_drift", {}) or {}
     retraining = payload.get("retraining", {}) or {}
 
-    should_alert = bool(data_drift.get("drift")) or bool(model_drift.get("decision", {}).get("drift")) or bool(
-        retraining.get("retrain")
+    should_alert = (
+        bool(data_drift.get("drift"))
+        or bool(model_drift.get("decision", {}).get("drift"))
+        or bool(retraining.get("retrain"))
     )
     should_alert = should_alert or bool((payload.get("dc3s_health") or {}).get("triggered"))
     if not should_alert:

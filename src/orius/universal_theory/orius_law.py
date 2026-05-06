@@ -10,13 +10,15 @@ characterization of degraded-observation safety:
     L3  Critical Capacity Theorem      C < C*_d => certification impossible
     L4  Achievability-Converse Sandwich (stylized lower envelope + executable upper envelope)
 """
+
 from __future__ import annotations
 
-import math
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 
+from orius.universal_theory.capacity_estimation import FaultChannelModel
 
 # ---------------------------------------------------------------------------
 # L1: Rate-Distortion Safety Law
@@ -209,7 +211,7 @@ def critical_capacity(
         "proof_sketch": (
             f"L3 stylized threshold: For TSVR <= {eps:.4f} with alpha={alpha}, "
             f"C*_d = H(X)*(1 - eps/alpha)/kappa_d = "
-            f"{H_X:.4f}*(1 - {eps/alpha:.4f})/{kappa_d:.3f} = {C_star:.4f} bits.  "
+            f"{H_X:.4f}*(1 - {eps / alpha:.4f})/{kappa_d:.3f} = {C_star:.4f} bits.  "
             f"Below C*_d, the stylized bridge no longer supports the target."
         ),
         "scope_note": (
@@ -273,8 +275,7 @@ def achievability_converse_sandwich(
             f"the lower side remains a stylized proxy."
         ),
         "scope_note": (
-            "Do not read this as a closed necessity-and-sufficiency theorem on the "
-            "current defended surface."
+            "Do not read this as a closed necessity-and-sufficiency theorem on the current defended surface."
         ),
     }
 
@@ -320,9 +321,7 @@ LAW_REGISTER: dict[str, dict[str, Any]] = {
     },
     "L4": {
         "name": "Achievability-Converse Sandwich",
-        "statement": (
-            "Stylized sandwich: proxy lower envelope plus executable upper envelope."
-        ),
+        "statement": ("Stylized sandwich: proxy lower envelope plus executable upper envelope."),
         "type": "characterization",
         "code_witness": "achievability_converse_sandwich",
         "module": "orius.universal_theory.orius_law",
@@ -367,9 +366,15 @@ def orius_grand_unification(
     l4 = achievability_converse_sandwich(w_bar, alpha, K_factor=K_factor)
 
     from orius.universal_theory.risk_bounds import pac_trajectory_safety_certificate
+
     pac = pac_trajectory_safety_certificate(
-        H=H, n_cal=n_cal, alpha=alpha, delta=delta,
-        w_sequence=w.tolist(), margin=margin, sigma_d=sigma_d,
+        H=H,
+        n_cal=n_cal,
+        alpha=alpha,
+        delta=delta,
+        w_sequence=w.tolist(),
+        margin=margin,
+        sigma_d=sigma_d,
     )
 
     gap_closed = False
@@ -396,7 +401,7 @@ def orius_grand_unification(
 
 
 def capacity_bridge_proof(
-    fault_channel: "FaultChannelModel",
+    fault_channel: FaultChannelModel,
     H_X: float,
     kappa_d: float = 1.0,
 ) -> dict[str, Any]:
@@ -415,9 +420,7 @@ def capacity_bridge_proof(
     5. Introducing kappa_d (domain bridge constant, <=1 for memoryless):
        w_t <= kappa_d * C / H(X).
     """
-    from orius.universal_theory.capacity_estimation import FaultChannelModel as _FCM
-
-    if not isinstance(fault_channel, _FCM):
+    if not isinstance(fault_channel, FaultChannelModel):
         raise TypeError("fault_channel must be a FaultChannelModel instance.")
     if H_X <= 0.0:
         raise ValueError("H_X must be positive.")
@@ -451,16 +454,12 @@ def capacity_bridge_proof(
         {
             "step": 4,
             "label": "Entropy resolution",
-            "detail": (
-                f"w_t <= I(X;Y)/H(X) = C/H(X) = {C:.6f}/{H_X:.4f} = {ratio:.6f}."
-            ),
+            "detail": (f"w_t <= I(X;Y)/H(X) = C/H(X) = {C:.6f}/{H_X:.4f} = {ratio:.6f}."),
         },
         {
             "step": 5,
             "label": "Domain bridge",
-            "detail": (
-                f"With kappa_d={kappa_d:.4f}: w_t <= kappa_d * C/H(X) = {w_upper:.6f}."
-            ),
+            "detail": (f"With kappa_d={kappa_d:.4f}: w_t <= kappa_d * C/H(X) = {w_upper:.6f}."),
         },
     ]
 
@@ -580,13 +579,13 @@ def fano_binary_corollary(
 
 
 __all__ = [
-    "rate_distortion_safety_law",
-    "capacity_bridge",
-    "critical_capacity",
+    "LAW_REGISTER",
     "achievability_converse_sandwich",
+    "capacity_bridge",
     "capacity_bridge_proof",
     "capacity_bridge_verify",
+    "critical_capacity",
     "fano_binary_corollary",
-    "LAW_REGISTER",
     "orius_grand_unification",
+    "rate_distortion_safety_law",
 ]

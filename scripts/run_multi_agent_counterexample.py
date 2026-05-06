@@ -7,6 +7,7 @@ share feeder capacity. Outputs CSV and summary JSON.
 Usage:
     python scripts/run_multi_agent_counterexample.py [--out reports/multi_agent]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -45,34 +46,60 @@ def main() -> None:
     with open(proto_compare_path, "w", newline="") as f:
         w = csv.DictWriter(
             f,
-            fieldnames=["protocol", "joint_violations", "local_violations", "useful_work_mwh", "fairness", "margin_quality", "degradation_allocation_quality"],
+            fieldnames=[
+                "protocol",
+                "joint_violations",
+                "local_violations",
+                "useful_work_mwh",
+                "fairness",
+                "margin_quality",
+                "degradation_allocation_quality",
+            ],
         )
         w.writeheader()
         for proto, data in results.items():
-            w.writerow({
-                "protocol": proto,
-                "joint_violations": data.get("joint_violations", 0),
-                "local_violations": data.get("local_violations", 0),
-                "useful_work_mwh": data.get("useful_work_mwh", 0),
-                "fairness": data.get("fairness", 0),
-                "margin_quality": data.get("margin_quality", 0),
-                "degradation_allocation_quality": data.get("degradation_allocation_quality", data.get("margin_quality", 0)),
-            })
+            w.writerow(
+                {
+                    "protocol": proto,
+                    "joint_violations": data.get("joint_violations", 0),
+                    "local_violations": data.get("local_violations", 0),
+                    "useful_work_mwh": data.get("useful_work_mwh", 0),
+                    "fairness": data.get("fairness", 0),
+                    "margin_quality": data.get("margin_quality", 0),
+                    "degradation_allocation_quality": data.get(
+                        "degradation_allocation_quality", data.get("margin_quality", 0)
+                    ),
+                }
+            )
 
     # fairness_metrics.csv
     fairness_path = out / "fairness_metrics.csv"
     with open(fairness_path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["protocol", "fairness", "margin_quality", "degradation_allocation_quality", "joint_violations", "useful_work_mwh"])
+        w = csv.DictWriter(
+            f,
+            fieldnames=[
+                "protocol",
+                "fairness",
+                "margin_quality",
+                "degradation_allocation_quality",
+                "joint_violations",
+                "useful_work_mwh",
+            ],
+        )
         w.writeheader()
         for proto, data in results.items():
-            w.writerow({
-                "protocol": proto,
-                "fairness": data.get("fairness", 0),
-                "margin_quality": data.get("margin_quality", 0),
-                "degradation_allocation_quality": data.get("degradation_allocation_quality", data.get("margin_quality", 0)),
-                "joint_violations": data.get("joint_violations", 0),
-                "useful_work_mwh": data.get("useful_work_mwh", 0),
-            })
+            w.writerow(
+                {
+                    "protocol": proto,
+                    "fairness": data.get("fairness", 0),
+                    "margin_quality": data.get("margin_quality", 0),
+                    "degradation_allocation_quality": data.get(
+                        "degradation_allocation_quality", data.get("margin_quality", 0)
+                    ),
+                    "joint_violations": data.get("joint_violations", 0),
+                    "useful_work_mwh": data.get("useful_work_mwh", 0),
+                }
+            )
 
     # Sync publication copy (same schema as protocol_compare)
     pub_dir = Path("reports/publication")
@@ -81,24 +108,38 @@ def main() -> None:
     with open(pub_scenario_path, "w", newline="") as f:
         w = csv.DictWriter(
             f,
-            fieldnames=["protocol", "joint_violations", "local_violations", "useful_work_mwh", "fairness", "margin_quality", "degradation_allocation_quality"],
+            fieldnames=[
+                "protocol",
+                "joint_violations",
+                "local_violations",
+                "useful_work_mwh",
+                "fairness",
+                "margin_quality",
+                "degradation_allocation_quality",
+            ],
         )
         w.writeheader()
         for proto, data in results.items():
-            w.writerow({
-                "protocol": proto,
-                "joint_violations": data.get("joint_violations", 0),
-                "local_violations": data.get("local_violations", 0),
-                "useful_work_mwh": data.get("useful_work_mwh", 0),
-                "fairness": data.get("fairness", 0),
-                "margin_quality": data.get("margin_quality", 0),
-                "degradation_allocation_quality": data.get("degradation_allocation_quality", data.get("margin_quality", 0)),
-            })
+            w.writerow(
+                {
+                    "protocol": proto,
+                    "joint_violations": data.get("joint_violations", 0),
+                    "local_violations": data.get("local_violations", 0),
+                    "useful_work_mwh": data.get("useful_work_mwh", 0),
+                    "fairness": data.get("fairness", 0),
+                    "margin_quality": data.get("margin_quality", 0),
+                    "degradation_allocation_quality": data.get(
+                        "degradation_allocation_quality", data.get("margin_quality", 0)
+                    ),
+                }
+            )
 
     print("=== Multi-Agent Non-Composition Counterexample ===")
     for proto, s in summary.items():
-        print(f"  {proto:30s} | violations={s['joint_violations']} "
-              f"| useful_work={s['useful_work']:.1f} | fairness={s['fairness']:.4f}")
+        print(
+            f"  {proto:30s} | violations={s['joint_violations']} "
+            f"| useful_work={s['useful_work']:.1f} | fairness={s['fairness']:.4f}"
+        )
     print(f"\nSummary → {summary_path}")
     print(f"Protocol compare → {proto_compare_path}")
     print(f"Fairness metrics → {fairness_path}")

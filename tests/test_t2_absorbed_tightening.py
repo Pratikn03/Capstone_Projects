@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-import pytest
 
 from orius.certos.domain_policies import BatteryGovernancePolicy
 from orius.certos.runtime import CertOSConfig, CertOSRuntime

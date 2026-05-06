@@ -8,7 +8,6 @@ from typing import Any
 
 import pandas as pd
 
-
 SCENARIO_ORDER = [
     "nominal",
     "dropout",
@@ -158,10 +157,9 @@ def _print_drift_combo_summary(df_summary: pd.DataFrame) -> None:
         print("  warning: required drift_combo controller rows are missing from the aggregated summary")
         return
 
-    best_dc3s = (
-        dc3s_rows.sort_values(["picp_90", "expected_cost_usd"], ascending=[False, True], kind="stable")
-        .iloc[0]
-    )
+    best_dc3s = dc3s_rows.sort_values(
+        ["picp_90", "expected_cost_usd"], ascending=[False, True], kind="stable"
+    ).iloc[0]
     det_picp = float(deterministic.iloc[0]["picp_90"])
     cost_delta = float(best_dc3s["expected_cost_usd"]) - float(robust.iloc[0]["expected_cost_usd"])
     intervention_rate = float(best_dc3s["intervention_rate"])
@@ -184,20 +182,18 @@ def build_table13(input_path: Path, out_dir: Path) -> dict[str, Any]:
     _validate_input(df)
 
     optional = _optional_columns(df)
-    numeric_cols = ["picp_90", "mean_interval_width", "expected_cost_usd", "intervention_rate", "violation_rate", *optional]
+    numeric_cols = [
+        "picp_90",
+        "mean_interval_width",
+        "expected_cost_usd",
+        "intervention_rate",
+        "violation_rate",
+        *optional,
+    ]
     group_cols = ["scenario", "controller"]
 
-    summary = (
-        df.groupby(group_cols, dropna=False)[numeric_cols]
-        .mean()
-        .reset_index()
-    )
-    seed_counts = (
-        df.groupby(group_cols, dropna=False)["seed"]
-        .nunique()
-        .rename("n_seeds")
-        .reset_index()
-    )
+    summary = df.groupby(group_cols, dropna=False)[numeric_cols].mean().reset_index()
+    seed_counts = df.groupby(group_cols, dropna=False)["seed"].nunique().rename("n_seeds").reset_index()
     summary = summary.merge(seed_counts, on=group_cols, how="left")
 
     ordered_cols = [

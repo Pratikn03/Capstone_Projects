@@ -1,4 +1,5 @@
 """Tests for the current ORIUS T9--T11 theorem helper surface."""
+
 from __future__ import annotations
 
 import pytest
@@ -95,6 +96,20 @@ class TestStylizedFrontierLowerBound:
         severe = compute_stylized_frontier_lower_bound([0.4, 0.4, 0.4], boundary_mass=0.2)
         assert severe["expected_lower_bound"] > mild["expected_lower_bound"]
 
+    def test_oasg_rate_scales_with_degradation_budget_and_severity(self) -> None:
+        result = compute_stylized_frontier_lower_bound(
+            [0.8, 0.5],
+            boundary_mass=0.4,
+            violation_severity=2.0,
+        )
+        degradation_budget = (1.0 - 0.8) + (1.0 - 0.5)
+        expected_violation_count = 0.5 * 0.4 * degradation_budget
+
+        assert result["degradation_budget"] == pytest.approx(degradation_budget)
+        assert result["expected_lower_bound"] == pytest.approx(expected_violation_count)
+        assert result["oasg_lower_bound"] == pytest.approx(2.0 * expected_violation_count)
+        assert result["oasg_rate_per_degradation_budget"] == pytest.approx(0.5 * 0.4 * 2.0)
+
 
 class TestStructuralTransfer:
     """T11 helper tests."""
@@ -130,10 +145,42 @@ class TestStructuralTransfer:
     @pytest.mark.parametrize(
         ("kwargs", "failed_name"),
         [
-            ({"coverage_holds": False, "sound_safe_action_set": True, "repair_membership_holds": True, "fallback_exists": True}, "coverage"),
-            ({"coverage_holds": True, "sound_safe_action_set": False, "repair_membership_holds": True, "fallback_exists": True}, "sound_safe_action_set"),
-            ({"coverage_holds": True, "sound_safe_action_set": True, "repair_membership_holds": False, "fallback_exists": True}, "repair_membership"),
-            ({"coverage_holds": True, "sound_safe_action_set": True, "repair_membership_holds": True, "fallback_exists": False}, "fallback"),
+            (
+                {
+                    "coverage_holds": False,
+                    "sound_safe_action_set": True,
+                    "repair_membership_holds": True,
+                    "fallback_exists": True,
+                },
+                "coverage",
+            ),
+            (
+                {
+                    "coverage_holds": True,
+                    "sound_safe_action_set": False,
+                    "repair_membership_holds": True,
+                    "fallback_exists": True,
+                },
+                "sound_safe_action_set",
+            ),
+            (
+                {
+                    "coverage_holds": True,
+                    "sound_safe_action_set": True,
+                    "repair_membership_holds": False,
+                    "fallback_exists": True,
+                },
+                "repair_membership",
+            ),
+            (
+                {
+                    "coverage_holds": True,
+                    "sound_safe_action_set": True,
+                    "repair_membership_holds": True,
+                    "fallback_exists": False,
+                },
+                "fallback",
+            ),
         ],
     )
     def test_missing_any_obligation_returns_counterexample(self, kwargs: dict, failed_name: str) -> None:
@@ -199,10 +246,10 @@ class TestTheoremRegister:
 
 from orius.dc3s.theoretical_guarantees import (
     prove_byzantine_bound,
-    verify_byzantine_bound_empirical,
     stale_decay_bound,
-    verify_stale_decay_sufficiency,
     stale_decay_episode_risk,
+    verify_byzantine_bound_empirical,
+    verify_stale_decay_sufficiency,
 )
 
 
@@ -221,6 +268,7 @@ class TestByzantineBound:
 
     def test_empirical_within_theory(self) -> None:
         import numpy as np
+
         rng = np.random.default_rng(42)
         honest = rng.normal(10.0, 1.0, size=18).tolist()
         adversarial = [100.0, -100.0]
@@ -247,11 +295,17 @@ class TestStaleDecay:
 
     def test_sufficiency_for_typical_domain(self) -> None:
         result = verify_stale_decay_sufficiency(
-            gamma=0.80, w_min=0.05, T_phys=20, tau_max=3,
+            gamma=0.80,
+            w_min=0.05,
+            T_phys=20,
+            tau_max=3,
         )
         assert result["sufficient"] is True
         marginal = verify_stale_decay_sufficiency(
-            gamma=0.85, w_min=0.05, T_phys=20, tau_max=3,
+            gamma=0.85,
+            w_min=0.05,
+            T_phys=20,
+            tau_max=3,
         )
         assert marginal["sufficient"] is False
 
@@ -276,18 +330,17 @@ class TestNewTheoremRegisterEntries:
 
 
 from orius.dc3s.theoretical_guarantees import (
-    compute_tight_impossibility_bound,
-    verify_minimax_gap,
-    sensor_quality_converse,
-    compute_minimum_w_for_tsvr,
-    verify_complete_characterization,
     complete_oasg_characterization,
+    compute_minimum_w_for_tsvr,
+    compute_tight_impossibility_bound,
+    sensor_quality_converse,
+    verify_complete_characterization,
+    verify_minimax_gap,
 )
 from orius.universal_theory.risk_bounds import pac_trajectory_safety_certificate
 
 
 class TestTightMinimaxBound:
-
     def test_lower_bound_uses_alpha_and_w_bar(self) -> None:
         result = compute_tight_impossibility_bound([0.6] * 100, alpha=0.10, K_factor=2.0)
         assert result["episode_lower_bound_rate"] == pytest.approx(0.02)
@@ -317,7 +370,6 @@ class TestTightMinimaxBound:
 
 
 class TestSensorConverse:
-
     def test_converse_holds_when_w_sufficient(self) -> None:
         result = sensor_quality_converse(w_mean=0.7, alpha=0.10, epsilon=0.04)
         assert result["converse_holds"] is True
@@ -342,45 +394,73 @@ class TestSensorConverse:
 
 
 class TestTrajectoryPAC:
-
     def test_perfect_reliability_gives_high_safety(self) -> None:
         result = pac_trajectory_safety_certificate(
-            H=10, n_cal=500, alpha=0.10, delta=0.05,
-            w_sequence=[1.0] * 10, margin=5.0, sigma_d=0.1,
+            H=10,
+            n_cal=500,
+            alpha=0.10,
+            delta=0.05,
+            w_sequence=[1.0] * 10,
+            margin=5.0,
+            sigma_d=0.1,
         )
         assert result["trajectory_safety_prob"] > 0.90
 
     def test_small_calibration_can_make_the_certificate_vacuous(self) -> None:
         result = pac_trajectory_safety_certificate(
-            H=50, n_cal=500, alpha=0.10, delta=0.05,
-            w_sequence=[0.8] * 50, margin=5.0, sigma_d=0.1,
+            H=50,
+            n_cal=500,
+            alpha=0.10,
+            delta=0.05,
+            w_sequence=[0.8] * 50,
+            margin=5.0,
+            sigma_d=0.1,
         )
         assert result["H_max_certifiable"] == 0
         assert result["H_max_nonvacuous"] > 0
 
     def test_H_max_certifiable_is_positive_when_calibration_and_reliability_are_strong(self) -> None:
         result = pac_trajectory_safety_certificate(
-            H=50, n_cal=300000, alpha=0.05, delta=0.05,
-            w_sequence=[0.98] * 50, margin=5.0, sigma_d=0.1,
+            H=50,
+            n_cal=300000,
+            alpha=0.05,
+            delta=0.05,
+            w_sequence=[0.98] * 50,
+            margin=5.0,
+            sigma_d=0.1,
         )
         assert result["H_max_certifiable"] > 0
         assert result["H_max_certifiable"] < 10000
 
     def test_degraded_reliability_reduces_safety_prob(self) -> None:
         good = pac_trajectory_safety_certificate(
-            H=20, n_cal=500, alpha=0.10, delta=0.05,
-            w_sequence=[0.9] * 20, margin=5.0, sigma_d=0.1,
+            H=20,
+            n_cal=500,
+            alpha=0.10,
+            delta=0.05,
+            w_sequence=[0.9] * 20,
+            margin=5.0,
+            sigma_d=0.1,
         )
         bad = pac_trajectory_safety_certificate(
-            H=20, n_cal=500, alpha=0.10, delta=0.05,
-            w_sequence=[0.4] * 20, margin=5.0, sigma_d=0.1,
+            H=20,
+            n_cal=500,
+            alpha=0.10,
+            delta=0.05,
+            w_sequence=[0.4] * 20,
+            margin=5.0,
+            sigma_d=0.1,
         )
         assert good["trajectory_safety_prob"] > bad["trajectory_safety_prob"]
 
     def test_martingale_flag_set_correctly(self) -> None:
         result = pac_trajectory_safety_certificate(
-            H=10, n_cal=500, alpha=0.10, delta=0.05,
-            w_sequence=[0.8] * 10, use_martingale=True,
+            H=10,
+            n_cal=500,
+            alpha=0.10,
+            delta=0.05,
+            w_sequence=[0.8] * 10,
+            use_martingale=True,
         )
         assert result["uses_martingale"] is True
         assert result["bound_style"] == "bonferroni_union_bound"
@@ -391,7 +471,6 @@ class TestTrajectoryPAC:
 
 
 class TestGrandUnification:
-
     def test_all_three_depth_theorems_in_register(self) -> None:
         assert "T_minimax" in THEOREM_REGISTER
         assert "T_sensor_converse" in THEOREM_REGISTER
@@ -413,8 +492,12 @@ class TestGrandUnification:
 
     def test_complete_characterization_assembles_all_paths(self) -> None:
         result = complete_oasg_characterization(
-            [0.7] * 100, alpha=0.10, n_cal=500, delta=0.05,
-            margin=5.0, sigma_d=0.1,
+            [0.7] * 100,
+            alpha=0.10,
+            n_cal=500,
+            delta=0.05,
+            margin=5.0,
+            sigma_d=0.1,
         )
         assert result["gap_closed"] is False
         assert "path_a_minimax" in result

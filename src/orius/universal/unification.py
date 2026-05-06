@@ -43,14 +43,15 @@ Senior engineer notes
 - The CBF barrier function h_fn is injected at construction time to keep the
   class domain-agnostic. Users provide h_fn specific to their dynamics.
 """
+
 from __future__ import annotations
 
 import numpy as np
 
-from .contract import TightenedSet, RepairResult
-
+from .contract import RepairResult, TightenedSet
 
 # ── CBF as ORIUS ───────────────────────────────────────────────────────────────
+
 
 class CBFAsORIUS:
     """Control Barrier Function safety filter as a DC3S domain adapter.
@@ -179,6 +180,7 @@ class CBFAsORIUS:
 
 # ── Robust MPC as ORIUS ────────────────────────────────────────────────────────
 
+
 class RobustMPCAsORIUS:
     """Robust MPC tube controller as a DC3S domain adapter.
 
@@ -228,9 +230,7 @@ class RobustMPCAsORIUS:
         if max_radius <= 0:
             raise ValueError(f"max_radius must be > 0, got {max_radius}")
         if tube_radius > max_radius:
-            raise ValueError(
-                f"tube_radius ({tube_radius}) must be ≤ max_radius ({max_radius})"
-            )
+            raise ValueError(f"tube_radius ({tube_radius}) must be ≤ max_radius ({max_radius})")
         self.r = tube_radius
         self.r_max = max_radius
         # This constant reliability value is the Robust MPC assumption expressed

@@ -5,13 +5,12 @@ import argparse
 import itertools
 import json
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src"
@@ -21,6 +20,7 @@ for path in (REPO_ROOT, SRC_ROOT):
         sys.path.insert(0, path_str)
 
 from bootstrap_ci import compute_ci_summary_df, write_ci_outputs
+
 from orius.cpsbench_iot.runner import run_suite
 
 

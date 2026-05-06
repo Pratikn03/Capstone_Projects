@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Generate canonical ORIUS publication assets for the active 3-domain program."""
+
 from __future__ import annotations
 
 import csv
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from build_three_domain_ml_artifacts import build_three_domain_ml_artifacts
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
@@ -24,14 +24,18 @@ TRAINING_AUDIT_DIR = REPO_ROOT / "reports" / "universal_training_audit"
 MIMIC_RUNTIME = "data/healthcare/mimic3/processed/mimic3_healthcare_orius.csv"
 MIMIC_MANIFEST = "data/healthcare/mimic3/processed/mimic3_manifest.json"
 BATTERY_WITNESS_RUNTIME_STEPS = 672
-AV_RUNTIME_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+AV_RUNTIME_DIR = (
+    REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+)
 AV_RUNTIME_SUMMARY = AV_RUNTIME_DIR / "runtime_summary.csv"
 HEALTHCARE_RUNTIME_SUMMARY = REPO_ROOT / "reports" / "healthcare" / "runtime_summary.csv"
-HEALTHCARE_MIMIC_PATH = REPO_ROOT / "data" / "healthcare" / "mimic3" / "processed" / "mimic3_healthcare_orius.csv"
+HEALTHCARE_MIMIC_PATH = (
+    REPO_ROOT / "data" / "healthcare" / "mimic3" / "processed" / "mimic3_healthcare_orius.csv"
+)
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _ensure_parent(path: Path) -> None:
@@ -70,7 +74,9 @@ def _tex_escape(value: Any) -> str:
     return text
 
 
-def _write_simple_tex_table(path: Path, headers: list[str], rows: list[list[Any]], caption: str, label: str) -> None:
+def _write_simple_tex_table(
+    path: Path, headers: list[str], rows: list[list[Any]], caption: str, label: str
+) -> None:
     cols = "l" * len(headers)
     lines = [
         r"\begin{table}[htbp]",
@@ -256,7 +262,9 @@ def _build_release_summary(override: dict[str, dict[str, Any]]) -> dict[str, Any
                 "display_name": "Autonomous Vehicles",
                 "tier": override["vehicle"]["resulting_tier"],
                 "canonical_runtime_path": str(AV_RUNTIME_SUMMARY.relative_to(REPO_ROOT)),
-                "provenance_path": str((AV_RUNTIME_DIR / "runtime_governance_summary.csv").relative_to(REPO_ROOT)),
+                "provenance_path": str(
+                    (AV_RUNTIME_DIR / "runtime_governance_summary.csv").relative_to(REPO_ROOT)
+                ),
                 "note": "AV is promoted through all-zip grouped nuPlan replay/runtime-contract evidence.",
             },
             "healthcare": {
@@ -271,9 +279,12 @@ def _build_release_summary(override: dict[str, dict[str, Any]]) -> dict[str, Any
 
 
 def _build_domain_closure_rows() -> list[dict[str, Any]]:
-    validation_rows = _validation_domain_rows()
-    av_runtime_steps = _read_runtime_steps(AV_RUNTIME_SUMMARY, "orius") or _read_runtime_steps(AV_RUNTIME_SUMMARY, "baseline")
-    healthcare_runtime_steps = _read_runtime_steps(HEALTHCARE_RUNTIME_SUMMARY, "orius") or _count_csv_rows(HEALTHCARE_MIMIC_PATH)
+    av_runtime_steps = _read_runtime_steps(AV_RUNTIME_SUMMARY, "orius") or _read_runtime_steps(
+        AV_RUNTIME_SUMMARY, "baseline"
+    )
+    healthcare_runtime_steps = _read_runtime_steps(HEALTHCARE_RUNTIME_SUMMARY, "orius") or _count_csv_rows(
+        HEALTHCARE_MIMIC_PATH
+    )
     healthcare_rows_total = _count_csv_rows(HEALTHCARE_MIMIC_PATH)
     return [
         {
@@ -406,12 +417,23 @@ def _write_review_generated_assets() -> None:
 
 def _write_publication_files() -> None:
     closure_rows = _build_domain_closure_rows()
-    closure_fieldnames = ["domain", "tier", "source", "baseline_tsvr", "orius_tsvr", "promotion_gate", "current_status"]
+    closure_fieldnames = [
+        "domain",
+        "tier",
+        "source",
+        "baseline_tsvr",
+        "orius_tsvr",
+        "promotion_gate",
+        "current_status",
+    ]
     _write_csv(PUBLICATION_DIR / "orius_domain_closure_matrix.csv", closure_rows, closure_fieldnames)
     _write_simple_tex_table(
         PUBLICATION_DIR / "tbl_orius_domain_closure_matrix.tex",
         ["Domain", "Tier", "Source", "Baseline TSVR", "ORIUS TSVR"],
-        [[row["domain"], row["tier"], row["source"], row["baseline_tsvr"], row["orius_tsvr"]] for row in closure_rows],
+        [
+            [row["domain"], row["tier"], row["source"], row["baseline_tsvr"], row["orius_tsvr"]]
+            for row in closure_rows
+        ],
         "Canonical Battery + AV + Healthcare closure matrix.",
         "tbl:orius-domain-closure-matrix",
     )
@@ -544,7 +566,13 @@ def _write_publication_files() -> None:
         PUBLICATION_DIR / "tbl_orius_runtime_budget_matrix.tex",
         ["Domain", "Median ms", "P95 ms", "Fallback %", "Tier"],
         [
-            [row["domain"], row["median_step_ms"], row["p95_step_ms"], row["fallback_coverage_pct"], row["tier"]]
+            [
+                row["domain"],
+                row["median_step_ms"],
+                row["p95_step_ms"],
+                row["fallback_coverage_pct"],
+                row["tier"],
+            ]
             for row in runtime_rows
         ],
         "Runtime-budget summary for the active three-domain program.",
@@ -584,7 +612,9 @@ def _write_publication_files() -> None:
             "note": "Three-domain lane is internally consistent and reviewer-safe under bounded claims.",
         }
     ]
-    _write_csv(PUBLICATION_DIR / "orius_93plus_reviewer_rerun.csv", reviewer_rows, list(reviewer_rows[0].keys()))
+    _write_csv(
+        PUBLICATION_DIR / "orius_93plus_reviewer_rerun.csv", reviewer_rows, list(reviewer_rows[0].keys())
+    )
     _write_csv(
         PUBLICATION_DIR / "orius_93plus_gap_matrix.csv",
         [],
@@ -693,6 +723,11 @@ def _write_publication_files() -> None:
             "description": "Canonical three-domain ML safety delta bundle for Battery, AV, and Healthcare.",
         },
         {
+            "artifact": "three_domain_forecast_calibration_runtime_evidence.csv",
+            "category": "ml evidence crosswalk",
+            "description": "Uniform forecast, calibration, runtime, and postcondition evidence table for Battery, nuPlan AV, and Healthcare.",
+        },
+        {
             "artifact": "three_domain_baseline_suite.csv",
             "category": "ml benchmark",
             "description": "Cross-domain baseline suite used for the promoted ML comparison lane.",
@@ -728,7 +763,11 @@ def _write_publication_files() -> None:
             "description": "Theorem-facing assumption map with register-resolved and theorem-local assumptions.",
         },
     ]
-    _write_csv(PUBLICATION_DIR / "orius_publication_artifact_index.csv", artifact_index_rows, list(artifact_index_rows[0].keys()))
+    _write_csv(
+        PUBLICATION_DIR / "orius_publication_artifact_index.csv",
+        artifact_index_rows,
+        list(artifact_index_rows[0].keys()),
+    )
 
     claim_rows = [
         {
@@ -751,7 +790,11 @@ def _write_publication_files() -> None:
             "artifact": "reports/publication/orius_domain_closure_matrix.csv",
         }
     ]
-    _write_csv(PUBLICATION_DIR / "orius_cross_domain_design_principles.csv", principle_rows, list(principle_rows[0].keys()))
+    _write_csv(
+        PUBLICATION_DIR / "orius_cross_domain_design_principles.csv",
+        principle_rows,
+        list(principle_rows[0].keys()),
+    )
 
     _write_text(
         PUBLICATION_DIR / "orius_fresh_results_package.md",
@@ -833,9 +876,21 @@ def _write_three_domain_lane() -> None:
         "domains": ["battery", "vehicle", "healthcare"],
     }
     summary_rows = [
-        {"domain": "battery", "display_name": "Battery Energy Storage", "tier": override["battery"]["resulting_tier"]},
-        {"domain": "vehicle", "display_name": "Autonomous Vehicles", "tier": override["vehicle"]["resulting_tier"]},
-        {"domain": "healthcare", "display_name": "Medical and Healthcare Monitoring", "tier": override["healthcare"]["resulting_tier"]},
+        {
+            "domain": "battery",
+            "display_name": "Battery Energy Storage",
+            "tier": override["battery"]["resulting_tier"],
+        },
+        {
+            "domain": "vehicle",
+            "display_name": "Autonomous Vehicles",
+            "tier": override["vehicle"]["resulting_tier"],
+        },
+        {
+            "domain": "healthcare",
+            "display_name": "Medical and Healthcare Monitoring",
+            "tier": override["healthcare"]["resulting_tier"],
+        },
     ]
     _write_json(THREE_DOMAIN_DIR / "publication_closure_override.json", override)
     _write_json(THREE_DOMAIN_DIR / "release_summary.json", release_summary)
@@ -1123,7 +1178,16 @@ def _write_three_domain_publication_overrides() -> None:
     _write_csv(
         PUBLICATION_DIR / "orius_supplemental_hf_evidence.csv",
         [],
-        ["domain", "repo_id", "artifact_role", "current_status", "downloads", "updated", "canonical_eligibility", "exact_limit"],
+        [
+            "domain",
+            "repo_id",
+            "artifact_role",
+            "current_status",
+            "downloads",
+            "updated",
+            "canonical_eligibility",
+            "exact_limit",
+        ],
     )
 
     literature_rows = [

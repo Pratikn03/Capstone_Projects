@@ -12,6 +12,7 @@ Usage:
     python scripts/run_certificate_half_life_blackout.py
     python scripts/run_certificate_half_life_blackout.py --seeds 42 123 --horizons 12 24 48
 """
+
 from __future__ import annotations
 
 import argparse
@@ -25,6 +26,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 # Import run_blackout_study from sibling script
 import importlib.util
+
 spec = importlib.util.spec_from_file_location(
     "run_blackout_study",
     REPO_ROOT / "scripts" / "run_blackout_study.py",
@@ -55,6 +57,7 @@ def main() -> None:
         all_rows.append(df)
 
     import pandas as pd
+
     combined = pd.concat(all_rows, ignore_index=True)
 
     csv_path = out_dir / "certificate_half_life_blackout.csv"
@@ -62,12 +65,18 @@ def main() -> None:
     print(f"Wrote {csv_path}")
 
     # Paper 2 metrics: CVA, time-to-expiration, renewal lag, useful work
-    agg = combined.groupby("blackout_hours").agg({
-        "tsvr_pct": "mean",
-        "coverage_pct": "mean",
-        "violations": "sum",
-        "total_steps": "sum",
-    }).reset_index()
+    agg = (
+        combined.groupby("blackout_hours")
+        .agg(
+            {
+                "tsvr_pct": "mean",
+                "coverage_pct": "mean",
+                "violations": "sum",
+                "total_steps": "sum",
+            }
+        )
+        .reset_index()
+    )
     agg["cva"] = agg["coverage_pct"] / 100.0  # Certificate Validity Accuracy
     agg["useful_work_preserved"] = 1.0 - (agg["violations"] / agg["total_steps"].replace(0, 1))
 

@@ -10,7 +10,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src"
 for path in (REPO_ROOT, SRC_ROOT):
@@ -19,7 +18,6 @@ for path in (REPO_ROOT, SRC_ROOT):
         sys.path.insert(0, path_str)
 
 from orius.evaluation.stats import bootstrap_ci
-
 
 SCENARIO_ORDER = [
     "nominal",
@@ -218,7 +216,7 @@ def compute_ci_summary_df(
     for group_key, group_df in grouped:
         if not isinstance(group_key, tuple):
             group_key = (group_key,)
-        row = dict(zip(group_cols, group_key))
+        row = dict(zip(group_cols, group_key, strict=False))
         for metric in metrics:
             values = pd.to_numeric(group_df[metric], errors="coerce").dropna()
             if values.empty:
@@ -241,9 +239,7 @@ def compute_ci_summary_df(
     summary = pd.DataFrame(rows)
     ordered_cols = list(group_cols)
     for metric in metrics:
-        ordered_cols.extend(
-            [f"{metric}_mean", f"{metric}_ci_low", f"{metric}_ci_high"]
-        )
+        ordered_cols.extend([f"{metric}_mean", f"{metric}_ci_low", f"{metric}_ci_high"])
     summary = summary[ordered_cols]
     return _sort_summary(summary, group_cols)
 

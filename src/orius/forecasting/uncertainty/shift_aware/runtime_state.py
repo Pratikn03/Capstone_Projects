@@ -30,7 +30,7 @@ class ShiftAwareRuntimeState:
         }
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any] | None, cfg: ShiftAwareConfig) -> "ShiftAwareRuntimeState":
+    def from_dict(cls, payload: dict[str, Any] | None, cfg: ShiftAwareConfig) -> ShiftAwareRuntimeState:
         data = dict(payload or {})
         adaptive_raw = dict(data.get("adaptive", {}))
         adaptive = AdaptiveQuantileState(
@@ -63,7 +63,9 @@ class ShiftAwareRuntimeEngine:
     def _load(self) -> ShiftAwareRuntimeState:
         if self.state_path is None or not self.state_path.exists():
             return ShiftAwareRuntimeState(
-                tracker=SubgroupCoverageTracker(target_coverage=self.cfg.coverage_target, window_size=self.cfg.coverage_window_size),
+                tracker=SubgroupCoverageTracker(
+                    target_coverage=self.cfg.coverage_target, window_size=self.cfg.coverage_window_size
+                ),
                 adaptive=AdaptiveQuantileState(
                     mode=self.cfg.aci_mode,
                     base_alpha=self.cfg.alpha,

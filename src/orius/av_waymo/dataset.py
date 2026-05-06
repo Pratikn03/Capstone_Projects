@@ -1,11 +1,12 @@
 """Scenario-native Waymo Motion parsing and validation builders."""
+
 from __future__ import annotations
 
-from collections.abc import Iterable
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import json
 import math
+from collections.abc import Iterable
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +16,6 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from .tfrecord import iter_tfrecord_records, parse_example_bytes
-
 
 PAST_STEPS = 10
 CURRENT_STEPS = 1
@@ -142,9 +142,7 @@ def _reshape_actor_feature(
         return np.asarray(values, dtype=dtype).reshape(actor_count, 1)
     if not values:
         return np.full((actor_count, steps), default, dtype=dtype)
-    raise ValueError(
-        f"Unexpected feature length {len(values)} for actor_count={actor_count}, steps={steps}"
-    )
+    raise ValueError(f"Unexpected feature length {len(values)} for actor_count={actor_count}, steps={steps}")
 
 
 def _concat_state_feature(
@@ -207,9 +205,13 @@ def _canonicalize_scenario_timestamps(timestamp_matrix: np.ndarray) -> np.ndarra
             step_delta = (canonical[next_index] - canonical[prev_index]) / float(span)
             canonical[step_index] = int(round(canonical[prev_index] + step_delta * (step_index - prev_index)))
         elif prev_index >= 0:
-            canonical[step_index] = int(canonical[prev_index] + EXPECTED_CADENCE_US * (step_index - prev_index))
+            canonical[step_index] = int(
+                canonical[prev_index] + EXPECTED_CADENCE_US * (step_index - prev_index)
+            )
         elif next_index < step_count:
-            canonical[step_index] = int(canonical[next_index] - EXPECTED_CADENCE_US * (next_index - step_index))
+            canonical[step_index] = int(
+                canonical[next_index] - EXPECTED_CADENCE_US * (next_index - step_index)
+            )
 
     return canonical
 
@@ -317,7 +319,9 @@ def _dynamic_actor_mask(scenario: dict[str, Any], ego_index: int) -> np.ndarray:
     return mask
 
 
-def _relative_xy(scenario: dict[str, Any], ego_index: int, actor_index: int, step_index: int) -> tuple[float, float]:
+def _relative_xy(
+    scenario: dict[str, Any], ego_index: int, actor_index: int, step_index: int
+) -> tuple[float, float]:
     ego_x = float(scenario["x"][ego_index, step_index])
     ego_y = float(scenario["y"][ego_index, step_index])
     actor_x = float(scenario["x"][actor_index, step_index])
@@ -423,7 +427,9 @@ def _scenario_index_row(scenario: dict[str, Any], validation: ScenarioValidation
         "shard_id": validation.shard_id,
         "record_index": validation.record_index,
         "actor_count": validation.actor_count,
-        "dynamic_actor_count": int(_dynamic_actor_mask(scenario, ego_index).sum()) if ego_index is not None else 0,
+        "dynamic_actor_count": int(_dynamic_actor_mask(scenario, ego_index).sum())
+        if ego_index is not None
+        else 0,
         "timestamp_count": validation.timestamp_count,
         "timestamp_start_us": int(scenario["timestamps_us"][0]),
         "timestamp_end_us": int(scenario["timestamps_us"][-1]),
@@ -535,9 +541,9 @@ def _actor_track_rows(scenario: dict[str, Any], validation: ScenarioValidation) 
 def _json_default(value: Any) -> Any:
     if isinstance(value, np.ndarray):
         return value.tolist()
-    if isinstance(value, (np.integer,)):
+    if isinstance(value, np.integer):
         return int(value)
-    if isinstance(value, (np.floating,)):
+    if isinstance(value, np.floating):
         return float(value)
     return value
 
@@ -612,7 +618,7 @@ def build_validation_surface(
                             "issues": list(validation.issues),
                         }
                     )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 issues.append(
                     {
                         "scenario_id": None,
@@ -643,7 +649,7 @@ def build_validation_surface(
     pd.DataFrame(anchor_rows).to_parquet(anchor_path, index=False)
 
     report = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "raw_dir": str(raw_path),
         "out_dir": str(out_path),
         "shard_count": len(shard_reports),

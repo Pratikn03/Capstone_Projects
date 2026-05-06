@@ -1,9 +1,10 @@
 """API key security with scope enforcement."""
+
 from __future__ import annotations
 
 from collections.abc import Iterable
 
-from fastapi import Security, HTTPException, status
+from fastapi import HTTPException, Security, status
 from fastapi.security.api_key import APIKeyHeader
 
 from services.api.config import get_api_keys, is_auth_disabled_for_tests

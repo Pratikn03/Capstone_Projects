@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build and verify camera-ready figure lineage for paper/report artifacts."""
+
 from __future__ import annotations
 
 import argparse
@@ -11,10 +12,9 @@ import re
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 REPO = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO / "reports" / "publication"
@@ -311,7 +311,11 @@ def resolve_graphic(ref: LatexRef, index: dict[str, list[Path]]) -> Path | None:
 def classification_for(refs: list[LatexRef], artifact: Path | None) -> str:
     text = " ".join([r.graphic for r in refs] + ([rel(artifact) or ""] if artifact else [])).lower()
     stem = artifact.stem if artifact else Path(refs[0].graphic if refs else "").stem
-    if any(r.macro == "ORIUSIncludeArchivedGraphic" for r in refs) or "/industrial/" in text or "/aerospace/" in text:
+    if (
+        any(r.macro == "ORIUSIncludeArchivedGraphic" for r in refs)
+        or "/industrial/" in text
+        or "/aerospace/" in text
+    ):
         return "legacy_archive"
     if stem in SCREENSHOT_STEMS or "screenshot" in stem or "github_overview" in stem:
         return "screenshot"
@@ -343,7 +347,12 @@ def data_hints(stem: str, artifact: Path | None) -> dict[str, list[str]]:
     elif "raw_sequence_track" in stem:
         scripts = ["scripts/run_battery_deep_novelty.py", "scripts/hf_jobs/deep_learning_novelty_job.py"]
         data = ["reports/publication/battery_raw_sequence_track_benchmark.csv"]
-    elif stem in {"training_interval_widths", "shift_aware_runtime", "fault_family_coverage", "runtime_metrics"}:
+    elif stem in {
+        "training_interval_widths",
+        "shift_aware_runtime",
+        "fault_family_coverage",
+        "runtime_metrics",
+    }:
         scripts = ["scripts/build_waymo_av_dry_run_report.py"]
         data = [
             "reports/orius_av/nuplan_allzip_grouped/training_summary.csv",
@@ -380,7 +389,10 @@ def data_hints(stem: str, artifact: Path | None) -> dict[str, list[str]]:
         data = ["reports/publication/graceful_four_policy_metrics.csv"]
     elif "blackout" in stem or "halflife" in stem:
         scripts = ["scripts/build_half_life_figures.py", "scripts/make_blackout_figures.py"]
-        data = ["reports/publication/blackout_half_life.csv", "reports/publication/certificate_half_life_blackout.csv"]
+        data = [
+            "reports/publication/blackout_half_life.csv",
+            "reports/publication/certificate_half_life_blackout.csv",
+        ]
     elif "reliability_baselines" in stem:
         scripts = ["scripts/run_battery_reliability_baselines.py"]
         data = ["reports/publication/battery_reliability_baselines_summary.csv"]
@@ -390,7 +402,11 @@ def data_hints(stem: str, artifact: Path | None) -> dict[str, list[str]]:
             "reports/universal_orius_validation/domain_validation_summary.csv",
             "reports/universal_orius_validation/domain_closure_matrix.csv",
         ]
-    elif "/reports/battery/figures/" in f"/{artifact_text}" or "/reports/av/figures/" in f"/{artifact_text}" or "/reports/healthcare/figures/" in f"/{artifact_text}":
+    elif (
+        "/reports/battery/figures/" in f"/{artifact_text}"
+        or "/reports/av/figures/" in f"/{artifact_text}"
+        or "/reports/healthcare/figures/" in f"/{artifact_text}"
+    ):
         scripts = ["scripts/generate_per_domain_figures.py"]
         data = ["reports/universal_orius_validation/domain_validation_summary.csv"]
     elif "/reports/publication/" in f"/{artifact_text}":
@@ -510,7 +526,9 @@ def build_entries() -> dict[str, Any]:
         archive_only = classification == "legacy_archive"
         entries.append(
             {
-                "artifact_path": "archive_only_unresolved_latex_graphic" if archive_only else "unresolved_latex_graphic",
+                "artifact_path": "archive_only_unresolved_latex_graphic"
+                if archive_only
+                else "unresolved_latex_graphic",
                 "artifact_exists": False,
                 "bytes": 0,
                 "sha256": "not_applicable",
@@ -533,12 +551,16 @@ def build_entries() -> dict[str, Any]:
             }
         )
 
-    entries.sort(key=lambda e: (e["classification"], e["artifact_path"] or e["latex_references"][0]["graphic"]))
+    entries.sort(
+        key=lambda e: (e["classification"], e["artifact_path"] or e["latex_references"][0]["graphic"])
+    )
     totals = {
         "inventory_images": len(images),
         "latex_references": len(refs),
         "latex_used_artifacts": sum(1 for e in entries if e["latex_used"] and e["artifact_exists"]),
-        "unresolved_latex_references": sum(1 for e in entries if e["latex_used"] and not e["artifact_exists"] and not e["archive_only"]),
+        "unresolved_latex_references": sum(
+            1 for e in entries if e["latex_used"] and not e["artifact_exists"] and not e["archive_only"]
+        ),
         "archive_only_references": sum(
             len(e["latex_references"]) for e in entries if e["latex_used"] and e["archive_only"]
         ),
@@ -546,7 +568,7 @@ def build_entries() -> dict[str, Any]:
     }
     return {
         "schema_version": 1,
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
         "policy": {
             "camera_ready_surface": "IEEE/journal PDF builds",
             "claim_scope": "Battery + AV + Healthcare are defended; extra-domain archive material is provenance only.",
@@ -632,7 +654,9 @@ def write_outputs(payload: dict[str, Any]) -> None:
             )
 
     LINEAGE_MD.write_text(render_markdown(payload), encoding="utf-8")
-    DESIGN_JSON.write_text(json.dumps(build_design_manifest(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    DESIGN_JSON.write_text(
+        json.dumps(build_design_manifest(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def render_markdown(payload: dict[str, Any]) -> str:
@@ -714,7 +738,9 @@ def verify_against_saved(payload: dict[str, Any]) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--verify", action="store_true", help="verify current assets against the committed lineage manifest")
+    parser.add_argument(
+        "--verify", action="store_true", help="verify current assets against the committed lineage manifest"
+    )
     parser.add_argument("--write", action="store_true", help="write lineage outputs")
     args = parser.parse_args(argv)
 

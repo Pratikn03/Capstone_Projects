@@ -1,13 +1,12 @@
 """Tests for certificate half-life and runtime validity-horizon engine (Paper 2)."""
+
 from __future__ import annotations
 
-import pytest
 from orius.dc3s.half_life import (
-    compute_certificate_state,
     check_renewal_trigger,
+    compute_certificate_state,
     time_to_expiration,
 )
-
 
 _CONSTRAINTS = {
     "min_soc_mwh": 0.0,
@@ -63,14 +62,20 @@ class TestComputeCertificateState:
     def test_confidence_decreases_with_step(self):
         """Confidence should decrease as current_step increases."""
         c0 = compute_certificate_state(
-            observed_soc_mwh=5000.0, quality_score=1.0,
-            safety_margin_mwh=100.0, sigma_d=50.0,
-            constraints=_CONSTRAINTS, current_step=0,
+            observed_soc_mwh=5000.0,
+            quality_score=1.0,
+            safety_margin_mwh=100.0,
+            sigma_d=50.0,
+            constraints=_CONSTRAINTS,
+            current_step=0,
         )["confidence"]
         c5 = compute_certificate_state(
-            observed_soc_mwh=5000.0, quality_score=1.0,
-            safety_margin_mwh=100.0, sigma_d=50.0,
-            constraints=_CONSTRAINTS, current_step=5,
+            observed_soc_mwh=5000.0,
+            quality_score=1.0,
+            safety_margin_mwh=100.0,
+            sigma_d=50.0,
+            constraints=_CONSTRAINTS,
+            current_step=5,
         )["confidence"]
         assert c0 >= c5
 
@@ -88,9 +93,12 @@ class TestComputeCertificateState:
 
     def test_expires_at_step_calculation(self):
         state = compute_certificate_state(
-            observed_soc_mwh=5000.0, quality_score=1.0,
-            safety_margin_mwh=100.0, sigma_d=50.0,
-            constraints=_CONSTRAINTS, current_step=10,
+            observed_soc_mwh=5000.0,
+            quality_score=1.0,
+            safety_margin_mwh=100.0,
+            sigma_d=50.0,
+            constraints=_CONSTRAINTS,
+            current_step=10,
         )
         assert state["expires_at_step"] == 10 + state["H_t"]
 

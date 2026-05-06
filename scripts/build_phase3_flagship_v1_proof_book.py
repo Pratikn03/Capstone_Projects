@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Build the standalone Phase 3 proof-book PDF from the tracked Markdown source."""
+
 from __future__ import annotations
 
 import shutil
 import subprocess
 import sys
 from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_MD = REPO_ROOT / "reports" / "publication" / "phase3_flagship_v1_proof_book.md"

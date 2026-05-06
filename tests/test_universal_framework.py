@@ -1,9 +1,10 @@
 """Tests for ORIUS Universal Framework."""
+
 from __future__ import annotations
 
 import pytest
 
-from orius.universal_framework import run_universal_step, get_adapter, list_domains
+from orius.universal_framework import get_adapter, list_domains, run_universal_step
 
 
 def test_list_domains() -> None:

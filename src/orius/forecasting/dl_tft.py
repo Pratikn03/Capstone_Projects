@@ -1,4 +1,5 @@
 """Lightweight transformer forecaster used as a TFT-style baseline."""
+
 from __future__ import annotations
 
 import torch

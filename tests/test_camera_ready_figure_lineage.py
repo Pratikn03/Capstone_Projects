@@ -74,7 +74,9 @@ def test_lineage_resolves_latex_figures_and_writes_manifests(tmp_path: Path, mon
     assert (tmp_path / "reports" / "publication" / "camera_ready_figure_lineage.json").exists()
     assert (tmp_path / "reports" / "publication" / "camera_ready_figure_lineage.csv").exists()
     assert (tmp_path / "reports" / "publication" / "camera_ready_figure_lineage.md").exists()
-    design = json.loads((tmp_path / "reports" / "publication" / "camera_ready_design_sources.json").read_text())
+    design = json.loads(
+        (tmp_path / "reports" / "publication" / "camera_ready_design_sources.json").read_text()
+    )
     assert design["design_sources"][0]["tool"] == "figma"
     assert lineage.verify_against_saved(payload) == []
 
@@ -90,10 +92,7 @@ def test_lineage_blocks_latex_data_plot_without_tracked_sources(tmp_path: Path, 
 
     payload = lineage.build_entries()
     errors = [
-        error
-        for entry in payload["entries"]
-        if entry["latex_used"]
-        for error in entry["verification_errors"]
+        error for entry in payload["entries"] if entry["latex_used"] for error in entry["verification_errors"]
     ]
 
     assert "missing_source_script" in errors

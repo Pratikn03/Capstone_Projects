@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 import numpy as np
 
@@ -22,8 +22,7 @@ def _require_ngboost():
         from ngboost.scores import LogScore
     except Exception as exc:  # pragma: no cover - environment-dependent
         raise RuntimeError(
-            "NGBoost is required for distributional forecasting. "
-            "Install ngboost in the active environment."
+            "NGBoost is required for distributional forecasting. Install ngboost in the active environment."
         ) from exc
     return NGBRegressor, Normal, LogScore
 

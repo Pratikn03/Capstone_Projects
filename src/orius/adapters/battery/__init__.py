@@ -8,6 +8,7 @@ Battery-only theorem helpers now live under:
 
     from orius.adapters.battery.theory import forward_tube
 """
+
 from __future__ import annotations
 
 from orius.dc3s.battery_adapter import BatteryDomainAdapter

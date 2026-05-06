@@ -12,6 +12,7 @@ Protocol
 
 Non-battery analog of tbl04_transfer_stress.tex.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,14 +23,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from orius.orius_bench.real_data_loader import get_ccpp_rows, get_bidmc_rows
-from orius.orius_bench.industrial_track import IndustrialTrackAdapter
-from orius.orius_bench.healthcare_track import HealthcareTrackAdapter
-from orius.orius_bench.fault_engine import generate_fault_schedule, active_faults
-from orius.universal_framework import run_universal_step
-from orius.orius_bench.metrics_engine import compute_all_metrics
-
 import numpy as np
+
+from orius.orius_bench.fault_engine import active_faults, generate_fault_schedule
+from orius.orius_bench.healthcare_track import HealthcareTrackAdapter
+from orius.orius_bench.industrial_track import IndustrialTrackAdapter
+from orius.orius_bench.real_data_loader import get_bidmc_rows, get_ccpp_rows
+from orius.universal_framework import run_universal_step
 
 # ---------------------------------------------------------------------------
 # Domain configs (match run_universal_orius_validation.py)
@@ -37,7 +37,7 @@ import numpy as np
 
 _DOMAIN_CFGS = {
     "industrial": {"expected_cadence_s": 900.0, "n_vol_bins": 1},
-    "healthcare": {"expected_cadence_s": 30.0,  "n_vol_bins": 1},
+    "healthcare": {"expected_cadence_s": 30.0, "n_vol_bins": 1},
 }
 
 _DOMAIN_QUANTILES = {
@@ -53,7 +53,9 @@ _HOLD_KEYS = {
 
 def _make_adapter_from_rows(domain: str, rows: list[dict]) -> object:
     """Create a track adapter whose starting-state pool is drawn from `rows`."""
-    import tempfile, csv, os
+    import csv
+    import os
+    import tempfile
 
     # Write the subset of rows to a temp file so the track can load them.
     # The track reads `dataset_path` on __init__ and uses rows for reset().
@@ -62,8 +64,7 @@ def _make_adapter_from_rows(domain: str, rows: list[dict]) -> object:
     else:  # healthcare
         fieldnames = ["HR", "SpO2", "RR"]
 
-    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".csv",
-                                      delete=False, newline="")
+    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False, newline="")
     writer = csv.DictWriter(tmp, fieldnames=fieldnames)
     writer.writeheader()
     writer.writerows(rows)
@@ -79,8 +80,9 @@ def _make_adapter_from_rows(domain: str, rows: list[dict]) -> object:
 
 
 def _make_domain_adapter(domain: str, cfg: dict) -> object:
-    from orius.universal_framework.industrial_adapter import IndustrialDomainAdapter as IA
     from orius.universal_framework.healthcare_adapter import HealthcareDomainAdapter as HA
+    from orius.universal_framework.industrial_adapter import IndustrialDomainAdapter as IA
+
     if domain == "industrial":
         return IA()
     else:
@@ -134,8 +136,7 @@ def _run_split_episode(
                 raw_telemetry.setdefault(f"_hold_{key}", prev.get(key, 0.0))
 
         # Simple baseline action: propose 0 (no change)
-        candidate = {k: 0.0 for k in (["power_setpoint"] if domain == "industrial"
-                                        else ["dosage_rate"])}
+        candidate = {k: 0.0 for k in (["power_setpoint"] if domain == "industrial" else ["dosage_rate"])}
         constraints = _make_constraints(domain, ts)
 
         repaired = run_universal_step(
@@ -159,14 +160,16 @@ def _run_split_episode(
         trajectory.append(step)
         history.append(raw_telemetry)
 
-        records.append({
-            "step":      t,
-            "violated":  violation["violated"],
-            "repaired":  repaired.get("repaired", False),
-        })
+        records.append(
+            {
+                "step": t,
+                "violated": violation["violated"],
+                "repaired": repaired.get("repaired", False),
+            }
+        )
 
     tsvr = sum(1 for r in records if r["violated"]) / len(records)
-    ir   = interventions / horizon
+    ir = interventions / horizon
     return {"tsvr": tsvr, "intervention_rate": ir, "n_steps": horizon}
 
 
@@ -178,18 +181,17 @@ def run_domain_transfer(
 ) -> dict:
     split = int(len(all_rows) * 0.8)
     train_rows = all_rows[:split]
-    test_rows  = all_rows[split:]
+    test_rows = all_rows[split:]
 
-    print(f"  {domain}: {len(all_rows)} rows total | "
-          f"train={len(train_rows)} | test={len(test_rows)}")
+    print(f"  {domain}: {len(all_rows)} rows total | train={len(train_rows)} | test={len(test_rows)}")
 
     train_tsvrs, train_irs = [], []
-    test_tsvrs,  test_irs  = [], []
+    test_tsvrs, test_irs = [], []
 
     for s in range(seeds):
         seed = 2000 + s
         tr = _run_split_episode(domain, train_rows, seed, horizon)
-        te = _run_split_episode(domain, test_rows,  seed, horizon)
+        te = _run_split_episode(domain, test_rows, seed, horizon)
         train_tsvrs.append(tr["tsvr"])
         train_irs.append(tr["intervention_rate"])
         test_tsvrs.append(te["tsvr"])
@@ -201,17 +203,17 @@ def run_domain_transfer(
         return {"mean": float(a.mean()), "std": float(a.std())}
 
     return {
-        "domain":      domain,
-        "n_rows":      len(all_rows),
-        "train_rows":  len(train_rows),
-        "test_rows":   len(test_rows),
-        "split_type":  "temporal_80_20",
-        "seeds":       seeds,
-        "horizon":     horizon,
-        "train_tsvr":  _fmt(train_tsvrs),
-        "test_tsvr":   _fmt(test_tsvrs),
-        "train_ir":    _fmt(train_irs),
-        "test_ir":     _fmt(test_irs),
+        "domain": domain,
+        "n_rows": len(all_rows),
+        "train_rows": len(train_rows),
+        "test_rows": len(test_rows),
+        "split_type": "temporal_80_20",
+        "seeds": seeds,
+        "horizon": horizon,
+        "train_tsvr": _fmt(train_tsvrs),
+        "test_tsvr": _fmt(test_tsvrs),
+        "train_ir": _fmt(train_irs),
+        "test_ir": _fmt(test_irs),
         "generalises": _fmt(test_tsvrs)["mean"] <= _fmt(train_tsvrs)["mean"] * 1.25,
     }
 
@@ -272,11 +274,11 @@ def write_transfer_table(results: list[dict], out_path: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Temporal 80/20 transfer validation for real-data proof domains.")
-    parser.add_argument("--seeds",   type=int, default=5)
+        description="Temporal 80/20 transfer validation for real-data proof domains."
+    )
+    parser.add_argument("--seeds", type=int, default=5)
     parser.add_argument("--horizon", type=int, default=48)
-    parser.add_argument("--out",     type=Path,
-                        default=ROOT / "reports" / "real_data_transfer")
+    parser.add_argument("--out", type=Path, default=ROOT / "reports" / "real_data_transfer")
     args = parser.parse_args()
 
     args.out.mkdir(parents=True, exist_ok=True)
@@ -286,8 +288,7 @@ def main() -> None:
     print("======================================================")
 
     all_results = []
-    for domain, loader in [("industrial", get_ccpp_rows),
-                            ("healthcare", get_bidmc_rows)]:
+    for domain, loader in [("industrial", get_ccpp_rows), ("healthcare", get_bidmc_rows)]:
         print(f"\n[{domain}]")
         rows = loader()
         res = run_domain_transfer(domain, rows, seeds=args.seeds, horizon=args.horizon)

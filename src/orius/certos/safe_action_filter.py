@@ -1,7 +1,9 @@
 """CertOS safe action filter: shield projection."""
+
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 
 def filter_action(
@@ -13,6 +15,7 @@ def filter_action(
 ) -> tuple[Mapping[str, float], Mapping[str, Any]]:
     """Delegate to orius.dc3s.shield.repair_action."""
     from orius.dc3s.shield import repair_action
+
     return repair_action(
         a_star=a_star,
         state=state,

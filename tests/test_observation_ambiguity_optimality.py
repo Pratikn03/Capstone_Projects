@@ -9,7 +9,6 @@ from orius.universal_theory.observation_ambiguity import (
     verify_covered_orius_release,
 )
 
-
 SAFE_ACTION_SETS = {
     "x_safe_left": {"hold", "brake"},
     "x_safe_right": {"hold", "slow"},

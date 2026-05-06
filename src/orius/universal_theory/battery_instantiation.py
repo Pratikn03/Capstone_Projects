@@ -3,11 +3,12 @@
 These utilities stay battery-specific by design; the universal theorem layer
 should not encode SOC, MWh, or battery-only fallback semantics directly.
 """
+
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping
-
+from collections.abc import Mapping
+from typing import Any
 
 T6_THEOREM_FORMULA = "floor(delta_bnd^2 / (2 * sigma_d^2 * log(2 / delta)))"
 T7_THEOREM_SURFACE = "piecewise_hold_or_safe_landing_fallback"
@@ -159,7 +160,7 @@ def certificate_expiration_bound(
     delta_bnd = max(0.0, float(delta_bnd))
     sigma_sq = float(sigma_d) ** 2
     denominator = 2.0 * sigma_sq * math.log(2.0 / float(delta))
-    bound = math.floor((delta_bnd ** 2) / denominator) if denominator > 0.0 else 0
+    bound = math.floor((delta_bnd**2) / denominator) if denominator > 0.0 else 0
     theorem_contract = {
         "theorem_id": "T6",
         "theorem_surface": "canonical_delta_aware_expiration_bound",
@@ -239,7 +240,9 @@ def compute_battery_safe_landing_action(
     current_soc = float(current_soc_mwh)
     dt_hours = max(_f(constraints.get("time_step_hours"), 1.0), 1e-9)
     charge_eff = max(1e-6, _f(constraints.get("charge_efficiency"), _f(constraints.get("efficiency"), 1.0)))
-    discharge_eff = max(1e-6, _f(constraints.get("discharge_efficiency"), _f(constraints.get("efficiency"), 1.0)))
+    discharge_eff = max(
+        1e-6, _f(constraints.get("discharge_efficiency"), _f(constraints.get("efficiency"), 1.0))
+    )
     max_power = _f(
         constraints.get("max_power_mw"),
         max(_f(constraints.get("max_charge_mw"), 0.0), _f(constraints.get("max_discharge_mw"), 0.0)),
@@ -249,8 +252,12 @@ def compute_battery_safe_landing_action(
     ramp_mw = _f(constraints.get("ramp_mw"), 0.0)
     last_net = _f(constraints.get("last_net_mw"), 0.0)
 
-    safe_margin_mwh = max(0.0, _f(constraints.get("safe_landing_margin_mwh"), _f(constraints.get("safe_margin_mwh"), 0.0)))
-    safe_margin_pct = max(0.0, _f(constraints.get("safe_landing_margin_pct"), _f(constraints.get("safe_margin_pct"), 0.05)))
+    safe_margin_mwh = max(
+        0.0, _f(constraints.get("safe_landing_margin_mwh"), _f(constraints.get("safe_margin_mwh"), 0.0))
+    )
+    safe_margin_pct = max(
+        0.0, _f(constraints.get("safe_landing_margin_pct"), _f(constraints.get("safe_margin_pct"), 0.05))
+    )
     configured_margin = max(safe_margin_mwh, safe_margin_pct * capacity)
     safe_zone_min = min(soc_max, soc_min + configured_margin)
     safe_zone_max = max(soc_min, soc_max - configured_margin)
@@ -318,7 +325,9 @@ def validate_battery_fallback(
     eps = max(0.0, float(model_error_mwh))
     dt_hours = max(_f(constraints.get("time_step_hours"), 1.0), 1e-9)
     charge_eff = max(1e-6, _f(constraints.get("charge_efficiency"), _f(constraints.get("efficiency"), 1.0)))
-    discharge_eff = max(1e-6, _f(constraints.get("discharge_efficiency"), _f(constraints.get("efficiency"), 1.0)))
+    discharge_eff = max(
+        1e-6, _f(constraints.get("discharge_efficiency"), _f(constraints.get("efficiency"), 1.0))
+    )
     landing_plan = compute_battery_safe_landing_action(current_soc_mwh=current_soc, constraints=constraints)
 
     hold_action = zero_dispatch_fallback()
@@ -457,9 +466,7 @@ def should_renew_certificate(
         "remaining_certified_steps": int(remaining),
         "tau_t": int(tau_t),
         "renewal_trigger_reason": (
-            "tau_t_remaining_le_threshold"
-            if remaining <= renewal_threshold_steps and tau_t > 0
-            else ""
+            "tau_t_remaining_le_threshold" if remaining <= renewal_threshold_steps and tau_t > 0 else ""
         ),
     }
 

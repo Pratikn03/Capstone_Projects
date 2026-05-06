@@ -1,19 +1,20 @@
 """Interval API tests with patched dependencies."""
+
 from __future__ import annotations
 
-from pathlib import Path
 import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
+import services.api.routers.forecast_intervals as intervals
+from orius.forecasting.uncertainty.conformal import ConformalConfig, ConformalInterval
 from services.api.config import get_api_keys
 from services.api.main import app
 from services.api.security import API_KEY_NAME
-import services.api.routers.forecast_intervals as intervals
-from orius.forecasting.uncertainty.conformal import ConformalConfig, ConformalInterval
 
 HEADERS = {API_KEY_NAME: "interval-test-key"}
 

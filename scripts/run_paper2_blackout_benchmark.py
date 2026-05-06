@@ -13,11 +13,11 @@ Outputs:
   reports/paper2/horizon_error.json
   reports/paper2/fig_certificate_shrinkage.png
 """
+
 from __future__ import annotations
 
 import csv
 import json
-import math
 import sys
 from pathlib import Path
 
@@ -53,7 +53,7 @@ def _write_svg_certificate_shrinkage(out_dir, forward_tube, last_action, margin_
         '<?xml version="1.0"?>',
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">',
         f'<rect width="{w}" height="{h}" fill="white"/>',
-        f'<text x="10" y="20" font-size="12">Certificate tube shrinkage (forward_tube)</text>',
+        '<text x="10" y="20" font-size="12">Certificate tube shrinkage (forward_tube)</text>',
     ]
     colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]
     for i, (sigma_d, radii) in enumerate(pts.items()):
@@ -64,7 +64,9 @@ def _write_svg_certificate_shrinkage(out_dir, forward_tube, last_action, margin_
             path_pts.append(f"{x:.1f},{y:.1f}")
         d = "M " + " L ".join(path_pts)
         lines.append(f'<path d="{d}" fill="none" stroke="{colors[i % 3]}" stroke-width="2"/>')
-        lines.append(f'<text x="{w-80}" y="{30+i*15}" font-size="10" fill="{colors[i % 3]}">σ_d={sigma_d}</text>')
+        lines.append(
+            f'<text x="{w - 80}" y="{30 + i * 15}" font-size="10" fill="{colors[i % 3]}">σ_d={sigma_d}</text>'
+        )
     lines.append("</svg>")
     (out_dir / "fig_certificate_shrinkage.svg").write_text("\n".join(lines), encoding="utf-8")
 
@@ -93,6 +95,7 @@ def _simulate_half_life_aware(
 ) -> list[float]:
     """Apply last_action for tau_t steps, then zero; half-life-aware policy."""
     import random
+
     rng = random.Random(seed)
     dt = _f(constraints.get("time_step_hours"), 1.0)
     eta_c = _f(constraints.get("charge_efficiency"), 1.0)
@@ -121,6 +124,7 @@ def simulate_soc_trajectory(
 ) -> list[float]:
     """Simulate SOC trajectory with random walk (sigma_d per step)."""
     import random
+
     rng = random.Random(seed)
     dt = _f(constraints.get("time_step_hours"), 1.0)
     eta_c = _f(constraints.get("charge_efficiency"), 1.0)
@@ -145,6 +149,7 @@ def count_violations(trajectory: list[float], soc_min: float, soc_max: float) ->
 def main() -> int:
     sys.path.insert(0, str(REPO_ROOT / "src"))
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
         "temporal_theorems",
         REPO_ROOT / "src" / "orius" / "dc3s" / "temporal_theorems.py",
@@ -157,7 +162,6 @@ def main() -> int:
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    capacity_mwh = 100.0
     soc_min = 10.0
     soc_max = 90.0
     constraints = {
@@ -189,14 +193,16 @@ def main() -> int:
                 constraints=constraints,
                 sigma_d=sigma_d,
             )
-            rows_horizon.append({
-                "initial_soc_pct": round(soc_pct, 2),
-                "initial_soc_mwh": round(initial_soc, 2),
-                "sigma_d": sigma_d,
-                "tau_t": result["tau_t"],
-                "tube_lower_mwh": round(result["tube_lower_mwh"], 4),
-                "tube_upper_mwh": round(result["tube_upper_mwh"], 4),
-            })
+            rows_horizon.append(
+                {
+                    "initial_soc_pct": round(soc_pct, 2),
+                    "initial_soc_mwh": round(initial_soc, 2),
+                    "sigma_d": sigma_d,
+                    "tau_t": result["tau_t"],
+                    "tube_lower_mwh": round(result["tube_lower_mwh"], 4),
+                    "tube_upper_mwh": round(result["tube_upper_mwh"], 4),
+                }
+            )
 
     with open(OUT_DIR / "expiration_horizon.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=rows_horizon[0].keys())
@@ -237,7 +243,12 @@ def main() -> int:
                             )
                         elif policy == "immediate_shutdown":
                             traj = simulate_soc_trajectory(
-                                initial_soc, zero_dispatch_fallback(), blackout_len, constraints, sigma_d, seed=mc
+                                initial_soc,
+                                zero_dispatch_fallback(),
+                                blackout_len,
+                                constraints,
+                                sigma_d,
+                                seed=mc,
                             )
                         elif policy == "dc3s_no_temporal":
                             traj = simulate_soc_trajectory(
@@ -245,20 +256,21 @@ def main() -> int:
                             )
                         elif policy == "half_life_aware":
                             traj = _simulate_half_life_aware(
-                                initial_soc, last_action, blackout_len, tau_t,
-                                constraints, sigma_d, seed=mc
+                                initial_soc, last_action, blackout_len, tau_t, constraints, sigma_d, seed=mc
                             )
                         total_violations += count_violations(traj, soc_min, soc_max)
 
-                    rows_compare.append({
-                        "policy": policy,
-                        "blackout_length": blackout_len,
-                        "initial_soc_pct": round(soc_pct, 2),
-                        "sigma_d": sigma_d,
-                        "tau_t": tau_t,
-                        "violations_total": total_violations,
-                        "violation_rate": round(total_violations / (n_monte_carlo * blackout_len), 4),
-                    })
+                    rows_compare.append(
+                        {
+                            "policy": policy,
+                            "blackout_length": blackout_len,
+                            "initial_soc_pct": round(soc_pct, 2),
+                            "sigma_d": sigma_d,
+                            "tau_t": tau_t,
+                            "violations_total": total_violations,
+                            "violation_rate": round(total_violations / (n_monte_carlo * blackout_len), 4),
+                        }
+                    )
 
     with open(OUT_DIR / "blackout_policy_compare.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=rows_compare[0].keys())
@@ -283,8 +295,7 @@ def main() -> int:
             actual_exit_steps = []
             for mc in range(50):
                 traj = simulate_soc_trajectory(
-                    initial_soc, last_action, min(100, max(50, tau_pred * 2)),
-                    constraints, sigma_d, seed=mc
+                    initial_soc, last_action, min(100, max(50, tau_pred * 2)), constraints, sigma_d, seed=mc
                 )
                 for i, s in enumerate(traj):
                     if s < soc_min - 1e-9 or s > soc_max + 1e-9:
@@ -293,13 +304,15 @@ def main() -> int:
                 else:
                     actual_exit_steps.append(len(traj))
             mean_actual = sum(actual_exit_steps) / len(actual_exit_steps)
-            horizon_errors.append({
-                "initial_soc_pct": soc_pct,
-                "sigma_d": sigma_d,
-                "tau_t_predicted": tau_pred,
-                "mean_actual_exit_step": round(mean_actual, 2),
-                "error_steps": round(mean_actual - tau_pred, 2),
-            })
+            horizon_errors.append(
+                {
+                    "initial_soc_pct": soc_pct,
+                    "sigma_d": sigma_d,
+                    "tau_t_predicted": tau_pred,
+                    "mean_actual_exit_step": round(mean_actual, 2),
+                    "error_steps": round(mean_actual - tau_pred, 2),
+                }
+            )
 
     with open(OUT_DIR / "horizon_error.json", "w", encoding="utf-8") as f:
         json.dump({"horizon_errors": horizon_errors, "n_runs": 50}, f, indent=2)
@@ -308,6 +321,7 @@ def main() -> int:
     fig_path = OUT_DIR / "fig_certificate_shrinkage.png"
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
 
@@ -346,6 +360,7 @@ def main() -> int:
         fig_path = OUT_DIR / "fig_certificate_shrinkage.svg"
         # Try SVG→PNG via rsvg-convert or ImageMagick
         import subprocess
+
         svg_path = OUT_DIR / "fig_certificate_shrinkage.svg"
         png_path = OUT_DIR / "fig_certificate_shrinkage.png"
         for cmd in [

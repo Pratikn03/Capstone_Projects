@@ -14,7 +14,6 @@ import re
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BENCHMARK = REPO_ROOT / "reports" / "publication" / "three_domain_ml_benchmark.csv"
 
@@ -47,11 +46,20 @@ HEADLINE_FILES = [
 
 FORBIDDEN_HEADLINE_PATTERNS = [
     (re.compile(r"\bTSVR\s+0\.1250?\s*(?:->|→)\s*0\.0417\b"), "old AV validation-harness TSVR headline"),
-    (re.compile(r"\bTSVR\s+0\.2917\s*(?:->|→)\s*0\.0417\b"), "old healthcare validation-harness TSVR headline"),
+    (
+        re.compile(r"\bTSVR\s+0\.2917\s*(?:->|→)\s*0\.0417\b"),
+        "old healthcare validation-harness TSVR headline",
+    ),
     (re.compile(r"\b0\.2276\s*(?:->|→)\s*0\.0000\b"), "old AV baseline headline"),
     (re.compile(r"\b0\.0393\s*(?:->|→)\s*0\.0000\b"), "old battery baseline headline"),
-    (re.compile(r"\bbaseline TSVR 0\.1250\s*(?:->|→)\s*ORIUS TSVR 0\.0417\b", re.I), "old AV replay headline"),
-    (re.compile(r"\bbaseline TSVR 0\.2917\s*(?:->|→)\s*ORIUS TSVR 0\.0417\b", re.I), "old healthcare replay headline"),
+    (
+        re.compile(r"\bbaseline TSVR 0\.1250\s*(?:->|→)\s*ORIUS TSVR 0\.0417\b", re.I),
+        "old AV replay headline",
+    ),
+    (
+        re.compile(r"\bbaseline TSVR 0\.2917\s*(?:->|→)\s*ORIUS TSVR 0\.0417\b", re.I),
+        "old healthcare replay headline",
+    ),
 ]
 
 
@@ -142,7 +150,9 @@ def _check_publication_closure(findings: list[str], canonical: dict[str, dict[st
         if domain != "Battery Energy Storage" and (
             "runtime denominator" not in status or "secondary proxy" not in status
         ):
-            findings.append(f"{path.relative_to(REPO_ROOT)} {domain} must disclose runtime denominator and secondary proxy")
+            findings.append(
+                f"{path.relative_to(REPO_ROOT)} {domain} must disclose runtime denominator and secondary proxy"
+            )
 
 
 def _check_forbidden_headline_text(findings: list[str]) -> None:

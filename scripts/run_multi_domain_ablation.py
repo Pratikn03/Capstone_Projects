@@ -27,6 +27,7 @@ Usage
     python scripts/run_multi_domain_ablation.py [--seeds 5] [--horizon 48]
         [--out reports/multi_domain_ablation]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -37,18 +38,20 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
+from datetime import UTC
+
 import numpy as np
 
+from orius.adapters.healthcare import HealthcareDomainAdapter
+from orius.adapters.vehicle import VehicleDomainAdapter
 from orius.orius_bench.adapter import BenchmarkAdapter
 from orius.orius_bench.battery_track import BatteryTrackAdapter
-from orius.orius_bench.vehicle_track import VehicleTrackAdapter
-from orius.orius_bench.healthcare_track import HealthcareTrackAdapter
-from orius.orius_bench.controller_api import NominalController, DC3SController, DomainAwareController
+from orius.orius_bench.controller_api import DC3SController, DomainAwareController, NominalController
 from orius.orius_bench.fault_engine import FaultEvent, FaultSchedule, active_faults, generate_fault_schedule
+from orius.orius_bench.healthcare_track import HealthcareTrackAdapter
 from orius.orius_bench.metrics_engine import StepRecord, compute_all_metrics
+from orius.orius_bench.vehicle_track import VehicleTrackAdapter
 from orius.universal_framework import run_universal_step
-from orius.adapters.vehicle import VehicleDomainAdapter, VehicleTrackAdapter as VehicleAdapter
-from orius.adapters.healthcare import HealthcareDomainAdapter, HealthcareTrackAdapter as HCAdapter
 
 # ---------------------------------------------------------------------------
 # Domain catalogue (same 3 as the active promoted program)
@@ -64,21 +67,21 @@ FAULT_TYPES = ["bias", "noise", "stuck_sensor", "blackout", "multi"]
 
 # DC3S domain configs (mirrors run_universal_orius_validation.py)
 _DOMAIN_CFGS: dict[str, dict] = {
-    "vehicle":    {"expected_cadence_s": 0.25},
+    "vehicle": {"expected_cadence_s": 0.25},
     "healthcare": {"expected_cadence_s": 1.0},
-    "battery":    {"expected_cadence_s": 3600.0},
+    "battery": {"expected_cadence_s": 3600.0},
 }
 
 _DOMAIN_QUANTILES: dict[str, float] = {
-    "vehicle":    0.9,
+    "vehicle": 0.9,
     "healthcare": 5.0,
-    "battery":    10.0,
+    "battery": 10.0,
 }
 
 _DOMAIN_HOLD_KEYS: dict[str, tuple[str, ...]] = {
-    "vehicle":    ("position_m", "speed_mps", "speed_limit_mps", "lead_position_m"),
+    "vehicle": ("position_m", "speed_mps", "speed_limit_mps", "lead_position_m"),
     "healthcare": ("hr_bpm", "spo2_pct", "respiratory_rate"),
-    "battery":    ("soc", "load_mw"),
+    "battery": ("soc", "load_mw"),
 }
 
 PROOF_DOMAINS = {"vehicle", "healthcare"}
@@ -87,6 +90,7 @@ PROOF_DOMAINS = {"vehicle", "healthcare"}
 # ---------------------------------------------------------------------------
 # Fault schedule generators (single-type isolation)
 # ---------------------------------------------------------------------------
+
 
 def _make_single_fault_schedule(seed: int, horizon: int, fault_type: str) -> FaultSchedule:
     """Generate a schedule with ONLY faults of *fault_type*."""
@@ -120,6 +124,7 @@ def _make_single_fault_schedule(seed: int, horizon: int, fault_type: str) -> Fau
 # Domain adapter factory (mirrors run_universal_orius_validation.py)
 # ---------------------------------------------------------------------------
 
+
 def _make_domain_adapter(domain: str) -> object:
     cfg = _DOMAIN_CFGS.get(domain, {"expected_cadence_s": 1.0})
     if domain == "vehicle":
@@ -133,8 +138,11 @@ def _make_domain_constraints(domain: str, state: dict) -> dict:
     if domain == "vehicle":
         return {
             "speed_limit_mps": float(state.get("speed_limit_mps", 30.0)),
-            "accel_min_mps2": -5.0, "accel_max_mps2": 3.0,
-            "dt_s": 0.25, "min_headway_m": 5.0, "headway_time_s": 2.0,
+            "accel_min_mps2": -5.0,
+            "accel_max_mps2": 3.0,
+            "dt_s": 0.25,
+            "min_headway_m": 5.0,
+            "headway_time_s": 2.0,
         }
     if domain == "healthcare":
         return {"spo2_min_pct": 90.0, "hr_min_bpm": 40.0, "hr_max_bpm": 120.0}
@@ -142,19 +150,22 @@ def _make_domain_constraints(domain: str, state: dict) -> dict:
 
 
 def _iso_step(step: int) -> str:
-    from datetime import datetime, timedelta, timezone
-    return (datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=step)).isoformat().replace("+00:00", "Z")
+    from datetime import datetime, timedelta
+
+    return (datetime(2026, 1, 1, tzinfo=UTC) + timedelta(seconds=step)).isoformat().replace("+00:00", "Z")
 
 
 # ---------------------------------------------------------------------------
 # Episode runners
 # ---------------------------------------------------------------------------
 
+
 def _run_baseline_episode(
     track: BenchmarkAdapter, controller, seed: int, horizon: int, fault_type: str
 ) -> list[StepRecord]:
     """Nominal or Robust controller baseline — no DC3S repair."""
     import math
+
     schedule = _make_single_fault_schedule(seed, horizon, fault_type)
     track.reset(seed)
     records: list[StepRecord] = []
@@ -171,15 +182,23 @@ def _run_baseline_episode(
         trajectory.append({**dict(new_state), **action})
         useful_work = track.compute_useful_work(trajectory[-2:] if len(trajectory) >= 2 else [trajectory[-1]])
         soc_after = 0.5 if not violation["violated"] else 0.0
-        records.append(StepRecord(
-            step=t, true_state=ts, observed_state=obs, action=action,
-            soc_after=soc_after, soc_min=0.1, soc_max=0.9,
-            certificate_valid=not violation["violated"],
-            certificate_predicted_valid=not violation["violated"],
-            fallback_active=bool(faults and faults[0].kind == "blackout"),
-            useful_work=0.0 if math.isnan(useful_work) else useful_work,
-            audit_fields_present=1, audit_fields_required=1,
-        ))
+        records.append(
+            StepRecord(
+                step=t,
+                true_state=ts,
+                observed_state=obs,
+                action=action,
+                soc_after=soc_after,
+                soc_min=0.1,
+                soc_max=0.9,
+                certificate_valid=not violation["violated"],
+                certificate_predicted_valid=not violation["violated"],
+                fallback_active=bool(faults and faults[0].kind == "blackout"),
+                useful_work=0.0 if math.isnan(useful_work) else useful_work,
+                audit_fields_present=1,
+                audit_fields_required=1,
+            )
+        )
     return records
 
 
@@ -188,6 +207,7 @@ def _run_dc3s_episode(
 ) -> list[StepRecord]:
     """DC3S controller with universal repair (proof domains) or raw (battery)."""
     import math
+
     domain = track.domain_name
     schedule = _make_single_fault_schedule(seed, horizon, fault_type)
     track.reset(seed)
@@ -240,15 +260,23 @@ def _run_dc3s_episode(
         soc_after = 0.5 if not violation["violated"] else 0.0
         trajectory.append({**dict(new_state), **action})
         useful_work = track.compute_useful_work(trajectory[-2:] if len(trajectory) >= 2 else [trajectory[-1]])
-        records.append(StepRecord(
-            step=t, true_state=ts, observed_state=obs, action=action,
-            soc_after=soc_after, soc_min=0.1, soc_max=0.9,
-            certificate_valid=not violation["violated"],
-            certificate_predicted_valid=not violation["violated"],
-            fallback_active=bool(faults and faults[0].kind == "blackout"),
-            useful_work=0.0 if math.isnan(useful_work) else useful_work,
-            audit_fields_present=1, audit_fields_required=1,
-        ))
+        records.append(
+            StepRecord(
+                step=t,
+                true_state=ts,
+                observed_state=obs,
+                action=action,
+                soc_after=soc_after,
+                soc_min=0.1,
+                soc_max=0.9,
+                certificate_valid=not violation["violated"],
+                certificate_predicted_valid=not violation["violated"],
+                fallback_active=bool(faults and faults[0].kind == "blackout"),
+                useful_work=0.0 if math.isnan(useful_work) else useful_work,
+                audit_fields_present=1,
+                audit_fields_required=1,
+            )
+        )
     return records
 
 
@@ -256,19 +284,20 @@ def _run_dc3s_episode(
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Multi-domain fault-type ablation")
-    parser.add_argument("--seeds",   type=int, default=5)
+    parser.add_argument("--seeds", type=int, default=5)
     parser.add_argument("--horizon", type=int, default=48)
-    parser.add_argument("--out",     default="reports/multi_domain_ablation")
+    parser.add_argument("--out", default="reports/multi_domain_ablation")
     args = parser.parse_args()
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
 
     nominal_ctrl = NominalController()
-    dc3s_ctrl    = DC3SController()
-    controllers  = [("nominal", nominal_ctrl), ("dc3s", dc3s_ctrl)]
+    dc3s_ctrl = DC3SController()
+    controllers = [("nominal", nominal_ctrl), ("dc3s", dc3s_ctrl)]
 
     all_rows: list[dict] = []
 
@@ -285,23 +314,30 @@ def main() -> int:
                         else:
                             records = _run_dc3s_episode(track, ctrl, seed, args.horizon, fault_type)
                         metrics = compute_all_metrics(records)
-                        all_rows.append({
-                            "domain":            domain,
-                            "fault_type":        fault_type,
-                            "controller":        ctrl_name,
-                            "seed":              seed,
-                            "tsvr":              round(metrics.tsvr, 6),
-                            "intervention_rate": round(metrics.intervention_rate, 6),
-                            "oasg":              round(metrics.oasg, 6),
-                        })
-                    except Exception as exc:  # noqa: BLE001
+                        all_rows.append(
+                            {
+                                "domain": domain,
+                                "fault_type": fault_type,
+                                "controller": ctrl_name,
+                                "seed": seed,
+                                "tsvr": round(metrics.tsvr, 6),
+                                "intervention_rate": round(metrics.intervention_rate, 6),
+                                "oasg": round(metrics.oasg, 6),
+                            }
+                        )
+                    except Exception as exc:
                         print(f"    ERROR {domain}/{fault_type}/{ctrl_name}/seed={seed}: {exc}")
-                        all_rows.append({
-                            "domain": domain, "fault_type": fault_type,
-                            "controller": ctrl_name, "seed": seed,
-                            "tsvr": float("nan"), "intervention_rate": float("nan"),
-                            "oasg": float("nan"),
-                        })
+                        all_rows.append(
+                            {
+                                "domain": domain,
+                                "fault_type": fault_type,
+                                "controller": ctrl_name,
+                                "seed": seed,
+                                "tsvr": float("nan"),
+                                "intervention_rate": float("nan"),
+                                "oasg": float("nan"),
+                            }
+                        )
 
     csv_path = out / "fault_type_tsvr.csv"
     with open(csv_path, "w", newline="") as f:

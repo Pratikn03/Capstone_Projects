@@ -14,6 +14,7 @@ Important scope note:
   probability by definition or as claiming coefficient-wise optimality without
   the extra T10 boundary-mass and indistinguishability assumptions.
 """
+
 from __future__ import annotations
 
 import math
@@ -36,6 +37,7 @@ class FrontierPoint:
         is_feasible      : True iff lower_bound ≥ 0 (always True by construction,
                            since we clamp to 0).
     """
+
     mean_reliability: float
     upper_bound: float
     lower_bound: float
@@ -88,16 +90,18 @@ def compute_frontier(
     points: list[FrontierPoint] = []
     for w_bar in w_bar_values:
         w_bar_f = float(w_bar)
-        upper = alpha * (1.0 - w_bar_f) * T           # T3 upper bound
-        lower = max(0.0, upper - correction)            # T10 lower bound (clamped)
+        upper = alpha * (1.0 - w_bar_f) * T  # T3 upper bound
+        lower = max(0.0, upper - correction)  # T10 lower bound (clamped)
         gap = upper - lower
-        points.append(FrontierPoint(
-            mean_reliability=w_bar_f,
-            upper_bound=upper,
-            lower_bound=lower,
-            gap=gap,
-            is_feasible=True,  # always: lower ≥ 0 by construction
-        ))
+        points.append(
+            FrontierPoint(
+                mean_reliability=w_bar_f,
+                upper_bound=upper,
+                lower_bound=lower,
+                gap=gap,
+                is_feasible=True,  # always: lower ≥ 0 by construction
+            )
+        )
     return points
 
 

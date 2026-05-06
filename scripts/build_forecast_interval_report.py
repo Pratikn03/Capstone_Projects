@@ -1,9 +1,10 @@
 """Build a conformal interval report from saved calibration/test arrays."""
+
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import numpy as np
 import yaml
@@ -42,16 +43,17 @@ def main() -> None:
 
     cal_template = args.cal or cfg.get("calibration_npz", "artifacts/backtests/calibration.npz")
     test_template = args.test or cfg.get("test_npz", "artifacts/backtests/test.npz")
-    cal_path = Path(cal_template.format(target=target)) if "{target}" in str(cal_template) else Path(cal_template)
-    test_path = Path(test_template.format(target=target)) if "{target}" in str(test_template) else Path(test_template)
+    cal_path = (
+        Path(cal_template.format(target=target)) if "{target}" in str(cal_template) else Path(cal_template)
+    )
+    test_path = (
+        Path(test_template.format(target=target)) if "{target}" in str(test_template) else Path(test_template)
+    )
     alpha = args.alpha
     if alpha is None:
         alpha = float(cfg.get("conformal", {}).get("alpha", 0.10))
     if not cal_path.exists() or not test_path.exists():
-        raise SystemExit(
-            "Missing calibration/test npz. Expected: "
-            f"{cal_path} and {test_path}."
-        )
+        raise SystemExit(f"Missing calibration/test npz. Expected: {cal_path} and {test_path}.")
 
     y_true_cal, y_pred_cal = _load_npz(cal_path)
     y_true_test, y_pred_test = _load_npz(test_path)

@@ -1,4 +1,5 @@
 """Smoke test the FastAPI app without launching a server."""
+
 from __future__ import annotations
 
 import sys

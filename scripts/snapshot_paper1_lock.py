@@ -7,11 +7,12 @@ enables CI to detect drift from locked values.
 Usage:
     python scripts/snapshot_paper1_lock.py
 """
+
 from __future__ import annotations
 
 import json
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -53,7 +54,7 @@ def main() -> None:
     CANONICAL_RUNS_DIR.mkdir(parents=True, exist_ok=True)
 
     snapshot_meta = {
-        "snapshot_at_utc": datetime.now(timezone.utc).isoformat(),
+        "snapshot_at_utc": datetime.now(UTC).isoformat(),
         "purpose": "Paper 1 battery foundation lock for ORIUS",
         "artifacts_copied": [],
         "artifacts_missing": [],

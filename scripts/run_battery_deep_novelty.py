@@ -10,19 +10,19 @@ Outputs:
 - raw-sequence PatchTST benchmark against the engineered-track GBM baseline
 - manuscript-ready tables and figures copied into paper assets
 """
+
 from __future__ import annotations
 
 import argparse
 import csv
-from dataclasses import asdict
 import json
-import math
 import os
-from pathlib import Path
 import shutil
+from collections.abc import Mapping, Sequence
+from pathlib import Path
 from statistics import mean
 from textwrap import dedent
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
@@ -31,11 +31,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score
 import torch
 import torch.nn.functional as F
+from sklearn.metrics import roc_auc_score
 from torch.utils.data import DataLoader, TensorDataset
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = REPO_ROOT / "src"
@@ -47,16 +46,16 @@ from orius.cpsbench_iot.runner import _to_telemetry_events, run_single
 from orius.cpsbench_iot.scenarios import DEFAULT_SCENARIOS, generate_episode
 from orius.dc3s.certificate import recompute_certificate_hash, store_certificates_batch
 from orius.dc3s.deep_oqe import (
+    FEATURE_NAMES,
     DeepOQEConfig,
     DeepOQEModel,
-    FEATURE_NAMES,
     extract_feature_vector,
     save_model,
 )
 from orius.dc3s.quality import compute_reliability
 from orius.forecasting.dl_patchtst import PatchTSTForecaster
-from orius.orius_bench.metrics_engine import StepRecord, compute_all_metrics as compute_bench_metrics
-
+from orius.orius_bench.metrics_engine import StepRecord
+from orius.orius_bench.metrics_engine import compute_all_metrics as compute_bench_metrics
 
 DEFAULT_OUT_DIR = REPO_ROOT / "reports" / "publication"
 DEFAULT_PAPER_TABLE_DIR = REPO_ROOT / "paper" / "assets" / "tables" / "generated"
@@ -65,7 +64,7 @@ DEFAULT_MODEL_DIR = REPO_ROOT / "artifacts" / "deep_oqe"
 ENGINEERED_BASELINE_PATH = REPO_ROOT / "reports" / "week2_metrics.json"
 FEATURES_PATH = REPO_ROOT / "data" / "processed" / "features.parquet"
 
-TRAIN_SCENARIOS = list(DEFAULT_SCENARIOS) + ["stale_sensor"]
+TRAIN_SCENARIOS = [*list(DEFAULT_SCENARIOS), "stale_sensor"]
 EVAL_SCENARIOS = list(DEFAULT_SCENARIOS)
 TRAIN_SEEDS = [11, 22, 33, 44]
 EVAL_SEEDS = [55, 66]
@@ -103,7 +102,9 @@ def _latex_escape(value: Any) -> str:
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run the bounded battery-scoped ORIUS deep-learning novelty package.")
+    parser = argparse.ArgumentParser(
+        description="Run the bounded battery-scoped ORIUS deep-learning novelty package."
+    )
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument("--model-dir", type=Path, default=DEFAULT_MODEL_DIR)
     parser.add_argument("--paper-table-dir", type=Path, default=DEFAULT_PAPER_TABLE_DIR)
@@ -267,7 +268,9 @@ def train_deep_oqe(
             loss.backward()
             optimizer.step()
             batch_losses.append(float(loss.detach().cpu().item()))
-        history.append({"epoch": epoch + 1, "train_loss": float(np.mean(batch_losses)) if batch_losses else 0.0})
+        history.append(
+            {"epoch": epoch + 1, "train_loss": float(np.mean(batch_losses)) if batch_losses else 0.0}
+        )
 
     model.eval()
     with torch.no_grad():
@@ -333,8 +336,12 @@ def write_deep_oqe_artifacts(
 ) -> dict[str, Any]:
     eval_frame = result["eval_frame"]
     low_threshold = 0.35
-    low_rate_fault = float((eval_frame.loc[eval_frame["fault_present"] == 1, "predicted_w"] < low_threshold).mean())
-    low_rate_clean = float((eval_frame.loc[eval_frame["fault_present"] == 0, "predicted_w"] < low_threshold).mean())
+    low_rate_fault = float(
+        (eval_frame.loc[eval_frame["fault_present"] == 1, "predicted_w"] < low_threshold).mean()
+    )
+    low_rate_clean = float(
+        (eval_frame.loc[eval_frame["fault_present"] == 0, "predicted_w"] < low_threshold).mean()
+    )
     lift = low_rate_fault / max(low_rate_clean, 1e-6)
 
     bucket_rows: list[dict[str, Any]] = []
@@ -423,31 +430,41 @@ def write_deep_oqe_artifacts(
         bucket_rows,
         ["bucket", "count", "predicted_w_mean", "target_w_mean", "mae", "fault_rate"],
     )
-    json_path.write_text(json.dumps({"summary": summary, "buckets": bucket_rows}, indent=2, sort_keys=True), encoding="utf-8")
+    json_path.write_text(
+        json.dumps({"summary": summary, "buckets": bucket_rows}, indent=2, sort_keys=True), encoding="utf-8"
+    )
     md_path.write_text(
         dedent(
             f"""\
             # Battery DeepOQE Summary
 
-            - Status: `{summary['artifact_status']}`
-            - Preferred backend: `{summary['preferred_backend']}`
-            - Preference reason: {summary['preference_reason']}
-            - Model: `{summary['model_path']}`
-            - Eval reliability MAE: `{summary['eval_reliability_mae']:.4f}`
-            - Heuristic reliability MAE: `{summary['heuristic_eval_reliability_mae']:.4f}`
-            - Fault AUC: `{summary['fault_auc']:.4f}`
-            - Low-reliability fault lift: `{summary['low_reliability_fault_lift']:.4f}`
+            - Status: `{summary["artifact_status"]}`
+            - Preferred backend: `{summary["preferred_backend"]}`
+            - Preference reason: {summary["preference_reason"]}
+            - Model: `{summary["model_path"]}`
+            - Eval reliability MAE: `{summary["eval_reliability_mae"]:.4f}`
+            - Heuristic reliability MAE: `{summary["heuristic_eval_reliability_mae"]:.4f}`
+            - Fault AUC: `{summary["fault_auc"]:.4f}`
+            - Low-reliability fault lift: `{summary["low_reliability_fault_lift"]:.4f}`
             """
         ),
         encoding="utf-8",
     )
 
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-    axes[0].bar(["Heuristic", "DeepOQE"], [summary["heuristic_eval_reliability_mae"], summary["eval_reliability_mae"]], color=["#a6761d", "#1b9e77"])
+    axes[0].bar(
+        ["Heuristic", "DeepOQE"],
+        [summary["heuristic_eval_reliability_mae"], summary["eval_reliability_mae"]],
+        color=["#a6761d", "#1b9e77"],
+    )
     axes[0].set_title("Reliability MAE")
     axes[0].set_ylabel("MAE")
     axes[0].grid(axis="y", alpha=0.25)
-    axes[1].bar(["Fault AUC", "Fault Lift"], [summary["fault_auc"], summary["low_reliability_fault_lift"]], color=["#7570b3", "#d95f02"])
+    axes[1].bar(
+        ["Fault AUC", "Fault Lift"],
+        [summary["fault_auc"], summary["low_reliability_fault_lift"]],
+        color=["#7570b3", "#d95f02"],
+    )
     axes[1].set_title("Fault Sensitivity")
     axes[1].grid(axis="y", alpha=0.25)
     fig.tight_layout()
@@ -508,7 +525,9 @@ def _bench_records_for_controller(
         observed_soc = float(buffers["soc_observed_mwh"][step])
         cert = buffers["certificates"][step]
         cert_present = isinstance(cert, Mapping)
-        intervention = abs(proposed_charge - safe_charge) > 1e-6 or abs(proposed_discharge - safe_discharge) > 1e-6
+        intervention = (
+            abs(proposed_charge - safe_charge) > 1e-6 or abs(proposed_discharge - safe_discharge) > 1e-6
+        )
         predicted_valid = cert_present and bool(buffers["guarantee_checks_passed"][step] > 0.5)
         true_valid = not (true_soc < min_soc - 1e-9 or true_soc > max_soc + 1e-9)
         proposed_next_obs_soc = observed_soc + float(constraints.get("time_step_hours", 1.0)) * (
@@ -533,7 +552,8 @@ def _bench_records_for_controller(
                 true_margin=float(true_margin),
                 observed_margin=float(observed_margin),
                 intervened=intervention,
-                fallback_used=intervention and (abs(safe_charge) + abs(safe_discharge) < abs(proposed_charge) + abs(proposed_discharge)),
+                fallback_used=intervention
+                and (abs(safe_charge) + abs(safe_discharge) < abs(proposed_charge) + abs(proposed_discharge)),
                 certificate_valid=true_valid,
                 certificate_predicted_valid=predicted_valid,
                 useful_work=useful_work,
@@ -589,14 +609,20 @@ def _battery_runtime_artifacts_for_controller(
         interval_lower = float(buffers["interval_lower"][step])
         interval_upper = float(buffers["interval_upper"][step])
         reliability_w = float(buffers["w_t"][step])
-        drift_score = float(buffers["rac_sensitivity_norm"][step]) if "rac_sensitivity_norm" in buffers else 0.0
+        drift_score = (
+            float(buffers["rac_sensitivity_norm"][step]) if "rac_sensitivity_norm" in buffers else 0.0
+        )
         cert_payload.setdefault("scenario_id", scenario)
         cert_payload.setdefault("fault_family", scenario)
         cert_payload.setdefault("lane", lane)
         cert_payload.setdefault("controller_label", controller_label)
         cert_payload.setdefault("dispatch_regime", _battery_dispatch_regime(safe_charge, safe_discharge))
-        cert_payload.setdefault("true_margin", float(record.true_margin if record.true_margin is not None else 0.0))
-        cert_payload.setdefault("observed_margin", float(record.observed_margin if record.observed_margin is not None else 0.0))
+        cert_payload.setdefault(
+            "true_margin", float(record.true_margin if record.true_margin is not None else 0.0)
+        )
+        cert_payload.setdefault(
+            "observed_margin", float(record.observed_margin if record.observed_margin is not None else 0.0)
+        )
         if cert_payload and lane == "deep" and controller == "dc3s_wrapped":
             cert_payload["prev_hash"] = stored_prev_hash
             cert_payload["certificate_hash"] = recompute_certificate_hash(cert_payload)
@@ -625,8 +651,16 @@ def _battery_runtime_artifacts_for_controller(
                 "safe_discharge_mw": safe_discharge,
                 "true_value": true_soc,
                 "observed_value": proposed_next_obs_soc,
-                "true_margin": float(record.true_margin if record.true_margin is not None else min(true_soc - min_soc, max_soc - true_soc)),
-                "observed_margin": float(record.observed_margin if record.observed_margin is not None else min(proposed_next_obs_soc - min_soc, max_soc - proposed_next_obs_soc)),
+                "true_margin": float(
+                    record.true_margin
+                    if record.true_margin is not None
+                    else min(true_soc - min_soc, max_soc - true_soc)
+                ),
+                "observed_margin": float(
+                    record.observed_margin
+                    if record.observed_margin is not None
+                    else min(proposed_next_obs_soc - min_soc, max_soc - proposed_next_obs_soc)
+                ),
                 "interval_lower": interval_lower,
                 "interval_upper": interval_upper,
                 "true_constraint_violated": bool(record.true_constraint_violated),
@@ -677,14 +711,16 @@ def build_replay_comparison(
                 main_rows = payload["main_rows"]
                 for controller in ("dc3s_wrapped", "dc3s_ftit"):
                     main_row = next(row for row in main_rows if row["controller"] == controller)
-                    records, trace_rows, cert_rows, previous_certificate_hash = _battery_runtime_artifacts_for_controller(
-                        lane=lane_name,
-                        scenario=scenario,
-                        seed=int(seed),
-                        controller=controller,
-                        buffers=payload["controller_buffers"][controller],
-                        constraints=payload["constraints"],
-                        previous_certificate_hash=previous_certificate_hash,
+                    records, trace_rows, cert_rows, previous_certificate_hash = (
+                        _battery_runtime_artifacts_for_controller(
+                            lane=lane_name,
+                            scenario=scenario,
+                            seed=int(seed),
+                            controller=controller,
+                            buffers=payload["controller_buffers"][controller],
+                            constraints=payload["constraints"],
+                            previous_certificate_hash=previous_certificate_hash,
+                        )
                     )
                     bench = compute_bench_metrics(records)
                     runtime_traces.extend(trace_rows)
@@ -787,7 +823,9 @@ def build_replay_comparison(
     trace_df.to_csv(runtime_traces_path, index=False)
     coverage_rows = []
     if not trace_df.empty:
-        for (controller_label, fault_family), group in trace_df.groupby(["controller_label", "fault_family"], dropna=False):
+        for (controller_label, fault_family), group in trace_df.groupby(
+            ["controller_label", "fault_family"], dropna=False
+        ):
             y_true = group["true_value"].to_numpy(dtype=float)
             lower = group["interval_lower"].to_numpy(dtype=float)
             upper = group["interval_upper"].to_numpy(dtype=float)
@@ -800,14 +838,18 @@ def build_replay_comparison(
                     "mean_width": float(np.mean(upper - lower)),
                 }
             )
-    pd.DataFrame(coverage_rows, columns=["controller", "fault_family", "target", "coverage", "mean_width"]).to_csv(
+    pd.DataFrame(
+        coverage_rows, columns=["controller", "fault_family", "target", "coverage", "mean_width"]
+    ).to_csv(
         fault_coverage_path,
         index=False,
     )
     if audit_db_path.exists():
         audit_db_path.unlink()
     if certificate_rows:
-        store_certificates_batch(certificate_rows, duckdb_path=str(audit_db_path), table_name="dispatch_certificates")
+        store_certificates_batch(
+            certificate_rows, duckdb_path=str(audit_db_path), table_name="dispatch_certificates"
+        )
     md_lines = ["# Battery DeepOQE Safety Metrics", ""]
     for _, row in summary_rows.iterrows():
         md_lines.append(
@@ -880,7 +922,7 @@ def _inject_raw_track_faults(frame: pd.DataFrame) -> pd.DataFrame:
         if start == 0:
             continue
         for col in ("load_mw", "wind_mw", "solar_mw"):
-            out.loc[start:end - 1, col] = float(out.loc[start - 1, col])
+            out.loc[start : end - 1, col] = float(out.loc[start - 1, col])
         fault_stale[start:end] = 1
 
     for idx in range(72, n, 187):
@@ -908,7 +950,7 @@ def _attach_deep_reliability(frame: pd.DataFrame, model_path: Path) -> pd.DataFr
     adaptive_state: dict[str, Any] = {}
     prev_event: Mapping[str, Any] | None = None
     reliability: list[float] = []
-    for idx, row in out.iterrows():
+    for _idx, row in out.iterrows():
         ts = pd.to_datetime(row["timestamp"], utc=True)
         if int(row["fault_delay_jitter"]) > 0:
             ts = ts + pd.Timedelta(seconds=3600)
@@ -969,7 +1011,9 @@ def _forecast_windows(
     return np.asarray(xs, dtype=np.float32), np.asarray(ys, dtype=np.float32)
 
 
-def _quantile_loss(pred: torch.Tensor, target: torch.Tensor, quantiles: Sequence[float], sample_weight: torch.Tensor) -> torch.Tensor:
+def _quantile_loss(
+    pred: torch.Tensor, target: torch.Tensor, quantiles: Sequence[float], sample_weight: torch.Tensor
+) -> torch.Tensor:
     losses: list[torch.Tensor] = []
     for idx, quantile in enumerate(quantiles):
         errors = target - pred[:, :, idx]
@@ -1017,8 +1061,12 @@ def run_raw_sequence_track(
     slice_rows: list[dict[str, Any]] = []
 
     for target in FORECAST_TARGETS:
-        x_train, y_train = _forecast_windows(frame, target=target, lookback=lookback, horizon=horizon, stride=train_stride, split="train")
-        x_test, y_test = _forecast_windows(frame, target=target, lookback=lookback, horizon=horizon, stride=eval_stride, split="test")
+        x_train, y_train = _forecast_windows(
+            frame, target=target, lookback=lookback, horizon=horizon, stride=train_stride, split="train"
+        )
+        x_test, y_test = _forecast_windows(
+            frame, target=target, lookback=lookback, horizon=horizon, stride=eval_stride, split="test"
+        )
         if len(x_train) == 0 or len(x_test) == 0:
             continue
 
@@ -1033,7 +1081,7 @@ def run_raw_sequence_track(
         x_train_n = (x_train - feature_mean) / feature_std
         x_test_n = (x_test - feature_mean) / feature_std
         y_train_n = (y_train - target_mean) / target_std
-        y_test_n = (y_test - target_mean) / target_std
+        (y_test - target_mean) / target_std
 
         model = PatchTSTForecaster(
             n_features=x_train_n.shape[-1],
@@ -1116,7 +1164,12 @@ def run_raw_sequence_track(
         elif target == "solar_mw":
             labels = np.where(y_true_flat > 10.0, "daytime", "nighttime")
         else:
-            reliability_flat = np.repeat(frame["reliability_w"].to_numpy(dtype=float)[lookback + horizon - 1 :: eval_stride][: len(x_test)], horizon)
+            reliability_flat = np.repeat(
+                frame["reliability_w"].to_numpy(dtype=float)[lookback + horizon - 1 :: eval_stride][
+                    : len(x_test)
+                ],
+                horizon,
+            )
             labels = np.where(reliability_flat < 0.6, "low_reliability", "high_reliability")
         for label in sorted(set(labels.tolist())):
             mask = labels == label
@@ -1126,7 +1179,9 @@ def run_raw_sequence_track(
                 {
                     "target": target,
                     "slice": label,
-                    "picp_90": float(np.mean((y_true_flat[mask] >= q10_flat[mask]) & (y_true_flat[mask] <= q90_flat[mask]))),
+                    "picp_90": float(
+                        np.mean((y_true_flat[mask] >= q10_flat[mask]) & (y_true_flat[mask] <= q90_flat[mask]))
+                    ),
                     "mean_interval_width": float(np.mean(q90_flat[mask] - q10_flat[mask])),
                     "n": int(mask.sum()),
                 }
@@ -1215,16 +1270,18 @@ def write_register(
             "The raw-sequence PatchTST lane is a bounded novelty surface, not a replacement for the locked engineered-track benchmark.",
         ],
     }
-    (out_dir / "battery_deep_learning_novelty_register.json").write_text(json.dumps(register, indent=2, sort_keys=True), encoding="utf-8")
+    (out_dir / "battery_deep_learning_novelty_register.json").write_text(
+        json.dumps(register, indent=2, sort_keys=True), encoding="utf-8"
+    )
     (out_dir / "battery_deep_learning_novelty_register.md").write_text(
         dedent(
             f"""\
             # Battery Deep-Learning Novelty Register
 
             - Scope: `bounded_battery_first`
-            - DeepOQE summary CSV: `{deep_oqe['summary_csv']}`
-            - Replay comparison CSV: `{replay['csv_path']}`
-            - Raw-track comparison CSV: `{raw_track['comparison_csv']}`
+            - DeepOQE summary CSV: `{deep_oqe["summary_csv"]}`
+            - Replay comparison CSV: `{replay["csv_path"]}`
+            - Raw-track comparison CSV: `{raw_track["comparison_csv"]}`
             """
         ),
         encoding="utf-8",
@@ -1288,7 +1345,9 @@ def run_pipeline(
         eval_stride=eval_stride,
         engineered_baseline_path=engineered_baseline_path,
     )
-    write_register(out_dir=out_dir, deep_oqe=deep_artifacts, replay=replay_artifacts, raw_track=raw_track_artifacts)
+    write_register(
+        out_dir=out_dir, deep_oqe=deep_artifacts, replay=replay_artifacts, raw_track=raw_track_artifacts
+    )
     return {
         "deep_oqe": deep_artifacts,
         "replay": replay_artifacts,

@@ -5,10 +5,12 @@ Safety predicates:
   - Path A: speed limit + TTC-style lead-vehicle barrier
   - Path B: RSS longitudinal safe-following gap (when rss_safe_gap_m is set)
 """
+
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 
 def _f(x: Any, default: float) -> float:

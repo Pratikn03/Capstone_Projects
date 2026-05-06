@@ -13,6 +13,7 @@ Panel B (right): DC3S five-stage pipeline block diagram:
 
 Output: paper/assets/figures/fig_oasg_hero.{png,pdf,svg}
 """
+
 from __future__ import annotations
 
 import sys
@@ -22,10 +23,10 @@ import numpy as np
 
 try:
     import matplotlib
+
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
-    from matplotlib.patches import FancyArrowPatch
+    import matplotlib.pyplot as plt
 except ImportError:
     print("matplotlib is required. Install with: pip install matplotlib")
     sys.exit(1)
@@ -38,7 +39,7 @@ def _strip_svg_trailing_whitespace(path: Path) -> None:
     path.write_text("\n".join(line.rstrip() for line in text.splitlines()) + "\n", encoding="utf-8")
 
 
-def _make_panel_a(ax: "plt.Axes") -> None:
+def _make_panel_a(ax: plt.Axes) -> None:
     """OASG timeline: observed vs true SOC with shield activation."""
     np.random.seed(42)
     T = 60
@@ -63,17 +64,16 @@ def _make_panel_a(ax: "plt.Axes") -> None:
     # Observed SOC line (blue)
     ax.plot(t, obs_soc * 100, color="#1565C0", lw=2.0, label="Observed SOC", zorder=3)
     # True SOC line (red)
-    ax.plot(t, true_soc * 100, color="#C62828", lw=2.0, linestyle="--",
-            label="True SOC", zorder=3)
+    ax.plot(t, true_soc * 100, color="#C62828", lw=2.0, linestyle="--", label="True SOC", zorder=3)
     # Safety floor (orange dashed)
     ax.axhline(y=floor * 100, color="#E65100", lw=1.5, linestyle=":", label="Safety floor (20 %)", zorder=2)
     # Shade the OASG region: where obs >= floor but true < floor
     oasg_mask = (obs_soc >= floor) & (true_soc < floor)
     if oasg_mask.any():
         oasg_t = t[oasg_mask]
-        ax.fill_between(oasg_t,
-                        floor * 100, obs_soc[oasg_mask] * 100,
-                        alpha=0.18, color="#FF8F00", label="OASG region")
+        ax.fill_between(
+            oasg_t, floor * 100, obs_soc[oasg_mask] * 100, alpha=0.18, color="#FF8F00", label="OASG region"
+        )
 
     # Shield activation marker
     ax.axvline(x=shield_t, color="#2E7D32", lw=2.0, linestyle="-.", zorder=4)
@@ -83,13 +83,12 @@ def _make_panel_a(ax: "plt.Axes") -> None:
         xytext=(shield_t + 5, 50),
         fontsize=8.5,
         color="#2E7D32",
-        arrowprops=dict(arrowstyle="->", color="#2E7D32", lw=1.2),
+        arrowprops={"arrowstyle": "->", "color": "#2E7D32", "lw": 1.2},
         ha="left",
     )
 
     # OASG label in the gap region
-    ax.text(31, 23, "OASG\nzone", fontsize=8, color="#E65100", ha="center",
-            style="italic")
+    ax.text(31, 23, "OASG\nzone", fontsize=8, color="#E65100", ha="center", style="italic")
 
     ax.set_xlabel("Time step", fontsize=10)
     ax.set_ylabel("State of Charge (%)", fontsize=10)
@@ -101,7 +100,7 @@ def _make_panel_a(ax: "plt.Axes") -> None:
     ax.spines["right"].set_visible(False)
 
 
-def _make_panel_b(ax: "plt.Axes") -> None:
+def _make_panel_b(ax: plt.Axes) -> None:
     """DC3S five-stage pipeline block diagram."""
     ax.set_xlim(0, 10)
     ax.set_ylim(0, 10)
@@ -127,17 +126,38 @@ def _make_panel_b(ax: "plt.Axes") -> None:
         y0 = y_center - box_h / 2
 
         rect = mpatches.FancyBboxPatch(
-            (x0, y0), box_w, box_h,
+            (x0, y0),
+            box_w,
+            box_h,
             boxstyle="round,pad=0.08",
-            facecolor=color, edgecolor="white", alpha=0.88, zorder=3,
+            facecolor=color,
+            edgecolor="white",
+            alpha=0.88,
+            zorder=3,
         )
         ax.add_patch(rect)
-        ax.text(x0 + box_w / 2, y0 + box_h * 0.62, label,
-                ha="center", va="center", fontsize=8.5, fontweight="bold",
-                color="white", zorder=4)
-        ax.text(x0 + box_w / 2, y0 + box_h * 0.22, sub,
-                ha="center", va="center", fontsize=6.8, color="white",
-                alpha=0.92, zorder=4)
+        ax.text(
+            x0 + box_w / 2,
+            y0 + box_h * 0.62,
+            label,
+            ha="center",
+            va="center",
+            fontsize=8.5,
+            fontweight="bold",
+            color="white",
+            zorder=4,
+        )
+        ax.text(
+            x0 + box_w / 2,
+            y0 + box_h * 0.22,
+            sub,
+            ha="center",
+            va="center",
+            fontsize=6.8,
+            color="white",
+            alpha=0.92,
+            zorder=4,
+        )
 
         # Arrow to next stage
         if i < len(stages) - 1:
@@ -145,7 +165,7 @@ def _make_panel_b(ax: "plt.Axes") -> None:
                 "",
                 xy=(x0 + box_w + arrow_len, y_center),
                 xytext=(x0 + box_w + 0.02, y_center),
-                arrowprops=dict(arrowstyle="-|>", color="#444", lw=1.2),
+                arrowprops={"arrowstyle": "-|>", "color": "#444", "lw": 1.2},
                 zorder=5,
             )
 
@@ -155,11 +175,18 @@ def _make_panel_b(ax: "plt.Axes") -> None:
         "",
         xy=(in_x, y_center + box_h / 2),
         xytext=(in_x, y_center + box_h / 2 + 1.2),
-        arrowprops=dict(arrowstyle="-|>", color="#555", lw=1.2),
+        arrowprops={"arrowstyle": "-|>", "color": "#555", "lw": 1.2},
         zorder=5,
     )
-    ax.text(in_x, y_center + box_h / 2 + 1.4, "Raw\ntelemetry $z_t$",
-            ha="center", va="bottom", fontsize=8, color="#333")
+    ax.text(
+        in_x,
+        y_center + box_h / 2 + 1.4,
+        "Raw\ntelemetry $z_t$",
+        ha="center",
+        va="bottom",
+        fontsize=8,
+        color="#333",
+    )
 
     # Safe action output arrow
     last_x = x_start + (len(stages) - 1) * (box_w + gap)
@@ -168,19 +195,28 @@ def _make_panel_b(ax: "plt.Axes") -> None:
         "",
         xy=(out_x, y_center - box_h / 2 - 1.1),
         xytext=(out_x, y_center - box_h / 2 - 0.02),
-        arrowprops=dict(arrowstyle="-|>", color="#2E7D32", lw=1.5),
+        arrowprops={"arrowstyle": "-|>", "color": "#2E7D32", "lw": 1.5},
         zorder=5,
     )
-    ax.text(out_x, y_center - box_h / 2 - 1.25, "Safe action $a_t^*$\n+ Certificate",
-            ha="center", va="top", fontsize=8, color="#2E7D32", fontweight="bold")
+    ax.text(
+        out_x,
+        y_center - box_h / 2 - 1.25,
+        "Safe action $a_t^*$\n+ Certificate",
+        ha="center",
+        va="top",
+        fontsize=8,
+        color="#2E7D32",
+        fontweight="bold",
+    )
 
     # OQE feedback label
     ax.annotate(
         "$w_t$ flows right →",
         xy=(x_start + box_w + gap / 2, y_center + 0.15),
         xytext=(x_start + box_w + 1.1, y_center + 1.6),
-        fontsize=7.5, color="#555",
-        arrowprops=dict(arrowstyle="-", color="#aaa", lw=0.8, linestyle="dashed"),
+        fontsize=7.5,
+        color="#555",
+        arrowprops={"arrowstyle": "-", "color": "#aaa", "lw": 0.8, "linestyle": "dashed"},
     )
 
     ax.set_title("(B) DC3S Five-Stage Pipeline", fontsize=11, fontweight="bold", pad=14)
@@ -195,14 +231,15 @@ def main() -> None:
         out_dir / "fig_oasg_hero.svg",
     ]
 
-    fig, (ax_a, ax_b) = plt.subplots(1, 2, figsize=(13, 5.2),
-                                      gridspec_kw={"width_ratios": [1.1, 1.0]})
+    fig, (ax_a, ax_b) = plt.subplots(1, 2, figsize=(13, 5.2), gridspec_kw={"width_ratios": [1.1, 1.0]})
     _make_panel_a(ax_a)
     _make_panel_b(ax_b)
 
     fig.suptitle(
         "The Observation–Action Safety Gap (OASG) and the DC3S Remedy",
-        fontsize=13, fontweight="bold", y=1.01,
+        fontsize=13,
+        fontweight="bold",
+        y=1.01,
     )
     fig.tight_layout(rect=[0, 0, 1, 1])
     for out_path in out_paths:

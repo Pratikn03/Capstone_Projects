@@ -1,8 +1,6 @@
 """Unit tests for VehicleDomainAdapter (ORIUS vehicles prototype)."""
-from __future__ import annotations
 
-import math
-import pytest
+from __future__ import annotations
 
 from orius.adapters.vehicle import VehicleDomainAdapter
 from orius.vehicles.plant import VehiclePlant
@@ -34,7 +32,12 @@ class TestVehiclePlant:
 class TestVehicleDomainAdapterIngestTelemetry:
     def test_passthrough(self) -> None:
         adapter = VehicleDomainAdapter()
-        packet = {"position_m": 1.0, "speed_mps": 5.0, "speed_limit_mps": 30.0, "ts_utc": "2026-01-01T00:00:00Z"}
+        packet = {
+            "position_m": 1.0,
+            "speed_mps": 5.0,
+            "speed_limit_mps": 30.0,
+            "ts_utc": "2026-01-01T00:00:00Z",
+        }
         out = adapter.ingest_telemetry(packet)
         assert out["position_m"] == 1.0
         assert out["speed_mps"] == 5.0
@@ -72,7 +75,15 @@ class TestVehicleDomainAdapterRepairAction:
     def test_clips_acceleration(self) -> None:
         adapter = VehicleDomainAdapter()
         candidate = {"acceleration_mps2": 100.0}
-        tightened = {"uncertainty": {"speed_lower_mps": 0, "speed_upper_mps": 30}, "constraints": {"accel_max_mps2": 3.0, "accel_min_mps2": -5.0, "speed_limit_mps": 30.0, "dt_s": 0.25}}
+        tightened = {
+            "uncertainty": {"speed_lower_mps": 0, "speed_upper_mps": 30},
+            "constraints": {
+                "accel_max_mps2": 3.0,
+                "accel_min_mps2": -5.0,
+                "speed_limit_mps": 30.0,
+                "dt_s": 0.25,
+            },
+        }
         state = {"speed_limit_mps": 30.0}
         safe, meta = adapter.repair_action(
             candidate, tightened, state=state, uncertainty={}, constraints=tightened["constraints"], cfg={}
@@ -83,7 +94,15 @@ class TestVehicleDomainAdapterRepairAction:
     def test_passes_through_safe_action(self) -> None:
         adapter = VehicleDomainAdapter()
         candidate = {"acceleration_mps2": 1.0}
-        tightened = {"uncertainty": {"speed_lower_mps": 0, "speed_upper_mps": 10}, "constraints": {"accel_max_mps2": 3.0, "accel_min_mps2": -5.0, "speed_limit_mps": 30.0, "dt_s": 0.25}}
+        tightened = {
+            "uncertainty": {"speed_lower_mps": 0, "speed_upper_mps": 10},
+            "constraints": {
+                "accel_max_mps2": 3.0,
+                "accel_min_mps2": -5.0,
+                "speed_limit_mps": 30.0,
+                "dt_s": 0.25,
+            },
+        }
         state = {"speed_limit_mps": 30.0}
         safe, meta = adapter.repair_action(
             candidate, tightened, state=state, uncertainty={}, constraints=tightened["constraints"], cfg={}

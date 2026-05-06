@@ -120,7 +120,9 @@ def test_check_conformal_artifacts_warns_for_missing_dl_model(tmp_path: Path) ->
     )
 
     assert checker.checks_failed == 0, f"Expected no failures; got: {checker.errors}"
-    assert any("lstm" in w.lower() for w in checker.warnings), "Expected warning about missing LSTM conformal artifact"
+    assert any("lstm" in w.lower() for w in checker.warnings), (
+        "Expected warning about missing LSTM conformal artifact"
+    )
 
 
 def test_check_conformal_artifacts_passes_for_dl_model_present(tmp_path: Path) -> None:
@@ -166,4 +168,3 @@ def test_check_conformal_artifacts_passes_for_dl_model_present(tmp_path: Path) -
     assert checker.checks_failed == 0, f"Expected no failures; got: {checker.errors}"
     # GBM (legacy npz x2) + LSTM conformal JSON + LSTM (npz x2) = 5 passing checks minimum.
     assert checker.checks_passed >= 5
-

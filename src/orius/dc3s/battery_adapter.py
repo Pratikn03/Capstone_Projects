@@ -6,15 +6,18 @@ interface so that:
   - a vehicles (or other CPS) adapter can be added alongside without
     touching the ORIUS core.
 """
+
 from __future__ import annotations
 
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
+
+from orius.domain.battery_adapter import repair_battery_action
 
 from .calibration import build_uncertainty_set
 from .certificate import make_certificate
 from .domain_adapter import DomainAdapter
 from .quality import compute_reliability
-from orius.domain.battery_adapter import repair_battery_action
 
 
 class BatteryDomainAdapter(DomainAdapter):
@@ -116,6 +119,7 @@ class BatteryDomainAdapter(DomainAdapter):
         state: Any,
     ) -> tuple[Mapping[str, float], Mapping[str, Any]]:
         """Shield-compatible projection: clamp action to SOC-safe region."""
+
         def _state_value(key: str, default: float) -> float:
             if isinstance(state, Mapping):
                 return float(state.get(key, default))
@@ -237,6 +241,8 @@ class BatteryDomainAdapter(DomainAdapter):
             guarantee_checks_passed=guarantee_checks_passed,
             guarantee_fail_reasons=list(guarantee_fail_reasons or []),
             true_soc_violation_after_apply=true_soc_violation_after_apply,
-            assumptions_version=str(cfg.get("assumptions_version")) if cfg.get("assumptions_version") is not None else None,
+            assumptions_version=str(cfg.get("assumptions_version"))
+            if cfg.get("assumptions_version") is not None
+            else None,
         )
         return certificate

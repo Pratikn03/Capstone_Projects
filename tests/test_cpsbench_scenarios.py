@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 
 from orius.cpsbench_iot.scenarios import generate_episode
 
@@ -32,13 +31,17 @@ def test_generate_episode_dropout():
 
 
 def test_generate_episode_delay_jitter():
-    obs, true, log = generate_episode("delay_jitter", seed=42, horizon=100, fault_overrides={"delay_rate": 0.5})
+    obs, true, log = generate_episode(
+        "delay_jitter", seed=42, horizon=100, fault_overrides={"delay_rate": 0.5}
+    )
     assert log["delay_jitter"].sum() > 0
     assert (log["delay_steps"] > 0).any()
 
 
 def test_generate_episode_out_of_order():
-    obs, true, log = generate_episode("out_of_order", seed=42, horizon=100, fault_overrides={"out_of_order_rate": 0.2})
+    obs, true, log = generate_episode(
+        "out_of_order", seed=42, horizon=100, fault_overrides={"out_of_order_rate": 0.2}
+    )
     assert log["out_of_order"].sum() > 0
     assert (log["arrived_timestamp"] < log["timestamp"]).any()
 

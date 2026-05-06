@@ -38,6 +38,10 @@ export type ReportsApiResponse = {
     last_updated?: string;
     metrics_source?: 'week2_metrics' | 'forecast_point_metrics' | 'publication_table' | 'missing';
     warnings?: string[];
+    live_backend?: {
+      status: 'unavailable';
+      detail: string;
+    };
   };
 };
 

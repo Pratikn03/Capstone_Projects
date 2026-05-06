@@ -8,6 +8,7 @@ Produces:
 The trace shows observed SOC, true SOC, reliability score, interval width,
 candidate vs safe action, and fault-active shading over a 48-hour window.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -21,24 +22,34 @@ for p in (REPO_ROOT, REPO_ROOT / "src"):
         sys.path.insert(0, str(p))
 
 import os
+
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from orius.cpsbench_iot.runner import run_single
-from orius.cpsbench_iot.scenarios import DEFAULT_SCENARIOS
 
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate 48h operational trace")
     parser.add_argument("--region", default="DE", help="Region label (DE or US)")
-    parser.add_argument("--fault", default="stale_sensor", choices=[
-        "nominal", "dropout", "delay_jitter", "out_of_order",
-        "spikes", "stale_sensor", "drift_combo",
-    ])
+    parser.add_argument(
+        "--fault",
+        default="stale_sensor",
+        choices=[
+            "nominal",
+            "dropout",
+            "delay_jitter",
+            "out_of_order",
+            "spikes",
+            "stale_sensor",
+            "drift_combo",
+        ],
+    )
     parser.add_argument("--window", type=int, default=48, help="Trace window in hours")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--out-dir", default="reports/publication")
@@ -52,24 +63,29 @@ def _extract_trace(
 ) -> dict[str, pd.DataFrame]:
     """Run two controllers (deterministic_lp, dc3s_ftit) and return step data."""
     payload = run_single(scenario=scenario, seed=seed, horizon=horizon)
-    main_rows = payload["main_rows"]
+    payload["main_rows"]
 
     from orius.cpsbench_iot.scenarios import generate_episode
+
     x_obs, x_true, event_log = generate_episode(
-        scenario=scenario, seed=seed, horizon=horizon,
+        scenario=scenario,
+        seed=seed,
+        horizon=horizon,
     )
 
-    from orius.cpsbench_iot.runner import (
-        _load_optimization_cfg, _load_dc3s_cfg, _battery_constraints,
-        _DC3SLoopState, _controller_step_deterministic,
-        _controller_step_dc3s, _init_controller_buffers,
-    )
-    from orius.dc3s.drift import PageHinkleyDetector
-    from orius.cpsbench_iot.telemetry_soc import SOCTelemetryChannel
     from orius.cpsbench_iot.plant import BatteryPlant
     from orius.cpsbench_iot.runner import (
-        _to_telemetry_events, _soc_fault_config_for_episode,
+        _battery_constraints,
+        _controller_step_dc3s,
+        _controller_step_deterministic,
+        _DC3SLoopState,
+        _load_dc3s_cfg,
+        _load_optimization_cfg,
+        _soc_fault_config_for_episode,
+        _to_telemetry_events,
     )
+    from orius.cpsbench_iot.telemetry_soc import SOCTelemetryChannel
+    from orius.dc3s.drift import PageHinkleyDetector
 
     optimization_cfg = _load_optimization_cfg()
     dc3s_cfg = _load_dc3s_cfg()
@@ -96,8 +112,10 @@ def _extract_trace(
         )
         soc_channel = SOCTelemetryChannel(
             _soc_fault_config_for_episode(
-                scenario=scenario, event_log=event_log,
-                seed=seed, fault_overrides=None,
+                scenario=scenario,
+                event_log=event_log,
+                seed=seed,
+                fault_overrides=None,
             )
         )
         dc3s_state = _DC3SLoopState(
@@ -117,20 +135,26 @@ def _extract_trace(
 
             if controller_name == "deterministic_lp":
                 step = _controller_step_deterministic(
-                    load_window=load_window, renew_window=renew_window,
-                    price_window=price_window, carbon_window=carbon_window,
-                    optimization_cfg=optimization_cfg, dc3s_cfg=dc3s_cfg,
+                    load_window=load_window,
+                    renew_window=renew_window,
+                    price_window=price_window,
+                    carbon_window=carbon_window,
+                    optimization_cfg=optimization_cfg,
+                    dc3s_cfg=dc3s_cfg,
                     observed_soc_mwh=float(observed_soc),
                 )
             else:
                 step = _controller_step_dc3s(
-                    load_window=load_window, renew_window=renew_window,
-                    price_window=price_window, carbon_window=carbon_window,
+                    load_window=load_window,
+                    renew_window=renew_window,
+                    price_window=price_window,
+                    carbon_window=carbon_window,
                     load_true_t=float(load_true[t]),
                     observed_soc_mwh=float(observed_soc),
                     current_true_soc_mwh=current_true_soc,
                     telemetry_event=telemetry_events[t],
-                    optimization_cfg=optimization_cfg, dc3s_cfg=dc3s_cfg,
+                    optimization_cfg=optimization_cfg,
+                    dc3s_cfg=dc3s_cfg,
                     state=dc3s_state,
                     command_id=f"trace-{scenario}-{seed}-{controller_name}-{t:04d}",
                     controller_name="dc3s_ftit",
@@ -139,9 +163,12 @@ def _extract_trace(
 
             safe_charge = float(step["safe_charge_mw"])
             safe_discharge = float(step["safe_discharge_mw"])
-            next_soc = float(plant.step(
-                charge_mw=safe_charge, discharge_mw=safe_discharge,
-            ))
+            next_soc = float(
+                plant.step(
+                    charge_mw=safe_charge,
+                    discharge_mw=safe_discharge,
+                )
+            )
             viol = plant.violation()
 
             fault_active = bool(
@@ -153,28 +180,30 @@ def _extract_trace(
                 | event_log.loc[t, "covariate_drift"]
             )
 
-            rows.append({
-                "step": t + 1,
-                "timestamp": str(x_obs.loc[t, "timestamp"]),
-                "soc_observed_mwh": float(observed_soc),
-                "soc_true_mwh": next_soc,
-                "reliability_w": float(step.get("w_t", 1.0)),
-                "drift_flag": bool(step.get("drift_flag", False)),
-                "inflation": float(step.get("rac_inflation", 1.0)),
-                "interval_width_mw": float(step.get("interval_width", 0.0)),
-                "proposed_charge_mw": float(step["proposed_charge_mw"]),
-                "proposed_discharge_mw": float(step["proposed_discharge_mw"]),
-                "safe_charge_mw": safe_charge,
-                "safe_discharge_mw": safe_discharge,
-                "intervened": bool(
-                    abs(safe_charge - float(step["proposed_charge_mw"])) > 1e-6
-                    or abs(safe_discharge - float(step["proposed_discharge_mw"])) > 1e-6
-                ),
-                "fault_active": fault_active,
-                "true_soc_violated": bool(viol["violated"]),
-                "violation_severity_mwh": float(viol["severity_mwh"]),
-                "price_per_mwh": float(price[t]),
-            })
+            rows.append(
+                {
+                    "step": t + 1,
+                    "timestamp": str(x_obs.loc[t, "timestamp"]),
+                    "soc_observed_mwh": float(observed_soc),
+                    "soc_true_mwh": next_soc,
+                    "reliability_w": float(step.get("w_t", 1.0)),
+                    "drift_flag": bool(step.get("drift_flag", False)),
+                    "inflation": float(step.get("rac_inflation", 1.0)),
+                    "interval_width_mw": float(step.get("interval_width", 0.0)),
+                    "proposed_charge_mw": float(step["proposed_charge_mw"]),
+                    "proposed_discharge_mw": float(step["proposed_discharge_mw"]),
+                    "safe_charge_mw": safe_charge,
+                    "safe_discharge_mw": safe_discharge,
+                    "intervened": bool(
+                        abs(safe_charge - float(step["proposed_charge_mw"])) > 1e-6
+                        or abs(safe_discharge - float(step["proposed_discharge_mw"])) > 1e-6
+                    ),
+                    "fault_active": fault_active,
+                    "true_soc_violated": bool(viol["violated"]),
+                    "violation_severity_mwh": float(viol["severity_mwh"]),
+                    "price_per_mwh": float(price[t]),
+                }
+            )
 
         traces[controller_name] = pd.DataFrame(rows)
 
@@ -198,11 +227,25 @@ def _plot_48h_trace(
     # Panel 1: SOC trajectories
     ax = axes[0]
     ax.plot(x, det["soc_true_mwh"], label="True SOC (det. LP)", color="#d62728", linewidth=1.4)
-    ax.plot(x, det["soc_observed_mwh"], label="Observed SOC (det. LP)",
-            color="#d62728", linewidth=1.0, linestyle="--", alpha=0.6)
+    ax.plot(
+        x,
+        det["soc_observed_mwh"],
+        label="Observed SOC (det. LP)",
+        color="#d62728",
+        linewidth=1.0,
+        linestyle="--",
+        alpha=0.6,
+    )
     ax.plot(x, dc3s["soc_true_mwh"], label="True SOC (DC3S FTIT)", color="#1f77b4", linewidth=1.4)
-    ax.plot(x, dc3s["soc_observed_mwh"], label="Observed SOC (DC3S FTIT)",
-            color="#1f77b4", linewidth=1.0, linestyle="--", alpha=0.6)
+    ax.plot(
+        x,
+        dc3s["soc_observed_mwh"],
+        label="Observed SOC (DC3S FTIT)",
+        color="#1f77b4",
+        linewidth=1.0,
+        linestyle="--",
+        alpha=0.6,
+    )
     ax.axhline(0, color="gray", linewidth=0.8, linestyle=":")
     ax.axhline(100, color="gray", linewidth=0.8, linestyle=":")
     fault_mask = dc3s["fault_active"].to_numpy(dtype=bool)
@@ -238,8 +281,9 @@ def _plot_48h_trace(
     ax.plot(x, net_safe, label="Safe action", color="#1f77b4", linewidth=1.2)
     intervened = dc3s["intervened"].to_numpy(dtype=bool)
     if np.any(intervened):
-        ax.scatter(x[intervened], net_safe.to_numpy()[intervened],
-                   color="red", zorder=5, s=20, label="Intervention")
+        ax.scatter(
+            x[intervened], net_safe.to_numpy()[intervened], color="red", zorder=5, s=20, label="Intervention"
+        )
     ax.set_ylabel("Net Dispatch (MW)\n(+dis / -chg)")
     ax.legend(loc="upper right", fontsize=8)
     ax.grid(alpha=0.3)
@@ -285,10 +329,12 @@ def main() -> None:
 
     fig_path = out_dir / "fig_48h_trace.png"
     _plot_48h_trace(
-        det_df=det_df, dc3s_df=dc3s_df,
+        det_df=det_df,
+        dc3s_df=dc3s_df,
         out_path=fig_path,
         window=args.window,
-        region=args.region, fault=args.fault,
+        region=args.region,
+        fault=args.fault,
     )
     print(f"  Figure -> {fig_path}")
 

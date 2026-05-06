@@ -5,18 +5,18 @@ This script is intentionally conservative:
 - Optionally runs dataset refresh hooks (currently best-effort placeholders).
 - Re-validates and de-duplicates feature parquet files by timestamp.
 """
+
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import json
-from pathlib import Path
 import subprocess
 import sys
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -111,7 +111,9 @@ def _latest_local_timestamp(paths: list[Path]) -> str | None:
     return max_ts.isoformat()
 
 
-def _validate_and_dedup_features(features_path: Path, required_columns: set[str], apply_changes: bool) -> dict[str, Any]:
+def _validate_and_dedup_features(
+    features_path: Path, required_columns: set[str], apply_changes: bool
+) -> dict[str, Any]:
     out: dict[str, Any] = {
         "path": str(features_path),
         "exists": features_path.exists(),
@@ -163,7 +165,7 @@ def _run_refresh_hook(cmd: list[str], enabled: bool) -> dict[str, Any]:
 def run_refresh(*, dataset_filter: str, apply_changes: bool, run_hooks: bool) -> dict[str, Any]:
     selected = sorted(DATASETS.keys()) if dataset_filter == "ALL" else [dataset_filter]
     summary: dict[str, Any] = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "dataset_filter": dataset_filter,
         "apply_changes": apply_changes,
         "run_hooks": run_hooks,
@@ -171,7 +173,7 @@ def run_refresh(*, dataset_filter: str, apply_changes: bool, run_hooks: bool) ->
     }
     for key in selected:
         cfg = DATASETS[key]
-        latest_local = _latest_local_timestamp(list(cfg["raw_candidates"]) + [cfg["features"]])
+        latest_local = _latest_local_timestamp([*list(cfg["raw_candidates"]), cfg["features"]])
         refresh_status = _run_refresh_hook(cfg["refresh_cmd"], enabled=run_hooks)
         features_status = _validate_and_dedup_features(
             features_path=cfg["features"],

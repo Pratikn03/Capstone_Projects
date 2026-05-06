@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
-from collections import deque
 from typing import Any
 
 from .state import GroupCoverageStats
@@ -20,6 +20,7 @@ class SubgroupCoverageTracker:
     @staticmethod
     def _bin_idx(value: float, n_bins: int) -> int:
         import math
+
         v = float(value)
         if math.isnan(v) or math.isinf(v):
             v = 0.0
@@ -113,13 +114,12 @@ class SubgroupCoverageTracker:
             "window_size": int(self.window_size),
             "groups": self.group_rows(),
             "windows": {
-                key: list(values)
-                for key, values in sorted(self._windows.items(), key=lambda kv: kv[0])
+                key: list(values) for key, values in sorted(self._windows.items(), key=lambda kv: kv[0])
             },
         }
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any] | None) -> "SubgroupCoverageTracker":
+    def from_dict(cls, payload: dict[str, Any] | None) -> SubgroupCoverageTracker:
         data = dict(payload or {})
         tracker = cls(
             target_coverage=float(data.get("target_coverage", 0.9)),

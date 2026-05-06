@@ -1,4 +1,5 @@
 """Pyomo-based multi-scenario robust battery dispatch optimization."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -22,7 +23,7 @@ def _as_scenarios(x: Any, label: str) -> np.ndarray:
 
 
 def _as_array(x: Any, label: str) -> np.ndarray:
-    if isinstance(x, (list, tuple, np.ndarray)):
+    if isinstance(x, list | tuple | np.ndarray):
         arr = np.asarray(x, dtype=float)
     else:
         arr = np.asarray([x], dtype=float)
@@ -98,7 +99,9 @@ def _ensure_highs_solver_available(solver_name: str) -> None:
         )
 
 
-def _infeasible_result(n_scenarios: int, horizon: int, status: str, cfg: RobustDispatchConfig) -> dict[str, Any]:
+def _infeasible_result(
+    n_scenarios: int, horizon: int, status: str, cfg: RobustDispatchConfig
+) -> dict[str, Any]:
     zeros_h = np.zeros(horizon, dtype=float)
     zeros_sh = np.zeros((n_scenarios, horizon), dtype=float)
     return {
@@ -131,7 +134,9 @@ def optimize_scenario_robust_dispatch(
 
     scen = _as_scenarios(load_scenarios, "load_scenarios")
     s_count, horizon = scen.shape
-    renewables = _broadcast(_as_array(renewables_forecast, "renewables_forecast"), horizon, "renewables_forecast")
+    renewables = _broadcast(
+        _as_array(renewables_forecast, "renewables_forecast"), horizon, "renewables_forecast"
+    )
     if price is None:
         prices = np.full(horizon, cfg.default_price_per_mwh, dtype=float)
     else:
@@ -221,7 +226,9 @@ def optimize_scenario_robust_dispatch(
     )
     worst_case_cost = float(np.max(scenario_costs))
     mean_scenario_cost = float(np.mean(scenario_costs))
-    degradation_cost = float(cfg.degradation_cost_per_mwh * np.sum((battery_charge + battery_discharge) * cfg.time_step_hours))
+    degradation_cost = float(
+        cfg.degradation_cost_per_mwh * np.sum((battery_charge + battery_discharge) * cfg.time_step_hours)
+    )
     binding_scenario = int(np.argmax(scenario_costs))
 
     return {

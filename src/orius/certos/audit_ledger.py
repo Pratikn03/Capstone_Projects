@@ -1,7 +1,9 @@
 """CertOS audit ledger: auditable intervention log."""
+
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 
 class AuditLedger:
@@ -29,7 +31,4 @@ class AuditLedger:
         return list(self._entries)
 
     def intervention_count(self) -> int:
-        return sum(
-            1 for e in self._entries
-            if e.get("op") in ("REVOKE", "FALLBACK", "EXPIRE")
-        )
+        return sum(1 for e in self._entries if e.get("op") in ("REVOKE", "FALLBACK", "EXPIRE"))

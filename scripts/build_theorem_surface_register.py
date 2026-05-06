@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Regenerate the YAML-canonical theorem surface register outputs."""
+
 from __future__ import annotations
 
 from _active_theorem_program import write_active_theorem_audit_outputs

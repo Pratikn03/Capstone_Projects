@@ -5,6 +5,7 @@ This script freezes one release family across publication artifacts and manuscri
 outputs. It does not train models itself; it expects a verified single
 release family to exist already.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -13,9 +14,8 @@ import json
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
 
 REPO = Path(__file__).resolve().parent.parent
 PAPER_DIR = REPO / "paper"
@@ -138,7 +138,7 @@ def _update_release_manifest(
         "historical_frozen_bundle": f"reports/publication/frozen/{release_id}/freeze_summary.json",
         "active_manifest_policy": "canonical pdfs only; frozen bundles are historical provenance and not active truth surfaces",
     }
-    payload["frozen_at_utc"] = datetime.now(timezone.utc).isoformat()
+    payload["frozen_at_utc"] = datetime.now(UTC).isoformat()
     manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return manifest_path
 
@@ -152,7 +152,7 @@ def _write_freeze_summary(
 ) -> Path:
     summary = {
         "release_id": release_id,
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "publication_manifest": str(manifest_path.relative_to(REPO)),
         "frozen_pdfs": frozen_pdfs,
     }
@@ -162,7 +162,9 @@ def _write_freeze_summary(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Freeze a final release family into manuscript and publication outputs")
+    parser = argparse.ArgumentParser(
+        description="Freeze a final release family into manuscript and publication outputs"
+    )
     parser.add_argument("--release-id", required=True)
     parser.add_argument("--out-dir", default=str(PUBLICATION_DIR))
     return parser.parse_args()

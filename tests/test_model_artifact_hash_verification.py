@@ -1,4 +1,5 @@
 """Regression tests for fail-closed model artifact hash checks."""
+
 from __future__ import annotations
 
 import hashlib
@@ -19,7 +20,9 @@ def _write_pickle(path: Path, payload: dict) -> str:
 def test_load_model_bundle_verifies_sidecar_sha256(tmp_path: Path) -> None:
     model_path = tmp_path / "model.pkl"
     digest = _write_pickle(model_path, {"model": "stub", "feature_cols": [], "target": "load_mw"})
-    model_path.with_name(f"{model_path.name}.sha256").write_text(f"{digest}  {model_path.name}\n", encoding="utf-8")
+    model_path.with_name(f"{model_path.name}.sha256").write_text(
+        f"{digest}  {model_path.name}\n", encoding="utf-8"
+    )
 
     bundle = load_model_bundle(model_path)
 

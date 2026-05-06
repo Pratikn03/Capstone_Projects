@@ -1,4 +1,5 @@
 """Tests for forecasting prediction helpers."""
+
 import numpy as np
 import pandas as pd
 
@@ -15,12 +16,14 @@ class DummyModel:
 
 def test_predict_next_24h_gbm():
     # Arrange a minimal feature frame with a UTC timestamp index.
-    df = pd.DataFrame({
-        "timestamp": pd.date_range("2020-01-01", periods=48, freq="h", tz="UTC"),
-        "feat1": np.random.rand(48),
-        "feat2": np.random.rand(48),
-        "flag": np.arange(48) % 2 == 0,
-    })
+    df = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2020-01-01", periods=48, freq="h", tz="UTC"),
+            "feat1": np.random.rand(48),
+            "feat2": np.random.rand(48),
+            "flag": np.arange(48) % 2 == 0,
+        }
+    )
     df.loc[df.index[-10:], "feat2"] = np.nan
 
     bundle = {

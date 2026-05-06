@@ -1,8 +1,8 @@
 """Property-based tests for the current ORIUS theorem witnesses."""
+
 from __future__ import annotations
 
 import pytest
-
 from hypothesis import given, settings
 from hypothesis import strategies as st
 

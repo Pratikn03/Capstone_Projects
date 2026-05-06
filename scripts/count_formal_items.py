@@ -5,6 +5,7 @@ The canonical count is derived from the master manuscript include graph,
 not from every standalone `.tex` file in the repository. This avoids
 double-counting alternative chapter surfaces and archived material.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -12,7 +13,6 @@ import json
 import re
 import sys
 from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MASTER = REPO_ROOT / "orius_battery_409page_figures_upgraded_main.tex"

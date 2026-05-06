@@ -3,12 +3,14 @@
 Generate FIG12_GEOGRAPHIC_SCOPE, FIG13_LOAD_RENEWABLE_PROFILES, FIG58_GAP_DISTRIBUTION
 for the paper. Uses real data when available, synthetic representative data otherwise.
 """
+
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,7 +43,7 @@ def _load_region_data(code: str) -> pd.DataFrame | None:
         try:
             return pd.read_parquet(path)
         except Exception:
-            pass
+            return None
     return None
 
 
@@ -88,7 +90,9 @@ def fig12_geographic_scope(out_path: Path) -> None:
         (-10, 30, 4, 5, "ERCOT\n(Texas)"),
     ]
     for x, y, w, h, label in us_boxes:
-        ax.add_patch(plt.Rectangle((x, y), w, h, facecolor="#f58518", alpha=0.6, edgecolor="#c96a0a", linewidth=1.5))
+        ax.add_patch(
+            plt.Rectangle((x, y), w, h, facecolor="#f58518", alpha=0.6, edgecolor="#c96a0a", linewidth=1.5)
+        )
         ax.text(x + w / 2, y + h / 2, label, ha="center", va="center", fontsize=10, fontweight="bold")
 
     ax.text(-1, 55, "Europe", fontsize=12, color="#333")
@@ -107,7 +111,9 @@ def fig13_load_renewable_profiles(out_path: Path) -> None:
     us_df = _load_region_data("US_MISO")
 
     if de_df is not None and len(de_df) >= n_h:
-        de_tail = de_df.sort_values("timestamp").tail(n_h) if "timestamp" in de_df.columns else de_df.tail(n_h)
+        de_tail = (
+            de_df.sort_values("timestamp").tail(n_h) if "timestamp" in de_df.columns else de_df.tail(n_h)
+        )
         load_de = de_tail["load_mw"].to_numpy() if "load_mw" in de_tail.columns else np.zeros(n_h)
         wind_de = de_tail["wind_mw"].to_numpy() if "wind_mw" in de_tail.columns else np.zeros(n_h)
         solar_de = de_tail["solar_mw"].to_numpy() if "solar_mw" in de_tail.columns else np.zeros(n_h)
@@ -115,7 +121,9 @@ def fig13_load_renewable_profiles(out_path: Path) -> None:
         load_de, wind_de, solar_de = _synthetic_profiles(n_h)
 
     if us_df is not None and len(us_df) >= n_h:
-        us_tail = us_df.sort_values("timestamp").tail(n_h) if "timestamp" in us_df.columns else us_df.tail(n_h)
+        us_tail = (
+            us_df.sort_values("timestamp").tail(n_h) if "timestamp" in us_df.columns else us_df.tail(n_h)
+        )
         load_us = us_tail["load_mw"].to_numpy() if "load_mw" in us_tail.columns else np.zeros(n_h)
         wind_us = us_tail["wind_mw"].to_numpy() if "wind_mw" in us_tail.columns else np.zeros(n_h)
         solar_us = us_tail["solar_mw"].to_numpy() if "solar_mw" in us_tail.columns else np.zeros(n_h)
@@ -126,10 +134,12 @@ def fig13_load_renewable_profiles(out_path: Path) -> None:
     t = np.arange(n_h)
     colors = {"load": "#1f77b4", "wind": "#98df8a", "solar": "#ffbb78"}
 
-    for i, (region, load, wind, solar) in enumerate([
-        ("DE", load_de, wind_de, solar_de),
-        ("US (MISO)", load_us, wind_us, solar_us),
-    ]):
+    for i, (region, load, wind, solar) in enumerate(
+        [
+            ("DE", load_de, wind_de, solar_de),
+            ("US (MISO)", load_us, wind_us, solar_us),
+        ]
+    ):
         axes[i, 0].plot(t, load, color=colors["load"], linewidth=1.2)
         axes[i, 0].set_ylabel("MW")
         axes[i, 0].set_title(f"{region} Load")
@@ -178,7 +188,7 @@ def fig58_gap_distribution(out_path: Path) -> None:
     fig, axes = plt.subplots(1, 3, figsize=(12, 4))
     colors = {"DE": "#4c78a8", "US": "#f58518"}
 
-    for ax, (name_de, name_us, data_de, data_us) in [
+    for ax, (name_de, _name_us, data_de, data_us) in [
         (axes[0], ("Load (DE)", "Load (US)", load_de, load_us)),
         (axes[1], ("Wind (DE)", "Wind (US)", wind_de, wind_us)),
         (axes[2], ("Solar (DE)", "Solar (US)", solar_de, solar_us)),
@@ -191,7 +201,11 @@ def fig58_gap_distribution(out_path: Path) -> None:
         ax.legend()
         ax.grid(alpha=0.3)
 
-    fig.suptitle("DE–US distribution comparison: scale, skewness, and zero-inflation differ across regions", fontsize=12, y=1.02)
+    fig.suptitle(
+        "DE–US distribution comparison: scale, skewness, and zero-inflation differ across regions",
+        fontsize=12,
+        y=1.02,
+    )
     fig.tight_layout()
     fig.savefig(out_path)
     plt.close(fig)

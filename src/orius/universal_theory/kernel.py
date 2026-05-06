@@ -1,8 +1,10 @@
 """Pure orchestration helpers for the universal degraded-observation kernel."""
+
 from __future__ import annotations
 
 import uuid
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from orius.dc3s.drift import PageHinkleyDetector
 
@@ -54,10 +56,7 @@ def build_observation_packet(
     domain_id: str = "",
 ) -> ObservationPacket:
     timestamp = str(
-        parsed_state.get("ts_utc")
-        or raw_telemetry.get("ts_utc")
-        or raw_telemetry.get("timestamp")
-        or ""
+        parsed_state.get("ts_utc") or raw_telemetry.get("ts_utc") or raw_telemetry.get("timestamp") or ""
     )
     return ObservationPacket(
         raw_telemetry=dict(raw_telemetry),
@@ -160,7 +159,9 @@ def build_repair_decision(
         safe_action=dict(safe_action),
         repaired=bool(repaired),
         mode=str(meta.get("mode", "projection")),
-        reason=str(meta.get("intervention_reason")) if meta.get("intervention_reason") not in (None, "") else None,
+        reason=str(meta.get("intervention_reason"))
+        if meta.get("intervention_reason") not in (None, "")
+        else None,
         metadata=meta,
     )
 
@@ -192,7 +193,9 @@ def _extract_reliability_history(
             candidate = item.get("w_t")
         if candidate is None and isinstance(item.get("reliability"), Mapping):
             reliability_payload = item.get("reliability")
-            candidate = reliability_payload.get("w_t", reliability_payload.get("weight", reliability_payload.get("w")))
+            candidate = reliability_payload.get(
+                "w_t", reliability_payload.get("weight", reliability_payload.get("w"))
+            )
         if candidate is None:
             continue
         try:
@@ -378,7 +381,7 @@ def execute_universal_step(
     }
     certificate.extras["semantic_checks"] = dict(contract_checks)
     certificate.extras["risk_bound_scope"] = str(episode_bound.get("scope", "current_step_only"))
-    certificate.extras["theorem_contracts"] = theorem_contracts
+    certificate.theorem_contracts = theorem_contracts
 
     return UniversalStepResult(
         certificate=certificate,

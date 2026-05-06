@@ -20,6 +20,10 @@ jobs:
           pip install -e .
       - name: Ruff Check
         run: ruff check src services scripts
+      - name: Code Health Gate
+        run: python scripts/audit_code_health.py --config configs/publish_audit.yaml
+      - name: Deployment Security Gate
+        run: python scripts/validate_deployment_security.py
       - name: Ruff Format Check
         run: ruff format --check src services scripts
       - name: Mypy
@@ -74,3 +78,17 @@ jobs:
       - name: Build
         working-directory: frontend
         run: npm run build
+      - name: Start dashboard
+        working-directory: frontend
+        run: |
+          npm run start > /tmp/orius-dashboard.log 2>&1 &
+          echo $! > /tmp/orius-dashboard.pid
+      - name: Smoke dashboard routes
+        working-directory: frontend
+        run: npm run smoke:routes -- --base-url http://127.0.0.1:3000 --wait
+      - name: Stop dashboard
+        if: always()
+        run: |
+          if [ -f /tmp/orius-dashboard.pid ]; then
+            kill "$(cat /tmp/orius-dashboard.pid)" || true
+          fi

@@ -13,10 +13,10 @@ import fnmatch
 import json
 import os
 import shlex
-from datetime import datetime, timezone
-from pathlib import Path
 import subprocess
-
+from contextlib import suppress
+from datetime import UTC, datetime
+from pathlib import Path
 
 DEFAULT_ACTIVE_RELEASE = "PREDEPLOY_MAX_BG_20260422T122751Z"
 DEFAULT_PRUNE_PARTS = {
@@ -161,7 +161,9 @@ def _is_pruned(path: Path, root: Path) -> bool:
     return any(rel == item or rel.startswith(f"{item}/") for item in DEFAULT_PRUNE_PARTS)
 
 
-def _walk_matching_files(root: Path, patterns: tuple[str, ...], exclude_parts: set[str] | None = None) -> list[Path]:
+def _walk_matching_files(
+    root: Path, patterns: tuple[str, ...], exclude_parts: set[str] | None = None
+) -> list[Path]:
     exclude_parts = exclude_parts or set()
     matches: list[Path] = []
     for current_root, dirs, files in os.walk(root):
@@ -251,21 +253,24 @@ def _has_git_sidecars(root: Path) -> bool:
     git_root = root / ".git"
     if not git_root.exists():
         return False
-    for current_root, _dirs, files in os.walk(git_root):
+    for _current_root, _dirs, files in os.walk(git_root):
         if any(name.startswith("._") for name in files):
             return True
     return False
 
 
-def _delete_git_object_sidecars(root: Path) -> int:
-    """Remove Git-object AppleDouble files that macOS can recreate late."""
-    git_root = root / ".git" / "objects"
+def _git_cleanup_excluded(root: Path, exclude_parts: set[str]) -> bool:
+    git_root = root / ".git"
+    return not git_root.exists() or _is_excluded(git_root, root, exclude_parts)
+
+
+def _delete_git_sidecars(root: Path) -> int:
+    """Remove Git AppleDouble files that macOS can recreate late."""
+    git_root = root / ".git"
     if not git_root.exists():
         return 0
-    try:
+    with suppress(FileNotFoundError):
         subprocess.run(["dot_clean", "-m", str(git_root)], check=False, capture_output=True, text=True)
-    except FileNotFoundError:
-        pass
     deleted = 0
     for _ in range(3):
         sidecars = [path for path in git_root.rglob("._*") if path.is_file()]
@@ -277,6 +282,27 @@ def _delete_git_object_sidecars(root: Path) -> int:
                 deleted += 1
             except FileNotFoundError:
                 continue
+    return deleted
+
+
+def _delete_manifest_sidecars(root: Path, manifest_path: Path) -> int:
+    """Remove AppleDouble sidecars produced while writing the cleanup manifest."""
+    deleted = 0
+    candidates = [manifest_path.with_name(f"._{manifest_path.name}")]
+    try:
+        parts = manifest_path.parent.relative_to(root).parts
+    except ValueError:
+        parts = ()
+    current = root
+    for part in parts:
+        candidates.append(current / f"._{part}")
+        current = current / part
+    for path in candidates:
+        try:
+            path.unlink()
+            deleted += 1
+        except FileNotFoundError:
+            continue
     return deleted
 
 
@@ -307,7 +333,9 @@ def main() -> int:
     exclude_parts = default_exclude_parts(root)
     exclude_parts.update(str(item).strip("/").replace("\\", "/") for item in args.exclude if item)
 
-    if args.delete and _has_git_sidecars(root) and _git_process_active():
+    git_cleanup_excluded = _git_cleanup_excluded(root, exclude_parts)
+
+    if args.delete and not git_cleanup_excluded and _has_git_sidecars(root) and _git_process_active():
         print("[cleanup_appledouble] refused: Git AppleDouble files exist while a git process is active")
         return 3
 
@@ -315,7 +343,7 @@ def main() -> int:
     open_writes = _open_paths(_active_write_candidates(root))
     manifest_path = root / args.manifest
     payload = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "root": str(root),
         "delete_requested": bool(args.delete),
         "manifest_requested": bool(args.write_manifest or args.delete),
@@ -353,17 +381,16 @@ def main() -> int:
                 continue
         payload["deleted"] = deleted
         manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
-        # Writing the manifest on macOS/external drives can itself create a new
-        # AppleDouble sidecar. Remove it so the cleanup operation is idempotent.
-        manifest_sidecar = manifest_path.with_name(f"._{manifest_path.name}")
-        if manifest_sidecar.exists():
-            manifest_sidecar.unlink()
-        deleted += _delete_git_object_sidecars(root)
+        # Writing the manifest on macOS/external drives can itself create
+        # AppleDouble sidecars for the manifest file and newly created parent
+        # directories. Remove them so cleanup is idempotent even for scoped roots.
+        deleted += _delete_manifest_sidecars(root, manifest_path)
+        if not git_cleanup_excluded:
+            deleted += _delete_git_sidecars(root)
         payload["deleted"] = deleted
         manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
-        manifest_sidecar = manifest_path.with_name(f"._{manifest_path.name}")
-        if manifest_sidecar.exists():
-            manifest_sidecar.unlink()
+        deleted += _delete_manifest_sidecars(root, manifest_path)
+        payload["deleted"] = deleted
 
     manifest_label = manifest_path.relative_to(root) if args.write_manifest or args.delete else "not-written"
     print(

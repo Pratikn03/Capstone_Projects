@@ -3,10 +3,12 @@
 Wraps the existing ``BatteryPlant`` simulation as a benchmark track,
 providing domain-specific state, observation, and violation semantics.
 """
+
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import numpy as np
 

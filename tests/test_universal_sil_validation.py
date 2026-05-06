@@ -1,11 +1,11 @@
 """Regression tests for the universal software-in-loop validator."""
+
 from __future__ import annotations
 
 import json
 import subprocess
 import sys
 from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "run_universal_sil_validation.py"

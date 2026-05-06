@@ -4,12 +4,19 @@ The legacy universal runtime exposed loosely typed ``dict[str, Any]`` payloads.
 This module keeps the runtime interoperable with those adapters while making
 the theorem-facing objects explicit and auditable.
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import math
-from typing import Any, Iterator, Mapping, Protocol, Sequence
+from collections.abc import Iterator, Mapping, Sequence
+from dataclasses import dataclass, field
+from typing import Any, Protocol
 
+from orius.dc3s.certificate import (
+    CERTIFICATE_SCHEMA_VERSION,
+    DEFAULT_CERTIFICATE_ISSUER,
+    normalize_certificate_schema,
+)
 
 AssumptionTag = str
 
@@ -82,8 +89,7 @@ class ObservationConsistentStateSet:
         self.reliability_weight = float(self.reliability_weight)
         if not math.isfinite(self.inflation) or self.inflation < 1.0:
             raise ValueError(
-                "ObservationConsistentStateSet.inflation must be finite and >= 1.0. "
-                f"Got {self.inflation!r}."
+                f"ObservationConsistentStateSet.inflation must be finite and >= 1.0. Got {self.inflation!r}."
             )
         if not math.isfinite(self.reliability_weight) or not (0.0 <= self.reliability_weight <= 1.0):
             raise ValueError(
@@ -103,9 +109,11 @@ class SafetySpec:
 
     def __post_init__(self) -> None:
         self.constraints = dict(self.constraints)
-        self.fallback_action = None if self.fallback_action is None else {
-            str(k): float(v) for k, v in self.fallback_action.items()
-        }
+        self.fallback_action = (
+            None
+            if self.fallback_action is None
+            else {str(k): float(v) for k, v in self.fallback_action.items()}
+        )
         self.assumption_tags = _tuple_tags(self.assumption_tags)
 
 
@@ -120,9 +128,11 @@ class SafeActionSet:
 
     def __post_init__(self) -> None:
         self.representation = dict(self.representation)
-        self.fallback_action = None if self.fallback_action is None else {
-            str(k): float(v) for k, v in self.fallback_action.items()
-        }
+        self.fallback_action = (
+            None
+            if self.fallback_action is None
+            else {str(k): float(v) for k, v in self.fallback_action.items()}
+        )
         self.assumption_tags = _tuple_tags(self.assumption_tags)
 
 
@@ -152,6 +162,13 @@ class RepairDecision:
 class SafetyCertificate(Mapping[str, Any]):
     """Structured certificate that remains mapping-compatible for callers."""
 
+    certificate_schema_version: str
+    issuer: str
+    domain: str
+    action: dict[str, Any]
+    validity_horizon_H_t: int | None
+    expires_at_step: int | None
+    theorem_contracts: dict[str, Any]
     command_id: str
     certificate_id: str
     created_at: str
@@ -164,12 +181,28 @@ class SafetyCertificate(Mapping[str, Any]):
     reliability: dict[str, Any]
     drift: dict[str, Any]
     certificate_hash: str | None = None
+    prev_hash: str | None = None
+    signature: str | None = None
+    signature_algorithm: str | None = None
+    public_key_id: str | None = None
     assumptions_checked: tuple[AssumptionTag, ...] = ()
     certificate_horizon_steps: int | None = None
     source_domain: str = ""
     extras: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        self.certificate_schema_version = str(self.certificate_schema_version or CERTIFICATE_SCHEMA_VERSION)
+        self.issuer = str(self.issuer or DEFAULT_CERTIFICATE_ISSUER)
+        self.domain = str(self.domain or self.zone_id)
+        self.action = dict(self.action)
+        self.validity_horizon_H_t = (
+            None if self.validity_horizon_H_t is None else int(self.validity_horizon_H_t)
+        )
+        self.expires_at_step = None if self.expires_at_step is None else int(self.expires_at_step)
+        self.theorem_contracts = {
+            str(key): dict(value) if isinstance(value, Mapping) else value
+            for key, value in self.theorem_contracts.items()
+        }
         self.command_id = str(self.command_id)
         self.certificate_id = str(self.certificate_id)
         self.created_at = str(self.created_at)
@@ -182,6 +215,12 @@ class SafetyCertificate(Mapping[str, Any]):
         self.reliability = dict(self.reliability)
         self.drift = dict(self.drift)
         self.certificate_hash = None if self.certificate_hash in (None, "") else str(self.certificate_hash)
+        self.prev_hash = None if self.prev_hash in (None, "") else str(self.prev_hash)
+        self.signature = None if self.signature in (None, "") else str(self.signature)
+        self.signature_algorithm = (
+            None if self.signature_algorithm in (None, "") else str(self.signature_algorithm)
+        )
+        self.public_key_id = None if self.public_key_id in (None, "") else str(self.public_key_id)
         self.assumptions_checked = _tuple_tags(self.assumptions_checked)
         self.certificate_horizon_steps = (
             None if self.certificate_horizon_steps is None else int(self.certificate_horizon_steps)
@@ -196,9 +235,16 @@ class SafetyCertificate(Mapping[str, Any]):
         *,
         assumptions_checked: Sequence[AssumptionTag] | None = None,
         source_domain: str = "",
-    ) -> "SafetyCertificate":
-        raw = dict(payload)
+    ) -> SafetyCertificate:
+        raw = normalize_certificate_schema(payload)
         known_keys = {
+            "certificate_schema_version",
+            "issuer",
+            "domain",
+            "action",
+            "validity_horizon_H_t",
+            "expires_at_step",
+            "theorem_contracts",
             "command_id",
             "certificate_id",
             "created_at",
@@ -211,15 +257,28 @@ class SafetyCertificate(Mapping[str, Any]):
             "reliability",
             "drift",
             "certificate_hash",
+            "cert_hash",
+            "prev_hash",
+            "signature",
+            "signature_algorithm",
+            "public_key_id",
             "assumptions_checked",
             "certificate_horizon_steps",
-            "validity_horizon_H_t",
             "tau_t",
             "source_domain",
         }
         horizon = raw.get("certificate_horizon_steps", raw.get("validity_horizon_H_t", raw.get("tau_t")))
         assumption_tags = assumptions_checked or raw.get("assumptions_checked") or ()
         return cls(
+            certificate_schema_version=str(raw.get("certificate_schema_version", CERTIFICATE_SCHEMA_VERSION)),
+            issuer=str(raw.get("issuer", DEFAULT_CERTIFICATE_ISSUER)),
+            domain=str(raw.get("domain", raw.get("zone_id", ""))),
+            action=_as_dict(raw.get("action")),
+            validity_horizon_H_t=None
+            if raw.get("validity_horizon_H_t") is None
+            else int(raw["validity_horizon_H_t"]),
+            expires_at_step=None if raw.get("expires_at_step") is None else int(raw["expires_at_step"]),
+            theorem_contracts=_as_dict(raw.get("theorem_contracts")),
             command_id=str(raw.get("command_id", raw.get("certificate_id", ""))),
             certificate_id=str(raw.get("certificate_id", raw.get("command_id", ""))),
             created_at=str(raw.get("created_at", "")),
@@ -232,6 +291,10 @@ class SafetyCertificate(Mapping[str, Any]):
             reliability=_as_dict(raw.get("reliability")),
             drift=_as_dict(raw.get("drift")),
             certificate_hash=raw.get("certificate_hash"),
+            prev_hash=raw.get("prev_hash"),
+            signature=raw.get("signature"),
+            signature_algorithm=raw.get("signature_algorithm"),
+            public_key_id=raw.get("public_key_id"),
             assumptions_checked=_tuple_tags(assumption_tags),
             certificate_horizon_steps=None if horizon is None else int(horizon),
             source_domain=str(source_domain or raw.get("source_domain", "")),
@@ -240,6 +303,13 @@ class SafetyCertificate(Mapping[str, Any]):
 
     def to_mapping(self) -> dict[str, Any]:
         payload = {
+            "certificate_schema_version": self.certificate_schema_version,
+            "issuer": self.issuer,
+            "domain": self.domain,
+            "action": dict(self.action),
+            "validity_horizon_H_t": self.validity_horizon_H_t,
+            "expires_at_step": self.expires_at_step,
+            "theorem_contracts": dict(self.theorem_contracts),
             "command_id": self.command_id,
             "certificate_id": self.certificate_id,
             "created_at": self.created_at,
@@ -252,6 +322,10 @@ class SafetyCertificate(Mapping[str, Any]):
             "reliability": dict(self.reliability),
             "drift": dict(self.drift),
             "certificate_hash": self.certificate_hash,
+            "prev_hash": self.prev_hash,
+            "signature": self.signature,
+            "signature_algorithm": self.signature_algorithm,
+            "public_key_id": self.public_key_id,
             "assumptions_checked": list(self.assumptions_checked),
             "source_domain": self.source_domain,
         }
@@ -295,7 +369,9 @@ class UniversalStepResult(Mapping[str, Any]):
         self.state = dict(self.state)
         self.step_risk_bound = float(self.step_risk_bound)
         self.episode_risk_bound = {
-            str(key): float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else value
+            str(key): float(value)
+            if isinstance(value, int | float) and not isinstance(value, bool)
+            else value
             for key, value in self.episode_risk_bound.items()
         }
         self.contract_checks = {
@@ -362,15 +438,13 @@ class UniversalStepResult(Mapping[str, Any]):
 class DomainInstantiation(Protocol):
     """Minimal universal contract that a domain adapter must satisfy."""
 
-    def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
-        ...
+    def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]: ...
 
     def compute_oqe(
         self,
         state: Mapping[str, Any],
         history: Sequence[Mapping[str, Any]] | None = None,
-    ) -> tuple[float, Mapping[str, Any]]:
-        ...
+    ) -> tuple[float, Mapping[str, Any]]: ...
 
     def build_uncertainty_set(
         self,
@@ -381,8 +455,7 @@ class DomainInstantiation(Protocol):
         cfg: Mapping[str, Any],
         drift_flag: bool | None = None,
         prev_meta: Mapping[str, Any] | None = None,
-    ) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
-        ...
+    ) -> tuple[Mapping[str, Any], Mapping[str, Any]]: ...
 
     def tighten_action_set(
         self,
@@ -390,8 +463,7 @@ class DomainInstantiation(Protocol):
         constraints: Mapping[str, Any],
         *,
         cfg: Mapping[str, Any],
-    ) -> Mapping[str, Any]:
-        ...
+    ) -> Mapping[str, Any]: ...
 
     def repair_action(
         self,
@@ -402,8 +474,7 @@ class DomainInstantiation(Protocol):
         uncertainty: Mapping[str, Any],
         constraints: Mapping[str, Any],
         cfg: Mapping[str, Any],
-    ) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
-        ...
+    ) -> tuple[Mapping[str, Any], Mapping[str, Any]]: ...
 
     def emit_certificate(
         self,
@@ -422,8 +493,7 @@ class DomainInstantiation(Protocol):
         dispatch_plan: Mapping[str, Any] | None = None,
         repair_meta: Mapping[str, Any] | None = None,
         guarantee_meta: Mapping[str, Any] | None = None,
-    ) -> Mapping[str, Any]:
-        ...
+    ) -> Mapping[str, Any]: ...
 
 
 class ContractViolation(ValueError):
@@ -505,8 +575,7 @@ def _action_within_safe_set_bounds(
     if not comparable_keys:
         return bool(safe_action_set.viable or safe_action_set.fallback_action is not None), comparable_keys
     passed = all(
-        lower_bounds[key] - 1e-9 <= float(action[key]) <= upper_bounds[key] + 1e-9
-        for key in comparable_keys
+        lower_bounds[key] - 1e-9 <= float(action[key]) <= upper_bounds[key] + 1e-9 for key in comparable_keys
     )
     return passed, comparable_keys
 
@@ -631,7 +700,8 @@ class ContractVerifier:
             )
             record(
                 "monotone_inflation",
-                degraded_inflation is not None and degraded_inflation + 1e-9 >= float(uncertainty_set.inflation),
+                degraded_inflation is not None
+                and degraded_inflation + 1e-9 >= float(uncertainty_set.inflation),
                 (
                     f"Lower reliability probe w'={degraded_weight:.3f} yields inflation "
                     f"{float(degraded_inflation or 0.0):.6f}, current inflation={float(uncertainty_set.inflation):.6f}."
@@ -778,8 +848,7 @@ class ContractVerifier:
             and abs(float(uncertainty_set.reliability_weight) - float(reliability.weight)) <= 1e-9
         )
         repair_membership_passed = (
-            invariant_passed("certificate_matches_repair")
-            and membership_passed
+            invariant_passed("certificate_matches_repair") and membership_passed
             if safe_action_set.viable
             else invariant_passed("fallback_action_matches_certificate")
         )
@@ -796,7 +865,11 @@ class ContractVerifier:
             bool(adapter_summary.get("contract_passed"))
             and bool(safe_action_set.representation)
             and invariant_passed("certificate_reliability_consistency")
-            and (invariant_passed("tightened_set_monotonicity") if "tightened_set_monotonicity" in checked_invariants else True)
+            and (
+                invariant_passed("tightened_set_monotonicity")
+                if "tightened_set_monotonicity" in checked_invariants
+                else True
+            )
         )
         obligations = {
             "coverage": {
@@ -865,9 +938,7 @@ ASSUMPTION_REGISTER: dict[str, dict[str, str]] = {
     "A1": {
         "tag": "A1",
         "name": "Almost-sure model error bound",
-        "formal": (
-            "For all t, |x_{t+1} - f(x_t,a_t)| <= epsilon_model almost surely."
-        ),
+        "formal": ("For all t, |x_{t+1} - f(x_t,a_t)| <= epsilon_model almost surely."),
         "role": (
             "Provides the deterministic one-step slack used by shielded "
             "postconditions and proof surfaces that cannot rely only on "
@@ -890,10 +961,7 @@ ASSUMPTION_REGISTER: dict[str, dict[str, str]] = {
     "A3": {
         "tag": "A3",
         "name": "Feasible safe repair",
-        "formal": (
-            "Whenever the runtime invokes repair, the tightened safe-action "
-            "set is non-empty."
-        ),
+        "formal": ("Whenever the runtime invokes repair, the tightened safe-action set is non-empty."),
         "role": (
             "Keeps repair as an active runtime precondition rather than an "
             "unrestricted theorem that arbitrary constraints always admit a "
@@ -903,10 +971,7 @@ ASSUMPTION_REGISTER: dict[str, dict[str, str]] = {
     "A4": {
         "tag": "A4",
         "name": "Known one-step dynamics",
-        "formal": (
-            "The one-step increment map Delta(a)=f(x,a)-x is known exactly "
-            "to the controller."
-        ),
+        "formal": ("The one-step increment map Delta(a)=f(x,a)-x is known exactly to the controller."),
         "role": (
             "Allows runtime certificates to check the immediate effect of an "
             "action against domain constraints."
@@ -931,22 +996,13 @@ ASSUMPTION_REGISTER: dict[str, dict[str, str]] = {
             "Each supported telemetry fault class is detected within a finite "
             "lag tau_max known to the runtime."
         ),
-        "role": (
-            "Bounds the exposure window before OQE degradation, repair, or "
-            "fallback must respond."
-        ),
+        "role": ("Bounds the exposure window before OQE degradation, repair, or fallback must respond."),
     },
     "A7": {
         "tag": "A7",
         "name": "Causal certificate rule",
-        "formal": (
-            "The certificate state obeys cert_t = h(z_1,...,z_t) for a causal "
-            "update rule h."
-        ),
-        "role": (
-            "Prevents certificates from using future telemetry and supports "
-            "the runtime audit chain."
-        ),
+        "formal": ("The certificate state obeys cert_t = h(z_1,...,z_t) for a causal update rule h."),
+        "role": ("Prevents certificates from using future telemetry and supports the runtime audit chain."),
     },
     "A8": {
         "tag": "A8",
@@ -965,25 +1021,19 @@ ASSUMPTION_REGISTER: dict[str, dict[str, str]] = {
         "tag": "A9",
         "name": "Sub-Gaussian disturbance law",
         "formal": (
-            "The disturbance increments satisfy E[exp(s epsilon_t)] <= "
-            "exp(s^2 sigma_d^2 / 2) for all real s."
+            "The disturbance increments satisfy E[exp(s epsilon_t)] <= exp(s^2 sigma_d^2 / 2) for all real s."
         ),
         "role": (
-            "Supplies the high-probability disturbance proxy used by T6 and "
-            "trajectory-PAC validity surfaces."
+            "Supplies the high-probability disturbance proxy used by T6 and trajectory-PAC validity surfaces."
         ),
     },
     "A10a": {
         "tag": "A10a",
         "name": "Polynomial mixing telemetry",
         "formal": (
-            "The telemetry process is phi-mixing with polynomial decay "
-            "phi(k)=O(k^{-beta}) for some beta > 1."
+            "The telemetry process is phi-mixing with polynomial decay phi(k)=O(k^{-beta}) for some beta > 1."
         ),
-        "role": (
-            "Supports scoped weak-dependence arguments where polynomial "
-            "mixing is sufficient."
-        ),
+        "role": ("Supports scoped weak-dependence arguments where polynomial mixing is sufficient."),
     },
     "A10b": {
         "tag": "A10b",
@@ -992,10 +1042,7 @@ ASSUMPTION_REGISTER: dict[str, dict[str, str]] = {
             "The telemetry process is phi-mixing with geometric decay "
             "phi(k) <= C rho^k for C > 0 and rho in (0,1)."
         ),
-        "role": (
-            "Supports the current T9 separated-window proof under stronger "
-            "dependence decay."
-        ),
+        "role": ("Supports the current T9 separated-window proof under stronger dependence decay."),
     },
     "A11": {
         "tag": "A11",
@@ -1026,12 +1073,10 @@ ASSUMPTION_REGISTER: dict[str, dict[str, str]] = {
         "tag": "A13",
         "name": "TV bridge",
         "formal": (
-            "For the T10 binary boundary-testing observation laws, "
-            "TV(P_{0,t}, P_{1,t}) <= w_t for every t."
+            "For the T10 binary boundary-testing observation laws, TV(P_{0,t}, P_{1,t}) <= w_t for every t."
         ),
         "role": (
-            "Links the reliability score to distinguishability in the scoped "
-            "binary lower-bound construction."
+            "Links the reliability score to distinguishability in the scoped binary lower-bound construction."
         ),
     },
 }

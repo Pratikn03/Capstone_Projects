@@ -1,4 +1,5 @@
 """Deterministic CPSBench-IoT episode generation with configurable faults and drift."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -6,7 +7,6 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-
 
 DEFAULT_SCENARIOS = ("nominal", "dropout", "delay_jitter", "out_of_order", "spikes", "drift_combo")
 FAULT_COLUMNS = (
@@ -41,7 +41,7 @@ def _base_episode(rng: np.random.Generator, horizon: int) -> pd.DataFrame:
         + 2200.0 * np.sin((2.0 * np.pi * dow / 7.0) - 0.4)
         + rng.normal(0.0, 450.0, size=horizon)
     )
-    wind = 8500.0 + 2200.0 * np.sin((2.0 * np.pi * (idx + 5.0) / 24.0)) + rng.normal(0.0, 550.0, size=horizon)
+    wind = 8500.0 + 2200.0 * np.sin(2.0 * np.pi * (idx + 5.0) / 24.0) + rng.normal(0.0, 550.0, size=horizon)
     solar_shape = np.sin(np.pi * (hour - 6.0) / 12.0)
     solar = np.maximum(0.0, 7000.0 * solar_shape) + rng.normal(0.0, 180.0, size=horizon)
     renewables = np.maximum(0.0, wind + np.maximum(0.0, solar))
@@ -77,7 +77,9 @@ def _init_event_log(timestamps: pd.Series) -> pd.DataFrame:
     return event_log
 
 
-def _apply_dropout(obs: pd.DataFrame, event_log: pd.DataFrame, rng: np.random.Generator, dropout_rate: float = 0.08) -> None:
+def _apply_dropout(
+    obs: pd.DataFrame, event_log: pd.DataFrame, rng: np.random.Generator, dropout_rate: float = 0.08
+) -> None:
     rate = max(0.0, min(float(dropout_rate), 1.0))
     if rate <= 0.0:
         return
@@ -100,12 +102,16 @@ def _apply_delay_jitter(
     idx = rng.choice(len(event_log), size=count, replace=False)
     delay = max(float(delay_seconds), 0.0)
     jitter = rng.normal(loc=delay, scale=max(0.25 * delay, 0.1), size=count)
-    event_log.loc[idx, "arrived_timestamp"] = event_log.loc[idx, "arrived_timestamp"] + pd.to_timedelta(jitter, unit="s")
+    event_log.loc[idx, "arrived_timestamp"] = event_log.loc[idx, "arrived_timestamp"] + pd.to_timedelta(
+        jitter, unit="s"
+    )
     event_log.loc[idx, "delay_jitter"] = 1
     event_log.loc[idx, "delay_steps"] = np.maximum(1, np.rint(np.abs(jitter) / 3600.0)).astype(int)
 
 
-def _apply_out_of_order(event_log: pd.DataFrame, rng: np.random.Generator, out_of_order_rate: float = 0.10) -> None:
+def _apply_out_of_order(
+    event_log: pd.DataFrame, rng: np.random.Generator, out_of_order_rate: float = 0.10
+) -> None:
     if len(event_log) < 8:
         return
     rate = max(0.0, min(float(out_of_order_rate), 1.0))
@@ -114,7 +120,9 @@ def _apply_out_of_order(event_log: pd.DataFrame, rng: np.random.Generator, out_o
     count = max(1, int(rate * len(event_log)))
     idx = rng.choice(np.arange(4, len(event_log)), size=count, replace=False)
     rewind = rng.integers(1, 4, size=count)
-    event_log.loc[idx, "arrived_timestamp"] = event_log.loc[idx, "arrived_timestamp"] - pd.to_timedelta(rewind, unit="h")
+    event_log.loc[idx, "arrived_timestamp"] = event_log.loc[idx, "arrived_timestamp"] - pd.to_timedelta(
+        rewind, unit="h"
+    )
     event_log.loc[idx, "out_of_order"] = 1
     event_log.loc[idx, "out_of_order_steps"] = rewind.astype(int)
 
@@ -147,8 +155,8 @@ def _apply_stale_sensor(obs: pd.DataFrame, event_log: pd.DataFrame, rng: np.rand
     for start in starts:
         end = min(start + 4, len(obs))
         for col in ("load_mw", "renewables_mw"):
-            obs.loc[start:end - 1, col] = float(obs.loc[start - 1, col])
-        event_log.loc[start:end - 1, "stale_sensor"] = 1
+            obs.loc[start : end - 1, col] = float(obs.loc[start - 1, col])
+        event_log.loc[start : end - 1, "stale_sensor"] = 1
 
 
 def _apply_drift(
@@ -220,7 +228,7 @@ def generate_episode(
         _apply_drift(x_obs, x_true, event_log, drift_timestep if drift_timestep is not None else horizon // 2)
     else:
         raise ValueError(
-            f"Unknown scenario '{scenario}'. Supported scenarios: {', '.join(DEFAULT_SCENARIOS + ('stale_sensor',))}"
+            f"Unknown scenario '{scenario}'. Supported scenarios: {', '.join((*DEFAULT_SCENARIOS, 'stale_sensor'))}"
         )
 
     # Optional domain-shift controls used by transfer stress evaluation.
@@ -234,7 +242,9 @@ def generate_episode(
 
     for frame in (x_obs, x_true):
         frame["load_mw"] = np.maximum(0.0, frame["load_mw"] * load_scale + load_bias_mw)
-        frame["renewables_mw"] = np.maximum(0.0, frame["renewables_mw"] * renewables_scale + renewables_bias_mw)
+        frame["renewables_mw"] = np.maximum(
+            0.0, frame["renewables_mw"] * renewables_scale + renewables_bias_mw
+        )
         frame["price_per_mwh"] = np.maximum(0.0, frame["price_per_mwh"] * price_scale)
         frame["carbon_kg_per_mwh"] = np.maximum(0.0, frame["carbon_kg_per_mwh"] * carbon_scale)
 

@@ -87,3 +87,15 @@ jobs:
           service: ${{ secrets.ECS_SERVICE_DASHBOARD }}
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           wait-for-service-stability: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Smoke deployed dashboard routes
+        env:
+          SMOKE_BASE_URL: ${{ secrets.DASHBOARD_BASE_URL }}
+        run: |
+          if [ -z "$SMOKE_BASE_URL" ]; then
+            echo "DASHBOARD_BASE_URL is not configured; skipping deployed route smoke."
+            exit 0
+          fi
+          node frontend/scripts/smoke-routes.mjs --base-url "$SMOKE_BASE_URL" --wait --timeout-ms 30000

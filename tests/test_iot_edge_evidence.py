@@ -10,11 +10,10 @@ Covers:
 - Certificate audit completeness on edge path
 - Latency bounds (all steps complete within wall-clock budget)
 """
+
 from __future__ import annotations
 
-import math
 import time
-from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -22,8 +21,8 @@ import pytest
 from orius.certos.runtime import CertOSConfig, CertOSRuntime
 from orius.cpsbench_iot.plant import BatteryPlant
 
-
 # ── SimBatteryDriver tests ────────────────────────────────────────────
+
 
 class TestSimBatteryDriver:
     """Test the digital-twin battery driver directly."""
@@ -32,6 +31,7 @@ class TestSimBatteryDriver:
         # Import lazily to avoid missing module issues
         try:
             from iot.edge_agent.drivers.sim import SimBatteryDriver
+
             return SimBatteryDriver()
         except ImportError:
             pytest.skip("iot.edge_agent.drivers.sim not importable")
@@ -63,6 +63,7 @@ class TestSimBatteryDriver:
 
 # ── BatteryPlant + CertOS integration ────────────────────────────────
 
+
 class TestCertOSBatteryIntegration:
     """Simulate a battery dispatch loop with CertOS lifecycle."""
 
@@ -84,7 +85,7 @@ class TestCertOSBatteryIntegration:
         )
         rt = CertOSRuntime(config=cfg)
 
-        rng = np.random.default_rng(42)
+        np.random.default_rng(42)
         history = []
 
         for t in range(steps):
@@ -113,13 +114,15 @@ class TestCertOSBatteryIntegration:
             plant.step(c, d)
 
             violations = rt.check_invariants(state)
-            history.append({
-                "step": t,
-                "status": state.status,
-                "fallback": state.fallback_active,
-                "soc": plant.soc_mwh,
-                "inv_violations": violations,
-            })
+            history.append(
+                {
+                    "step": t,
+                    "status": state.status,
+                    "fallback": state.fallback_active,
+                    "soc": plant.soc_mwh,
+                    "inv_violations": violations,
+                }
+            )
 
         return rt, history
 
@@ -153,13 +156,17 @@ class TestCertOSBatteryIntegration:
 
 # ── Latency Evidence ─────────────────────────────────────────────────
 
+
 class TestEdgeLatency:
     """Prove that CertOS + BatteryPlant step completes within budget."""
 
     def test_step_latency_under_1ms(self):
         plant = BatteryPlant(
-            soc_mwh=100.0, min_soc_mwh=20.0, max_soc_mwh=180.0,
-            charge_eff=0.92, discharge_eff=0.95,
+            soc_mwh=100.0,
+            min_soc_mwh=20.0,
+            max_soc_mwh=180.0,
+            charge_eff=0.92,
+            discharge_eff=0.95,
         )
         rt = CertOSRuntime()
 
@@ -184,6 +191,7 @@ class TestEdgeLatency:
 
 
 # ── Certificate Audit Path ───────────────────────────────────────────
+
 
 class TestCertificateAuditPath:
     """Verify that every dispatch leaves an auditable trace."""

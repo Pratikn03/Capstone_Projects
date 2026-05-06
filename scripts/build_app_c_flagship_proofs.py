@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build the standalone Appendix C flagship proof draft."""
+
 from __future__ import annotations
 
 import shutil
@@ -7,7 +8,6 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_TEX = REPO_ROOT / "appendices" / "app_c_flagship_proofs.tex"

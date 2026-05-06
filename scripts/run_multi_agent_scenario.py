@@ -4,6 +4,7 @@
 Non-composition counterexample: two batteries, shared feeder limit.
 Outputs CSV and summary to reports/publication/.
 """
+
 from __future__ import annotations
 
 import sys
@@ -30,10 +31,12 @@ def main() -> None:
     print("Multi-agent transformer-capacity scenario (bounded composition)")
     print("-" * 50)
     for name, r in results.items():
-        print(f"  {name:12s}: joint_viol={r['joint_violations']:3d} "
-              f"local_viol={r['local_violations']:3d} "
-              f"work={r['useful_work_mwh']:.0f} "
-              f"margin_q={r['margin_quality']:.3f}")
+        print(
+            f"  {name:12s}: joint_viol={r['joint_violations']:3d} "
+            f"local_viol={r['local_violations']:3d} "
+            f"work={r['useful_work_mwh']:.0f} "
+            f"margin_q={r['margin_quality']:.3f}"
+        )
     print(f"\nCSV -> {out_dir / 'multi_agent_transformer_scenario.csv'}")
 
 

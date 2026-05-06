@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 import json
-import math
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 import duckdb
 import pandas as pd
 
 from orius.dc3s.certificate import normalize_certificate_schema, recompute_certificate_hash
 
-
 # ---------------------------------------------------------------------------
 # Formal validity predicate  (Theorem: CertOS Runtime Proof)
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class ValidityVerdict:
@@ -71,7 +71,7 @@ def _extract_reliability_weight(certificate: Mapping[str, Any]) -> float:
             if value not in (None, ""):
                 return float(value)
         except (TypeError, ValueError):
-            pass
+            continue
     reliability = certificate.get("reliability")
     if isinstance(reliability, Mapping):
         for key in ("w_t", "w", "reliability_w"):
@@ -117,7 +117,7 @@ def _hash_integrity_ok(raw_cert: Mapping[str, Any], normalized_cert: Mapping[str
                 without_synthesized_horizon.pop("validity_horizon_H_t", None)
                 candidates.append(without_synthesized_horizon)
         except (TypeError, ValueError):
-            pass
+            legacy_horizon = None
 
     stripped = {k: v for k, v in normalized_cert.items() if k not in NON_HASHED_EXTENSION_FIELDS}
     candidates.append(stripped)
@@ -178,6 +178,7 @@ def formal_validity_predicate(
 # Composability theorem  (induction over certificate chain)
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class ComposabilityResult:
     """Result of the composability verification over an episode chain."""
@@ -214,8 +215,12 @@ def verify_composability(
     T = len(cert_list)
     if T == 0:
         return ComposabilityResult(
-            composable=True, chain_length=0, all_valid=True,
-            episode_tsvr_bound=0.0, failed_indices=(), proof_sketch="Empty chain.",
+            composable=True,
+            chain_length=0,
+            all_valid=True,
+            episode_tsvr_bound=0.0,
+            failed_indices=(),
+            proof_sketch="Empty chain.",
         )
 
     failed_indices = []
@@ -248,8 +253,8 @@ def verify_composability(
         proof_sketch=(
             f"Chain of {T} certificates.  All pass validity predicate (w_min={w_min:.3f}).  "
             f"Episode TSVR <= {alpha} * {total_gap:.4f} = {alpha * total_gap:.6f}."
-            if all_valid else
-            f"Chain of {T} certificates.  {len(failed_indices)} failed validity predicate "
+            if all_valid
+            else f"Chain of {T} certificates.  {len(failed_indices)} failed validity predicate "
             f"at indices {failed_indices}.  Composability does not hold."
         ),
     )
@@ -258,6 +263,7 @@ def verify_composability(
 # ---------------------------------------------------------------------------
 # Tamper-evidence proof  (SHA-256 collision resistance)
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class TamperEvidenceResult:
@@ -289,8 +295,10 @@ def verify_tamper_evidence(
     T = len(cert_list)
     if T == 0:
         return TamperEvidenceResult(
-            tamper_evident=True, chain_length=0,
-            detection_probability_lower_bound=1.0, broken_links=(),
+            tamper_evident=True,
+            chain_length=0,
+            detection_probability_lower_bound=1.0,
+            broken_links=(),
             proof_sketch="Empty chain — vacuously tamper-evident.",
         )
 
@@ -329,8 +337,8 @@ def verify_tamper_evidence(
             f"Chain of {T} certificates verified.  All hashes match and "
             f"prev_hash links are consistent.  Under A7 (SHA-256 collision "
             f"resistance), tampering is detectable with P >= 1 - 2^{{-128}}."
-            if tamper_evident else
-            f"Chain of {T} certificates.  {len(broken_links)} broken link(s) "
+            if tamper_evident
+            else f"Chain of {T} certificates.  {len(broken_links)} broken link(s) "
             f"at indices {broken_links}.  Tampering detected."
         ),
     )
@@ -378,7 +386,9 @@ NON_HASHED_EXTENSION_FIELDS = {
 }
 
 
-def load_certificates_from_duckdb(duckdb_path: str | Path, table_name: str = "dispatch_certificates") -> list[dict[str, Any]]:
+def load_certificates_from_duckdb(
+    duckdb_path: str | Path, table_name: str = "dispatch_certificates"
+) -> list[dict[str, Any]]:
     db_path = Path(duckdb_path)
     if not db_path.exists():
         return []
@@ -416,7 +426,9 @@ def load_certificates_from_duckdb(duckdb_path: str | Path, table_name: str = "di
     return certificates
 
 
-def verify_certificates(certificates: Iterable[Mapping[str, Any]]) -> tuple[dict[str, Any], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def verify_certificates(
+    certificates: Iterable[Mapping[str, Any]],
+) -> tuple[dict[str, Any], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     raw_list = [dict(cert) for cert in certificates]
     cert_list = [normalize_certificate_schema(cert) for cert in raw_list]
     failure_rows: list[dict[str, Any]] = []
@@ -451,7 +463,9 @@ def verify_certificates(certificates: Iterable[Mapping[str, Any]]) -> tuple[dict
         half_life = certificate.get("half_life_steps")
         expires_at = certificate.get("expires_at_step")
         status = certificate.get("validity_status")
-        has_expiry = any(value not in (None, "") for value in (validity_horizon, half_life, expires_at, status))
+        has_expiry = any(
+            value not in (None, "") for value in (validity_horizon, half_life, expires_at, status)
+        )
         expiry_ok = True
         if has_expiry:
             try:
@@ -459,8 +473,7 @@ def verify_certificates(certificates: Iterable[Mapping[str, Any]]) -> tuple[dict
                 half_life_value = None if half_life in (None, "") else int(half_life)
                 expires_value = None if expires_at in (None, "") else int(expires_at)
                 expiry_ok = all(
-                    value is None or value >= 0
-                    for value in (horizon_value, half_life_value, expires_value)
+                    value is None or value >= 0 for value in (horizon_value, half_life_value, expires_value)
                 )
                 if horizon_value is not None and half_life_value is not None:
                     expiry_ok = expiry_ok and half_life_value <= max(horizon_value, half_life_value)
@@ -532,7 +545,9 @@ def verify_certificates(certificates: Iterable[Mapping[str, Any]]) -> tuple[dict
         failure_rows.append(
             {
                 "row_index": int(failed_index or 0),
-                "command_id": str(cert_list[int(failed_index or 0)].get("command_id", "")) if cert_list else "",
+                "command_id": str(cert_list[int(failed_index or 0)].get("command_id", ""))
+                if cert_list
+                else "",
                 "failure_type": str(failure_reason or "chain_invalid"),
                 "missing_fields": "",
                 "expected_hash": str(expected_prev_hash or ""),
@@ -542,7 +557,14 @@ def verify_certificates(certificates: Iterable[Mapping[str, Any]]) -> tuple[dict
 
     failure_df = pd.DataFrame(
         failure_rows,
-        columns=["row_index", "command_id", "failure_type", "missing_fields", "expected_hash", "observed_hash"],
+        columns=[
+            "row_index",
+            "command_id",
+            "failure_type",
+            "missing_fields",
+            "expected_hash",
+            "observed_hash",
+        ],
     )
     expiry_df = pd.DataFrame(
         expiry_rows,
@@ -573,7 +595,11 @@ def verify_certificates(certificates: Iterable[Mapping[str, Any]]) -> tuple[dict
             },
             {
                 "metric": "required_payload_pass_rate",
-                "value": float(1.0 - len(failure_df[failure_df["failure_type"] == "missing_required_fields"]) / max(len(cert_list), 1)),
+                "value": float(
+                    1.0
+                    - len(failure_df[failure_df["failure_type"] == "missing_required_fields"])
+                    / max(len(cert_list), 1)
+                ),
             },
             {
                 "metric": "expiry_metadata_presence_rate",
@@ -594,10 +620,26 @@ def verify_certificates(certificates: Iterable[Mapping[str, Any]]) -> tuple[dict
         "chain_valid": bool(chain_valid),
         "checked": int(len(cert_list) if chain_valid else (failed_index or 0)),
         "failure_rows": int(len(failure_df)),
-        "required_payload_pass_rate": float(governance_df.loc[governance_df["metric"] == "required_payload_pass_rate", "value"].iloc[0]) if not governance_df.empty else 0.0,
-        "expiry_metadata_presence_rate": float(governance_df.loc[governance_df["metric"] == "expiry_metadata_presence_rate", "value"].iloc[0]) if not governance_df.empty else 0.0,
-        "expiry_consistency_rate": float(governance_df.loc[governance_df["metric"] == "expiry_consistency_rate", "value"].iloc[0]) if not governance_df.empty else 1.0,
-        "audit_completeness_rate": float(governance_df.loc[governance_df["metric"] == "audit_completeness_rate", "value"].iloc[0]) if not governance_df.empty else 1.0,
+        "required_payload_pass_rate": float(
+            governance_df.loc[governance_df["metric"] == "required_payload_pass_rate", "value"].iloc[0]
+        )
+        if not governance_df.empty
+        else 0.0,
+        "expiry_metadata_presence_rate": float(
+            governance_df.loc[governance_df["metric"] == "expiry_metadata_presence_rate", "value"].iloc[0]
+        )
+        if not governance_df.empty
+        else 0.0,
+        "expiry_consistency_rate": float(
+            governance_df.loc[governance_df["metric"] == "expiry_consistency_rate", "value"].iloc[0]
+        )
+        if not governance_df.empty
+        else 1.0,
+        "audit_completeness_rate": float(
+            governance_df.loc[governance_df["metric"] == "audit_completeness_rate", "value"].iloc[0]
+        )
+        if not governance_df.empty
+        else 1.0,
         "failed_index": failed_index,
         "reason": failure_reason,
     }

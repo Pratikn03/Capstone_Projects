@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -78,22 +79,22 @@ const DOMAINS: Domain[] = [
     ir: '0.0%',
     status: 'verified',
     statusLabel: 'Locked artifact',
-    description: 'Reference witness row for the full theorem ladder. German grid (OPSD) + US balancing authorities (EIA-930). All T1–T11 validated.',
+    description: 'Reference witness row for the defended battery proof spine. T5 is a definition; T8/T9/T10 are supporting; draft extensions stay out of the defended headline count.',
   },
   {
     key: 'av',
     name: 'Autonomous Vehicles',
     icon: Car,
     tier: 'runtime-contract-closed',
-    dataset: 'AV runtime denominator',
-    source: 'reports/orius_av/full_corpus/runtime_summary.csv',
-    tsvrBefore: '22.76%',
-    tsvrAfter: '0.0%',
+    dataset: 'nuPlan all-zip replay denominator',
+    source: 'reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv',
+    tsvrBefore: '28.93%',
+    tsvrAfter: '0.016%',
     picp: '100%',
-    ir: '96.6%',
+    ir: '50.0%',
     status: 'verified',
     statusLabel: 'Runtime contract closed',
-    description: 'Defended-bounded domain. Full 9,348-step runtime denominator under the narrowed AV brake-hold release contract. T11, postcondition, and runtime-witness pass rates are all 100%.',
+    description: 'Defended-bounded domain. Full nuPlan all-zip grouped replay denominator under the narrowed AV brake-hold release contract. T11 and the AV one-step fallback lemma are runtime-linked; no road deployment or full autonomous-driving field closure is claimed.',
   },
   {
     key: 'healthcare',
@@ -108,18 +109,30 @@ const DOMAINS: Domain[] = [
     ir: '75.1%',
     status: 'verified',
     statusLabel: 'Runtime contract closed',
-    description: 'Defended-bounded domain. Promoted MIMIC monitoring runtime denominator under the fail-safe alert-release contract. T11, postcondition, and runtime-witness pass rates are all 100%.',
+    description: 'Defended-bounded domain. Promoted MIMIC monitoring runtime denominator under the fail-safe alert-release contract. T11 and the healthcare one-step fallback lemma are runtime-linked; no clinical deployment or clinical decision support approval is claimed.',
   },
 ];
 
-// Theorem-Domain matrix: true = full witness, 'partial' = scoped/supporting/runtime-linked, false = N/A
+// Theorem-Domain matrix: true = full witness, 'partial' = scoped/supporting/runtime-linked, false = not applicable
 type Applicability = true | 'partial' | false;
-const THEOREM_IDS = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11'];
+const THEOREM_COLUMNS = [
+  { id: 'T1', label: 'T1', qualifier: 'Flagship', href: '/theorems#theorem-t1' },
+  { id: 'T2', label: 'T2', qualifier: 'Flagship', href: '/theorems#theorem-t2' },
+  { id: 'T3', label: 'T3', qualifier: 'Flagship', href: '/theorems#theorem-t3' },
+  { id: 'T4', label: 'T4', qualifier: 'Flagship', href: '/theorems#theorem-t4' },
+  { id: 'T5', label: 'T5', qualifier: 'Definition', href: '/theorems#theorem-t5' },
+  { id: 'T6', label: 'T6', qualifier: 'Flagship', href: '/theorems#theorem-t6' },
+  { id: 'T7', label: 'T7_Battery', qualifier: 'Battery', href: '/theorems#theorem-t7_battery' },
+  { id: 'T8', label: 'T8', qualifier: 'Supporting', href: '/theorems#theorem-t8' },
+  { id: 'T9', label: 'T9', qualifier: 'Supporting', href: '/theorems#theorem-t9' },
+  { id: 'T10', label: 'T10', qualifier: 'Supporting', href: '/theorems#theorem-t10' },
+  { id: 'T11', label: 'T11', qualifier: 'Runtime', href: '/theorems#theorem-t11' },
+];
 
 const DOMAIN_THEOREM_MATRIX: Record<string, Applicability[]> = {
-  battery:    [true, true, true, true, true, true, true, true, true, true, true],
-  av:         [true, true, true, true, 'partial', 'partial', 'partial', 'partial', true, 'partial', true],
-  healthcare: [true, true, true, true, 'partial', 'partial', 'partial', 'partial', 'partial', 'partial', true],
+  battery:    [true, true, true, true, 'partial', true, true, 'partial', 'partial', 'partial', true],
+  av:         [false, 'partial', 'partial', false, 'partial', 'partial', false, 'partial', 'partial', 'partial', true],
+  healthcare: [false, 'partial', 'partial', false, 'partial', 'partial', false, 'partial', 'partial', 'partial', true],
 };
 
 interface Claim {
@@ -134,13 +147,13 @@ const CLAIMS: Claim[] = [
   { id: 'C002', claim: 'DC3S one-step repair preserves true safety', theorems: 'T2', evidence: 'Inductive proof + empirical' },
   { id: 'C003', claim: 'Expected violations bounded by α(1−w̄)T', theorems: 'T3', evidence: 'Martingale proof + battery data' },
   { id: 'C004', claim: 'Quality-ignorant controllers are fundamentally unsafe', theorems: 'T4', evidence: 'Constructive witness + ablation' },
-  { id: 'C005', claim: 'Certificate validity horizon is computable', theorems: 'T5, T6', evidence: 'Forward tube analysis' },
-  { id: 'C006', claim: 'Feasible fallback always exists from safe interior', theorems: 'T7', evidence: 'Zero-dispatch construction' },
-  { id: 'C007', claim: 'Graceful degradation never worsens outcomes', theorems: 'T8', evidence: '6 fault × 7 controller comparison' },
-  { id: 'C008', claim: 'Quality-ignorance has fundamental lower bound', theorems: 'T9', evidence: 'Martingale + Azuma–Hoeffding' },
-  { id: 'C009', claim: 'T3 bound is tight within factor 4', theorems: 'T10', evidence: 'Le Cam two-point method' },
-  { id: 'C010', claim: 'ORIUS transfers to any compliant domain', theorems: 'T11', evidence: 'Typed adapter + promoted three-domain lane' },
-  { id: 'C011', claim: 'DC3S achieves zero TSVR under all nominal + fault scenarios', theorems: 'T2, T3, T7', evidence: 'ORIUS-Bench full suite' },
+  { id: 'C005', claim: 'Certificate validity horizon is defined; expiration is bounded for the battery witness row', theorems: 'T5, T6', evidence: 'Forward tube definition + expiration-bound artifact' },
+  { id: 'C006', claim: 'Feasible fallback theorem is battery-specific; AV/Healthcare use one-step runtime lemmas', theorems: 'T7_Battery, T6_AV_FallbackValidity, T6_HC_FallbackValidity', evidence: 'C7_BatteryFallback proof + runtime-contract witnesses' },
+  { id: 'C007', claim: 'Graceful degradation comparison is a supporting bounded surface', theorems: 'T8', evidence: '6 fault × 7 controller comparison' },
+  { id: 'C008', claim: 'T9 is supporting after cross-domain mixing and witness constants are discharged', theorems: 'T9', evidence: 'T9 promotion evidence for Battery, AV, and Healthcare' },
+  { id: 'C009', claim: 'T10 is supporting after boundary mass and TV bridge are discharged across domains', theorems: 'T10', evidence: 'T10 boundary-law evidence for Battery, AV, and Healthcare' },
+  { id: 'C010', claim: 'Any compliant domain inherits the ORIUS runtime-assurance contract', theorems: 'T11', evidence: 'Typed adapter + promoted three-domain lane' },
+  { id: 'C011', claim: 'Battery DC3S achieves zero TSVR under nominal + fault scenarios; other domains are bounded runtime-contract rows', theorems: 'T2, T3, T7_Battery', evidence: 'ORIUS-Bench battery suite + runtime-contract witnesses' },
 ];
 
 interface DesignPrinciple {
@@ -288,7 +301,7 @@ export default function DomainsPage() {
           Promoted Domain Coverage
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          3 promoted domains × 11 theorems — evidence tiers, transfer obligations, and claims register
+          3 promoted domains × universal contract + domain instantiations — evidence tiers, transfer obligations, and claims register
         </p>
       </div>
 
@@ -320,8 +333,8 @@ export default function DomainsPage() {
 
       {/* T11 Transfer Theorem */}
       <Panel
-        title="T11: Typed Structural Transfer"
-        subtitle="Universal adapter contract — any compliant domain inherits T2–T3 safety guarantees"
+        title="T11: ORIUS Runtime-Assurance Contract"
+        subtitle="Universal adapter contract — any compliant domain inherits the ORIUS runtime-assurance contract"
         badge="Structural"
         badgeColor="warn"
         accentColor="warn"
@@ -349,14 +362,23 @@ export default function DomainsPage() {
       </Panel>
 
       {/* Theorem-Domain Matrix */}
-      <Panel title="Theorem–Domain Applicability Matrix" subtitle="3 promoted domains × 11 theorems" accentColor="primary">
+      <Panel title="Theorem–Domain Applicability Matrix" subtitle="3 promoted domains × universal contract + domain instantiations" accentColor="primary">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-white/[0.08]">
                 <th className="text-left py-2.5 px-3 text-slate-500 font-medium">Domain</th>
-                {THEOREM_IDS.map((id) => (
-                  <th key={id} className="text-center py-2.5 px-2 text-slate-500 font-medium font-mono">{id}</th>
+                {THEOREM_COLUMNS.map((column) => (
+                  <th key={column.id} className="text-center py-2 px-1.5 text-slate-500 font-medium">
+                    <Link
+                      href={column.href}
+                      className="group mx-auto flex min-w-[58px] flex-col items-center gap-0.5 rounded-md px-1.5 py-1 text-slate-400 transition-colors hover:bg-white/[0.04] hover:text-emerald-300"
+                      title={`${column.label} in Theorem Ledger`}
+                    >
+                      <span className="font-mono text-[11px] font-semibold">{column.label}</span>
+                      <span className="text-[8px] font-medium text-slate-600 group-hover:text-emerald-400/70">{column.qualifier}</span>
+                    </Link>
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -387,8 +409,10 @@ export default function DomainsPage() {
         </div>
         <p className="mt-3 text-[11px] text-slate-500 leading-relaxed">
           Green cells indicate full witness/application for the current domain surface. Amber cells indicate scoped,
-          supporting, or runtime-linked theorem coverage; for AV and Healthcare this is intentional because the active
-          defended claim is bounded T11 runtime-contract closure, not equal battery proof depth.
+          supporting, definition, or runtime-linked theorem coverage. T5 is definitional, T7_Battery is battery-specific, and
+          C7_BatteryFallback names the battery fallback proof surface. AV/Healthcare close through bounded T11 runtime
+          contracts plus domain fallback-validity lemmas, not equal battery proof depth. T9/T10 amber cells now mirror the
+          Theorem Ledger: supporting, assumption-qualified cross-domain evidence backed by the promotion package, not draft rows.
         </p>
         <div className="flex gap-4 mt-3 pt-3 border-t border-white/[0.04]">
           <div className="flex items-center gap-1.5">
@@ -397,7 +421,7 @@ export default function DomainsPage() {
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-amber-400 text-sm">○</span>
-            <span className="text-[10px] text-slate-500">Scoped / runtime-linked</span>
+            <span className="text-[10px] text-slate-500">Scoped / supporting / runtime-linked</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-slate-600 text-sm">—</span>

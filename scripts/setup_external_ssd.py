@@ -1,26 +1,24 @@
 #!/usr/bin/env python3
 """Scaffold and verify an external SSD layout for ORIUS raw datasets."""
+
 from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from orius.data_pipeline.external_raw import DEFAULT_STRICT_EXTERNAL_ROOT, STRICT_EXTERNAL_ROOT_ENV
-
-
-DATASET_DIRS = (
-    "waymo_open_motion",
-    "argoverse2_motion",
-    "argoverse2_sensor",
-    "kitti_odometry",
-    "aerospace_flight_telemetry",
+from orius.data_pipeline.external_raw import (
+    DEFAULT_STRICT_EXTERNAL_ROOT,
+    EXTERNAL_DATASETS,
+    STRICT_EXTERNAL_ROOT_ENV,
 )
+
+DATASET_DIRS = tuple(spec.directory_name for spec in EXTERNAL_DATASETS.values())
 
 ENV_VAR = "ORIUS_EXTERNAL_DATA_ROOT"
 DEFAULT_EXTERNAL_ROOT_NAME = "orius_external_data"
@@ -38,13 +36,16 @@ def _required_dirs(external_root: Path) -> list[Path]:
 
 
 def _render_shell_block(external_root: Path) -> str:
-    return "\n".join(
-        [
-            BLOCK_START,
-            f"export {ENV_VAR}={external_root}",
-            BLOCK_END,
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                BLOCK_START,
+                f"export {ENV_VAR}={external_root}",
+                BLOCK_END,
+            ]
+        )
+        + "\n"
+    )
 
 
 def _upsert_shell_block(shell_profile: Path, external_root: Path) -> None:
@@ -114,7 +115,7 @@ def _print_next_steps(external_root: Path, strict_link: Path, *, shell_profile: 
         f"1. Put raw datasets under {external_root}",
         f"2. Reload your shell and verify {ENV_VAR}:",
         "   source ~/.zshrc",
-        f"   echo \"${ENV_VAR}\"",
+        f'   echo "${ENV_VAR}"',
         "3. Run the repo checks:",
         f"   PYTHONPATH=src .venv/bin/python scripts/verify_real_data_preflight.py --external-root {external_root}",
         "   PYTHONPATH=src .venv/bin/python scripts/refresh_real_data_manifests.py",
@@ -130,18 +131,39 @@ def _print_next_steps(external_root: Path, strict_link: Path, *, shell_profile: 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Scaffold and verify an ORIUS external SSD layout.")
-    parser.add_argument("--volume-root", type=Path, required=True, help="Mounted SSD root for the external SSD volume.")
-    parser.add_argument("--external-root-name", default=DEFAULT_EXTERNAL_ROOT_NAME, help="Folder name created under the SSD root")
+    parser.add_argument(
+        "--volume-root", type=Path, required=True, help="Mounted SSD root for the external SSD volume."
+    )
+    parser.add_argument(
+        "--external-root-name",
+        default=DEFAULT_EXTERNAL_ROOT_NAME,
+        help="Folder name created under the SSD root",
+    )
     parser.add_argument(
         "--strict-link",
         type=Path,
         default=Path(str(DEFAULT_STRICT_LINK)),
         help=f"Symlink path used by strict equal-domain gate (default: ${STRICT_EXTERNAL_ROOT_ENV} or ~/orius_external_data)",
     )
-    parser.add_argument("--skip-symlink", action="store_true", help="Do not create or verify the strict-link path")
-    parser.add_argument("--append-shell-profile", action="store_true", help="Append or update the env var block in the selected shell profile")
-    parser.add_argument("--shell-profile", type=Path, default=Path("~/.zshrc"), help="Shell profile to update when --append-shell-profile is set")
-    parser.add_argument("--verify-only", action="store_true", help="Only verify the SSD layout; do not create missing directories or links")
+    parser.add_argument(
+        "--skip-symlink", action="store_true", help="Do not create or verify the strict-link path"
+    )
+    parser.add_argument(
+        "--append-shell-profile",
+        action="store_true",
+        help="Append or update the env var block in the selected shell profile",
+    )
+    parser.add_argument(
+        "--shell-profile",
+        type=Path,
+        default=Path("~/.zshrc"),
+        help="Shell profile to update when --append-shell-profile is set",
+    )
+    parser.add_argument(
+        "--verify-only",
+        action="store_true",
+        help="Only verify the SSD layout; do not create missing directories or links",
+    )
     args = parser.parse_args()
 
     volume_root = args.volume_root.expanduser().resolve()

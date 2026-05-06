@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 import pandas as pd
-
 from _battery_wrappers_common import REPO_ROOT, ensure_dir, write_manifest
 
 
@@ -52,7 +51,10 @@ def main() -> None:
                 "peak_shaving_pct": float(impact.get("peak_shaving_pct", 0.0)),
                 "carbon_source": str(impact.get("carbon_source", "unknown")),
                 "targets_present": ",".join(sorted(str(x) for x in compare["target"].unique())),
-                "price_target_present": bool((compare["target"].astype(str) == "price_eur_mwh").any() or (compare["target"].astype(str) == "price_usd_mwh").any()),
+                "price_target_present": bool(
+                    (compare["target"].astype(str) == "price_eur_mwh").any()
+                    or (compare["target"].astype(str) == "price_usd_mwh").any()
+                ),
                 "forecast_table_path": str(compare_path.relative_to(REPO_ROOT)),
                 "impact_summary_path": str(impact_path.relative_to(REPO_ROOT)),
             }

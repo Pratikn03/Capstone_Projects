@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Fill tbl08 CSV from Phase 1 baseline_comparison.json results."""
-import json
+
 import csv
+import json
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -13,8 +14,12 @@ with open(phase1_path) as f:
 
 target_map = {"Load": "load_mw", "Wind": "wind_mw", "Solar": "solar_mw"}
 model_map = {
-    "GBM": "gbm", "LSTM": "lstm", "TCN": "tcn",
-    "N-BEATS": "nbeats", "TFT": "tft", "PatchTST": "patchtst",
+    "GBM": "gbm",
+    "LSTM": "lstm",
+    "TCN": "tcn",
+    "N-BEATS": "nbeats",
+    "TFT": "tft",
+    "PatchTST": "patchtst",
 }
 
 csv_path = REPO / "paper" / "assets" / "tables" / "tbl08_forecast_baselines.csv"
@@ -46,10 +51,10 @@ for row in rows:
 
     # Fill if RMSE is missing
     if row["RMSE"] == "---":
-        row["RMSE"] = f'{m["rmse"]:.2f}'
-        row["MAE"] = f'{m["mae"]:.2f}'
-        row["sMAPE (%)"] = f'{m["smape"] * 100:.2f}'
-        row["R2"] = f'{m["r2"]:.4f}'
+        row["RMSE"] = f"{m['rmse']:.2f}"
+        row["MAE"] = f"{m['mae']:.2f}"
+        row["sMAPE (%)"] = f"{m['smape'] * 100:.2f}"
+        row["R2"] = f"{m['r2']:.4f}"
         row["PICP@90 (%)"] = "---"
         row["Interval Width (MW)"] = "---"
         filled += 1
@@ -58,10 +63,10 @@ for row in rows:
     # Update GBM with latest Phase 1 numbers
     elif row["Model"] == "GBM":
         old_rmse = row["RMSE"]
-        row["RMSE"] = f'{m["rmse"]:.2f}'
-        row["MAE"] = f'{m["mae"]:.2f}'
-        row["sMAPE (%)"] = f'{m["smape"] * 100:.2f}'
-        row["R2"] = f'{m["r2"]:.4f}'
+        row["RMSE"] = f"{m['rmse']:.2f}"
+        row["MAE"] = f"{m['mae']:.2f}"
+        row["sMAPE (%)"] = f"{m['smape'] * 100:.2f}"
+        row["R2"] = f"{m['r2']:.4f}"
         if old_rmse != row["RMSE"]:
             print(f"  Updated GBM: {region} {row['Target']} RMSE {old_rmse} -> {row['RMSE']}")
 

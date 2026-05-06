@@ -10,14 +10,14 @@ Mathematical Formulation:
         - charge[t]: MW to charge at time t
         - discharge[t]: MW to discharge at time t
         - grid[t]: MW imported from grid at time t
-        
+
     Objective (minimize):
         sum_t [
             price[t] * grid[t]
             + carbon_weight * carbon[t] * grid[t]
             + degradation_cost_per_mwh * (charge[t] + discharge[t])
         ]
-        
+
     Constraints:
         - Power balance: load[t] = renewables[t] + discharge[t] - charge[t] + grid[t]
         - SoC dynamics: soc[t] = soc[t-1] + eta_regime(t) * charge[t] - discharge[t] / eta_regime(t)
@@ -37,28 +37,29 @@ Usage:
     ...     config={'battery': {'capacity_mwh': 10}}
     ... )
 """
+
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 from scipy.optimize import Bounds, LinearConstraint, milp
 
 from orius.optimizer.risk import RiskConfig, apply_interval_bounds
 
-
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
 
+
 def _as_array(x) -> np.ndarray:
     """
     Convert input to a 1D float NumPy array.
-    
+
     This helper standardizes various input types (scalars, lists, arrays)
     into a consistent format for the optimizer.
     """
-    if isinstance(x, (list, tuple, np.ndarray)):
+    if isinstance(x, list | tuple | np.ndarray):
         arr = np.asarray(x, dtype=float)
     else:
         arr = np.asarray([x], dtype=float)
@@ -75,15 +76,21 @@ def _broadcast_interval(arr: np.ndarray | None, horizon: int, label: str) -> np.
     return arr
 
 
-def _parse_interval(interval: dict | None, horizon: int, label: str) -> tuple[np.ndarray | None, np.ndarray | None]:
+def _parse_interval(
+    interval: dict | None, horizon: int, label: str
+) -> tuple[np.ndarray | None, np.ndarray | None]:
     if interval is None:
         return None, None
     if not isinstance(interval, dict):
         raise ValueError(f"{label}_interval must be a dict with lower/upper arrays")
     lower = interval.get("lower", interval.get("lo"))
     upper = interval.get("upper", interval.get("hi"))
-    lower_arr = _broadcast_interval(_as_array(lower), horizon, f"{label} lower") if lower is not None else None
-    upper_arr = _broadcast_interval(_as_array(upper), horizon, f"{label} upper") if upper is not None else None
+    lower_arr = (
+        _broadcast_interval(_as_array(lower), horizon, f"{label} lower") if lower is not None else None
+    )
+    upper_arr = (
+        _broadcast_interval(_as_array(upper), horizon, f"{label} upper") if upper is not None else None
+    )
     return lower_arr, upper_arr
 
 
@@ -95,7 +102,7 @@ def optimize_dispatch(
     forecast_carbon_kg=None,
     load_interval: dict | None = None,
     renewables_interval: dict | None = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Solve a mixed-integer dispatch problem with battery + grid constraints."""
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)
@@ -130,13 +137,21 @@ def optimize_dispatch(
     eta_a = float(
         battery.get(
             "efficiency_regime_a",
-            nominal_eff if ("charge_efficiency" in battery or "discharge_efficiency" in battery or "efficiency" in battery) else 0.98,
+            nominal_eff
+            if (
+                "charge_efficiency" in battery or "discharge_efficiency" in battery or "efficiency" in battery
+            )
+            else 0.98,
         )
     )
     eta_b = float(
         battery.get(
             "efficiency_regime_b",
-            nominal_eff if ("charge_efficiency" in battery or "discharge_efficiency" in battery or "efficiency" in battery) else 0.90,
+            nominal_eff
+            if (
+                "charge_efficiency" in battery or "discharge_efficiency" in battery or "efficiency" in battery
+            )
+            else 0.90,
         )
     )
     soc_split_frac = float(battery.get("efficiency_soc_split", 0.80))
@@ -177,7 +192,7 @@ def optimize_dispatch(
         min_soc = max(min_soc, min(risk.reserve_soc_mwh, capacity))
 
     max_import = float(grid.get("max_import_mw", grid.get("max_draw_mw", 50.0)))
-    
+
     # Use time-varying price if provided; otherwise fallback to config constant.
     if forecast_price is not None:
         price = _as_array(forecast_price)
@@ -395,27 +410,27 @@ def optimize_dispatch(
 
     # Bounds for each decision variable.
     bounds = []
-    for t in range(H):  # grid
+    for _ in range(H):  # grid
         bounds.append((0.0, max_import))
-    for t in range(H):  # charge
+    for _ in range(H):  # charge
         bounds.append((0.0, max_charge))
-    for t in range(H):  # discharge
+    for _ in range(H):  # discharge
         bounds.append((0.0, max_discharge))
     for t in range(H):  # curtailment
         bounds.append((0.0, ren[t]))
-    for t in range(H):  # unmet
+    for _ in range(H):  # unmet
         bounds.append((0.0, None))
-    for t in range(H):  # soc
+    for _ in range(H):  # soc
         bounds.append((min_soc, capacity))
-    for t in range(H):  # charge_a
+    for _ in range(H):  # charge_a
         bounds.append((0.0, max_charge))
-    for t in range(H):  # charge_b
+    for _ in range(H):  # charge_b
         bounds.append((0.0, max_charge))
-    for t in range(H):  # discharge_a
+    for _ in range(H):  # discharge_a
         bounds.append((0.0, max_discharge))
-    for t in range(H):  # discharge_b
+    for _ in range(H):  # discharge_b
         bounds.append((0.0, max_discharge))
-    for t in range(H):  # z_b (binary)
+    for _ in range(H):  # z_b (binary)
         bounds.append((0.0, 1.0))
     # Peak bound ties max import; acts as optimization variable.
     bounds.append((0.0, max_import))
@@ -447,8 +462,7 @@ def optimize_dispatch(
             "soc_mwh": [soc0] * H,
             "peak_mw": float(np.max(grid_plan)) if len(grid_plan) else None,
             "expected_cost_usd": float(
-                np.sum(grid_plan * price) * dt_hours
-                + np.sum(curtail) * curtail_pen * dt_hours
+                np.sum(grid_plan * price) * dt_hours + np.sum(curtail) * curtail_pen * dt_hours
             ),
             "battery_degradation_cost_usd": 0.0,
             "carbon_kg": float(np.sum(grid_plan * carbon_series) * dt_hours),

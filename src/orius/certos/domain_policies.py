@@ -1,7 +1,6 @@
 """Explicit domain governance policies for CertOS portability checks."""
-from __future__ import annotations
 
-from typing import Any, Mapping
+from __future__ import annotations
 
 from .runtime import DomainGovernancePolicy
 

@@ -1,9 +1,11 @@
 """Persistent online state for DC3S runtime."""
+
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 import duckdb
 
@@ -126,7 +128,9 @@ class DC3SStateStore:
                 last_prev_hash,
                 last_inflation,
                 json.dumps(dict(last_event or {}), ensure_ascii=True, sort_keys=True) if last_event else None,
-                json.dumps(dict(last_action or {}), ensure_ascii=True, sort_keys=True) if last_action else None,
+                json.dumps(dict(last_action or {}), ensure_ascii=True, sort_keys=True)
+                if last_action
+                else None,
             ],
         )
 

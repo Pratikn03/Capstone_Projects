@@ -48,7 +48,9 @@ def _seed_release_repo(root: Path) -> Path:
             _write(root / rel, json.dumps({"status": "pass", "domain": "three-domain"}) + "\n")
 
     for rel in TABLE_DIRS:
-        _write(root / rel / "tbl_real_data_validation.tex", "\\begin{tabular}{ll}Battery & pass\\end{tabular}\n")
+        _write(
+            root / rel / "tbl_real_data_validation.tex", "\\begin{tabular}{ll}Battery & pass\\end{tabular}\n"
+        )
     for rel in TABLE_FILES:
         _write(root / rel, "domain,metric\nBattery,1\n")
 
@@ -116,13 +118,18 @@ def test_build_clean_artifact_release_writes_expected_tree_and_manifests(tmp_pat
     assert "README.md" in (release / "MANIFEST.sha256").read_text(encoding="utf-8")
 
 
-def test_builder_excludes_raw_downloads_caches_appledouble_and_private_healthcare_rows(tmp_path: Path) -> None:
+def test_builder_excludes_raw_downloads_caches_appledouble_and_private_healthcare_rows(
+    tmp_path: Path,
+) -> None:
     repo = _seed_release_repo(tmp_path / "repo")
     _write(repo / AV_EVIDENCE_DIRS[0] / "nuplan-v1.1.zip", "raw zip should not copy\n")
     _write(repo / AV_EVIDENCE_DIRS[0] / "partial.crdownload", "partial should not copy\n")
     _write(repo / AV_EVIDENCE_DIRS[0] / "._runtime_summary.csv", "appledouble should not copy\n")
     _write(repo / "src/orius/__pycache__/x.pyc", "cache should not copy\n")
-    _write(repo / "reports/predeployment_external_validation/healthcare_site_splits/train.parquet", "private rows\n")
+    _write(
+        repo / "reports/predeployment_external_validation/healthcare_site_splits/train.parquet",
+        "private rows\n",
+    )
 
     release = build_release(
         repo_root=repo,
@@ -138,7 +145,31 @@ def test_builder_excludes_raw_downloads_caches_appledouble_and_private_healthcar
     assert not any(path.endswith(".crdownload") for path in copied_paths)
     assert not any("/._" in path or path.startswith("._") for path in copied_paths)
     assert not any("__pycache__" in path for path in copied_paths)
-    assert not any(path.startswith("evidence/healthcare/") and path.endswith(".parquet") for path in copied_paths)
+    assert not any(
+        path.startswith("evidence/healthcare/") and path.endswith(".parquet") for path in copied_paths
+    )
+
+
+def test_builder_includes_symlinked_derived_runtime_files(tmp_path: Path) -> None:
+    repo = _seed_release_repo(tmp_path / "repo")
+    trace_target = repo / "derived_runtime_traces.csv"
+    _write(trace_target, "controller,violation\norius,False\n")
+    runtime_trace = repo / AV_EVIDENCE_DIRS[0] / "runtime_traces.csv"
+    runtime_trace.unlink()
+    runtime_trace.symlink_to(trace_target)
+
+    release = build_release(
+        repo_root=repo,
+        out_root=tmp_path / "out",
+        release_id="orius-three-domain-artifact-test",
+        include_manuscripts=True,
+        copy_mode="copy",
+        verify=True,
+    )
+
+    copied_trace = release / "evidence/av_nuplan/runtime/runtime_traces.csv"
+    assert copied_trace.exists()
+    assert copied_trace.read_text(encoding="utf-8") == trace_target.read_text(encoding="utf-8")
 
 
 def test_validator_rejects_raw_stale_and_missing_required_artifacts(tmp_path: Path) -> None:

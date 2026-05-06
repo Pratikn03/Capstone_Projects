@@ -3,9 +3,11 @@
 The public entrypoint remains stable, but the implementation now delegates to
 the typed universal degraded-observation kernel in ``orius.universal_theory``.
 """
+
 from __future__ import annotations
 
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from orius.dc3s.drift import PageHinkleyDetector
 from orius.universal_theory import UniversalStepResult, execute_universal_step

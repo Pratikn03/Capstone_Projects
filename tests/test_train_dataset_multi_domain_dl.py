@@ -36,17 +36,34 @@ def test_sequence_lookback_resolution_prefers_steps_and_never_returns_zero() -> 
     assert forecasting_train._resolve_task_lookback({"lookback_hours": 0.1, "lookback_steps": 24}) == 24
 
 
-def test_multi_domain_train_splits_are_imputable_and_scalable() -> None:
-    cases = (
-        ("AV", "speed_mps"),
-        ("HEALTHCARE", "hr_bpm"),
+def test_healthcare_config_uses_target_specific_conformal_multiplier() -> None:
+    healthcare_cfg = td._load_training_cfg(td.DATASET_REGISTRY["HEALTHCARE"])
+    uncertainty_cfg = forecasting_train._merge_uncertainty_cfg(
+        {
+            "enabled": True,
+            "conformal": {"alpha": 0.10, "method": "cqr", "q_multiplier": 1.0},
+            "target_overrides": {"hr_bpm": {"conformal": {"q_multiplier": 2.0}}},
+        },
+        healthcare_cfg.get("uncertainty", {}),
     )
+
+    hr_cfg = forecasting_train._conformal_config_for_target(uncertainty_cfg, "hr_bpm")
+    spo2_cfg = forecasting_train._conformal_config_for_target(uncertainty_cfg, "spo2_pct")
+
+    assert hr_cfg.alpha == 0.10
+    assert hr_cfg.q_multiplier > 1.0
+    assert spo2_cfg.q_multiplier == 1.0
+
+
+def test_multi_domain_train_splits_are_imputable_and_scalable() -> None:
+    cases = ("AV", "HEALTHCARE")
     repo_root = Path(td.REPO_ROOT)
 
-    for dataset_key, target in cases:
+    for dataset_key in cases:
         registry_cfg = td.DATASET_REGISTRY[dataset_key]
         train_cfg = td._load_training_cfg(registry_cfg)
         targets = td._configured_targets(train_cfg)
+        target = targets[0]
         train_df = pd.read_parquet(repo_root / registry_cfg.splits_path / "train.parquet")
         X, y, feat_cols = forecasting_train.make_xy(train_df, target, targets)
         assert feat_cols

@@ -1,8 +1,8 @@
 """Shared builders for the YAML-canonical theorem audit surface."""
+
 from __future__ import annotations
 
 import ast
-import csv
 import json
 import re
 from collections import Counter
@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REPORTS_DIR = REPO_ROOT / "reports" / "publication"
@@ -88,7 +87,10 @@ def _find_py_symbol_line(path: Path, symbol: str) -> int:
     def find_in_nodes(nodes: list[ast.stmt], remaining: list[str]) -> int | None:
         target = remaining[0]
         for node in nodes:
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node.name == target:
+            if (
+                isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
+                and node.name == target
+            ):
                 if len(remaining) == 1:
                     return int(node.lineno)
                 if isinstance(node, ast.ClassDef):
@@ -101,7 +103,10 @@ def _find_py_symbol_line(path: Path, symbol: str) -> int:
     if line is None and len(parts) == 1:
         target = parts[0]
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node.name == target:
+            if (
+                isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
+                and node.name == target
+            ):
                 line = int(node.lineno)
                 break
     if line is None:
@@ -113,10 +118,7 @@ def _resolve_location(file_path: str, needle: str) -> str:
     path = REPO_ROOT / file_path
     if not path.exists():
         raise FileNotFoundError(path)
-    if path.suffix == ".py":
-        line = _find_py_symbol_line(path, needle)
-    else:
-        line = _find_text_line(path, needle)
+    line = _find_py_symbol_line(path, needle) if path.suffix == ".py" else _find_text_line(path, needle)
     return f"{file_path}:{line}"
 
 
@@ -157,7 +159,9 @@ def _string_list(values: list[Any]) -> list[str]:
     return [str(value) for value in values]
 
 
-def _combine_assumptions(spec: dict[str, Any], assumption_lookup: dict[str, str]) -> tuple[list[str], list[dict[str, str]], list[str]]:
+def _combine_assumptions(
+    spec: dict[str, Any], assumption_lookup: dict[str, str]
+) -> tuple[list[str], list[dict[str, str]], list[str]]:
     assumptions = [str(value) for value in spec.get("assumptions", [])]
     extra_unresolved = [str(value) for value in spec.get("unresolved_assumptions", [])]
     locations: list[dict[str, str]] = []
@@ -174,7 +178,9 @@ def _combine_assumptions(spec: dict[str, Any], assumption_lookup: dict[str, str]
 
 
 def _build_theorem_row(spec: dict[str, Any], assumption_lookup: dict[str, str]) -> dict[str, Any]:
-    assumptions_used, assumption_locations, unresolved_assumptions = _combine_assumptions(spec, assumption_lookup)
+    assumptions_used, assumption_locations, unresolved_assumptions = _combine_assumptions(
+        spec, assumption_lookup
+    )
     statement_source = spec["statement_source"]
     proof_source = spec["proof_source"]
     return {
@@ -384,7 +390,9 @@ def render_active_theorem_remediation_md(payload: dict[str, Any]) -> str:
 
 def render_defended_core_json(payload: dict[str, Any]) -> str:
     rows = _defended_core_rows(payload)
-    return json.dumps({"summary": _defended_core_summary(rows), "rows": rows}, indent=2, sort_keys=False) + "\n"
+    return (
+        json.dumps({"summary": _defended_core_summary(rows), "rows": rows}, indent=2, sort_keys=False) + "\n"
+    )
 
 
 def _defended_core_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -503,7 +511,9 @@ def render_assumption_map_csv(payload: dict[str, Any]) -> str:
                 "defense_tier": theorem["defense_tier"],
                 "item_type": "appendix_assumption",
                 "item": assumption,
-                "resolution_status": "registered" if assumption in location_lookup else "unknown_appendix_reference",
+                "resolution_status": "registered"
+                if assumption in location_lookup
+                else "unknown_appendix_reference",
                 "evidence_location": location_lookup.get(assumption, ""),
             }
             lines.append(_render_csv_row(row, columns))
@@ -574,7 +584,9 @@ def render_assumption_map_md(payload: dict[str, Any]) -> str:
         location_lookup = {item["assumption"]: item["location"] for item in theorem["assumption_locations"]}
         for assumption in theorem["assumptions_used"]:
             if assumption in location_lookup:
-                lines.append(f"- appendix assumption `{assumption}` - registered at {location_lookup[assumption]}")
+                lines.append(
+                    f"- appendix assumption `{assumption}` - registered at {location_lookup[assumption]}"
+                )
             else:
                 lines.append(f"- appendix assumption `{assumption}` - unknown Appendix B reference")
         typed_status = _typed_obligation_status(theorem)
@@ -582,7 +594,9 @@ def render_assumption_map_md(payload: dict[str, Any]) -> str:
         for obligation in theorem["typed_obligations"]:
             lines.append(f"- typed obligation `{obligation}` - {typed_status} via {typed_location}")
         for assumption in theorem["unresolved_assumptions"]:
-            lines.append(f"- theorem-local assumption `{assumption}` - scoped_unresolved at {theorem['proof_location']}")
+            lines.append(
+                f"- theorem-local assumption `{assumption}` - scoped_unresolved at {theorem['proof_location']}"
+            )
         lines.append("")
     return "\n".join(lines)
 
@@ -698,17 +712,35 @@ def render_theorem_surface_summary_tex(registry: dict[str, Any]) -> str:
     ]
     for environment in ENV_ORDER:
         lines.append(f"{environment} & {counts.get(environment, 0)} \\\\")
-    lines.extend([r"\midrule", rf"total & {sum(counts.values())} \\\\", r"\bottomrule", r"\end{tabular}", r"\end{table}"])
+    lines.extend(
+        [
+            r"\midrule",
+            rf"total & {sum(counts.values())} \\\\",
+            r"\bottomrule",
+            r"\end{tabular}",
+            r"\end{table}",
+        ]
+    )
     return "\n".join(lines) + "\n"
 
 
 def render_battery_claim_evidence_register(payload: dict[str, Any]) -> str:
-    columns = ("theorem_or_scope", "chapter", "token", "code_or_script", "artifact_path", "status", "code_exists", "artifact_exists")
+    columns = (
+        "theorem_or_scope",
+        "chapter",
+        "token",
+        "code_or_script",
+        "artifact_path",
+        "status",
+        "code_exists",
+        "artifact_exists",
+    )
     lines = [",".join(columns)]
     for theorem in payload["theorems"]:
         claim = next(
             (
-                item for item in _load_registry()["theorems"]
+                item
+                for item in _load_registry()["theorems"]
                 if item["id"] == theorem["theorem_id"] and "claim_evidence" in item
             ),
             None,
@@ -735,7 +767,9 @@ def render_battery_claim_evidence_register(payload: dict[str, Any]) -> str:
                 value = f'"{value}"'
             escaped.append(value)
         lines.append(",".join(escaped))
-    lines.append("A1-A13,ch15,ASM_REGISTER,appendices/app_b_assumptions.tex,appendices/app_b_assumptions.tex,locked,True,True")
+    lines.append(
+        "A1-A13,ch15,ASM_REGISTER,appendices/app_b_assumptions.tex,appendices/app_b_assumptions.tex,locked,True,True"
+    )
     return "\n".join(lines) + "\n"
 
 
@@ -745,7 +779,21 @@ def render_linear_ready_json(payload: dict[str, Any]) -> str:
             "title": "Canonical theorem registry",
             "description": "YAML schema, audit renderers, alias handling, and validator refactor.",
             "blocked_by": [],
-            "theorems": ["T1", "T2", "T3a", "T3b", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T10_T11_ObservationAmbiguitySandwich"],
+            "theorems": [
+                "T1",
+                "T2",
+                "T3a",
+                "T3b",
+                "T4",
+                "T5",
+                "T6",
+                "T7",
+                "T8",
+                "T9",
+                "T10",
+                "T11",
+                "T10_T11_ObservationAmbiguitySandwich",
+            ],
         },
         {
             "title": "Assumption register A1-A13",
@@ -786,8 +834,27 @@ def render_linear_ready_json(payload: dict[str, Any]) -> str:
         {
             "title": "Headline core rewrite",
             "description": "Appendix M/S and chapter-level defended-count surfaces synchronized to the registry.",
-            "blocked_by": ["Canonical theorem registry", "Assumption register A1-A13", "T6 direct theorem upgrade", "T7 piecewise fallback promotion", "T3 split and migration", "Surface retiering"],
-            "theorems": ["T1", "T2", "T3a", "T3b", "T4", "T6", "T7", "T8", "T11", "T10_T11_ObservationAmbiguitySandwich", "T_trajectory_PAC"],
+            "blocked_by": [
+                "Canonical theorem registry",
+                "Assumption register A1-A13",
+                "T6 direct theorem upgrade",
+                "T7 piecewise fallback promotion",
+                "T3 split and migration",
+                "Surface retiering",
+            ],
+            "theorems": [
+                "T1",
+                "T2",
+                "T3a",
+                "T3b",
+                "T4",
+                "T6",
+                "T7",
+                "T8",
+                "T11",
+                "T10_T11_ObservationAmbiguitySandwich",
+                "T_trajectory_PAC",
+            ],
         },
         {
             "title": "External proof audit",
@@ -852,45 +919,47 @@ def write_active_theorem_audit_outputs() -> None:
     THEOREM_REGISTER_TEX.write_text(render_theorem_surface_register_tex(registry), encoding="utf-8")
     THEOREM_SURFACE_SUMMARY_CSV.write_text(render_theorem_surface_summary_csv(registry), encoding="utf-8")
     THEOREM_SURFACE_SUMMARY_TEX.write_text(render_theorem_surface_summary_tex(registry), encoding="utf-8")
-    BATTERY_CLAIM_EVIDENCE_REGISTER.write_text(render_battery_claim_evidence_register(payload), encoding="utf-8")
+    BATTERY_CLAIM_EVIDENCE_REGISTER.write_text(
+        render_battery_claim_evidence_register(payload), encoding="utf-8"
+    )
     LINEAR_READY_JSON.write_text(render_linear_ready_json(payload), encoding="utf-8")
     EXTERNAL_AUDIT_PACKET_MD.write_text(render_external_audit_packet_md(payload), encoding="utf-8")
 
 
 __all__ = [
+    "ASSUMPTION_MAP_CSV",
+    "ASSUMPTION_MAP_MD",
+    "AUDIT_CSV",
+    "AUDIT_JSON",
+    "AUDIT_MD",
+    "BATTERY_CLAIM_EVIDENCE_REGISTER",
+    "DEFENDED_CORE_CSV",
+    "DEFENDED_CORE_JSON",
+    "DEFENDED_CORE_MD",
+    "EXTERNAL_AUDIT_PACKET_MD",
+    "LINEAR_READY_JSON",
     "REGISTRY_YAML",
+    "REMEDIATION_MD",
     "THEOREM_REGISTER_CSV",
     "THEOREM_REGISTER_TEX",
     "THEOREM_SURFACE_SUMMARY_CSV",
     "THEOREM_SURFACE_SUMMARY_TEX",
-    "AUDIT_JSON",
-    "AUDIT_CSV",
-    "AUDIT_MD",
-    "REMEDIATION_MD",
-    "DEFENDED_CORE_JSON",
-    "DEFENDED_CORE_CSV",
-    "DEFENDED_CORE_MD",
-    "ASSUMPTION_MAP_CSV",
-    "ASSUMPTION_MAP_MD",
-    "LINEAR_READY_JSON",
-    "BATTERY_CLAIM_EVIDENCE_REGISTER",
-    "EXTERNAL_AUDIT_PACKET_MD",
     "build_active_theorem_audit_payload",
-    "render_active_theorem_audit_json",
     "render_active_theorem_audit_csv",
+    "render_active_theorem_audit_json",
     "render_active_theorem_audit_md",
     "render_active_theorem_remediation_md",
-    "render_defended_core_json",
-    "render_defended_core_csv",
-    "render_defended_core_md",
     "render_assumption_map_csv",
     "render_assumption_map_md",
+    "render_battery_claim_evidence_register",
+    "render_defended_core_csv",
+    "render_defended_core_json",
+    "render_defended_core_md",
+    "render_external_audit_packet_md",
+    "render_linear_ready_json",
     "render_theorem_surface_register_csv",
     "render_theorem_surface_register_tex",
     "render_theorem_surface_summary_csv",
     "render_theorem_surface_summary_tex",
-    "render_battery_claim_evidence_register",
-    "render_linear_ready_json",
-    "render_external_audit_packet_md",
     "write_active_theorem_audit_outputs",
 ]

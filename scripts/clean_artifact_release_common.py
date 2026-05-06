@@ -1,8 +1,8 @@
 """Shared constants for the ORIUS clean artifact release bundle."""
+
 from __future__ import annotations
 
 from pathlib import Path
-
 
 THREE_DOMAIN_CLAIM_BOUNDARY = (
     "Promoted ORIUS evidence is limited to Battery Energy Storage, "

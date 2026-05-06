@@ -27,6 +27,7 @@ To use REAL data
    - Extract bidmc_*_Numerics.csv files
    - Place them under data/healthcare/raw/bidmc_csv/
 """
+
 from __future__ import annotations
 
 import argparse
@@ -79,7 +80,9 @@ def main() -> int:
         print(f"[CCPP]  Real data found: {ccpp['path']} ({ccpp['rows']} rows)")
     else:
         reason = "force-synthetic" if args.force_synthetic else "not found"
-        print(f"[CCPP]  Real data {reason}. Generating calibrated synthetic ({ccpp['fallback_rows']} rows)...")
+        print(
+            f"[CCPP]  Real data {reason}. Generating calibrated synthetic ({ccpp['fallback_rows']} rows)..."
+        )
         rows = generate_ccpp_synthetic(n=ccpp["fallback_rows"], seed=42)
         _write_ccpp(CCPP_PATH, rows)
         print(f"[CCPP]  Written to {CCPP_PATH}")
@@ -90,7 +93,9 @@ def main() -> int:
         print(f"[BIDMC] Real data found: {bidmc['path']} ({bidmc['rows']} rows)")
     else:
         reason = "force-synthetic" if args.force_synthetic else "not found"
-        print(f"[BIDMC] Real data {reason}. Generating calibrated synthetic ({bidmc['fallback_rows']} rows)...")
+        print(
+            f"[BIDMC] Real data {reason}. Generating calibrated synthetic ({bidmc['fallback_rows']} rows)..."
+        )
         rows = generate_bidmc_synthetic(n=bidmc["fallback_rows"], seed=42)
         _write_bidmc(BIDMC_SYNTHETIC_PATH, rows)
         print(f"[BIDMC] Written to {BIDMC_SYNTHETIC_PATH}")

@@ -1,9 +1,10 @@
 """Validate optimizer outputs against basic feasibility constraints."""
+
 from __future__ import annotations
 
-from pathlib import Path
 import json
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -33,15 +34,11 @@ def _load_config() -> dict:
     return yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
 
 
-def _check_bounds(name: str, arr: np.ndarray, lower: float | None, upper: float | None, tol: float = 1e-6) -> dict:
-    if lower is not None:
-        low_ok = bool(np.all(arr >= lower - tol))
-    else:
-        low_ok = True
-    if upper is not None:
-        high_ok = bool(np.all(arr <= upper + tol))
-    else:
-        high_ok = True
+def _check_bounds(
+    name: str, arr: np.ndarray, lower: float | None, upper: float | None, tol: float = 1e-6
+) -> dict:
+    low_ok = bool(np.all(arr >= lower - tol)) if lower is not None else True
+    high_ok = bool(np.all(arr <= upper + tol)) if upper is not None else True
     return {
         "name": name,
         "ok": low_ok and high_ok,

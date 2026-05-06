@@ -1,4 +1,5 @@
 """Smoke test for scripts/prove_framework.py checks."""
+
 from __future__ import annotations
 
 import subprocess
@@ -6,7 +7,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "prove_framework.py"
 

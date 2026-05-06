@@ -1,4 +1,5 @@
 """Unit tests for deterministic DC3S guarantee checks."""
+
 from __future__ import annotations
 
 from orius.dc3s.guarantee_checks import (

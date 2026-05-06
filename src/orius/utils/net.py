@@ -1,8 +1,9 @@
 """Utilities: HTTP sessions with retries."""
+
 from __future__ import annotations
 
 import logging
-from typing import Iterable, Mapping
+from collections.abc import Iterable, Mapping
 
 import requests
 from requests.adapters import HTTPAdapter

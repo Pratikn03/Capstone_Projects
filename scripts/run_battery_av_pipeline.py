@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """Run the battery and AV training surfaces as one bounded pipeline."""
+
 from __future__ import annotations
 
 import argparse
 import csv
-from datetime import datetime, timezone
 import hashlib
 import json
 import os
-from pathlib import Path
 import sys
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = REPO_ROOT / "src"
@@ -22,18 +22,23 @@ for candidate in (SRC_DIR, SCRIPT_DIR):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
-import build_waymo_av_dry_run_report as av_report_script
 import build_battery_av_closure_artifacts as closure_script
 import build_orius_ieee_assets as ieee_assets_script
 import build_orius_monograph_assets as monograph_assets_script
+import build_waymo_av_dry_run_report as av_report_script
 import run_battery_deep_novelty as battery_script
-from orius.av_nuplan import build_feature_tables, build_nuplan_replay_surface, run_runtime_dry_run, train_dry_run_models
+
+from orius.av_nuplan import (
+    build_feature_tables,
+    build_nuplan_replay_surface,
+    run_runtime_dry_run,
+    train_dry_run_models,
+)
 from orius.av_waymo import (
     build_replay_surface,
     build_subset_manifest,
     build_validation_surface,
 )
-
 
 DEFAULT_OUT_ROOT = REPO_ROOT / "reports" / "battery_av"
 DEFAULT_BATTERY_OUT = DEFAULT_OUT_ROOT / "battery"
@@ -59,8 +64,18 @@ def _is_appledouble(path: Path) -> bool:
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the battery + AV pipelines together")
-    parser.add_argument("--out-root", type=Path, default=DEFAULT_OUT_ROOT, help="Root reports directory for the combined battery+AV surface")
-    parser.add_argument("--overall-dir", type=Path, default=DEFAULT_OVERALL, help="Directory for the combined manifest and summary")
+    parser.add_argument(
+        "--out-root",
+        type=Path,
+        default=DEFAULT_OUT_ROOT,
+        help="Root reports directory for the combined battery+AV surface",
+    )
+    parser.add_argument(
+        "--overall-dir",
+        type=Path,
+        default=DEFAULT_OVERALL,
+        help="Directory for the combined manifest and summary",
+    )
     parser.add_argument("--skip-battery", action="store_true", help="Skip the battery training surface")
     parser.add_argument("--skip-av", action="store_true", help="Skip the AV training surface")
     parser.add_argument("--submission-scope", type=str, default="battery_av_only")
@@ -70,7 +85,9 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--battery-paper-table-dir", type=Path, default=DEFAULT_BATTERY_PAPER_TABLE_DIR)
     parser.add_argument("--battery-paper-fig-dir", type=Path, default=DEFAULT_BATTERY_PAPER_FIG_DIR)
     parser.add_argument("--battery-features", type=Path, default=battery_script.FEATURES_PATH)
-    parser.add_argument("--battery-engineered-baseline", type=Path, default=battery_script.ENGINEERED_BASELINE_PATH)
+    parser.add_argument(
+        "--battery-engineered-baseline", type=Path, default=battery_script.ENGINEERED_BASELINE_PATH
+    )
     parser.add_argument("--battery-deep-oqe-epochs", type=int, default=12)
     parser.add_argument("--battery-forecast-epochs", type=int, default=8)
     parser.add_argument("--battery-batch-size", type=int, default=128)
@@ -80,7 +97,9 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--battery-train-stride", type=int, default=6)
     parser.add_argument("--battery-eval-stride", type=int, default=12)
 
-    parser.add_argument("--av-source", choices=["nuplan", "nuplan_singapore", "waymo_motion"], default=DEFAULT_AV_SOURCE)
+    parser.add_argument(
+        "--av-source", choices=["nuplan", "nuplan_singapore", "waymo_motion"], default=DEFAULT_AV_SOURCE
+    )
     parser.add_argument("--av-raw-dir", type=Path, default=DEFAULT_AV_RAW)
     parser.add_argument("--av-processed-dir", type=Path, default=None)
     parser.add_argument("--av-models-dir", type=Path, default=DEFAULT_AV_MODELS)
@@ -89,7 +108,9 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--nuplan-train-zip", type=Path, action="append", default=None)
     parser.add_argument("--nuplan-train-dir", type=Path, action="append", default=None)
     parser.add_argument("--nuplan-train-glob", type=str, default="nuplan-v*.zip")
-    parser.add_argument("--nuplan-archive-role", choices=["train", "val", "test", "trainval"], default="train")
+    parser.add_argument(
+        "--nuplan-archive-role", choices=["train", "val", "test", "trainval"], default="train"
+    )
     parser.add_argument("--nuplan-skip-incomplete", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--nuplan-maps-zip", type=Path, default=DEFAULT_NUPLAN_MAPS_ZIP)
     parser.add_argument("--nuplan-temp-dir", type=Path, default=None)
@@ -98,10 +119,25 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--nuplan-max-dbs-per-archive", type=int, default=None)
     parser.add_argument("--nuplan-max-scenarios-per-archive", type=int, default=None)
     parser.add_argument("--nuplan-scenario-stride", type=int, default=91)
-    parser.add_argument("--nuplan-split-strategy", choices=["balanced", "hash", "all_test", "grouped_archive_db_city"], default="grouped_archive_db_city")
+    parser.add_argument(
+        "--nuplan-split-strategy",
+        choices=["balanced", "hash", "all_test", "grouped_archive_db_city"],
+        default="grouped_archive_db_city",
+    )
     parser.add_argument("--av-subset-size", type=int, default=1000, help="Subset size when using --av-subset")
-    parser.add_argument("--av-full-corpus", dest="av_full_corpus", action="store_true", default=True, help="Use every scenario in scenario_index.parquet across the 7 validation shards")
-    parser.add_argument("--av-subset", dest="av_full_corpus", action="store_false", help="Use a bounded subset instead of the canonical full-corpus AV surface")
+    parser.add_argument(
+        "--av-full-corpus",
+        dest="av_full_corpus",
+        action="store_true",
+        default=True,
+        help="Use every scenario in scenario_index.parquet across the 7 validation shards",
+    )
+    parser.add_argument(
+        "--av-subset",
+        dest="av_full_corpus",
+        action="store_false",
+        help="Use a bounded subset instead of the canonical full-corpus AV surface",
+    )
     parser.add_argument("--av-max-validation-shards", type=int, default=None)
     parser.add_argument("--av-max-validation-scenarios", type=int, default=None)
     parser.add_argument("--av-max-runtime-scenarios", type=int, default=None)
@@ -122,7 +158,11 @@ def _parse_args() -> argparse.Namespace:
         if args.overall_dir == DEFAULT_OVERALL:
             args.overall_dir = args.out_root / "overall"
     if args.av_processed_dir is None:
-        args.av_processed_dir = DEFAULT_NUPLAN_PROCESSED if args.av_source in {"nuplan", "nuplan_singapore"} else DEFAULT_AV_PROCESSED
+        args.av_processed_dir = (
+            DEFAULT_NUPLAN_PROCESSED
+            if args.av_source in {"nuplan", "nuplan_singapore"}
+            else DEFAULT_AV_PROCESSED
+        )
     if args.nuplan_train_zip is None and args.nuplan_train_dir is None:
         args.nuplan_train_zip = [DEFAULT_NUPLAN_TRAIN_ZIP]
     return args
@@ -144,7 +184,7 @@ def _collect_file_paths(value: Any, sink: set[Path]) -> None:
         for nested in value.values():
             _collect_file_paths(nested, sink)
         return
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, list | tuple):
         for nested in value:
             _collect_file_paths(nested, sink)
         return
@@ -209,7 +249,11 @@ def _input_hashes(args: argparse.Namespace) -> dict[str, Any]:
         if shift_cfg_path.exists() and shift_cfg_path.is_file():
             payload["av"]["shift_aware_config_sha256"] = _sha256_file(shift_cfg_path)
     runtime_policy_path = getattr(args, "av_runtime_policy_json", None)
-    if isinstance(runtime_policy_path, Path) and runtime_policy_path.exists() and runtime_policy_path.is_file():
+    if (
+        isinstance(runtime_policy_path, Path)
+        and runtime_policy_path.exists()
+        and runtime_policy_path.is_file()
+    ):
         payload["av"]["runtime_policy_sha256"] = _sha256_file(runtime_policy_path)
 
     return payload
@@ -259,7 +303,10 @@ def run_av_pipeline(args: argparse.Namespace) -> dict[str, Any]:
         replay_source = str(report.get("replay", {}).get("source_dataset") or av_source)
         report["source"] = replay_source
         report["subset_mode"] = replay_source
-        report["subset_size"] = int(report.get("replay", {}).get("scenario_count") or _resolve_full_corpus_count(args.av_processed_dir))
+        report["subset_size"] = int(
+            report.get("replay", {}).get("scenario_count")
+            or _resolve_full_corpus_count(args.av_processed_dir)
+        )
         report["features"] = build_feature_tables(
             replay_windows_path=args.av_processed_dir / "replay_windows.parquet",
             out_dir=args.av_processed_dir,
@@ -305,7 +352,9 @@ def run_av_pipeline(args: argparse.Namespace) -> dict[str, Any]:
             write_actor_tracks=not args.av_skip_actor_tracks,
         )
 
-    subset_size = _resolve_full_corpus_count(args.av_processed_dir) if args.av_full_corpus else int(args.av_subset_size)
+    subset_size = (
+        _resolve_full_corpus_count(args.av_processed_dir) if args.av_full_corpus else int(args.av_subset_size)
+    )
     report["subset_mode"] = "full_corpus" if args.av_full_corpus else "subset"
     report["subset_size"] = subset_size
     report["subset"] = build_subset_manifest(
@@ -380,7 +429,7 @@ def main() -> int:
     overall_dir.mkdir(parents=True, exist_ok=True)
 
     combined: dict[str, Any] = {
-        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "created_at_utc": datetime.now(UTC).isoformat(),
         "domains": {},
     }
     summary_rows: list[dict[str, object]] = []
@@ -404,7 +453,9 @@ def main() -> int:
     combined["publication_assets"] = {
         "submission_scope": args.submission_scope,
         "parity_matrix": str(REPO_ROOT / "reports" / "publication" / "orius_equal_domain_parity_matrix.csv"),
-        "domain_closure_matrix": str(REPO_ROOT / "reports" / "publication" / "orius_domain_closure_matrix.csv"),
+        "domain_closure_matrix": str(
+            REPO_ROOT / "reports" / "publication" / "orius_domain_closure_matrix.csv"
+        ),
         "maturity_matrix": str(REPO_ROOT / "reports" / "publication" / "orius_maturity_matrix.csv"),
         "executive_summary": str(REPO_ROOT / "docs" / "executive_summary.md"),
         "claim_ledger": str(REPO_ROOT / "docs" / "claim_ledger.md"),
@@ -439,13 +490,17 @@ def main() -> int:
     manifest = {
         "created_at_utc": combined["created_at_utc"],
         "domains": sorted(combined["domains"].keys()),
-        "artifacts": {str(path): _sha256_file(path) for path in sorted(artifact_paths) if not _is_appledouble(path)},
+        "artifacts": {
+            str(path): _sha256_file(path) for path in sorted(artifact_paths) if not _is_appledouble(path)
+        },
         "input_hashes": _input_hashes(args),
     }
 
     _write_summary_csv(Path(combined["summary_csv"]), summary_rows)
     manifest_path = overall_dir / "battery_av_manifest.json"
-    existing_manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
+    existing_manifest = (
+        json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
+    )
     existing_manifest.setdefault("artifacts", {})
     existing_manifest["artifacts"].update(manifest["artifacts"])
     existing_manifest.setdefault("pipeline_artifacts", {})

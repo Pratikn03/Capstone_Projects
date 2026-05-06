@@ -8,7 +8,6 @@ import pandas as pd
 
 from orius.dc3s.certificate import make_certificate, store_certificates_batch
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "build_battery_av_closure_artifacts.py"
 
@@ -116,15 +115,41 @@ def test_build_closure_smoke(tmp_path: Path) -> None:
             },
         ]
     ).to_csv(battery_dir / "runtime_traces.csv", index=False)
-    pd.DataFrame([{"controller": "deep:dc3s_wrapped", "tsvr": 0.0, "oasg": 0.5, "cva": 1.0, "gdq": 0.8, "intervention_rate": 0.5, "audit_completeness": 1.0, "recovery_latency": 0.0, "n_steps": 2}]).to_csv(
+    pd.DataFrame(
+        [
+            {
+                "controller": "deep:dc3s_wrapped",
+                "tsvr": 0.0,
+                "oasg": 0.5,
+                "cva": 1.0,
+                "gdq": 0.8,
+                "intervention_rate": 0.5,
+                "audit_completeness": 1.0,
+                "recovery_latency": 0.0,
+                "n_steps": 2,
+            }
+        ]
+    ).to_csv(
         battery_dir / "runtime_summary.csv",
         index=False,
     )
-    pd.DataFrame([{"controller": "deep:dc3s_wrapped", "fault_family": "dropout", "target": "soc_mwh", "coverage": 1.0, "mean_width": 0.1}]).to_csv(
+    pd.DataFrame(
+        [
+            {
+                "controller": "deep:dc3s_wrapped",
+                "fault_family": "dropout",
+                "target": "soc_mwh",
+                "coverage": 1.0,
+                "mean_width": 0.1,
+            }
+        ]
+    ).to_csv(
         battery_dir / "fault_family_coverage.csv",
         index=False,
     )
-    (battery_dir / "battery_deep_learning_novelty_register.json").write_text(json.dumps({"ok": True}), encoding="utf-8")
+    (battery_dir / "battery_deep_learning_novelty_register.json").write_text(
+        json.dumps({"ok": True}), encoding="utf-8"
+    )
     _write_certificates(battery_dir / "battery_runtime.duckdb")
 
     pd.DataFrame(
@@ -181,11 +206,35 @@ def test_build_closure_smoke(tmp_path: Path) -> None:
             },
         ]
     ).to_csv(av_dir / "runtime_traces.csv", index=False)
-    pd.DataFrame([{"controller": "orius", "tsvr": 0.0, "oasg": 0.5, "cva": 1.0, "gdq": 0.9, "intervention_rate": 0.5, "audit_completeness": 1.0, "recovery_latency": 0.0, "n_steps": 2}]).to_csv(
+    pd.DataFrame(
+        [
+            {
+                "controller": "orius",
+                "tsvr": 0.0,
+                "oasg": 0.5,
+                "cva": 1.0,
+                "gdq": 0.9,
+                "intervention_rate": 0.5,
+                "audit_completeness": 1.0,
+                "recovery_latency": 0.0,
+                "n_steps": 2,
+            }
+        ]
+    ).to_csv(
         av_dir / "runtime_summary.csv",
         index=False,
     )
-    pd.DataFrame([{"controller": "orius", "fault_family": "delay_jitter", "target": "ego_speed_mps", "coverage": 1.0, "mean_width": 2.0}]).to_csv(
+    pd.DataFrame(
+        [
+            {
+                "controller": "orius",
+                "fault_family": "delay_jitter",
+                "target": "ego_speed_mps",
+                "coverage": 1.0,
+                "mean_width": 2.0,
+            }
+        ]
+    ).to_csv(
         av_dir / "fault_family_coverage.csv",
         index=False,
     )

@@ -5,7 +5,6 @@ import pytest
 from orius.dc3s.temporal_theorems import (
     certificate_expiration_bound,
     certificate_validity_horizon,
-    certificate_half_life,
     certify_fallback_existence,
     evaluate_graceful_degradation_dominance,
     forward_tube,
@@ -50,11 +49,13 @@ def test_certificate_expiration_bound_uses_delta_aware_formula():
         sigma_d=5.0,
         delta=0.05,
     )
-    expected = math.floor((45.0 ** 2) / (2.0 * (5.0 ** 2) * math.log(2.0 / 0.05)))
+    expected = math.floor((45.0**2) / (2.0 * (5.0**2) * math.log(2.0 / 0.05)))
     assert bound["tau_expire_lb"] == expected
     assert bound["confidence_delta"] == pytest.approx(0.05)
     assert bound["theorem_formula"] == "floor(delta_bnd^2 / (2 * sigma_d^2 * log(2 / delta)))"
-    assert bound["theorem_contract"]["first_passage_lemma"] == "reflection_principle_subgaussian_first_passage"
+    assert (
+        bound["theorem_contract"]["first_passage_lemma"] == "reflection_principle_subgaussian_first_passage"
+    )
     assert "0 < delta < 1" in bound["theorem_contract"]["side_conditions"]
     assert horizon["tau_t"] >= bound["tau_expire_lb"]
 

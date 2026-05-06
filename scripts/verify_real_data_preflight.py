@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Run repo-local preflight checks for the active 3-domain ORIUS program."""
+
 from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT / "src") not in sys.path:
@@ -127,7 +128,9 @@ def _domain_status(domain: str, *, explicit_root: Path | None) -> dict[str, obje
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Verify real-data preconditions for the active 3-domain ORIUS program")
+    parser = argparse.ArgumentParser(
+        description="Verify real-data preconditions for the active 3-domain ORIUS program"
+    )
     parser.add_argument(
         "--domain",
         dest="domains",
@@ -135,7 +138,9 @@ def main() -> int:
         choices=DOMAIN_NAMES,
         help="Limit checks to one or more domains. Defaults to all.",
     )
-    parser.add_argument("--external-root", type=Path, default=None, help="Override ORIUS_EXTERNAL_DATA_ROOT for this check")
+    parser.add_argument(
+        "--external-root", type=Path, default=None, help="Override ORIUS_EXTERNAL_DATA_ROOT for this check"
+    )
     parser.add_argument("--min-free-gib", type=float, default=DEFAULT_MIN_FREE_GIB)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()

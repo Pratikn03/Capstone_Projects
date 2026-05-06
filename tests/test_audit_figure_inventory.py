@@ -1,8 +1,9 @@
 """Tests for figure inventory audit script."""
+
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
 import json
+from datetime import UTC, datetime, timedelta
 
 import scripts.audit_figure_inventory as fig_audit
 from orius.cpsbench_iot.runner import REQUIRED_OUTPUTS
@@ -19,8 +20,8 @@ def test_build_inventory_marks_critical_missing(tmp_path, monkeypatch) -> None:
     _write(tmp_path / "reports" / "figures" / "demo.png", b"png")
     _write(tmp_path / "reports" / "publication" / "dc3s_main_table.csv", b"csv")
 
-    run_start = datetime.now(timezone.utc) - timedelta(hours=1)
-    lock_time = datetime.now(timezone.utc) - timedelta(days=1)
+    run_start = datetime.now(UTC) - timedelta(hours=1)
+    lock_time = datetime.now(UTC) - timedelta(days=1)
     payload = fig_audit.build_inventory(run_start_utc=run_start, manifest_lock_utc=lock_time)
 
     assert payload["summary"]["files_total"] >= 2
@@ -48,7 +49,7 @@ def test_audit_figure_inventory_main_writes_outputs(tmp_path, monkeypatch) -> No
             "--manifest",
             "paper/metrics_manifest.json",
             "--run-start-utc",
-            datetime.now(timezone.utc).isoformat(),
+            datetime.now(UTC).isoformat(),
         ],
     )
     fig_audit.main()

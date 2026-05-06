@@ -1,33 +1,37 @@
 """CLI and orchestration for CPSBench-IoT runs."""
+
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass, field
-from functools import lru_cache
 import json
 import os
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
 
 matplotlib.use("Agg")
+import contextlib
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import yaml
 
-from orius.dc3s.certificate import compute_config_hash, compute_model_hash, make_certificate
 from orius.dc3s.calibration import build_uncertainty_set, build_uncertainty_set_kappa
+from orius.dc3s.certificate import compute_config_hash, compute_model_hash, make_certificate
 from orius.dc3s.drift import PageHinkleyDetector
 from orius.dc3s.ftit import update as update_ftit_state
 from orius.dc3s.guarantee_checks import evaluate_guarantee_checks
 from orius.dc3s.quality import compute_reliability
 from orius.dc3s.rac_cert import RACCertModel, compute_dispatch_sensitivity, normalize_sensitivity
 from orius.dc3s.shield import repair_action
-from orius.forecasting.uncertainty.cqr import RegimeCQR
 from orius.forecasting.uncertainty.conformal import load_conformal
+from orius.forecasting.uncertainty.cqr import RegimeCQR
 from orius.optimizer import optimize_dispatch
 from orius.optimizer.robust_dispatch import (
     CVaRDispatchConfig,
@@ -37,12 +41,11 @@ from orius.optimizer.robust_dispatch import (
 )
 
 from .baselines import aci_conformal_dispatch, scenario_robust_dispatch
-from .scenario_mpc import scenario_mpc_dispatch
 from .metrics import compute_all_metrics
 from .plant import BatteryPlant
+from .scenario_mpc import scenario_mpc_dispatch
 from .scenarios import FAULT_COLUMNS, generate_episode
 from .telemetry_soc import SOCTelemetryChannel, SOCTelemetryFaultConfig
-
 
 REQUIRED_OUTPUTS = (
     "dc3s_main_table.csv",
@@ -119,21 +122,22 @@ def _load_dc3s_cfg() -> dict[str, Any]:
 
     env_lambda = os.getenv("ORIUS_DC3S_LAMBDA_MW")
     if env_lambda:
-        try:
+        with contextlib.suppress(ValueError):
             dc3s["ambiguity"]["lambda_mw"] = float(env_lambda)
-        except ValueError:
-            pass
 
     env_quantile = os.getenv("ORIUS_DC3S_LAMBDA_QUANTILE")
     if env_quantile:
-        try:
+        with contextlib.suppress(ValueError):
             dc3s["ambiguity"]["lambda_quantile"] = float(env_quantile)
-        except ValueError:
-            pass
 
     env_learn = os.getenv("ORIUS_DC3S_LEARN_LAMBDA")
     if env_learn:
-        dc3s["ambiguity"]["learn_lambda_from_quantile"] = env_learn.strip().lower() in {"1", "true", "yes", "on"}
+        dc3s["ambiguity"]["learn_lambda_from_quantile"] = env_learn.strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
     return dc3s
 
 
@@ -281,7 +285,12 @@ def _load_regime_cqr(target: str = "load_mw") -> RegimeCQR | None:
     path = Path(str(cfg["artifact_path"]).format(target=target))
     if not path.exists():
         if cfg["policy"] == "strict":
-            strict_runtime = os.getenv("ORIUS_REQUIRE_REGIME_CQR", "").strip().lower() in {"1", "true", "yes", "on"}
+            strict_runtime = os.getenv("ORIUS_REQUIRE_REGIME_CQR", "").strip().lower() in {
+                "1",
+                "true",
+                "yes",
+                "on",
+            }
             if strict_runtime:
                 raise RuntimeError(
                     f"Regime CQR enabled with strict policy but missing artifact: {path}. "
@@ -329,7 +338,7 @@ def _base_interval_bounds(load_window: np.ndarray) -> tuple[np.ndarray, np.ndarr
             if lo.shape == hi.shape == load_window.shape:
                 return lo, hi
         except Exception:
-            pass
+            ci = None
 
     q = np.maximum(75.0, 0.08 * np.abs(load_window))
     return np.maximum(0.0, load_window - q), load_window + q
@@ -352,7 +361,7 @@ def _cqr_bounds(load_window: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         if lo.shape == hi.shape == np.asarray(load_window).shape:
             return lo, hi
     except Exception:
-        pass
+        regime = None
     return base_lower, base_upper
 
 
@@ -422,7 +431,11 @@ def _rac_bounds(
         raise ValueError(f"Unsupported inflation_law: {inflation_law}")
 
     if inflation_law == "kappa":
-        sigma_sq_used = float(sigma_sq) if sigma_sq is not None else float(np.var(np.abs(load_arr - 0.5 * (base_lower + base_upper))))
+        sigma_sq_used = (
+            float(sigma_sq)
+            if sigma_sq is not None
+            else float(np.var(np.abs(load_arr - 0.5 * (base_lower + base_upper))))
+        )
         lower, upper, meta = build_uncertainty_set_kappa(
             yhat=load_arr,
             q=np.asarray(q_for_build, dtype=float),
@@ -482,7 +495,9 @@ def _controller_step_deterministic(
     )
     return {
         "proposed_charge_mw": float(np.asarray(dispatch.get("battery_charge_mw", [0.0]), dtype=float)[0]),
-        "proposed_discharge_mw": float(np.asarray(dispatch.get("battery_discharge_mw", [0.0]), dtype=float)[0]),
+        "proposed_discharge_mw": float(
+            np.asarray(dispatch.get("battery_discharge_mw", [0.0]), dtype=float)[0]
+        ),
         "safe_charge_mw": float(np.asarray(dispatch.get("battery_charge_mw", [0.0]), dtype=float)[0]),
         "safe_discharge_mw": float(np.asarray(dispatch.get("battery_discharge_mw", [0.0]), dtype=float)[0]),
         "interval_lower": np.asarray(lower_90, dtype=float),
@@ -490,7 +505,9 @@ def _controller_step_deterministic(
         "solver_status": "deterministic",
         "w_t": float(rac_meta.get("w_t", 1.0)),
         "delta_mw": float(rac_meta.get("delta_mw", 0.0)),
-        "interval_width": float(rac_meta.get("interval_width", max(0.0, upper_90[0] - lower_90[0]) if len(lower_90) else 0.0)),
+        "interval_width": float(
+            rac_meta.get("interval_width", max(0.0, upper_90[0] - lower_90[0]) if len(lower_90) else 0.0)
+        ),
         "sensitivity_t": float(rac_meta.get("sensitivity_t", 0.0)),
         "sensitivity_norm": float(rac_meta.get("sensitivity_norm", 0.0)),
         "q_eff": float(rac_meta.get("q_eff", 0.0)),
@@ -535,7 +552,9 @@ def _controller_step_robust_fixed(
         max_grid_import_mw=constraints["max_grid_import_mw"],
         default_price_per_mwh=float(np.mean(price_window)),
         degradation_cost_per_mwh=constraints["degradation_cost_per_mwh"],
-        risk_weight_worst_case=float(dict(optimization_cfg).get("robust", {}).get("risk_weight_worst_case", 1.0)),
+        risk_weight_worst_case=float(
+            dict(optimization_cfg).get("robust", {}).get("risk_weight_worst_case", 1.0)
+        ),
         time_step_hours=constraints["time_step_hours"],
         solver_name=str(dict(optimization_cfg).get("solver_name", "appsi_highs")),
     )
@@ -566,7 +585,9 @@ def _controller_step_robust_fixed(
         "solver_status": solver_status,
         "w_t": float(rac_meta.get("w_t", 1.0)),
         "delta_mw": float(rac_meta.get("delta_mw", 0.0)),
-        "interval_width": float(rac_meta.get("interval_width", max(0.0, upper[0] - lower[0]) if len(lower) else 0.0)),
+        "interval_width": float(
+            rac_meta.get("interval_width", max(0.0, upper[0] - lower[0]) if len(lower) else 0.0)
+        ),
         "sensitivity_t": float(rac_meta.get("sensitivity_t", 0.0)),
         "sensitivity_norm": float(rac_meta.get("sensitivity_norm", 0.0)),
         "q_eff": float(rac_meta.get("q_eff", 0.0)),
@@ -641,7 +662,9 @@ def _controller_step_cvar_interval(
         max_grid_import_mw=constraints["max_grid_import_mw"],
         default_price_per_mwh=float(np.mean(price_window)),
         degradation_cost_per_mwh=constraints["degradation_cost_per_mwh"],
-        risk_weight_worst_case=float(dict(optimization_cfg).get("robust", {}).get("risk_weight_worst_case", 1.0)),
+        risk_weight_worst_case=float(
+            dict(optimization_cfg).get("robust", {}).get("risk_weight_worst_case", 1.0)
+        ),
         time_step_hours=constraints["time_step_hours"],
         solver_name=str(dict(optimization_cfg).get("solver_name", "appsi_highs")),
         beta=beta,
@@ -682,7 +705,9 @@ def _controller_step_cvar_interval(
         "solver_status": solver_status,
         "w_t": float(rac_meta.get("w_t", 1.0)),
         "delta_mw": float(rac_meta.get("delta_mw", 0.0)),
-        "interval_width": float(rac_meta.get("interval_width", max(0.0, upper[0] - lower[0]) if len(lower) else 0.0)),
+        "interval_width": float(
+            rac_meta.get("interval_width", max(0.0, upper[0] - lower[0]) if len(lower) else 0.0)
+        ),
         "sensitivity_t": float(rac_meta.get("sensitivity_t", 0.0)),
         "sensitivity_norm": float(rac_meta.get("sensitivity_norm", 0.0)),
         "q_eff": float(rac_meta.get("q_eff", 0.0)),
@@ -726,7 +751,10 @@ def _controller_step_dc3s(
         event["ts_utc"] = str(command_id)
 
     expected_cadence_s = float(dc3s_cfg.get("expected_cadence_s", 3600.0))
-    ftit_cfg = {**dict(cfg_runtime.get("ftit", {})), "law": str(cfg_runtime.get("law", "linear")).strip().lower()}
+    ftit_cfg = {
+        **dict(cfg_runtime.get("ftit", {})),
+        "law": str(cfg_runtime.get("law", "linear")).strip().lower(),
+    }
     w_t, flags = compute_reliability(
         event,
         state.prev_event,
@@ -764,7 +792,9 @@ def _controller_step_dc3s(
         max_grid_import_mw=constraints["max_grid_import_mw"],
         default_price_per_mwh=float(np.mean(price_window)),
         degradation_cost_per_mwh=constraints["degradation_cost_per_mwh"],
-        risk_weight_worst_case=float(dict(optimization_cfg).get("robust", {}).get("risk_weight_worst_case", 1.0)),
+        risk_weight_worst_case=float(
+            dict(optimization_cfg).get("robust", {}).get("risk_weight_worst_case", 1.0)
+        ),
         time_step_hours=constraints["time_step_hours"],
         solver_name=str(dict(optimization_cfg).get("solver_name", "appsi_highs")),
     )
@@ -776,6 +806,7 @@ def _controller_step_dc3s(
     drift_flag = bool(drift.get("drift", False))
 
     if probe_mode in {"finite_diff", "fd", "robust_fd"}:
+
         def _robust_probe(load_probe: np.ndarray) -> tuple[float, float]:
             probe_lower, probe_upper, _ = _rac_bounds(
                 load_window=np.asarray(load_probe, dtype=float),
@@ -1071,12 +1102,20 @@ def run_single(
     telemetry_events = _to_telemetry_events(x_obs=x_obs, event_log=event_log)
 
     n = len(load_obs)
-    stepwise_controllers = ("deterministic_lp", "robust_fixed_interval", "cvar_interval", "dc3s_wrapped", "dc3s_ftit")
-    controllers = stepwise_controllers + ("aci_conformal", "scenario_robust", "scenario_mpc")
+    stepwise_controllers = (
+        "deterministic_lp",
+        "robust_fixed_interval",
+        "cvar_interval",
+        "dc3s_wrapped",
+        "dc3s_ftit",
+    )
+    controllers = (*stepwise_controllers, "aci_conformal", "scenario_robust", "scenario_mpc")
     if controllers_filter is not None:
         requested = tuple(dict.fromkeys(str(item) for item in controllers_filter))
         controllers = tuple(controller for controller in controllers if controller in requested)
-        stepwise_controllers = tuple(controller for controller in stepwise_controllers if controller in requested)
+        stepwise_controllers = tuple(
+            controller for controller in stepwise_controllers if controller in requested
+        )
         if not controllers:
             raise ValueError("controllers_filter did not match any known CPSBench controller")
     cqr_group_metrics = _compute_cqr_group_metrics(load_true, load_obs)
@@ -1192,7 +1231,9 @@ def run_single(
                 applied_discharge = safe_discharge
 
             next_soc = float(plant.step(charge_mw=applied_charge, discharge_mw=applied_discharge))
-            violation_after_apply = bool(next_soc < constraints["min_soc_mwh"] or next_soc > constraints["max_soc_mwh"])
+            violation_after_apply = bool(
+                next_soc < constraints["min_soc_mwh"] or next_soc > constraints["max_soc_mwh"]
+            )
             cert = step.get("certificate")
             if isinstance(cert, dict):
                 cert["true_soc_violation_after_apply"] = violation_after_apply
@@ -1208,7 +1249,9 @@ def run_single(
             buf["interval_upper"][t] = float(np.asarray(step["interval_upper"], dtype=float)[0])
             buf["w_t"][t] = float(step.get("w_t", 1.0))
             buf["delta_mw"][t] = float(step.get("delta_mw", 0.0))
-            buf["interval_width"][t] = float(step.get("interval_width", max(0.0, buf["interval_upper"][t] - buf["interval_lower"][t])))
+            buf["interval_width"][t] = float(
+                step.get("interval_width", max(0.0, buf["interval_upper"][t] - buf["interval_lower"][t]))
+            )
             buf["lambda_mw_used"][t] = float(step.get("lambda_mw_used", 0.0))
             buf["rac_sensitivity"][t] = float(step.get("sensitivity_t", 0.0))
             buf["rac_sensitivity_norm"][t] = float(step.get("sensitivity_norm", 0.0))
@@ -1261,7 +1304,10 @@ def run_single(
             load_true - renew_true - aci_buf["safe_discharge_mw"] + aci_buf["safe_charge_mw"],
         )
         aci_expected_cost = float(
-            np.sum(price * aci_grid_import_true * dt + deg * (np.abs(aci_buf["safe_charge_mw"]) + np.abs(aci_buf["safe_discharge_mw"])) * dt)
+            np.sum(
+                price * aci_grid_import_true * dt
+                + deg * (np.abs(aci_buf["safe_charge_mw"]) + np.abs(aci_buf["safe_discharge_mw"])) * dt
+            )
         )
         aci_carbon = float(np.sum(carbon * aci_grid_import_true * dt))
         aci_result["expected_cost_usd"] = aci_expected_cost
@@ -1283,10 +1329,16 @@ def run_single(
             seed=seed,
         )
         scenario_buf = _init_controller_buffers(n)
-        scenario_buf["proposed_charge_mw"] = np.asarray(scenario_robust_result["proposed_charge_mw"], dtype=float)
-        scenario_buf["proposed_discharge_mw"] = np.asarray(scenario_robust_result["proposed_discharge_mw"], dtype=float)
+        scenario_buf["proposed_charge_mw"] = np.asarray(
+            scenario_robust_result["proposed_charge_mw"], dtype=float
+        )
+        scenario_buf["proposed_discharge_mw"] = np.asarray(
+            scenario_robust_result["proposed_discharge_mw"], dtype=float
+        )
         scenario_buf["safe_charge_mw"] = np.asarray(scenario_robust_result["safe_charge_mw"], dtype=float)
-        scenario_buf["safe_discharge_mw"] = np.asarray(scenario_robust_result["safe_discharge_mw"], dtype=float)
+        scenario_buf["safe_discharge_mw"] = np.asarray(
+            scenario_robust_result["safe_discharge_mw"], dtype=float
+        )
         scenario_buf["soc_true_mwh"] = np.asarray(scenario_robust_result["soc_mwh"], dtype=float)
         scenario_buf["soc_observed_mwh"] = np.asarray(scenario_robust_result["soc_mwh"], dtype=float)
         scenario_buf["interval_lower"] = np.asarray(scenario_robust_result["interval_lower"], dtype=float)
@@ -1300,7 +1352,12 @@ def run_single(
             load_true - renew_true - scenario_buf["safe_discharge_mw"] + scenario_buf["safe_charge_mw"],
         )
         scenario_expected_cost = float(
-            np.sum(price * scenario_grid_import_true * dt + deg * (np.abs(scenario_buf["safe_charge_mw"]) + np.abs(scenario_buf["safe_discharge_mw"])) * dt)
+            np.sum(
+                price * scenario_grid_import_true * dt
+                + deg
+                * (np.abs(scenario_buf["safe_charge_mw"]) + np.abs(scenario_buf["safe_discharge_mw"]))
+                * dt
+            )
         )
         scenario_carbon = float(np.sum(carbon * scenario_grid_import_true * dt))
         scenario_robust_result["expected_cost_usd"] = scenario_expected_cost
@@ -1339,7 +1396,10 @@ def run_single(
             load_true - renew_true - mpc_buf["safe_discharge_mw"] + mpc_buf["safe_charge_mw"],
         )
         mpc_expected_cost = float(
-            np.sum(price * mpc_grid_import_true * dt + deg * (np.abs(mpc_buf["safe_charge_mw"]) + np.abs(mpc_buf["safe_discharge_mw"])) * dt)
+            np.sum(
+                price * mpc_grid_import_true * dt
+                + deg * (np.abs(mpc_buf["safe_charge_mw"]) + np.abs(mpc_buf["safe_discharge_mw"])) * dt
+            )
         )
         mpc_carbon = float(np.sum(carbon * mpc_grid_import_true * dt))
         mpc_result["expected_cost_usd"] = mpc_expected_cost
@@ -1351,7 +1411,11 @@ def run_single(
         mpc_buf["carbon_kg"] = mpc_carbon
         results["scenario_mpc"] = mpc_buf
 
-    baseline_cost = float(results["deterministic_lp"]["expected_cost_usd"]) if "deterministic_lp" in results else float("nan")
+    baseline_cost = (
+        float(results["deterministic_lp"]["expected_cost_usd"])
+        if "deterministic_lp" in results
+        else float("nan")
+    )
 
     main_rows: list[dict[str, Any]] = []
     fault_rows: list[dict[str, Any]] = []
@@ -1385,7 +1449,9 @@ def run_single(
         cvar_eta_mean = float(np.nanmean(cvar_eta_vals)) if np.isfinite(cvar_eta_vals).any() else np.nan
         cvar_cost_mean = float(np.nanmean(cvar_cost_vals)) if np.isfinite(cvar_cost_vals).any() else np.nan
         adaptive_width_mean = float(np.mean(res["interval_width"])) if len(res["interval_width"]) else np.nan
-        adaptive_width_p95 = float(np.quantile(res["interval_width"], 0.95)) if len(res["interval_width"]) else np.nan
+        adaptive_width_p95 = (
+            float(np.quantile(res["interval_width"], 0.95)) if len(res["interval_width"]) else np.nan
+        )
 
         row = {
             "scenario": scenario,
@@ -1402,8 +1468,7 @@ def run_single(
                 np.mean(
                     np.asarray(
                         [
-                            (s in {"ok", "deterministic", "optimal"})
-                            or ("optimal" in str(s).lower())
+                            (s in {"ok", "deterministic", "optimal"}) or ("optimal" in str(s).lower())
                             for s in res["solver_status"]
                         ],
                         dtype=float,
@@ -1413,12 +1478,24 @@ def run_single(
             "guarantee_checks_passed_rate": float(np.mean(res["guarantee_checks_passed"])),
             "adaptive_width_mean": adaptive_width_mean,
             "adaptive_width_p95": adaptive_width_p95,
-            "lambda_mw_used_mean": float(np.mean(res["lambda_mw_used"])) if len(res["lambda_mw_used"]) else np.nan,
-            "rac_sensitivity_mean": float(np.mean(res["rac_sensitivity"])) if len(res["rac_sensitivity"]) else np.nan,
-            "rac_sensitivity_p95": float(np.quantile(res["rac_sensitivity"], 0.95)) if len(res["rac_sensitivity"]) else np.nan,
-            "rac_q_multiplier_mean": float(np.mean(res["rac_q_multiplier"])) if len(res["rac_q_multiplier"]) else np.nan,
-            "rac_q_multiplier_p95": float(np.quantile(res["rac_q_multiplier"], 0.95)) if len(res["rac_q_multiplier"]) else np.nan,
-            "rac_inflation_mean": float(np.mean(res["rac_inflation"])) if len(res["rac_inflation"]) else np.nan,
+            "lambda_mw_used_mean": float(np.mean(res["lambda_mw_used"]))
+            if len(res["lambda_mw_used"])
+            else np.nan,
+            "rac_sensitivity_mean": float(np.mean(res["rac_sensitivity"]))
+            if len(res["rac_sensitivity"])
+            else np.nan,
+            "rac_sensitivity_p95": float(np.quantile(res["rac_sensitivity"], 0.95))
+            if len(res["rac_sensitivity"])
+            else np.nan,
+            "rac_q_multiplier_mean": float(np.mean(res["rac_q_multiplier"]))
+            if len(res["rac_q_multiplier"])
+            else np.nan,
+            "rac_q_multiplier_p95": float(np.quantile(res["rac_q_multiplier"], 0.95))
+            if len(res["rac_q_multiplier"])
+            else np.nan,
+            "rac_inflation_mean": float(np.mean(res["rac_inflation"]))
+            if len(res["rac_inflation"])
+            else np.nan,
             "cvar_eta": cvar_eta_mean,
             "cvar_cost": cvar_cost_mean,
             **cqr_group_metrics,
@@ -1428,9 +1505,17 @@ def run_single(
 
         violated = np.asarray(metrics["true_soc_violation_mask"], dtype=bool)
         interventions = (
-            np.abs(np.asarray(res["proposed_charge_mw"], dtype=float) - np.asarray(res["safe_charge_mw"], dtype=float)) > 1e-6
+            np.abs(
+                np.asarray(res["proposed_charge_mw"], dtype=float)
+                - np.asarray(res["safe_charge_mw"], dtype=float)
+            )
+            > 1e-6
         ) | (
-            np.abs(np.asarray(res["proposed_discharge_mw"], dtype=float) - np.asarray(res["safe_discharge_mw"], dtype=float)) > 1e-6
+            np.abs(
+                np.asarray(res["proposed_discharge_mw"], dtype=float)
+                - np.asarray(res["safe_discharge_mw"], dtype=float)
+            )
+            > 1e-6
         )
 
         for fault_col in FAULT_COLUMNS:
@@ -1511,7 +1596,11 @@ def _plot_true_soc_curves(main_df: pd.DataFrame, out_violation: Path, out_severi
     fig.savefig(out_violation, dpi=220)
     plt.close(fig)
 
-    sev_col = "true_soc_violation_severity_p95_mwh" if "true_soc_violation_severity_p95_mwh" in subset.columns else "true_soc_violation_severity_p95"
+    sev_col = (
+        "true_soc_violation_severity_p95_mwh"
+        if "true_soc_violation_severity_p95_mwh" in subset.columns
+        else "true_soc_violation_severity_p95"
+    )
     fig, ax = plt.subplots(figsize=(8, 5))
     if subset.empty:
         ax.text(0.5, 0.5, "No dropout/drift_combo rows in run", ha="center", va="center")
@@ -1659,11 +1748,16 @@ def run_suite(
             all_main_rows.extend(payload["main_rows"])
             all_fault_rows.extend(payload["fault_rows"])
 
-
-    main_df = pd.DataFrame(all_main_rows).sort_values(["scenario", "seed", "controller"]).reset_index(drop=True)
+    main_df = (
+        pd.DataFrame(all_main_rows).sort_values(["scenario", "seed", "controller"]).reset_index(drop=True)
+    )
     if "true_soc_violation_mask" in main_df.columns:
         main_df = main_df.drop(columns=["true_soc_violation_mask"])
-    fault_df = pd.DataFrame(all_fault_rows).sort_values(["scenario", "seed", "fault_type", "controller"]).reset_index(drop=True)
+    fault_df = (
+        pd.DataFrame(all_fault_rows)
+        .sort_values(["scenario", "seed", "fault_type", "controller"])
+        .reset_index(drop=True)
+    )
 
     main_csv = out / "dc3s_main_table.csv"
     fault_csv = out / "dc3s_fault_breakdown.csv"
@@ -1691,7 +1785,11 @@ def run_suite(
     if include_fault_sweep:
         sweep_df = run_fault_sweep(seeds=seeds_list, horizon=horizon, out_dir=out)
         rows_sweep = int(len(sweep_df))
-        sev_col = "true_soc_violation_severity_p95_mwh" if "true_soc_violation_severity_p95_mwh" in sweep_df.columns else "true_soc_violation_severity_p95"
+        sev_col = (
+            "true_soc_violation_severity_p95_mwh"
+            if "true_soc_violation_severity_p95_mwh" in sweep_df.columns
+            else "true_soc_violation_severity_p95"
+        )
         _plot_sweep_metric(
             sweep_df=sweep_df,
             metric_col="true_soc_violation_rate",
@@ -1706,7 +1804,9 @@ def run_suite(
             title="Violation Severity (P95) vs Fault Severity",
             out_path=fig_violation_severity,
         )
-        _plot_true_soc_curves(main_df=main_df, out_violation=fig_true_soc_rate, out_severity=fig_true_soc_severity)
+        _plot_true_soc_curves(
+            main_df=main_df, out_violation=fig_true_soc_rate, out_severity=fig_true_soc_severity
+        )
         artifacts.update(
             {
                 "cpsbench_merged_sweep.csv": str(out / "cpsbench_merged_sweep.csv"),
@@ -1735,7 +1835,9 @@ def run_suite(
                     ].mean()
                 ),
                 "mean_intervention_rate": float(sub["intervention_rate"].mean()),
-                "mean_cost_usd": float(sub["expected_cost_usd"].dropna().mean()) if not sub["expected_cost_usd"].dropna().empty else None,
+                "mean_cost_usd": float(sub["expected_cost_usd"].dropna().mean())
+                if not sub["expected_cost_usd"].dropna().empty
+                else None,
             }
             for controller, sub in main_df.groupby("controller", sort=True)
         },
@@ -1756,13 +1858,12 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
-    summary = run_suite(
+    run_suite(
         scenarios=[args.scenario],
         seeds=[int(args.seed)],
         out_dir=args.out_dir,
         horizon=int(args.horizon),
     )
-    print(json.dumps(summary, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":

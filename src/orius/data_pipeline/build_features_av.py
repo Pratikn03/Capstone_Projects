@@ -11,6 +11,7 @@ Two modes are supported:
    Input is a processed 1D trajectory CSV and the output is the older
    ``features.parquet`` plus time-based splits.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -20,7 +21,6 @@ import pandas as pd
 
 from orius.av_waymo import build_validation_surface
 from orius.data_pipeline.split_time_series import time_split_with_calibration
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_RAW = REPO_ROOT / "data" / "orius_av" / "raw" / "waymo_motion" / "validation"
@@ -70,7 +70,9 @@ def _build_legacy_features(
     df["hour"] = df["timestamp"].dt.hour
     df["minute"] = df["timestamp"].dt.minute
 
-    required_cols = [f"speed_mps_lag{lag}" for lag in LAG_STEPS] + [f"position_m_lag{lag}" for lag in LAG_STEPS]
+    required_cols = [f"speed_mps_lag{lag}" for lag in LAG_STEPS] + [
+        f"position_m_lag{lag}" for lag in LAG_STEPS
+    ]
     for target_col in ("speed_mps", "position_m", "lead_position_m", "rss_safe_gap_m"):
         if target_col in df.columns:
             required_cols.append(target_col)
@@ -132,23 +134,29 @@ def build_features(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build AV features or Waymo validation artifacts")
-    parser.add_argument("--in", dest="input", type=Path, default=DEFAULT_RAW, help="Input CSV or raw TFRecord directory")
+    parser.add_argument(
+        "--in", dest="input", type=Path, default=DEFAULT_RAW, help="Input CSV or raw TFRecord directory"
+    )
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Output directory")
-    parser.add_argument("--max-shards", type=int, default=None, help="Limit raw shard scans in scenario-native mode")
-    parser.add_argument("--max-scenarios", type=int, default=None, help="Limit scenario scans in scenario-native mode")
-    parser.add_argument("--skip-actor-tracks", action="store_true", help="Skip actor_tracks.parquet in scenario-native mode")
+    parser.add_argument(
+        "--max-shards", type=int, default=None, help="Limit raw shard scans in scenario-native mode"
+    )
+    parser.add_argument(
+        "--max-scenarios", type=int, default=None, help="Limit scenario scans in scenario-native mode"
+    )
+    parser.add_argument(
+        "--skip-actor-tracks", action="store_true", help="Skip actor_tracks.parquet in scenario-native mode"
+    )
     args = parser.parse_args()
     if not args.input.exists():
-        print(f"Input not found: {args.input}")
         return 1
-    artifact_path = build_features(
+    build_features(
         args.input,
         args.out,
         max_shards=args.max_shards,
         max_scenarios=args.max_scenarios,
         skip_actor_tracks=args.skip_actor_tracks,
     )
-    print(f"AV artifact -> {artifact_path}")
     return 0
 
 

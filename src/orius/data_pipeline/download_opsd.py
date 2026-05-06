@@ -6,11 +6,12 @@ You can change version/date via --version.
 Example:
   python -m orius.data_pipeline.download_opsd --out data/raw
 """
+
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from orius.utils.logging import get_logger
 from orius.utils.net import get_session
@@ -18,7 +19,10 @@ from orius.utils.net import get_session
 DEFAULT_VERSION = "2020-10-06"
 DEFAULT_FILE = "time_series_60min_singleindex.csv"
 
-def download(url: str, out_path: Path, chunk: int = 1024 * 1024, *, retries: int = 3, backoff: float = 0.5) -> None:
+
+def download(
+    url: str, out_path: Path, chunk: int = 1024 * 1024, *, retries: int = 3, backoff: float = 0.5
+) -> None:
     """Download a file with streaming + retries."""
     log = get_logger("orius.download_opsd")
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -41,8 +45,9 @@ def download(url: str, out_path: Path, chunk: int = 1024 * 1024, *, retries: int
                         sys.stdout.write(f"\rDownloading... {pct:6.2f}%")
                         sys.stdout.flush()
     if total > 0:
-        print()
+        pass
     log.info("Saved: %s", out_path)
+
 
 def main():
     """CLI entrypoint for OPSD downloader."""
@@ -73,6 +78,7 @@ If you already downloaded manually, ensure this file exists:
 """,
         encoding="utf-8",
     )
+
 
 if __name__ == "__main__":
     main()

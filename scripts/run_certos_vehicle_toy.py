@@ -7,6 +7,7 @@ CertOS works with a peer domain (vehicle). Outputs certos_vehicle_toy.json.
 Usage:
     python3 scripts/run_certos_vehicle_toy.py [--out reports/certos]
 """
+
 from __future__ import annotations
 
 import argparse

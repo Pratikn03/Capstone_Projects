@@ -1,4 +1,5 @@
 """Smoke tests for the Waymo AV dry-run pipeline."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -26,7 +27,9 @@ from orius.certos.verification import load_certificates_from_duckdb, verify_cert
 from orius.dc3s.certificate import make_certificate
 
 
-def _make_scenario_features(*, scenario_id: str, speed_bias: float, gap_bias: float) -> dict[str, list[float | int | bytes]]:
+def _make_scenario_features(
+    *, scenario_id: str, speed_bias: float, gap_bias: float
+) -> dict[str, list[float | int | bytes]]:
     actor_count = 3
     total_steps = 91
     timestamps = [step * 100_000 for step in range(total_steps)]
@@ -94,7 +97,10 @@ def _make_scenario_features(*, scenario_id: str, speed_bias: float, gap_bias: fl
 
 def _write_synthetic_waymo_raw(raw_dir: Path, scenario_count: int = 12) -> None:
     raw_dir.mkdir(parents=True, exist_ok=True)
-    shard_payloads: dict[str, list[bytes]] = {"validation_tfexample.tfrecord-00000-of-00002": [], "validation_tfexample.tfrecord-00001-of-00002": []}
+    shard_payloads: dict[str, list[bytes]] = {
+        "validation_tfexample.tfrecord-00000-of-00002": [],
+        "validation_tfexample.tfrecord-00001-of-00002": [],
+    }
     for idx in range(scenario_count):
         payload = serialize_example_features(
             _make_scenario_features(
@@ -103,7 +109,11 @@ def _write_synthetic_waymo_raw(raw_dir: Path, scenario_count: int = 12) -> None:
                 gap_bias=float(idx % 7),
             )
         )
-        shard_name = "validation_tfexample.tfrecord-00000-of-00002" if idx % 2 == 0 else "validation_tfexample.tfrecord-00001-of-00002"
+        shard_name = (
+            "validation_tfexample.tfrecord-00000-of-00002"
+            if idx % 2 == 0
+            else "validation_tfexample.tfrecord-00001-of-00002"
+        )
         shard_payloads[shard_name].append(payload)
     for shard_name, payloads in shard_payloads.items():
         write_tfrecord_records(raw_dir / shard_name, payloads)
@@ -115,8 +125,23 @@ def _force_balanced_splits(processed_dir: Path) -> None:
     anchor_df = pd.read_parquet(anchor_path)
     step_df = pd.read_parquet(step_path)
     scenario_ids = sorted(anchor_df["scenario_id"].unique().tolist())
-    split_cycle = ["train", "train", "train", "train", "train", "train", "calibration", "calibration", "val", "val", "test", "test"]
-    split_map = {scenario_id: split_cycle[idx % len(split_cycle)] for idx, scenario_id in enumerate(scenario_ids)}
+    split_cycle = [
+        "train",
+        "train",
+        "train",
+        "train",
+        "train",
+        "train",
+        "calibration",
+        "calibration",
+        "val",
+        "val",
+        "test",
+        "test",
+    ]
+    split_map = {
+        scenario_id: split_cycle[idx % len(split_cycle)] for idx, scenario_id in enumerate(scenario_ids)
+    }
     anchor_df["split"] = anchor_df["scenario_id"].map(split_map)
     step_df["split"] = step_df["scenario_id"].map(split_map)
     anchor_df.to_parquet(anchor_path, index=False)
@@ -223,7 +248,9 @@ def test_waymo_dry_run_smoke(tmp_path: Path) -> None:
     assert set(orius_trace_df["source_theorem"]) == {"T11"}
     assert set(orius_trace_df["t11_status"]).issubset({"runtime_linked", "contract_violation"})
     assert float(summary_df.loc[summary_df["controller"] == "orius", "tsvr"].iloc[0]) == 0.0
-    assert float(summary_df.loc[summary_df["controller"] == "orius", "fallback_activation_rate"].iloc[0]) <= 0.50
+    assert (
+        float(summary_df.loc[summary_df["controller"] == "orius", "fallback_activation_rate"].iloc[0]) <= 0.50
+    )
     assert float(summary_df.loc[summary_df["controller"] == "always_brake", "tsvr"].iloc[0]) == 0.0
     assert float(summary_df.loc[summary_df["controller"] == "orius", "useful_work_total"].iloc[0]) >= float(
         summary_df.loc[summary_df["controller"] == "always_brake", "useful_work_total"].iloc[0]
@@ -243,7 +270,9 @@ def test_waymo_dry_run_smoke(tmp_path: Path) -> None:
     assert set(ablation_df["metric_surface"]) == {"runtime_denominator"}
     assert set(negative_df["surface"]) == {"runtime_denominator"}
     orius_comparator = comparator_df[comparator_df["baseline_family"] == "orius_full_stack"].iloc[0]
-    fallback_comparator = comparator_df[comparator_df["baseline_family"] == "degenerate_fallback_runtime"].iloc[0]
+    fallback_comparator = comparator_df[
+        comparator_df["baseline_family"] == "degenerate_fallback_runtime"
+    ].iloc[0]
     assert float(orius_comparator["runtime_witness_pass_rate"]) == 1.0
     assert float(orius_comparator["fallback_activation_rate"]) <= 0.50
     assert float(orius_comparator["useful_work_total"]) >= float(fallback_comparator["useful_work_total"])
@@ -253,7 +282,9 @@ def test_waymo_dry_run_smoke(tmp_path: Path) -> None:
     assert {str(value) for value in independent_rows["independent_baseline"]} == {"True"}
     assert independent_rows["controller"].nunique() == len(independent_rows)
     assert Path(runtime_report["audit_db_path"]).exists()
-    cert_summary, _, _, _ = verify_certificates(load_certificates_from_duckdb(runtime_report["audit_db_path"]))
+    cert_summary, _, _, _ = verify_certificates(
+        load_certificates_from_duckdb(runtime_report["audit_db_path"])
+    )
     assert cert_summary["chain_valid"] is True
     shift_artifacts = runtime_report["shift_aware_artifacts"]
     assert Path(shift_artifacts["summary_csv"]).exists()

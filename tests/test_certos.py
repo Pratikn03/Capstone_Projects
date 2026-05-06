@@ -7,12 +7,13 @@ Covers:
 - Recovery manager
 - Runtime orchestrator end-to-end
 """
+
 from __future__ import annotations
 
 import pytest
 
 from orius.certos.audit_ledger import AuditLedger
-from orius.certos.certificate_engine import CertificateEngine, LifecycleOp
+from orius.certos.certificate_engine import CertificateEngine
 from orius.certos.domain_policies import BatteryGovernancePolicy
 from orius.certos.recovery_manager import RecoveryManager
 from orius.certos.runtime import CertOSConfig, CertOSRuntime, CertOSState, DomainGovernancePolicy
@@ -27,6 +28,7 @@ class DiscreteAlertPolicy(DomainGovernancePolicy):
 
 
 # ── Certificate Engine ────────────────────────────────────────────────
+
 
 class TestCertificateEngine:
     def test_issue_creates_valid_cert(self):
@@ -78,6 +80,7 @@ class TestCertificateEngine:
 
 # ── Audit Ledger ──────────────────────────────────────────────────────
 
+
 class TestAuditLedger:
     def test_append_and_entries(self):
         al = AuditLedger()
@@ -105,6 +108,7 @@ class TestAuditLedger:
 
 # ── Recovery Manager ──────────────────────────────────────────────────
 
+
 class TestRecoveryManager:
     def test_recovery_with_callback(self):
         rm = RecoveryManager(on_recover=lambda: {"recovered": True})
@@ -119,12 +123,11 @@ class TestRecoveryManager:
 
 # ── Runtime Orchestrator ──────────────────────────────────────────────
 
+
 class TestCertOSRuntime:
     def test_issue_produces_valid_state(self):
         rt = CertOSRuntime()
-        state = rt.issue(
-            {"discharge_mw": 50}, {"discharge_mw": 45}, validity_horizon=10
-        )
+        state = rt.issue({"discharge_mw": 50}, {"discharge_mw": 45}, validity_horizon=10)
         assert state.status == "valid"
         assert state.validity_horizon == 10
         assert not state.fallback_active
@@ -162,9 +165,7 @@ class TestCertOSRuntime:
         assert state.fallback_active
 
     def test_expired_battery_step_prefers_fallback_over_runtime_assertion(self):
-        rt = CertOSRuntime(
-            config=CertOSConfig(governance_policy=BatteryGovernancePolicy())
-        )
+        rt = CertOSRuntime(config=CertOSConfig(governance_policy=BatteryGovernancePolicy()))
         state = rt.validate_and_step(
             observed_soc_mwh=21.0,
             proposed_action={"charge_mw": 0.0, "discharge_mw": 10.0},
@@ -219,15 +220,20 @@ class TestCertOSRuntime:
 
 # ── Invariant Enforcement ─────────────────────────────────────────────
 
+
 class TestInvariants:
     def test_inv1_no_action_without_cert(self):
         """INV-1: expired cert with nonzero action → violation."""
         rt = CertOSRuntime()
         # Manually build a state that violates INV-1
         bad_state = CertOSState(
-            step=0, validity_horizon=0, status="expired",
-            safe_action={"discharge_mw": 50}, certificate={},
-            fallback_active=False, audit_count=0,
+            step=0,
+            validity_horizon=0,
+            status="expired",
+            safe_action={"discharge_mw": 50},
+            certificate={},
+            fallback_active=False,
+            audit_count=0,
         )
         violations = rt.check_invariants(bad_state)
         assert "INV-1" in violations
@@ -236,9 +242,13 @@ class TestInvariants:
         """INV-3: H_t > 0 but fallback active → violation."""
         rt = CertOSRuntime()
         bad_state = CertOSState(
-            step=0, validity_horizon=10, status="valid",
-            safe_action={"discharge_mw": 50}, certificate={},
-            fallback_active=True, audit_count=0,
+            step=0,
+            validity_horizon=10,
+            status="valid",
+            safe_action={"discharge_mw": 50},
+            certificate={},
+            fallback_active=True,
+            audit_count=0,
         )
         violations = rt.check_invariants(bad_state)
         assert "INV-3" in violations
@@ -276,6 +286,7 @@ class TestInvariants:
 
 
 # ── Multi-Step Lifecycle ──────────────────────────────────────────────
+
 
 class TestCertOSMultiStep:
     def test_full_lifecycle_valid_degrade_expire_recover(self):
@@ -326,27 +337,32 @@ class TestCertOSModuleSurface:
 
     def test_belief_engine(self):
         from orius.certos.belief_engine import get_belief
+
         b = get_belief({"soc": 0.5}, {"w": 0.9})
         assert "state" in b and "uncertainty" in b
 
     def test_reliability_engine(self):
         from orius.certos.reliability_engine import compute_reliability
+
         w, flags = compute_reliability({"soc_mwh": 50}, None, expected_cadence_s=3600.0)
         assert 0 <= w <= 1
 
     def test_shift_engine(self):
         from orius.certos.shift_engine import build_uncertainty_set
+
         lower, upper, meta = build_uncertainty_set(50.0, 5.0, 0.9)
         assert len(lower) > 0 and len(upper) > 0
 
     def test_reachability_engine(self):
         from orius.certos.reachability_engine import compute_validity_horizon
+
         constraints = {"min_soc_mwh": 10, "max_soc_mwh": 90}
         r = compute_validity_horizon(40, 60, {"discharge_mw": 10}, constraints, 5.0, 100)
         assert "tau_t" in r
 
     def test_safe_action_filter(self):
         from orius.certos.safe_action_filter import filter_action
+
         safe, meta = filter_action(
             {"discharge_mw": 50},
             {"soc_mwh": 50},
@@ -358,8 +374,11 @@ class TestCertOSModuleSurface:
 
     def test_graceful_planner(self):
         from orius.certos.graceful_planner import plan_fallback
+
         actions = plan_fallback(
-            {"discharge_mw": 20}, 5, 50.0,
+            {"discharge_mw": 20},
+            5,
+            50.0,
             {"min_soc_mwh": 10, "max_soc_mwh": 90},
         )
         assert len(actions) > 0
@@ -370,12 +389,9 @@ class TestCertOSModuleSurface:
 
 from orius.certos.verification import (
     formal_validity_predicate,
-    ValidityVerdict,
     verify_certificates,
     verify_composability,
-    ComposabilityResult,
     verify_tamper_evidence,
-    TamperEvidenceResult,
 )
 from orius.dc3s.certificate import recompute_certificate_hash
 

@@ -1,8 +1,8 @@
 # AV (Autonomous Vehicles) domain training config
 dataset:
   key: AV
-  label: AV Trajectories (synthetic/NGSIM)
-  source: ORIUS
+  label: nuPlan All-Zip Grouped AV Replay
+  source: nuPlan
   region_group: multi-domain
 
 task:
@@ -10,7 +10,13 @@ task:
   lookback_hours: 1.0
   lookback_steps: 24  # Explicit sequence window for DL models.
   quantiles: [0.1, 0.5, 0.9]
-  targets: [speed_mps, position_m, lead_position_m, rss_safe_gap_m]
+  targets:
+    - target_ego_speed_mps__1s
+    - target_relative_gap_m__1s
+    - target_ego_speed_mps__2s
+    - target_relative_gap_m__2s
+    - target_ego_speed_mps__4s
+    - target_relative_gap_m__4s
 
 seed: 42
 seeds: [42, 123, 456, 789]
@@ -22,8 +28,10 @@ cross_validation:
   gap: 1
 
 data:
-  processed_path: data/orius_av/av/processed/features.parquet
-  timestamp_col: timestamp
+  processed_path: data/orius_av/av/processed_nuplan_allzip_grouped/anchor_features.parquet
+  timestamp_col:
+  order_cols: [scenario_id, step_index]
+  non_feature_cols: [scenario_id, shard_id, record_index, step_index, ego_track_id, split]
 
 splits:
   train_ratio: 0.70
@@ -146,7 +154,7 @@ models:
 
 backtest:
   enabled: true
-  out_path: reports/av/walk_forward_report.json
+  out_path: reports/orius_av/nuplan_allzip_grouped/walk_forward_report.json
 
 tuning:
   enabled: false

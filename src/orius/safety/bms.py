@@ -1,6 +1,7 @@
 """Virtual battery management safety layer."""
-from datetime import datetime
+
 import logging
+from datetime import datetime
 
 from pydantic import BaseModel, Field
 

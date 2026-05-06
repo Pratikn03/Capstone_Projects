@@ -11,20 +11,21 @@ linkage review for binary/vendor/data surfaces, and emits:
 - reports/audit/full_folder_summary.json
 - reports/audit/full_folder_vendor_anomalies.csv
 """
+
 from __future__ import annotations
 
 import argparse
 import csv
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
-from typing import Any, Iterable
-
+from collections.abc import Iterable
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT_DIR = REPO_ROOT / "reports" / "audit"
@@ -141,12 +142,14 @@ class Finding:
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _run_git(*args: str) -> set[str]:
     try:
-        output = subprocess.check_output(["git", *args], cwd=str(REPO_ROOT), text=True, stderr=subprocess.DEVNULL)
+        output = subprocess.check_output(
+            ["git", *args], cwd=str(REPO_ROOT), text=True, stderr=subprocess.DEVNULL
+        )
     except Exception:
         return set()
     return {line.strip() for line in output.splitlines() if line.strip()}
@@ -242,7 +245,19 @@ def _classify_file(path: Path, *, tracked: bool) -> tuple[str, str]:
         if is_text:
             return "authored_text", "semantic"
         return "build_output", "metadata"
-    if top in {"src", "scripts", "tests", "services", "deploy", "docker", "iot", "configs", "docs", "notebooks", "orius-plan"}:
+    if top in {
+        "src",
+        "scripts",
+        "tests",
+        "services",
+        "deploy",
+        "docker",
+        "iot",
+        "configs",
+        "docs",
+        "notebooks",
+        "orius-plan",
+    }:
         if is_text:
             return "authored_text", "semantic"
         return "binary_media", "metadata"
@@ -254,7 +269,9 @@ def _classify_file(path: Path, *, tracked: bool) -> tuple[str, str]:
 
 
 def _severity_for_absolute_path(rel_path: str) -> str:
-    if rel_path in {"Makefile"} or rel_path.startswith(("src/", "scripts/", "services/", "deploy/", "docker/", "iot/")):
+    if rel_path in {"Makefile"} or rel_path.startswith(
+        ("src/", "scripts/", "services/", "deploy/", "docker/", "iot/")
+    ):
         return "high"
     if rel_path.startswith(("reports/", "paper/", "appendices/", "chapters/")):
         return "medium"
@@ -275,9 +292,7 @@ def _ignore_absolute_path_line(rel_path: str, line: str) -> bool:
         return True
     if rel_path.startswith("scripts/") and "help=" in stripped and "/Volumes/" in stripped:
         return True
-    if rel_path == "Makefile" and stripped.startswith("SSD_VOLUME ?=") and "/Volumes/" in stripped:
-        return True
-    return False
+    return bool(rel_path == "Makefile" and stripped.startswith("SSD_VOLUME ?=") and "/Volumes/" in stripped)
 
 
 def _add_finding(
@@ -521,7 +536,9 @@ def _analyze_workspace_state(
         generated_rows = [
             row
             for row in status_rows
-            if any(token in row for token in ("paper/", "appendices/", ".aux", ".out", ".bbl", ".blg", ".pdf"))
+            if any(
+                token in row for token in ("paper/", "appendices/", ".aux", ".out", ".bbl", ".blg", ".pdf")
+            )
         ]
         _add_finding(
             findings,
@@ -556,9 +573,14 @@ def _analyze_workspace_state(
         )
 
 
-def _analyze_vendor_environment(findings: list[Finding], findings_by_file: dict[str, list[str]]) -> list[dict[str, Any]]:
+def _analyze_vendor_environment(
+    findings: list[Finding], findings_by_file: dict[str, list[str]]
+) -> list[dict[str, Any]]:
     anomalies: list[dict[str, Any]] = []
-    for rel_path, category in ((".venv", "virtualenv_root_present"), ("frontend/node_modules", "node_modules_root_present")):
+    for rel_path, category in (
+        (".venv", "virtualenv_root_present"),
+        ("frontend/node_modules", "node_modules_root_present"),
+    ):
         path = REPO_ROOT / rel_path
         if not path.exists():
             continue
@@ -624,7 +646,7 @@ def run_full_folder_audit(*, out_dir: Path = DEFAULT_OUT_DIR) -> dict[str, Any]:
         try:
             stat = path.stat()
             size_bytes = stat.st_size
-            modified_at = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat()
+            modified_at = datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat()
         except OSError:
             size_bytes = -1
             modified_at = ""
@@ -637,7 +659,9 @@ def run_full_folder_audit(*, out_dir: Path = DEFAULT_OUT_DIR) -> dict[str, Any]:
                 "top_level_area": rel_path.split("/", 1)[0] if "/" in rel_path else "<root>",
                 "file_class": file_class,
                 "review_mode": review_mode,
-                "tracked_status": "tracked" if tracked else ("untracked" if rel_path in untracked_files else "observed"),
+                "tracked_status": "tracked"
+                if tracked
+                else ("untracked" if rel_path in untracked_files else "observed"),
                 "subsystem": _subsystem_for(rel_path),
                 "size_bytes": size_bytes,
                 "modified_at_utc": modified_at,
@@ -755,7 +779,9 @@ def run_full_folder_audit(*, out_dir: Path = DEFAULT_OUT_DIR) -> dict[str, Any]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run a full-folder audit with semantic and metadata review modes.")
+    parser = argparse.ArgumentParser(
+        description="Run a full-folder audit with semantic and metadata review modes."
+    )
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
     args = parser.parse_args()
     summary = run_full_folder_audit(out_dir=args.out_dir)

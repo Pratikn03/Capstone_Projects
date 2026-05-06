@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BOOK_MD = REPO_ROOT / "reports" / "publication" / "phase3_flagship_v1_proof_book.md"
 BOOK_PDF = REPO_ROOT / "reports" / "publication" / "phase3_flagship_v1_proof_book.pdf"

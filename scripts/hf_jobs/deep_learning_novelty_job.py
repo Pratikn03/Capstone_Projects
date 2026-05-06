@@ -10,7 +10,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(os.environ.get("GRIDPULSE_REPO_ROOT", ".")).resolve()
 PYTHON = sys.executable
 OUT_DIR = Path(os.environ.get("ORIUS_DEEP_OUT_DIR", "reports/publication"))
@@ -52,7 +51,9 @@ def run(*args: str) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run or inspect the bounded battery deep-learning novelty HF job.")
+    parser = argparse.ArgumentParser(
+        description="Run or inspect the bounded battery deep-learning novelty HF job."
+    )
     parser.add_argument(
         "--list-outputs",
         action="store_true",

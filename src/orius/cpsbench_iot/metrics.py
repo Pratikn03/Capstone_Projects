@@ -1,7 +1,9 @@
 """Metrics for CPSBench-IoT forecast quality, control safety, and trace completeness."""
+
 from __future__ import annotations
 
-from typing import Any, Iterable, Mapping
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -92,7 +94,20 @@ def compute_forecast_metrics(
 def _compute_recovery_time(violations: np.ndarray, event_log: pd.DataFrame | None) -> float:
     if event_log is None or event_log.empty:
         return 0.0
-    fault_cols = [c for c in event_log.columns if c in {"dropout", "delay_jitter", "out_of_order", "spikes", "stale_sensor", "covariate_drift", "label_drift"}]
+    fault_cols = [
+        c
+        for c in event_log.columns
+        if c
+        in {
+            "dropout",
+            "delay_jitter",
+            "out_of_order",
+            "spikes",
+            "stale_sensor",
+            "covariate_drift",
+            "label_drift",
+        }
+    ]
     if not fault_cols:
         return 0.0
     active_fault = event_log[fault_cols].sum(axis=1).to_numpy(dtype=float) > 0.0
@@ -196,7 +211,9 @@ def compute_control_metrics(
     if not (len(p_ch) == len(p_dis) == len(s_ch) == len(s_dis) == n):
         raise ValueError("Control arrays must have identical length")
 
-    max_power = float(constraints.get("max_power_mw", max(np.max(s_ch, initial=0.0), np.max(s_dis, initial=0.0))))
+    max_power = float(
+        constraints.get("max_power_mw", max(np.max(s_ch, initial=0.0), np.max(s_dis, initial=0.0)))
+    )
     max_charge = float(constraints.get("max_charge_mw", max_power))
     max_discharge = float(constraints.get("max_discharge_mw", max_power))
     min_soc = float(constraints.get("min_soc_mwh", np.min(soc, initial=0.0)))

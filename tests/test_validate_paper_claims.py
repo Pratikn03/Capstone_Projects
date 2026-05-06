@@ -226,8 +226,14 @@ def test_check_promoted_validation_surface_alignment_flags_cross_surface_drift(t
     _check_promoted_validation_surface_alignment(findings, tmp_path)
 
     assert any("Autonomous Vehicles benchmark orius_tsvr_mean=0.0" in finding.detail for finding in findings)
-    assert any("Medical and Healthcare Monitoring closure orius_tsvr='0.0000'" in finding.detail for finding in findings)
-    assert any("current_status must disclose runtime-denominator governance" in finding.detail for finding in findings)
+    assert any(
+        "Medical and Healthcare Monitoring closure orius_tsvr='0.0000'" in finding.detail
+        for finding in findings
+    )
+    assert any(
+        "current_status must disclose runtime-denominator governance" in finding.detail
+        for finding in findings
+    )
     assert any("claim_governs_from=runtime_denominator" in finding.detail for finding in findings)
     assert any("diagnostic_only=True" in finding.detail for finding in findings)
 
@@ -296,4 +302,7 @@ def test_check_healthcare_runtime_metric_alignment_flags_proxy_or_cross_surface_
         in finding.detail
         for finding in findings
     )
-    assert any("intervention_rate=0.6 diverges from runtime summary intervention_rate=0.5" in finding.detail for finding in findings)
+    assert any(
+        "intervention_rate=0.6 diverges from runtime summary intervention_rate=0.5" in finding.detail
+        for finding in findings
+    )

@@ -1,9 +1,11 @@
 """Domain registry for the canonical three-domain ORIUS runtime."""
+
 from __future__ import annotations
 
-from dataclasses import dataclass
 import logging
-from typing import Any, Callable, Mapping
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +54,7 @@ def get_domain_capabilities(domain_id: str, cfg: Mapping[str, Any] | None = None
     if hasattr(adapter, "capability_profile"):
         try:
             return dict(adapter.capability_profile())
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.warning("Adapter capability profile failed for %s; using registry defaults", domain_id)
     normalized = _normalize_domain_id(domain_id)
     return dict(_REGISTRY[normalized].capabilities)
@@ -68,6 +70,7 @@ def _register_builtins() -> None:
     """Register the canonical three-domain ORIUS runtime adapters."""
     try:
         from orius.adapters.battery import BatteryDomainAdapter
+
         register_domain(
             "energy",
             lambda cfg: BatteryDomainAdapter(),
@@ -83,6 +86,7 @@ def _register_builtins() -> None:
         logger.warning("Failed to register energy domain adapter: %s", e)
     try:
         from orius.adapters.vehicle import VehicleDomainAdapter
+
         register_domain(
             "av",
             lambda cfg: VehicleDomainAdapter(cfg),
@@ -98,6 +102,7 @@ def _register_builtins() -> None:
         logger.warning("Failed to register av domain adapter: %s", e)
     try:
         from orius.adapters.healthcare import HealthcareDomainAdapter
+
         register_domain(
             "healthcare",
             lambda cfg: HealthcareDomainAdapter(cfg),

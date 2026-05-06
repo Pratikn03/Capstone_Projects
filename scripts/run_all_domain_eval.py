@@ -16,14 +16,13 @@ Usage:
     python scripts/run_all_domain_eval.py [--seed 42] [--rows 200] [--out reports/multi_domain]
     python scripts/run_all_domain_eval.py --allow-support-tier
 """
+
 from __future__ import annotations
 
 import argparse
-from typing import Any
 import json
 import os
 import time
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
@@ -39,15 +38,17 @@ from orius.universal_framework import get_adapter, run_universal_step
 DEFAULT_OUT = Path("reports/multi_domain")
 DEFAULT_ROWS = 200
 
-plt.rcParams.update({
-    "font.family": "serif",
-    "font.size": 10,
-    "axes.labelsize": 11,
-    "axes.titlesize": 12,
-    "figure.dpi": 300,
-    "savefig.dpi": 300,
-    "savefig.bbox": "tight",
-})
+plt.rcParams.update(
+    {
+        "font.family": "serif",
+        "font.size": 10,
+        "axes.labelsize": 11,
+        "axes.titlesize": 12,
+        "figure.dpi": 300,
+        "savefig.dpi": 300,
+        "savefig.bbox": "tight",
+    }
+)
 
 
 def _violates_av(row: pd.Series, action: dict[str, object], constraints: dict[str, object]) -> bool:
@@ -75,11 +76,25 @@ DOMAINS = {
         "csv": "data/orius_av/av/processed/av_trajectories_orius.csv",
         "adapter_id": "av",
         "telemetry_cols": ["position_m", "speed_mps", "speed_limit_mps", "lead_position_m", "ts_utc"],
-        "candidate_fn": lambda row: {"acceleration_mps2": min(3.0, 0.6 * (float(row.get("speed_limit_mps", 16.0) or 16.0) - float(row.get("speed_mps", 0.0) or 0.0)))},
+        "candidate_fn": lambda row: {
+            "acceleration_mps2": min(
+                3.0,
+                0.6
+                * (float(row.get("speed_limit_mps", 16.0) or 16.0) - float(row.get("speed_mps", 0.0) or 0.0)),
+            )
+        },
         "rule_based_fn": lambda row: {
-            "acceleration_mps2": max(-3.0, min(2.0,
-                0.5 * (0.90 * float(row.get("speed_limit_mps", 11.0) or 11.0)
-                       - float(row.get("speed_mps", 0.0) or 0.0))))
+            "acceleration_mps2": max(
+                -3.0,
+                min(
+                    2.0,
+                    0.5
+                    * (
+                        0.90 * float(row.get("speed_limit_mps", 11.0) or 11.0)
+                        - float(row.get("speed_mps", 0.0) or 0.0)
+                    ),
+                ),
+            )
         },
         "constraints": {"speed_max_mps": 11.0, "dt_s": 1.0},
         "safety_col": "speed_mps",
@@ -98,9 +113,13 @@ DOMAINS = {
         "candidate_fn": lambda row: {"alert_level": 0.1},
         "rule_based_fn": lambda row: {
             "alert_level": (
-                0.9 if (float(row.get("hr_bpm", 80) or 80) > 110 or float(row.get("hr_bpm", 80) or 80) < 55)
-                else (0.5 if (float(row.get("hr_bpm", 80) or 80) > 100 or float(row.get("hr_bpm", 80) or 80) < 60)
-                else 0.1)
+                0.9
+                if (float(row.get("hr_bpm", 80) or 80) > 110 or float(row.get("hr_bpm", 80) or 80) < 55)
+                else (
+                    0.5
+                    if (float(row.get("hr_bpm", 80) or 80) > 100 or float(row.get("hr_bpm", 80) or 80) < 60)
+                    else 0.1
+                )
             )
         },
         "constraints": {"spo2_min_pct": 90.0},
@@ -122,6 +141,38 @@ STALE_WINDOW = 3
 
 
 def _normalize_domain_frame(name: str, df: pd.DataFrame) -> pd.DataFrame:
+    if name == "av":
+        frame = df.copy()
+        rename_map: dict[str, str] = {}
+        if "ego_speed_mps_lag0" in frame.columns and "speed_mps" not in frame.columns:
+            rename_map["ego_speed_mps_lag0"] = "speed_mps"
+        if "lead_gap_m_lag0" in frame.columns and "lead_gap_m" not in frame.columns:
+            rename_map["lead_gap_m_lag0"] = "lead_gap_m"
+        frame = frame.rename(columns=rename_map)
+        if "position_m" not in frame.columns:
+            step = pd.to_numeric(
+                frame.get("step_index", pd.Series(range(len(frame)))), errors="coerce"
+            ).fillna(0.0)
+            speed = pd.to_numeric(
+                frame.get("speed_mps", pd.Series(0.0, index=frame.index)), errors="coerce"
+            ).fillna(0.0)
+            frame["position_m"] = step.astype(float) * speed.astype(float)
+        if "speed_limit_mps" not in frame.columns:
+            frame["speed_limit_mps"] = 11.0
+        if "lead_position_m" not in frame.columns:
+            gap = pd.to_numeric(
+                frame.get("lead_gap_m", pd.Series(100.0, index=frame.index)), errors="coerce"
+            ).fillna(100.0)
+            frame["lead_position_m"] = pd.to_numeric(frame["position_m"], errors="coerce").fillna(0.0) + gap
+        if "ts_utc" not in frame.columns:
+            step = pd.to_numeric(
+                frame.get("step_index", pd.Series(range(len(frame)))), errors="coerce"
+            ).fillna(0.0)
+            frame["ts_utc"] = (
+                pd.Timestamp("2026-01-01T00:00:00Z") + pd.to_timedelta(step.astype(float), unit="s")
+            ).astype(str)
+        return frame
+
     if name != "healthcare":
         return df
 
@@ -152,9 +203,7 @@ def inject_faults(df: pd.DataFrame, cfg: dict[str, object], rng: np.random.Gener
     numeric_cols = [
         c
         for c in df.columns
-        if c != "ts_utc"
-        and pd.api.types.is_numeric_dtype(df[c])
-        and not pd.api.types.is_bool_dtype(df[c])
+        if c != "ts_utc" and pd.api.types.is_numeric_dtype(df[c]) and not pd.api.types.is_bool_dtype(df[c])
     ]
     dropout_mask = rng.random(n) < DROPOUT_PROB
     for i in np.where(dropout_mask)[0]:
@@ -182,7 +231,7 @@ def inject_faults(df: pd.DataFrame, cfg: dict[str, object], rng: np.random.Gener
 
 
 def _safe(v: object) -> object:
-    if isinstance(v, (np.floating, np.integer)):
+    if isinstance(v, np.floating | np.integer):
         return float(v) if isinstance(v, np.floating) else int(v)
     if isinstance(v, np.ndarray):
         return v.tolist()
@@ -205,6 +254,8 @@ def _load_domain_frame(
     if csv_path_raw:
         csv_path = Path(str(csv_path_raw))
         if csv_path.exists():
+            if csv_path.suffix.lower() == ".parquet":
+                return pd.read_parquet(csv_path), "locked_parquet"
             return pd.read_csv(csv_path), "locked_csv"
         if not allow_support_tier:
             raise FileNotFoundError(
@@ -251,7 +302,7 @@ def eval_domain(
 
     for step_idx, row in df_faulted.iterrows():
         telemetry: dict[str, object] = {}
-        for c in avail_cols + ["dropout", "stale_sensor", "spikes"]:
+        for c in [*avail_cols, "dropout", "stale_sensor", "spikes"]:
             if c not in row.index:
                 continue
             value = row.get(c)
@@ -503,9 +554,7 @@ def build_latency_table(results: list[dict[str, object]]) -> str:
     ]
     for row in rows:
         lines.append(
-            f"{row['display']} & "
-            f"{float(row['p50_latency_ms']):.2f} & "
-            f"{float(row['p95_latency_ms']):.2f} \\\\"
+            f"{row['display']} & {float(row['p50_latency_ms']):.2f} & {float(row['p95_latency_ms']):.2f} \\\\"
         )
     lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}"])
     return "\n".join(lines)
@@ -521,14 +570,8 @@ def build_violation_figure(
     labels = [str(r["display"]) for r in rows]
     before = [float(r["violation_rate_before_pct"]) for r in rows]
     after = [float(r["violation_rate_after_pct"]) for r in rows]
-    rule_vals = [
-        float(rule_results.get(str(r["domain"]), {}).get("viol_rate_rule_pct") or 0.0)
-        for r in rows
-    ]
-    has_rule = any(
-        rule_results.get(str(r["domain"]), {}).get("viol_rate_rule_pct") is not None
-        for r in rows
-    )
+    rule_vals = [float(rule_results.get(str(r["domain"]), {}).get("viol_rate_rule_pct") or 0.0) for r in rows]
+    has_rule = any(rule_results.get(str(r["domain"]), {}).get("viol_rate_rule_pct") is not None for r in rows)
 
     fig, ax = plt.subplots(figsize=(10, 4.5))
     x = np.arange(len(rows))

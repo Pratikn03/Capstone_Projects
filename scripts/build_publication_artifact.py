@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """One-command artifact builder for CPSBench/DC3S publication outputs."""
+
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import hashlib
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
@@ -24,22 +25,23 @@ if str(REPO_ROOT) not in sys.path:
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from orius.cpsbench_iot.runner import run_suite, run_single
+from orius.cpsbench_iot.runner import run_single, run_suite
 from orius.cpsbench_iot.scenarios import DEFAULT_SCENARIOS
 from orius.dc3s.calibration import calibrate_ambiguity_lambda
+from scripts.build_baseline_comparison_table import build_release_baseline_comparison
 from scripts.build_conference_assets import (
     build_calibration_tradeoff,
     build_dataset_cards,
-    build_figure_inventory as build_conference_figure_inventory,
     build_transfer_generalization,
 )
-from scripts.build_baseline_comparison_table import build_release_baseline_comparison
+from scripts.build_conference_assets import (
+    build_figure_inventory as build_conference_figure_inventory,
+)
 from scripts.build_cost_safety_pareto import build_cost_safety_pareto
 from scripts.build_dataset_summary_table import build_dataset_summary_rows
 from scripts.run_ablations import run_dc3s_ablation_matrix
 from scripts.train_distributional_load import train_distributional_load
 from scripts.train_regime_cqr import train_regime_cqr_artifacts
-
 
 REQUIRED_PUBLICATION = (
     "dc3s_main_table.csv",
@@ -73,25 +75,82 @@ REQUIRED_PUBLICATION = (
 RELEASE_DATASETS = ("DE", "US_MISO", "US_PJM", "US_ERCOT")
 
 PAPER_ASSET_SOURCE_MAP = {
-    "FIG01_ARCHITECTURE": {"source_artifact": "reports/figures/architecture.png", "build_command": "bash scripts/export_paper_assets.sh"},
-    "FIG02_DC3S_STEP": {"source_artifact": "reports/publication/figures/fig11_dispatch_comparison.png", "build_command": "bash scripts/export_paper_assets.sh"},
-    "FIG03_TRUE_SOC_VIOLATION": {"source_artifact": "reports/publication/fig_true_soc_violation_vs_dropout.png", "build_command": "bash scripts/export_paper_assets.sh"},
-    "FIG04_TRUE_SOC_SEVERITY": {"source_artifact": "reports/publication/fig_true_soc_severity_p95_vs_dropout.png", "build_command": "bash scripts/export_paper_assets.sh"},
-    "FIG05_CQR_GROUP_COVERAGE": {"source_artifact": "reports/publication/fig_cqr_group_coverage.png", "build_command": "bash scripts/export_paper_assets.sh"},
-    "FIG06_TRANSFER_COVERAGE": {"source_artifact": "reports/publication/fig_transfer_coverage.png", "build_command": "bash scripts/export_paper_assets.sh"},
-    "FIG07_COST_SAFETY_FRONTIER": {"source_artifact": "reports/publication/fig_cost_safety_pareto.png", "build_command": "bash scripts/export_paper_assets.sh"},
-    "FIG08_RAC_SENSITIVITY_WIDTH": {"source_artifact": "reports/publication/fig_rac_sensitivity_vs_width.png", "build_command": "bash scripts/export_paper_assets.sh"},
-    "FIG09_REGION_DATASET_CARDS": {"source_artifact": "reports/publication/fig_region_dataset_cards.png", "build_command": "bash scripts/export_paper_assets.sh"},
-    "FIG10_CALIBRATION_TRADEOFF": {"source_artifact": "reports/publication/fig_calibration_tradeoff.png", "build_command": "bash scripts/export_paper_assets.sh"},
-    "FIG11_TRANSFER_GENERALIZATION": {"source_artifact": "reports/publication/fig_transfer_generalization.png", "build_command": "bash scripts/export_paper_assets.sh"},
-    "TBL01_MAIN_RESULTS": {"source_artifact": "reports/publication/dc3s_main_table.csv", "build_command": "bash scripts/export_paper_assets.sh"},
-    "TBL02_ABLATIONS": {"source_artifact": "reports/publication/table2_ablations.csv", "build_command": "bash scripts/export_paper_assets.sh"},
-    "TBL03_CQR_GROUP_COVERAGE": {"source_artifact": "reports/publication/cqr_group_coverage.csv", "build_command": "bash scripts/export_paper_assets.sh"},
-    "TBL04_TRANSFER_STRESS": {"source_artifact": "reports/publication/transfer_stress.csv", "build_command": "bash scripts/export_paper_assets.sh"},
-    "TBL05_DATASET_SUMMARY": {"source_artifact": "reports/publication/tables/table1_dataset_summary.csv", "build_command": "bash scripts/export_paper_assets.sh"},
-    "TBL06_HYPERPARAMS": {"source_artifact": "configs/train_forecast.yaml", "build_command": "bash scripts/export_paper_assets.sh"},
-    "TBL07_DATASET_CARDS": {"source_artifact": "reports/publication/dataset_cards.csv", "build_command": "bash scripts/export_paper_assets.sh"},
-    "TBL08_FORECAST_BASELINES": {"source_artifact": "reports/publication/baseline_comparison_all.csv", "build_command": "bash scripts/export_paper_assets.sh"},
+    "FIG01_ARCHITECTURE": {
+        "source_artifact": "reports/figures/architecture.png",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "FIG02_DC3S_STEP": {
+        "source_artifact": "reports/publication/figures/fig11_dispatch_comparison.png",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "FIG03_TRUE_SOC_VIOLATION": {
+        "source_artifact": "reports/publication/fig_true_soc_violation_vs_dropout.png",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "FIG04_TRUE_SOC_SEVERITY": {
+        "source_artifact": "reports/publication/fig_true_soc_severity_p95_vs_dropout.png",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "FIG05_CQR_GROUP_COVERAGE": {
+        "source_artifact": "reports/publication/fig_cqr_group_coverage.png",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "FIG06_TRANSFER_COVERAGE": {
+        "source_artifact": "reports/publication/fig_transfer_coverage.png",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "FIG07_COST_SAFETY_FRONTIER": {
+        "source_artifact": "reports/publication/fig_cost_safety_pareto.png",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "FIG08_RAC_SENSITIVITY_WIDTH": {
+        "source_artifact": "reports/publication/fig_rac_sensitivity_vs_width.png",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "FIG09_REGION_DATASET_CARDS": {
+        "source_artifact": "reports/publication/fig_region_dataset_cards.png",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "FIG10_CALIBRATION_TRADEOFF": {
+        "source_artifact": "reports/publication/fig_calibration_tradeoff.png",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "FIG11_TRANSFER_GENERALIZATION": {
+        "source_artifact": "reports/publication/fig_transfer_generalization.png",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "TBL01_MAIN_RESULTS": {
+        "source_artifact": "reports/publication/dc3s_main_table.csv",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "TBL02_ABLATIONS": {
+        "source_artifact": "reports/publication/table2_ablations.csv",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "TBL03_CQR_GROUP_COVERAGE": {
+        "source_artifact": "reports/publication/cqr_group_coverage.csv",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "TBL04_TRANSFER_STRESS": {
+        "source_artifact": "reports/publication/transfer_stress.csv",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "TBL05_DATASET_SUMMARY": {
+        "source_artifact": "reports/publication/tables/table1_dataset_summary.csv",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "TBL06_HYPERPARAMS": {
+        "source_artifact": "configs/train_forecast.yaml",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "TBL07_DATASET_CARDS": {
+        "source_artifact": "reports/publication/dataset_cards.csv",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
+    "TBL08_FORECAST_BASELINES": {
+        "source_artifact": "reports/publication/baseline_comparison_all.csv",
+        "build_command": "bash scripts/export_paper_assets.sh",
+    },
 }
 
 
@@ -123,7 +182,9 @@ def _load_release_source_runs(release_id: str) -> dict[str, dict[str, Any]]:
     source_runs: dict[str, dict[str, Any]] = {}
     for dataset in RELEASE_DATASETS:
         dataset_lower = dataset.lower()
-        manifest_path = REPO_ROOT / "artifacts" / "runs" / dataset_lower / release_id / "registry" / "run_manifest.json"
+        manifest_path = (
+            REPO_ROOT / "artifacts" / "runs" / dataset_lower / release_id / "registry" / "run_manifest.json"
+        )
         if not manifest_path.exists():
             raise FileNotFoundError(
                 f"Missing candidate run manifest for {dataset}: {manifest_path}. "
@@ -193,7 +254,9 @@ def _load_dc3s_cfg() -> dict[str, Any]:
 
 
 def _resolve_split_paths(unc_cfg: dict[str, Any]) -> dict[str, Path]:
-    split_cfg = unc_cfg.get("publication_splits", {}) if isinstance(unc_cfg.get("publication_splits"), dict) else {}
+    split_cfg = (
+        unc_cfg.get("publication_splits", {}) if isinstance(unc_cfg.get("publication_splits"), dict) else {}
+    )
     train = Path(str(split_cfg.get("train", "data/processed/splits/train.parquet")))
     cal = Path(str(split_cfg.get("calibration", "data/processed/splits/calibration.parquet")))
     test = Path(str(split_cfg.get("test", "data/processed/splits/test.parquet")))
@@ -209,7 +272,9 @@ def _resolve_split_paths(unc_cfg: dict[str, Any]) -> dict[str, Path]:
     return {"train": train, "calibration": cal, "test": test}
 
 
-def _prepare_regime_cqr(out_dir: Path, split_paths: dict[str, Path], unc_cfg: dict[str, Any]) -> dict[str, Any]:
+def _prepare_regime_cqr(
+    out_dir: Path, split_paths: dict[str, Path], unc_cfg: dict[str, Any]
+) -> dict[str, Any]:
     regime_cfg = unc_cfg.get("regime_cqr", {}) if isinstance(unc_cfg.get("regime_cqr"), dict) else {}
     if not bool(regime_cfg.get("enabled", True)):
         raise RuntimeError("regime_cqr.enabled must be true for publication runs")
@@ -225,11 +290,19 @@ def _prepare_regime_cqr(out_dir: Path, split_paths: dict[str, Path], unc_cfg: di
         backend_policy=str(regime_cfg.get("quantile_backend_policy", "strict")),
         quantile_backend=str(regime_cfg.get("quantile_backend", "lightgbm")),
     )
-    regime_path = Path(str(regime_cfg.get("artifact_path", "artifacts/uncertainty/{target}_regime_cqr.json")).format(target="load_mw"))
+    regime_path = Path(
+        str(regime_cfg.get("artifact_path", "artifacts/uncertainty/{target}_regime_cqr.json")).format(
+            target="load_mw"
+        )
+    )
     if not regime_path.exists():
         raise FileNotFoundError(f"Regime CQR artifact missing after training: {regime_path}")
     rac_cfg = unc_cfg.get("rac_cert", {}) if isinstance(unc_cfg.get("rac_cert"), dict) else {}
-    rac_path = Path(str(rac_cfg.get("artifact_path", "artifacts/uncertainty/{target}_rac_cert.json")).format(target="load_mw"))
+    rac_path = Path(
+        str(rac_cfg.get("artifact_path", "artifacts/uncertainty/{target}_rac_cert.json")).format(
+            target="load_mw"
+        )
+    )
     if not rac_path.exists():
         raise FileNotFoundError(f"RAC-Cert artifact missing after training: {rac_path}")
     payload["regime_path_resolved"] = str(regime_path)
@@ -272,7 +345,9 @@ def _build_cqr_group_coverage(out_dir: Path) -> dict[str, Any]:
         ax.text(0.5, 0.5, "No CQR group coverage rows", ha="center", va="center")
     else:
         for _, row in cov_df.iterrows():
-            if not np.isfinite(float(row.get("mean_width", np.nan))) or not np.isfinite(float(row.get("picp_90", np.nan))):
+            if not np.isfinite(float(row.get("mean_width", np.nan))) or not np.isfinite(
+                float(row.get("picp_90", np.nan))
+            ):
                 continue
             ax.scatter(float(row["mean_width"]), float(row["picp_90"]), s=80)
             ax.text(float(row["mean_width"]), float(row["picp_90"]), f" {row['group']}")
@@ -328,9 +403,15 @@ def _build_rac_diagnostics(out_dir: Path) -> dict[str, Any]:
 
     summary = {
         "rows": int(len(df)),
-        "controllers": sorted(df["controller"].astype(str).unique().tolist()) if "controller" in df.columns else [],
-        "rac_sensitivity_mean_global": float(pd.to_numeric(df["rac_sensitivity_mean"], errors="coerce").mean()),
-        "rac_q_multiplier_mean_global": float(pd.to_numeric(df["rac_q_multiplier_mean"], errors="coerce").mean()),
+        "controllers": sorted(df["controller"].astype(str).unique().tolist())
+        if "controller" in df.columns
+        else [],
+        "rac_sensitivity_mean_global": float(
+            pd.to_numeric(df["rac_sensitivity_mean"], errors="coerce").mean()
+        ),
+        "rac_q_multiplier_mean_global": float(
+            pd.to_numeric(df["rac_q_multiplier_mean"], errors="coerce").mean()
+        ),
         "rac_inflation_mean_global": float(pd.to_numeric(df["rac_inflation_mean"], errors="coerce").mean()),
     }
     summary_path = out_dir / "rac_cert_summary.json"
@@ -362,7 +443,11 @@ def _calibrate_ambiguity_from_splits(
     split_paths: dict[str, Path],
     dc3s_cfg: dict[str, Any],
 ) -> dict[str, Any]:
-    cal_df = pd.read_parquet(split_paths["calibration"]) if split_paths["calibration"].suffix == ".parquet" else pd.read_csv(split_paths["calibration"])
+    cal_df = (
+        pd.read_parquet(split_paths["calibration"])
+        if split_paths["calibration"].suffix == ".parquet"
+        else pd.read_csv(split_paths["calibration"])
+    )
     if "load_mw" not in cal_df.columns:
         raise ValueError("Calibration split missing load_mw needed for ambiguity calibration")
     load = cal_df["load_mw"].to_numpy(dtype=float)
@@ -428,11 +513,17 @@ def _build_transfer_stress(out_dir: Path, seeds: list[int], horizon: int) -> dic
     sweep_specs: list[tuple[str, str, float | str, dict[str, Any]]] = []
     sweep_specs.append(("nominal", "nominal", 0.0, {}))
     for p in (0.0, 0.10, 0.20, 0.30):
-        sweep_specs.append(("dropout", "dropout", p, {"dropout_rate": float(p), "soc_dropout_prob": float(p)}))
+        sweep_specs.append(
+            ("dropout", "dropout", p, {"dropout_rate": float(p), "soc_dropout_prob": float(p)})
+        )
     for p in (0.0, 0.10, 0.20):
         sweep_specs.append(("stale", "nominal", p, {"soc_stale_prob": float(p)}))
-    sweep_specs.append(("delay", "delay_jitter", 0, {"delay_seconds": 0.0, "delay_rate": 0.0, "soc_stale_prob": 0.0}))
-    sweep_specs.append(("delay", "delay_jitter", "high", {"delay_seconds": 15.0, "delay_rate": 0.50, "soc_stale_prob": 0.35}))
+    sweep_specs.append(
+        ("delay", "delay_jitter", 0, {"delay_seconds": 0.0, "delay_rate": 0.0, "soc_stale_prob": 0.0})
+    )
+    sweep_specs.append(
+        ("delay", "delay_jitter", "high", {"delay_seconds": 15.0, "delay_rate": 0.50, "soc_stale_prob": 0.35})
+    )
 
     rows: list[dict[str, Any]] = []
     for case_name, case_overrides in transfer_cases.items():
@@ -534,7 +625,9 @@ def _verify_outputs(out_dir: Path) -> None:
         "true_soc_violation_severity_p95_mwh",
     }
     if not required_cols.issubset(set(main.columns)):
-        raise RuntimeError(f"Main table missing severity compatibility columns: {sorted(required_cols - set(main.columns))}")
+        raise RuntimeError(
+            f"Main table missing severity compatibility columns: {sorted(required_cols - set(main.columns))}"
+        )
 
     transfer = pd.read_csv(out_dir / "transfer_stress.csv")
     required_cases = {
@@ -546,7 +639,10 @@ def _verify_outputs(out_dir: Path) -> None:
     if not required_cases.issubset(set(transfer["transfer_case"].astype(str).unique().tolist())):
         raise RuntimeError("transfer_stress.csv missing one or more required transfer cases")
     table5 = pd.read_csv(out_dir / "table5_transfer.csv")
-    if "transfer_case" in table5.columns and table5["transfer_case"].astype(str).str.contains("pending_transfer_artifacts", na=False).any():
+    if (
+        "transfer_case" in table5.columns
+        and table5["transfer_case"].astype(str).str.contains("pending_transfer_artifacts", na=False).any()
+    ):
         raise RuntimeError("table5_transfer.csv contains placeholder rows")
     stats = json.loads((out_dir / "stats_summary.json").read_text(encoding="utf-8"))
     stats_blob = json.dumps(stats, sort_keys=True)
@@ -564,7 +660,9 @@ def _verify_outputs(out_dir: Path) -> None:
         raise RuntimeError("baseline_comparison_all.csv contains NaN; missing values must render as ---")
     baseline_status = json.loads(baseline_status_path.read_text(encoding="utf-8"))
     if not bool(baseline_status.get("full_table_complete", False)):
-        raise RuntimeError("baseline_comparison_status.json reports an incomplete six-model DE/US forecast table")
+        raise RuntimeError(
+            "baseline_comparison_status.json reports an incomplete six-model DE/US forecast table"
+        )
 
 
 def _sha256_file(path: Path) -> str:
@@ -608,9 +706,7 @@ def _write_release_manifest(
     conference_figure_inventory: dict[str, Any] | None,
 ) -> dict[str, Any]:
     try:
-        commit = (
-            subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
-        )
+        commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
     except Exception:
         commit = "unknown"
     artifact_hashes: dict[str, str] = {}
@@ -630,7 +726,7 @@ def _write_release_manifest(
     manifest = {
         "release_id": release_id,
         "git_commit": commit,
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "release_family": release_id,
         "command": command,
         "seeds": seeds,
@@ -657,7 +753,9 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     release_id = args.release_id or args.release_family
     if not release_id:
-        raise SystemExit("build_publication_artifact.py requires --release-id for normalized release-family builds")
+        raise SystemExit(
+            "build_publication_artifact.py requires --release-id for normalized release-family builds"
+        )
 
     seeds = list(args.seeds or list(range(10)))
     scenarios = list(args.scenarios or DEFAULT_SCENARIOS)
@@ -695,11 +793,15 @@ def main() -> None:
     )
 
     transfer_summary = _build_transfer_stress(out_dir, seeds=seeds, horizon=int(args.horizon))
-    pareto_summary = build_cost_safety_pareto(main_table_path=out_dir / "dc3s_main_table.csv", out_dir=out_dir)
+    pareto_summary = build_cost_safety_pareto(
+        main_table_path=out_dir / "dc3s_main_table.csv", out_dir=out_dir
+    )
     rac_summary = _build_rac_diagnostics(out_dir)
     dataset_summary = _build_dataset_summary_table(out_dir)
     baseline_summary = build_release_baseline_comparison(release_id=release_id, out_dir=out_dir)
-    dataset_cards = build_dataset_cards(dataset_summary_path=out_dir / "tables" / "table1_dataset_summary.csv", out_dir=out_dir)
+    dataset_cards = build_dataset_cards(
+        dataset_summary_path=out_dir / "tables" / "table1_dataset_summary.csv", out_dir=out_dir
+    )
     calibration_tradeoff = build_calibration_tradeoff(out_dir=out_dir)
     transfer_generalization = build_transfer_generalization(out_dir=out_dir)
     conference_figure_inventory = build_conference_figure_inventory(out_dir=out_dir)

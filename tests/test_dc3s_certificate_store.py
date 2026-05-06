@@ -1,4 +1,5 @@
 """Tests for DC3S certificate storage schema and typed telemetry columns."""
+
 from __future__ import annotations
 
 import json
@@ -48,10 +49,7 @@ def test_store_certificate_persists_typed_dc3s_columns(tmp_path) -> None:
 
     conn = duckdb.connect(str(db_path))
     try:
-        cols = {
-            row[1]
-            for row in conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()
-        }
+        cols = {row[1] for row in conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()}
         assert {
             "intervened",
             "intervention_reason",
@@ -131,10 +129,7 @@ def test_store_certificate_migrates_legacy_table(tmp_path) -> None:
 
     conn = duckdb.connect(str(db_path))
     try:
-        cols = {
-            row[1]
-            for row in conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()
-        }
+        cols = {row[1] for row in conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()}
         assert {
             "intervened",
             "intervention_reason",

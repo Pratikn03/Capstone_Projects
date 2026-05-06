@@ -53,8 +53,7 @@ def _compute_lead_gap(actor_tracks: pd.DataFrame, ego: pd.DataFrame) -> pd.DataF
     # Get non-ego valid actors
     others = actor_tracks.loc[
         ~actor_tracks["is_ego"] & actor_tracks["valid"],
-        ["scenario_id", "step_index", "track_id", "x_m", "y_m",
-         "speed_mps", "heading_rad"],
+        ["scenario_id", "step_index", "track_id", "x_m", "y_m", "speed_mps", "heading_rad"],
     ].copy()
 
     # Merge ego position onto other actors
@@ -76,22 +75,38 @@ def _compute_lead_gap(actor_tracks: pd.DataFrame, ego: pd.DataFrame) -> pd.DataF
     # Select closest lead per (scenario, step)
     if len(candidates) == 0:
         lead = pd.DataFrame(
-            columns=["scenario_id", "step_index", "lead_track_id",
-                      "lead_rel_x_m", "lead_rel_y_m", "lead_speed_mps",
-                      "lead_heading_rad"],
+            columns=[
+                "scenario_id",
+                "step_index",
+                "lead_track_id",
+                "lead_rel_x_m",
+                "lead_rel_y_m",
+                "lead_speed_mps",
+                "lead_heading_rad",
+            ],
         )
     else:
         idx = candidates.groupby(["scenario_id", "step_index"])["rel_x"].idxmin()
-        lead = candidates.loc[idx, [
-            "scenario_id", "step_index", "track_id", "rel_x", "rel_y",
-            "speed_mps", "heading_rad",
-        ]].rename(columns={
-            "track_id": "lead_track_id",
-            "rel_x": "lead_rel_x_m",
-            "rel_y": "lead_rel_y_m",
-            "speed_mps": "lead_speed_mps",
-            "heading_rad": "lead_heading_rad",
-        })
+        lead = candidates.loc[
+            idx,
+            [
+                "scenario_id",
+                "step_index",
+                "track_id",
+                "rel_x",
+                "rel_y",
+                "speed_mps",
+                "heading_rad",
+            ],
+        ].rename(
+            columns={
+                "track_id": "lead_track_id",
+                "rel_x": "lead_rel_x_m",
+                "rel_y": "lead_rel_y_m",
+                "speed_mps": "lead_speed_mps",
+                "heading_rad": "lead_heading_rad",
+            }
+        )
 
     return lead
 
@@ -126,10 +141,19 @@ def build_per_step_lead_gap(
 
     # Reorder columns
     col_order = [
-        "scenario_id", "step_index", "ts_utc",
-        "ego_x_m", "ego_y_m", "ego_speed_mps", "ego_heading_rad",
-        "lead_present", "lead_track_id",
-        "lead_rel_x_m", "lead_rel_y_m", "lead_speed_mps", "lead_heading_rad",
+        "scenario_id",
+        "step_index",
+        "ts_utc",
+        "ego_x_m",
+        "ego_y_m",
+        "ego_speed_mps",
+        "ego_heading_rad",
+        "lead_present",
+        "lead_track_id",
+        "lead_rel_x_m",
+        "lead_rel_y_m",
+        "lead_speed_mps",
+        "lead_heading_rad",
     ]
     for c in col_order:
         if c not in result.columns:
@@ -141,8 +165,7 @@ def build_per_step_lead_gap(
     print(f"Wrote {len(result):,} rows to {output_path}")
 
     n_with_lead = result["lead_present"].sum()
-    print(f"  Lead present in {n_with_lead:,}/{len(result):,} steps "
-          f"({100*n_with_lead/len(result):.1f}%)")
+    print(f"  Lead present in {n_with_lead:,}/{len(result):,} steps ({100 * n_with_lead / len(result):.1f}%)")
 
     return result
 

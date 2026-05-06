@@ -45,7 +45,9 @@ def test_build_dataset_cards_writes_csv_and_figure(tmp_path: Path, monkeypatch) 
             "source": "OPSD",
         },
     )
-    (tmp_path / "de_stats.json").write_text(json.dumps({"total_features": 94, "columns": 98}), encoding="utf-8")
+    (tmp_path / "de_stats.json").write_text(
+        json.dumps({"total_features": 94, "columns": 98}), encoding="utf-8"
+    )
     (tmp_path / "dataset_provenance.json").write_text(
         json.dumps({"weather_source": "Open-Meteo", "carbon_source": "proxy_generation_mix"}),
         encoding="utf-8",

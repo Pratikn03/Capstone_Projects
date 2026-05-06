@@ -5,40 +5,41 @@ This module defines the main FastAPI application that serves the ORIUS
 energy forecasting and battery optimization platform. It provides:
 
 - **Forecasting endpoints**: Load, solar, wind, price predictions
-- **Anomaly detection**: Real-time outlier identification  
+- **Anomaly detection**: Real-time outlier identification
 - **Battery optimization**: Dispatch scheduling with safety constraints
 - **Monitoring**: Model drift and data quality metrics
 
 Architecture:
     The API is organized using FastAPI routers for modularity:
-    
+
     /forecast/*     - Forecast generation and intervals
     /anomaly/*      - Anomaly detection endpoints
     /optimize/*     - Battery dispatch optimization
     /monitor/*      - Monitoring and drift metrics
-    
+
 Safety Systems:
     - BMS (Battery Management System): Validates all dispatch commands
     - Watchdog: Monitors system health and triggers alerts
-    
+
 Running the Server:
     # Development
     uvicorn services.api.main:app --reload --port 8000
-    
+
     # Production
     gunicorn services.api.main:app -w 4 -k uvicorn.workers.UvicornWorker
 
 Environment Variables:
     ORIUS_API_KEY: API authentication key (required)
     ORIUS_LOG_LEVEL: Logging verbosity (default: INFO)
-    
+
 See Also:
     - services/api/README.md: Full API documentation
     - configs/serving.yaml: Service configuration
 """
+
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Security, Response
+from fastapi import FastAPI, HTTPException, Response, Security
 from pydantic import BaseModel
 
 from orius.safety.bms import SafetyLayer, SafetyViolation
@@ -46,14 +47,14 @@ from orius.safety.watchdog import SystemWatchdog
 from orius.utils.logging import setup_logging
 from services.api.config import get_bms_config, get_watchdog_timeout
 from services.api.health import readiness_check
-from services.api.routers import forecast, anomaly, optimize, monitor, dc3s, iot, universal, research
+from services.api.routers import anomaly, dc3s, forecast, iot, monitor, optimize, research, universal
 from services.api.routers.forecast_intervals import router as intervals_router
 from services.api.security import get_api_key, verify_scope
 
 # Prometheus metrics integration
 try:
-    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-    from orius.monitoring.prometheus_metrics import REQUESTS_TOTAL
+    from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
@@ -66,14 +67,15 @@ setup_logging()
 # APPLICATION LIFECYCLE
 # ============================================================================
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
     FastAPI lifespan context manager for startup/shutdown events.
-    
+
     Startup:
         - Starts the system watchdog for health monitoring
-        
+
     Shutdown:
         - Gracefully stops the watchdog
         - Ensures clean resource cleanup
@@ -86,14 +88,14 @@ async def lifespan(app: FastAPI):
 
 
 # ============================================================================
-# APPLICATION INITIALIZATION  
+# APPLICATION INITIALIZATION
 # ============================================================================
 
 app = FastAPI(
     title="ORIUS API",
     version="0.1.0",
     description="Energy forecasting and battery dispatch optimization API",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # Initialize Battery Management System (BMS) with safety limits
@@ -141,7 +143,7 @@ def metrics(api_key: str = Security(get_api_key)):
     verify_scope("read", api_key)
     """
     Prometheus metrics endpoint.
-    
+
     Exposes application metrics in Prometheus text format for scraping.
     Includes:
     - Request counts and latencies
@@ -153,14 +155,10 @@ def metrics(api_key: str = Security(get_api_key)):
     """
     if not PROMETHEUS_AVAILABLE:
         raise HTTPException(
-            status_code=501,
-            detail="Prometheus metrics not available. Install prometheus-client."
+            status_code=501, detail="Prometheus metrics not available. Install prometheus-client."
         )
-    
-    return Response(
-        content=generate_latest(),
-        media_type=CONTENT_TYPE_LATEST
-    )
+
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.get("/system/health")

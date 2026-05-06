@@ -1,34 +1,35 @@
 """Anomaly detection: detection."""
+
 from __future__ import annotations
 
 import pickle
 from pathlib import Path
-from typing import List
 
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 
+from orius.release.artifact_loader import load_pickle_artifact
+
+
 class MultivariateAnomalyDetector:
     """
     Layer 3: Isolation Forest for multivariate anomaly detection.
-    
+
     Detects physically unlikely combinations (e.g., high load but low temperature,
     or high solar generation at night) by learning the joint distribution of features.
     """
+
     def __init__(self, contamination: float = 0.01, n_estimators: int = 100, random_state: int = 42):
         # Key: flag anomalies from residuals or isolation forest signals
         self.model = IsolationForest(
-            n_estimators=n_estimators,
-            contamination=contamination,
-            random_state=random_state,
-            n_jobs=-1
+            n_estimators=n_estimators, contamination=contamination, random_state=random_state, n_jobs=-1
         )
-        self.feature_cols: List[str] = []
+        self.feature_cols: list[str] = []
 
-    def fit(self, df: pd.DataFrame, feature_cols: List[str]) -> "MultivariateAnomalyDetector":
+    def fit(self, df: pd.DataFrame, feature_cols: list[str]) -> MultivariateAnomalyDetector:
         """
         Fit the Isolation Forest on historical data.
-        
+
         Args:
             df: DataFrame containing training data.
             feature_cols: List of column names to use for detection (e.g. load, temp, wind_speed).
@@ -42,7 +43,7 @@ class MultivariateAnomalyDetector:
     def detect(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Detect anomalies in new data.
-        
+
         Returns:
             DataFrame with original index and new columns:
             - 'anomaly_score': Mean anomaly score (lower is more anomalous).
@@ -52,18 +53,18 @@ class MultivariateAnomalyDetector:
             raise ValueError("Model has not been fitted yet.")
 
         X = df[self.feature_cols].fillna(0).values
-        
+
         # decision_function: Average anomaly score of X of the base classifiers.
         # The lower, the more abnormal.
         scores = self.model.decision_function(X)
-        
+
         # predict: -1 for outliers and 1 for inliers.
-        labels = self.model.predict(X) 
-        
+        labels = self.model.predict(X)
+
         result = df.copy()
         result["anomaly_score"] = scores
-        result["is_anomaly"] = (labels == -1)
-        
+        result["is_anomaly"] = labels == -1
+
         return result
 
     def save(self, path: str | Path):
@@ -73,6 +74,5 @@ class MultivariateAnomalyDetector:
             pickle.dump(self, f)
 
     @classmethod
-    def load(cls, path: str | Path) -> "MultivariateAnomalyDetector":
-        with open(path, "rb") as f:
-            return pickle.load(f)
+    def load(cls, path: str | Path) -> MultivariateAnomalyDetector:
+        return load_pickle_artifact(path)

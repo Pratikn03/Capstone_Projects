@@ -5,6 +5,7 @@ Reads the raw sweep CSV and produces a compact, thesis-ready table showing
 violation rate, violation severity (p95), intervention rate, and cost delta
 per fault dimension × severity × controller.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -33,8 +34,10 @@ def build_table(in_csv: Path, out_dir: Path) -> pd.DataFrame:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     key_controllers = [
-        "deterministic_lp", "robust_fixed_interval",
-        "dc3s_wrapped", "dc3s_ftit",
+        "deterministic_lp",
+        "robust_fixed_interval",
+        "dc3s_wrapped",
+        "dc3s_ftit",
     ]
     df = df[df["controller"].isin(key_controllers)].copy()
 
@@ -62,13 +65,27 @@ def build_table(in_csv: Path, out_dir: Path) -> pd.DataFrame:
     agg["sev_p95_mwh"] = agg["sev_p95_mean"].round(3)
     agg["cost_delta"] = agg["cost_delta_pct_mean"].round(2)
 
-    table = agg[[
-        "fault_dimension", "severity", "controller",
-        "tsvr_pct", "sev_p95_mwh", "ir_pct", "cost_delta", "n_episodes",
-    ]].copy()
+    table = agg[
+        [
+            "fault_dimension",
+            "severity",
+            "controller",
+            "tsvr_pct",
+            "sev_p95_mwh",
+            "ir_pct",
+            "cost_delta",
+            "n_episodes",
+        ]
+    ].copy()
     table.columns = [
-        "Fault Dimension", "Severity", "Controller",
-        "TSVR (%)", "Sev P95 (MWh)", "IR (%)", "Cost Δ (%)", "N",
+        "Fault Dimension",
+        "Severity",
+        "Controller",
+        "TSVR (%)",
+        "Sev P95 (MWh)",
+        "IR (%)",
+        "Cost Δ (%)",
+        "N",
     ]
 
     csv_path = out_dir / "fault_performance_table.csv"
@@ -89,15 +106,15 @@ def build_table(in_csv: Path, out_dir: Path) -> pd.DataFrame:
         "total_rows": int(len(table)),
         "fault_dimensions": sorted(table["Fault Dimension"].unique().tolist()),
         "controllers": sorted(table["Controller"].unique().tolist()),
-        "dc3s_wrapped_max_tsvr": float(
-            table.loc[table["Controller"] == "dc3s_wrapped", "TSVR (%)"].max()
-        ) if "dc3s_wrapped" in table["Controller"].values else None,
-        "dc3s_ftit_max_tsvr": float(
-            table.loc[table["Controller"] == "dc3s_ftit", "TSVR (%)"].max()
-        ) if "dc3s_ftit" in table["Controller"].values else None,
-        "det_lp_max_tsvr": float(
-            table.loc[table["Controller"] == "deterministic_lp", "TSVR (%)"].max()
-        ) if "deterministic_lp" in table["Controller"].values else None,
+        "dc3s_wrapped_max_tsvr": float(table.loc[table["Controller"] == "dc3s_wrapped", "TSVR (%)"].max())
+        if "dc3s_wrapped" in table["Controller"].values
+        else None,
+        "dc3s_ftit_max_tsvr": float(table.loc[table["Controller"] == "dc3s_ftit", "TSVR (%)"].max())
+        if "dc3s_ftit" in table["Controller"].values
+        else None,
+        "det_lp_max_tsvr": float(table.loc[table["Controller"] == "deterministic_lp", "TSVR (%)"].max())
+        if "deterministic_lp" in table["Controller"].values
+        else None,
     }
     summary_path = out_dir / "fault_performance_summary.json"
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")

@@ -1,7 +1,7 @@
 """Tests for Paper 2 certificate half-life and validity horizon."""
+
 from __future__ import annotations
 
-import pytest
 from orius.dc3s.half_life import (
     compute_certificate_state,
     compute_half_life_from_horizon,

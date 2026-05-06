@@ -5,7 +5,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from orius.data_pipeline.build_features_healthcare import build_features, build_max_input_features, build_promoted_features
+from orius.data_pipeline.build_features_healthcare import (
+    build_features,
+    build_max_input_features,
+    build_promoted_features,
+)
 
 
 def _write_bridge_csv(path: Path, patient_id: str, source_offset: int) -> None:
@@ -40,9 +44,13 @@ def test_build_max_input_features_merges_bidmc_and_mimic_sources(tmp_path: Path)
     features = pd.read_parquet(features_path)
     assert {"bidmc", "mimic3"} == set(features["source_dataset"].unique())
     assert features["patient_id"].nunique() == 2
-    assert {"shock_index", "reliability", "forecast_spo2_pct", "hr_bpm_lag24", "spo2_pct_roll24_mean"}.issubset(
-        features.columns
-    )
+    assert {
+        "shock_index",
+        "reliability",
+        "forecast_spo2_pct",
+        "hr_bpm_lag24",
+        "spo2_pct_roll24_mean",
+    }.issubset(features.columns)
 
     manifest = json.loads((out_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["n_patients"] == 2
@@ -78,7 +86,9 @@ def test_build_promoted_features_accepts_bridge_schema_and_writes_splits(tmp_pat
     features_path = build_promoted_features(mimic_path, out_dir)
 
     features = pd.read_parquet(features_path)
-    assert {"source_dataset", "patient_id", "spo2_pct", "forecast_spo2_pct", "reliability"}.issubset(features.columns)
+    assert {"source_dataset", "patient_id", "spo2_pct", "forecast_spo2_pct", "reliability"}.issubset(
+        features.columns
+    )
     assert set(features["source_dataset"].unique()) == {"mimic3"}
 
     split_dir = out_dir / "splits"

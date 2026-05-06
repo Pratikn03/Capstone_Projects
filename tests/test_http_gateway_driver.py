@@ -1,4 +1,5 @@
 """Unit tests for HTTP gateway driver retry and normalization behavior."""
+
 from __future__ import annotations
 
 import requests

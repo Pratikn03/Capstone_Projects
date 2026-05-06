@@ -7,8 +7,10 @@ current reports. Used by CI to protect the battery foundation.
 Usage:
     python scripts/check_paper1_lock_drift.py
 """
+
 from __future__ import annotations
 
+import contextlib
 import csv
 import json
 import sys
@@ -41,10 +43,8 @@ def _csv_key_values(path: Path) -> dict[str, float]:
             return out
         for col in ("cost_savings_pct", "carbon_reduction_pct", "peak_shaving_pct"):
             if col in rows[0]:
-                try:
+                with contextlib.suppress(ValueError, TypeError):
                     out[col] = float(rows[0][col])
-                except (ValueError, TypeError):
-                    pass
     return out
 
 
@@ -52,7 +52,7 @@ def _manifest_key_values(obj: dict, prefix: str = "") -> dict[str, float]:
     out: dict[str, float] = {}
     for k, v in obj.items():
         path = f"{prefix}.{k}" if prefix else k
-        if isinstance(v, (int, float)):
+        if isinstance(v, int | float):
             out[path] = float(v)
         elif isinstance(v, dict):
             out.update(_manifest_key_values(v, path))
@@ -77,9 +77,7 @@ def main() -> int:
             current_vals = _csv_key_values(current_path)
             for k in lock_vals:
                 if k in current_vals and abs(lock_vals[k] - current_vals[k]) > 1e-4:
-                    errors.append(
-                        f"{rel_path} {k}: lock={lock_vals[k]}, current={current_vals[k]}"
-                    )
+                    errors.append(f"{rel_path} {k}: lock={lock_vals[k]}, current={current_vals[k]}")
         elif rel_path.endswith(".json"):
             try:
                 lock_data = json.loads(lock_path.read_text(encoding="utf-8"))

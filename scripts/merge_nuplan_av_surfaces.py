@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """Merge validated nuPlan ORIUS AV surfaces and optionally rebuild features."""
+
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import json
-from pathlib import Path
 import sys
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = REPO_ROOT / "src"
@@ -27,17 +27,34 @@ from orius.av_waymo.training import (
     assign_split,
 )
 
-
 FEATURE_BATCH_ROWS = 200_000
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Merge nuPlan replay surfaces into one ORIUS AV evidence surface")
-    parser.add_argument("--surface-dir", type=Path, action="append", required=True, help="Processed nuPlan surface directory; repeat in merge order")
+    parser = argparse.ArgumentParser(
+        description="Merge nuPlan replay surfaces into one ORIUS AV evidence surface"
+    )
+    parser.add_argument(
+        "--surface-dir",
+        type=Path,
+        action="append",
+        required=True,
+        help="Processed nuPlan surface directory; repeat in merge order",
+    )
     parser.add_argument("--out-dir", type=Path, required=True, help="Merged output surface directory")
-    parser.add_argument("--maps-zip", type=Path, default=None, help="Optional maps zip path recorded in the merged manifest")
-    parser.add_argument("--archive-role", default="all_completed_grouped", help="Merged evidence role recorded in the manifest")
-    parser.add_argument("--build-features", action="store_true", help="Build merged feature tables after replay/scenario merge")
+    parser.add_argument(
+        "--maps-zip", type=Path, default=None, help="Optional maps zip path recorded in the merged manifest"
+    )
+    parser.add_argument(
+        "--archive-role",
+        default="all_completed_grouped",
+        help="Merged evidence role recorded in the manifest",
+    )
+    parser.add_argument(
+        "--build-features",
+        action="store_true",
+        help="Build merged feature tables after replay/scenario merge",
+    )
     parser.add_argument(
         "--reuse-feature-tables",
         action="store_true",
@@ -53,7 +70,7 @@ def _parse_args() -> argparse.Namespace:
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -139,14 +156,18 @@ def _dedupe_archives(manifests: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return archives
 
 
-def _merge_surfaces(surface_dirs: list[Path], out_dir: Path, *, maps_zip: Path | None, archive_role: str) -> dict[str, Any]:
+def _merge_surfaces(
+    surface_dirs: list[Path], out_dir: Path, *, maps_zip: Path | None, archive_role: str
+) -> dict[str, Any]:
     surface_dirs = [path.resolve() for path in surface_dirs]
     out_dir.mkdir(parents=True, exist_ok=True)
     paths_by_surface = [_surface_paths(path) for path in surface_dirs]
     reports = [_read_json(paths["surface_report"]) for paths in paths_by_surface]
     manifests = [_read_json(paths["source_manifest"]) for paths in paths_by_surface]
 
-    replay_count = _copy_parquet_streaming([paths["replay_windows"] for paths in paths_by_surface], out_dir / "replay_windows.parquet")
+    replay_count = _copy_parquet_streaming(
+        [paths["replay_windows"] for paths in paths_by_surface], out_dir / "replay_windows.parquet"
+    )
 
     scenario_frames = [pd.read_parquet(paths["scenario_index"]) for paths in paths_by_surface]
     scenario_index = pd.concat(scenario_frames, ignore_index=True)
@@ -167,7 +188,9 @@ def _merge_surfaces(surface_dirs: list[Path], out_dir: Path, *, maps_zip: Path |
         if isinstance(skipped, list):
             skipped_archives.extend(row for row in skipped if isinstance(row, dict))
 
-    source_datasets = sorted({str(value) for value in scenario_index.get("source_dataset", pd.Series(dtype=str)).dropna().unique()})
+    source_datasets = sorted(
+        {str(value) for value in scenario_index.get("source_dataset", pd.Series(dtype=str)).dropna().unique()}
+    )
     source_dataset = source_datasets[0] if len(source_datasets) == 1 else "nuplan_multi_city"
     source_manifest = {
         "generated_at_utc": _utc_now_iso(),
@@ -177,7 +200,8 @@ def _merge_surfaces(surface_dirs: list[Path], out_dir: Path, *, maps_zip: Path |
         "train_archives": archives,
         "skipped_train_archives": skipped_archives,
         "total_db_count": int(sum(int(archive.get("db_count", 0)) for archive in archives)),
-        "maps": _maps_inventory(maps_zip) or next((manifest.get("maps") for manifest in manifests if manifest.get("maps")), None),
+        "maps": _maps_inventory(maps_zip)
+        or next((manifest.get("maps") for manifest in manifests if manifest.get("maps")), None),
     }
     _write_json(out_dir / "nuplan_source_manifest.json", source_manifest)
 
@@ -206,7 +230,9 @@ def _merge_surfaces(surface_dirs: list[Path], out_dir: Path, *, maps_zip: Path |
     return report
 
 
-def _split_map_for_strategy(scenario_index: pd.DataFrame, split_strategy: str) -> tuple[dict[str, str], dict[str, Any]]:
+def _split_map_for_strategy(
+    scenario_index: pd.DataFrame, split_strategy: str
+) -> tuple[dict[str, str], dict[str, Any]]:
     scenario_ids = scenario_index["scenario_id"].astype(str).unique()
     if split_strategy == "all_test":
         return {str(scenario_id): "test" for scenario_id in scenario_ids}, {}
@@ -273,7 +299,13 @@ def _merge_feature_tables(
                     _emit_progress({"event": "nuplan_feature_merge_progress", "feature_rows": int(row_count)})
                     while row_count >= next_progress_row_count:
                         next_progress_row_count += 1_000_000
-            _emit_progress({"event": "nuplan_feature_merge_source_done", "source": str(source), "feature_rows": int(row_count)})
+            _emit_progress(
+                {
+                    "event": "nuplan_feature_merge_source_done",
+                    "source": str(source),
+                    "feature_rows": int(row_count),
+                }
+            )
         if writer is None:
             raise ValueError("No feature sources were merged")
         writer.close()
@@ -289,7 +321,9 @@ def _merge_feature_tables(
     anchor_features = pd.concat(anchor_frames, ignore_index=True)
     anchor_features["split"] = anchor_features["scenario_id"].astype(str).map(split_map)
     if anchor_features["split"].isna().any():
-        missing = anchor_features.loc[anchor_features["split"].isna(), "scenario_id"].astype(str).head(5).tolist()
+        missing = (
+            anchor_features.loc[anchor_features["split"].isna(), "scenario_id"].astype(str).head(5).tolist()
+        )
         raise ValueError(f"Anchor split map is missing scenario IDs: {missing}")
     anchor_features_path = out_dir / "anchor_features.parquet"
     anchor_features.to_parquet(anchor_features_path, index=False)
@@ -307,7 +341,10 @@ def _merge_feature_tables(
         "scenario_count": int(anchor_features["scenario_id"].nunique()),
         "split_strategy": split_strategy,
         "reused_feature_tables": True,
-        "split_counts": {str(key): int(value) for key, value in anchor_features["split"].value_counts().sort_index().items()},
+        "split_counts": {
+            str(key): int(value)
+            for key, value in anchor_features["split"].value_counts().sort_index().items()
+        },
         **split_metadata,
         "artifacts": {
             "step_features": str(step_features_path),

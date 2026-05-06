@@ -1,4 +1,5 @@
 """Tests for dataset-aware research integration in pipeline.run."""
+
 from __future__ import annotations
 
 import json
@@ -140,7 +141,9 @@ def _patch_lightweight_research_dependencies(monkeypatch: pytest.MonkeyPatch) ->
             },
         }
 
-    def fake_robust_dispatch(*, load_lower_bound, load_upper_bound, renewables_forecast, price, config, verbose):
+    def fake_robust_dispatch(
+        *, load_lower_bound, load_upper_bound, renewables_forecast, price, config, verbose
+    ):
         h = len(load_lower_bound)
         return {
             "battery_charge_mw": [0.0] * h,
@@ -203,7 +206,9 @@ def test_run_defaults_include_research_step(monkeypatch: pytest.MonkeyPatch, tmp
     pr.main()
 
     assert calls["research"] == 2
-    manifest = json.loads((repo / "artifacts" / "runs" / "run-default" / "manifest.json").read_text(encoding="utf-8"))
+    manifest = json.loads(
+        (repo / "artifacts" / "runs" / "run-default" / "manifest.json").read_text(encoding="utf-8")
+    )
     assert "research" in manifest["steps"]
     assert set(manifest["research_outputs"].keys()) == {"de", "us"}
 
@@ -563,9 +568,14 @@ def test_research_step_calls_regret_metrics(monkeypatch: pytest.MonkeyPatch, tmp
 
     def fake_forecast(context_df, target, horizon, forecast_cfg, models_dir):
         yhat = np.full(horizon, {"load_mw": 100.0, "wind_mw": 20.0, "solar_mw": 10.0}[target], dtype=float)
-        return {"forecast": yhat.tolist(), "quantiles": {"0.1": (yhat - 1).tolist(), "0.9": (yhat + 1).tolist()}}
+        return {
+            "forecast": yhat.tolist(),
+            "quantiles": {"0.1": (yhat - 1).tolist(), "0.9": (yhat + 1).tolist()},
+        }
 
-    def fake_robust_dispatch(*, load_lower_bound, load_upper_bound, renewables_forecast, price, config, verbose):
+    def fake_robust_dispatch(
+        *, load_lower_bound, load_upper_bound, renewables_forecast, price, config, verbose
+    ):
         h = len(load_lower_bound)
         return {
             "battery_charge_mw": [0.0] * h,

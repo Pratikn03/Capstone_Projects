@@ -28,8 +28,12 @@ def test_kappa_increases_when_reliability_decreases() -> None:
 
 def test_kappa_increases_when_sigma_sq_increases() -> None:
     cfg = _kappa_cfg()
-    _, _, meta_low = build_uncertainty_set_kappa(100.0, 10.0, w_t=0.8, drift_flag=False, cfg=cfg, sigma_sq=1.0)
-    _, _, meta_high = build_uncertainty_set_kappa(100.0, 10.0, w_t=0.8, drift_flag=False, cfg=cfg, sigma_sq=9.0)
+    _, _, meta_low = build_uncertainty_set_kappa(
+        100.0, 10.0, w_t=0.8, drift_flag=False, cfg=cfg, sigma_sq=1.0
+    )
+    _, _, meta_high = build_uncertainty_set_kappa(
+        100.0, 10.0, w_t=0.8, drift_flag=False, cfg=cfg, sigma_sq=9.0
+    )
     assert meta_high["kappa"] > meta_low["kappa"]
 
 
@@ -128,7 +132,10 @@ def test_runner_rac_bounds_kappa_wiring(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setattr(
         cps_runner,
         "_cqr_bounds",
-        lambda load_window: (np.asarray(load_window, dtype=float) - 10.0, np.asarray(load_window, dtype=float) + 10.0),
+        lambda load_window: (
+            np.asarray(load_window, dtype=float) - 10.0,
+            np.asarray(load_window, dtype=float) + 10.0,
+        ),
     )
     monkeypatch.setattr(cps_runner, "_load_rac_cert", lambda target: None)
 

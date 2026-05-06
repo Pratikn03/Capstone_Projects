@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Summarize CHIL-style IoT/API runs into a stable JSON artifact."""
+
 from __future__ import annotations
 
 import argparse
@@ -87,7 +88,9 @@ def summarize_run(
     if {"dispatched_at", "acked_at"}.issubset(queue.columns):
         valid = queue.dropna(subset=["dispatched_at", "acked_at"]).copy()
         if not valid.empty:
-            ack_latency_s = ((valid["acked_at"] - valid["dispatched_at"]).dt.total_seconds()).astype(float).tolist()
+            ack_latency_s = (
+                ((valid["acked_at"] - valid["dispatched_at"]).dt.total_seconds()).astype(float).tolist()
+            )
 
     certificate_required = [
         "command_id",
@@ -108,10 +111,14 @@ def summarize_run(
         if not cert.empty:
             if cert["reliability_w"].nunique() == 1:
                 cert["bucket"] = 0
-                edges = [float(cert["reliability_w"].iloc[0]), float(cert["reliability_w"].iloc[0])]
+                [float(cert["reliability_w"].iloc[0]), float(cert["reliability_w"].iloc[0])]
             else:
-                cert["bucket"] = pd.qcut(cert["reliability_w"], q=min(5, cert["reliability_w"].nunique()), labels=False, duplicates="drop")
-                edges = []
+                cert["bucket"] = pd.qcut(
+                    cert["reliability_w"],
+                    q=min(5, cert["reliability_w"].nunique()),
+                    labels=False,
+                    duplicates="drop",
+                )
             grouped = cert.groupby("bucket", dropna=False)
             for bucket, frame in grouped:
                 bucket_rows.append(
@@ -124,7 +131,9 @@ def summarize_run(
                 )
 
     agent_log = _read_agent_log(Path(agent_log_path) if agent_log_path else None)
-    status_counts = agent_log.get("status", pd.Series(dtype=str)).value_counts().to_dict() if not agent_log.empty else {}
+    status_counts = (
+        agent_log.get("status", pd.Series(dtype=str)).value_counts().to_dict() if not agent_log.empty else {}
+    )
 
     def _dist(values: list[float]) -> dict[str, float | None]:
         if not values:
@@ -142,10 +151,21 @@ def summarize_run(
         "telemetry_events": int(len(telemetry)),
         "queued_commands": int(len(queue)),
         "acks": int(len(ack)),
-        "ack_status_counts": {str(k): int(v) for k, v in ack.get("status", pd.Series(dtype=str)).value_counts().to_dict().items()},
-        "queue_status_counts": {str(k): int(v) for k, v in queue.get("status", pd.Series(dtype=str)).value_counts().to_dict().items()},
-        "queue_expiry_events": int((queue.get("status", pd.Series(dtype=str)) == "timeout").sum()) if not queue.empty else 0,
-        "hold_events": int(status_counts.get("hold", 0)) + int((queue.get("status", pd.Series(dtype=str)) == "timeout").sum()) if not queue.empty else int(status_counts.get("hold", 0)),
+        "ack_status_counts": {
+            str(k): int(v)
+            for k, v in ack.get("status", pd.Series(dtype=str)).value_counts().to_dict().items()
+        },
+        "queue_status_counts": {
+            str(k): int(v)
+            for k, v in queue.get("status", pd.Series(dtype=str)).value_counts().to_dict().items()
+        },
+        "queue_expiry_events": int((queue.get("status", pd.Series(dtype=str)) == "timeout").sum())
+        if not queue.empty
+        else 0,
+        "hold_events": int(status_counts.get("hold", 0))
+        + int((queue.get("status", pd.Series(dtype=str)) == "timeout").sum())
+        if not queue.empty
+        else int(status_counts.get("hold", 0)),
         "empty_command_events": int(status_counts.get("empty", 0)),
         "error_events": int(status_counts.get("error", 0)),
         "ack_latency_seconds": _dist(ack_latency_s),

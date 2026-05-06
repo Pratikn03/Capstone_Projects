@@ -1,4 +1,5 @@
 """Data pipeline: build model-ready features from raw OPSD energy data."""
+
 from __future__ import annotations
 
 import argparse
@@ -150,7 +151,9 @@ def normalize_opsd_country_frame(df: pd.DataFrame, *, country: str) -> pd.DataFr
             out[normalized] = pd.to_numeric(df[direct], errors="coerce")
             continue
 
-        component_sets = [[_format_candidate(col, country=code) for col in group] for group in spec["component_sets"]]
+        component_sets = [
+            [_format_candidate(col, country=code) for col in group] for group in spec["component_sets"]
+        ]
         resolved = pd.Series(float("nan"), index=df.index, dtype=float)
         for group in component_sets:
             series = _sum_components(df, group)
@@ -288,10 +291,7 @@ def load_weather(path: Path) -> pd.DataFrame:
     """Load a weather file (CSV/Parquet) with a timestamp column."""
     if not path.exists():
         raise FileNotFoundError(f"Weather file not found: {path}")
-    if path.suffix == ".parquet":
-        df = pd.read_parquet(path)
-    else:
-        df = pd.read_csv(path)
+    df = pd.read_parquet(path) if path.suffix == ".parquet" else pd.read_csv(path)
 
     if "timestamp" not in df.columns:
         if "time" in df.columns:
@@ -308,10 +308,7 @@ def load_signals(path: Path) -> pd.DataFrame:
     """Load price/carbon signals, normalize columns, and keep known fields."""
     if not path.exists():
         raise FileNotFoundError(f"Signals file not found: {path}")
-    if path.suffix == ".parquet":
-        df = pd.read_parquet(path)
-    else:
-        df = pd.read_csv(path)
+    df = pd.read_parquet(path) if path.suffix == ".parquet" else pd.read_csv(path)
 
     if "timestamp" not in df.columns:
         if "time" in df.columns:
@@ -349,10 +346,18 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--in", dest="in_dir", required=True, help="Input directory (data/raw)")
     parser.add_argument("--out", dest="out_dir", default="data/processed", help="Output directory")
     parser.add_argument("--country", default="DE", help="OPSD country code to extract (default: DE)")
-    parser.add_argument("--weather", default=None, help="Optional weather file (csv/parquet) to merge on timestamp")
-    parser.add_argument("--signals", default=None, help="Optional price/carbon signals file (csv/parquet) to merge on timestamp")
+    parser.add_argument(
+        "--weather", default=None, help="Optional weather file (csv/parquet) to merge on timestamp"
+    )
+    parser.add_argument(
+        "--signals",
+        default=None,
+        help="Optional price/carbon signals file (csv/parquet) to merge on timestamp",
+    )
     parser.add_argument("--holidays", default=None, help="Optional holidays file (csv) with date column")
-    parser.add_argument("--holiday-country", default=None, help="Holiday country code (default: same as --country)")
+    parser.add_argument(
+        "--holiday-country", default=None, help="Holiday country code (default: same as --country)"
+    )
     parser.add_argument("--sql-out", default=None, help="Optional SQL DB path to write features table")
     parser.add_argument("--sql-engine", choices=["duckdb", "sqlite"], default="duckdb")
     parser.add_argument("--sql-table", default="features")
@@ -442,13 +447,9 @@ def main() -> None:
     out_path = out_dir / "features.parquet"
     df.to_parquet(out_path, index=False)
 
-    print(f"Saved: {out_path}")
-    print("Country:", country, "| Rows:", len(df), "| Columns:", df.shape[1])
-
     if args.sql_out:
         sql_path = Path(args.sql_out)
         write_sql(df, sql_path, table=args.sql_table, engine=args.sql_engine)
-        print(f"Saved SQL table '{args.sql_table}' to: {sql_path}")
 
 
 if __name__ == "__main__":

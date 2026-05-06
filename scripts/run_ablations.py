@@ -14,6 +14,7 @@ Outputs:
 - ablation_comparison.png: Bar chart comparison
 - ablation_stats.json: Statistical test results
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,41 +24,42 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from scipy.stats import wilcoxon
 
 import numpy as np
 import pandas as pd
 import yaml
+from scipy.stats import wilcoxon
 
 # Add src to path
 REPO = Path(__file__).resolve().parents[1]
 if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
+from orius.cpsbench_iot.runner import run_suite as run_cpsbench_suite
+from orius.evaluation.stats import bootstrap_ci, compare_systems_statistically
 from orius.optimizer.robust_dispatch import (
     RobustDispatchConfig,
-    optimize_robust_dispatch,
     evaluate_dispatch_robustness,
+    optimize_robust_dispatch,
 )
-from orius.evaluation.stats import compare_systems_statistically, bootstrap_ci
 from orius.utils.seed import set_seed
-from orius.cpsbench_iot.runner import run_suite as run_cpsbench_suite
 
 
 def load_test_data(data_path: Path) -> dict[str, np.ndarray]:
     """Load test split data for ablation analysis."""
-    if data_path.suffix == ".parquet":
-        df = pd.read_parquet(data_path)
-    else:
-        df = pd.read_csv(data_path)
-    
+    df = pd.read_parquet(data_path) if data_path.suffix == ".parquet" else pd.read_csv(data_path)
+
     # Extract relevant columns (assuming standard naming)
     data = {
         "load_true": df["load_mw"].values if "load_mw" in df.columns else df["load"].values,
-        "wind_true": df["wind_mw"].values if "wind_mw" in df.columns else df.get("wind", np.zeros(len(df))).values,
-        "solar_true": df["solar_mw"].values if "solar_mw" in df.columns else df.get("solar", np.zeros(len(df))).values,
+        "wind_true": df["wind_mw"].values
+        if "wind_mw" in df.columns
+        else df.get("wind", np.zeros(len(df))).values,
+        "solar_true": df["solar_mw"].values
+        if "solar_mw" in df.columns
+        else df.get("solar", np.zeros(len(df))).values,
     }
-    
+
     return data
 
 
@@ -68,21 +70,21 @@ def generate_synthetic_forecasts(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Generate synthetic forecasts with Gaussian noise.
-    
+
     Returns:
         forecast, lower_bound, upper_bound
     """
     np.random.seed(seed)
-    
+
     std = noise_level * np.std(true_values)
     forecast = true_values + np.random.normal(0, std, len(true_values))
     forecast = np.maximum(forecast, 0)
-    
+
     # Prediction intervals (90% coverage ≈ 1.645 * std)
     lower = forecast - 1.645 * std
     upper = forecast + 1.645 * std
     lower = np.maximum(lower, 0)
-    
+
     return forecast, lower, upper
 
 
@@ -107,14 +109,14 @@ def run_ablation_scenario(
 ) -> dict:
     """
     Run a single ablation scenario.
-    
+
     Args:
         scenario_name: Name of the scenario
         *_true: True values
         *_forecast: Point forecasts
         *_lower/upper: Prediction interval bounds
         enable_*: Feature flags for ablation
-    
+
     Returns:
         Dictionary with scenario results
     """
@@ -131,14 +133,14 @@ def run_ablation_scenario(
     else:
         load_lower = load_forecast if load_lower is None else load_lower
         load_upper = load_forecast if load_upper is None else load_upper
-    
+
     if not enable_optimization:
         # Forecast-only: just measure forecast error
         # No dispatch optimization
         load_rmse = float(np.sqrt(np.mean((load_true - load_forecast) ** 2)))
         wind_rmse = float(np.sqrt(np.mean((wind_true - wind_forecast) ** 2)))
         solar_rmse = float(np.sqrt(np.mean((solar_true - solar_forecast) ** 2)))
-        
+
         return {
             "scenario": scenario_name,
             "total_cost": None,  # No dispatch, no cost
@@ -149,7 +151,7 @@ def run_ablation_scenario(
             "forecast_error_wind": wind_rmse,
             "forecast_error_solar": solar_rmse,
         }
-    
+
     renewables_forecast = np.asarray(wind_forecast, dtype=float) + np.asarray(solar_forecast, dtype=float)
     renewables_true = np.asarray(wind_true, dtype=float) + np.asarray(solar_true, dtype=float)
 
@@ -199,29 +201,29 @@ def run_ablation_study(
 ) -> pd.DataFrame:
     """
     Run complete ablation study with multiple scenarios.
-    
+
     Args:
         data_path: Path to test data
-        output_dir: Output directory  
+        output_dir: Output directory
         n_runs: Number of random runs for robustness
         forecast_noise: Forecast noise level (0-1)
         verbose: Print progress
-    
+
     Returns:
         DataFrame with ablation results
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Load test data
     print(f"Loading test data from {data_path}...")
     data = load_test_data(data_path)
-    
+
     # Truncate to reasonable horizon for speed (e.g., 1 week = 168 hours)
     horizon = min(168, len(data["load_true"]))
     load_true = data["load_true"][:horizon]
     wind_true = data["wind_true"][:horizon]
     solar_true = data["solar_true"][:horizon]
-    
+
     # Ablation scenarios
     scenarios = [
         {
@@ -229,36 +231,36 @@ def run_ablation_study(
             "uncertainty": True,
             "carbon": True,
             "optimization": True,
-            "description": "All features enabled"
+            "description": "All features enabled",
         },
         {
             "name": "No Uncertainty",
             "uncertainty": False,
             "carbon": True,
             "optimization": True,
-            "description": "Point forecasts only"
+            "description": "Point forecasts only",
         },
         {
             "name": "No Carbon",
             "uncertainty": True,
             "carbon": False,
             "optimization": True,
-            "description": "Cost-only optimization"
+            "description": "Cost-only optimization",
         },
         {
             "name": "Forecast Only",
             "uncertainty": False,
             "carbon": False,
             "optimization": False,
-            "description": "No dispatch optimization"
+            "description": "No dispatch optimization",
         },
     ]
-    
+
     all_results = []
-    
+
     for run in range(n_runs):
         set_seed(42 + run)
-        
+
         # Generate synthetic forecasts with noise
         load_forecast, load_lower, load_upper = generate_synthetic_forecasts(
             load_true, forecast_noise, seed=42 + run
@@ -269,14 +271,14 @@ def run_ablation_study(
         solar_forecast, solar_lower, solar_upper = generate_synthetic_forecasts(
             solar_true, forecast_noise, seed=200 + run
         )
-        
+
         if verbose:
             print(f"\nRun {run + 1}/{n_runs}")
-        
+
         for scenario in scenarios:
             if verbose:
                 print(f"  Testing: {scenario['name']}")
-            
+
             result = run_ablation_scenario(
                 scenario_name=scenario["name"],
                 load_true=load_true,
@@ -296,43 +298,43 @@ def run_ablation_study(
                 enable_optimization=scenario["optimization"],
                 verbose=False,
             )
-            
+
             result["run"] = run
             result["description"] = scenario["description"]
             all_results.append(result)
-    
+
     # Convert to DataFrame
     df = pd.DataFrame(all_results)
-    
+
     # Save results
     csv_path = output_dir / "ablation_results.csv"
     df.to_csv(csv_path, index=False)
     print(f"\nSaved ablation results: {csv_path}")
-    
+
     return df
 
 
 def create_ablation_summary(results_df: pd.DataFrame, output_dir: Path) -> dict:
     """
     Create statistical summary of ablation results.
-    
+
     Args:
         results_df: Results from run_ablation_study
         output_dir: Output directory
-    
+
     Returns:
         Summary statistics dictionary
     """
     # Group by scenario
     summary = []
-    
+
     for scenario in results_df["scenario"].unique():
         mask = results_df["scenario"] == scenario
         scenario_data = results_df[mask]
-        
+
         # Extract costs (excluding None for forecast-only)
         costs = scenario_data["total_cost"].dropna().values
-        
+
         if len(costs) == 0:
             summary_stats = {
                 "scenario": scenario,
@@ -353,26 +355,26 @@ def create_ablation_summary(results_df: pd.DataFrame, output_dir: Path) -> dict:
                 "mean_regret_pct": float(scenario_data["regret_pct"].dropna().mean()),
                 "mean_infeasible_rate": float(scenario_data["infeasible_rate"].dropna().mean()),
             }
-        
+
         summary.append(summary_stats)
-    
+
     summary_df = pd.DataFrame(summary)
-    
+
     # Save summary
     summary_path = output_dir / "ablation_summary.csv"
     summary_df.to_csv(summary_path, index=False)
     print(f"Saved ablation summary: {summary_path}")
-    
+
     # Perform pairwise comparisons vs Full System
     full_costs = results_df[results_df["scenario"] == "Full System"]["total_cost"].dropna().values
-    
+
     comparisons = {}
     for scenario in results_df["scenario"].unique():
         if scenario == "Full System":
             continue
-        
+
         scenario_costs = results_df[results_df["scenario"] == scenario]["total_cost"].dropna().values
-        
+
         if len(scenario_costs) > 0:
             comparison = compare_systems_statistically(
                 full_costs,
@@ -380,12 +382,12 @@ def create_ablation_summary(results_df: pd.DataFrame, output_dir: Path) -> dict:
                 system_names=("Full System", scenario),
             )
             comparisons[scenario] = comparison
-    
+
     # Save comparisons
     comp_path = output_dir / "ablation_stats.json"
     comp_path.write_text(json.dumps(comparisons, indent=2), encoding="utf-8")
     print(f"Saved statistical comparisons: {comp_path}")
-    
+
     return {
         "summary": summary_df.to_dict("records"),
         "comparisons": comparisons,
@@ -399,38 +401,38 @@ def plot_ablation_results(results_df: pd.DataFrame, output_dir: Path) -> None:
     except ImportError:
         print("matplotlib/seaborn not available, skipping plot")
         return
-    
+
     # Group by scenario and compute mean
     scenario_means = results_df.groupby("scenario")["total_cost"].mean().sort_values()
     scenario_stds = results_df.groupby("scenario")["total_cost"].std()
-    
+
     # Remove NaN (forecast-only has no cost)
     scenario_means = scenario_means.dropna()
     scenario_stds = scenario_stds[scenario_means.index]
-    
+
     fig, ax = plt.subplots(figsize=(10, 6))
-    
+
     x = np.arange(len(scenario_means))
     bars = ax.bar(x, scenario_means, yerr=scenario_stds, capsize=5, alpha=0.8)
-    
+
     # Color code: Full System in green, others in blue/orange
-    colors = ['green' if 'Full' in name else 'steelblue' for name in scenario_means.index]
-    for bar, color in zip(bars, colors):
+    colors = ["green" if "Full" in name else "steelblue" for name in scenario_means.index]
+    for bar, color in zip(bars, colors, strict=False):
         bar.set_color(color)
-    
+
     ax.set_xlabel("Scenario", fontsize=12, fontweight="bold")
     ax.set_ylabel("Total Cost (EUR)", fontsize=12, fontweight="bold")
     ax.set_title("Ablation Study: System Component Impact", fontsize=14, fontweight="bold")
     ax.set_xticks(x)
     ax.set_xticklabels(scenario_means.index, rotation=15, ha="right")
     ax.grid(axis="y", alpha=0.3)
-    
+
     plt.tight_layout()
-    
+
     plot_path = output_dir / "ablation_comparison.png"
     plt.savefig(plot_path, dpi=300, bbox_inches="tight")
     plt.close()
-    
+
     print(f"Saved ablation plot: {plot_path}")
 
 
@@ -443,7 +445,9 @@ def _load_dc3s_ablation_cfg(path: Path) -> dict:
     return payload
 
 
-def _bootstrap_ci_mean(values: np.ndarray, n_bootstrap: int = 10000, alpha: float = 0.05) -> tuple[float, float]:
+def _bootstrap_ci_mean(
+    values: np.ndarray, n_bootstrap: int = 10000, alpha: float = 0.05
+) -> tuple[float, float]:
     vals = np.asarray(values, dtype=float)
     vals = vals[np.isfinite(vals)]
     if vals.size == 0:
@@ -654,8 +658,12 @@ def run_dc3s_ablation_matrix(
     }
     for metric in metrics:
         bundle = _compute_metric_bundle(
-            baseline=primary_pairs[f"{metric}_baseline"].to_numpy(dtype=float) if len(primary_pairs) else np.asarray([], dtype=float),
-            candidate=primary_pairs[f"{metric}_dc3s"].to_numpy(dtype=float) if len(primary_pairs) else np.asarray([], dtype=float),
+            baseline=primary_pairs[f"{metric}_baseline"].to_numpy(dtype=float)
+            if len(primary_pairs)
+            else np.asarray([], dtype=float),
+            candidate=primary_pairs[f"{metric}_dc3s"].to_numpy(dtype=float)
+            if len(primary_pairs)
+            else np.asarray([], dtype=float),
             metric=metric,
             threshold_rel=threshold_rel,
             p_threshold=p_threshold,
@@ -692,7 +700,9 @@ def run_dc3s_ablation_matrix(
     }
 
     # Secondary diagnostics: per-fault and per-scenario.
-    sec_cfg = cfg.get("secondary_diagnostics", {}) if isinstance(cfg.get("secondary_diagnostics"), dict) else {}
+    sec_cfg = (
+        cfg.get("secondary_diagnostics", {}) if isinstance(cfg.get("secondary_diagnostics"), dict) else {}
+    )
     baselines = sec_cfg.get("baselines", ["robust_fixed_interval", "deterministic_lp"])
     include_per_fault = bool(sec_cfg.get("include_per_fault", True))
     for baseline in [str(b) for b in baselines]:
@@ -769,7 +779,9 @@ def run_dc3s_ablation_matrix(
         if include_per_fault:
             baseline_sweep = sweep_df[sweep_df["controller"] == baseline]
             candidate_sweep = sweep_df[sweep_df["controller"] == candidate]
-            merged_fault = baseline_sweep.merge(candidate_sweep, on=pair_cols, suffixes=("_baseline", "_dc3s"), how="inner")
+            merged_fault = baseline_sweep.merge(
+                candidate_sweep, on=pair_cols, suffixes=("_baseline", "_dc3s"), how="inner"
+            )
             if faulted_only:
                 sev_vals = pd.to_numeric(merged_fault["severity"], errors="coerce")
                 merged_fault = merged_fault[sev_vals > severity_min].copy()
@@ -828,7 +840,9 @@ def run_dc3s_ablation_matrix(
     publication_dir = Path("reports/publication")
     publication_dir.mkdir(parents=True, exist_ok=True)
     summary_df.to_csv(publication_dir / "table2_ablations.csv", index=False, float_format="%.6f")
-    (publication_dir / "stats_summary.json").write_text(stats_path.read_text(encoding="utf-8"), encoding="utf-8")
+    (publication_dir / "stats_summary.json").write_text(
+        stats_path.read_text(encoding="utf-8"), encoding="utf-8"
+    )
 
     result = {
         "rows": int(len(summary_df)),
@@ -853,7 +867,9 @@ def main():
         action="store_true",
         help="Run DC3S CPSBench ablation matrix instead of legacy optimizer ablations",
     )
-    parser.add_argument("--scenario", type=str, default="drift_combo", help="CPSBench scenario for --dc3s mode")
+    parser.add_argument(
+        "--scenario", type=str, default="drift_combo", help="CPSBench scenario for --dc3s mode"
+    )
     parser.add_argument("--horizon", type=int, default=96, help="CPSBench horizon for --dc3s mode")
     parser.add_argument(
         "--seeds",
@@ -893,11 +909,12 @@ def main():
         help="Forecast noise level (0-1)",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Verbose output",
     )
-    
+
     args = parser.parse_args()
 
     if args.dc3s:
@@ -911,11 +928,11 @@ def main():
         )
         print(json.dumps(summary, indent=2))
         return
-    
+
     print("=" * 60)
     print("ORIUS Ablation Study")
     print("=" * 60)
-    
+
     # Run ablation study
     results_df = run_ablation_study(
         data_path=args.data,
@@ -924,13 +941,13 @@ def main():
         forecast_noise=args.noise,
         verbose=args.verbose,
     )
-    
+
     # Create summary and statistics
     summary = create_ablation_summary(results_df, args.output)
-    
+
     # Create visualization
     plot_ablation_results(results_df, args.output)
-    
+
     print("\n" + "=" * 60)
     print("Ablation study complete!")
     print(f"Results saved to: {args.output}")

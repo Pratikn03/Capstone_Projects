@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SPLITS_DIR = REPO_ROOT / "data" / "healthcare" / "processed" / "splits"
 
@@ -30,7 +29,9 @@ def test_live_healthcare_splits_are_patient_disjoint_and_time_monotone() -> None
         ("calibration", "test"),
         ("val", "test"),
     ):
-        assert patient_sets[left].isdisjoint(patient_sets[right]), f"patient overlap between {left} and {right}"
+        assert patient_sets[left].isdisjoint(patient_sets[right]), (
+            f"patient overlap between {left} and {right}"
+        )
 
     assert timestamps["train"].max() < timestamps["calibration"].min()
     assert timestamps["calibration"].max() < timestamps["val"].min()

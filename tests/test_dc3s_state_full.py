@@ -1,7 +1,6 @@
 """Comprehensive tests for DC3S state persistence."""
-from __future__ import annotations
 
-import json
+from __future__ import annotations
 
 import pytest
 
@@ -23,9 +22,12 @@ class TestDC3SStateStore:
     def test_upsert_then_get_round_trip(self, tmp_path):
         store = DC3SStateStore(str(tmp_path / "s.duckdb"))
         store.upsert(
-            zone_id="DE", device_id="batt-1", target="load_mw",
+            zone_id="DE",
+            device_id="batt-1",
+            target="load_mw",
             last_timestamp="2026-01-01T00:00:00Z",
-            last_yhat=45000.0, last_y_true=45200.0,
+            last_yhat=45000.0,
+            last_y_true=45200.0,
             drift_state={"count": 10, "mean": 200.0},
             adaptive_state={"ftit": {"n": 5.0}},
             last_prev_hash="abc123",
@@ -78,8 +80,14 @@ class TestDC3SStateStore:
 
     def test_numeric_fields_preserved(self, tmp_path):
         store = DC3SStateStore(str(tmp_path / "s.duckdb"))
-        store.upsert(zone_id="z", device_id="d", target="t",
-                      last_yhat=1.23456789, last_y_true=9.87654321, last_inflation=2.5)
+        store.upsert(
+            zone_id="z",
+            device_id="d",
+            target="t",
+            last_yhat=1.23456789,
+            last_y_true=9.87654321,
+            last_inflation=2.5,
+        )
         state = store.get("z", "d", "t")
         assert state["last_yhat"] == pytest.approx(1.23456789)
         assert state["last_y_true"] == pytest.approx(9.87654321)

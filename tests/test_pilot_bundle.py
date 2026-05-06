@@ -18,7 +18,12 @@ def _seed_iot_and_cert(tmp_path: Path) -> tuple[Path, Path]:
         store.record_telemetry(
             device_id="edge-1",
             ts_utc="2026-03-12T12:00:00Z",
-            payload={"ts_utc": "2026-03-12T12:00:00Z", "load_mw": 50.0, "renewables_mw": 10.0, "soc_mwh": 5.0},
+            payload={
+                "ts_utc": "2026-03-12T12:00:00Z",
+                "load_mw": 50.0,
+                "renewables_mw": 10.0,
+                "soc_mwh": 5.0,
+            },
             reliability_w=0.85,
             reliability_flags={"stale": False},
         )

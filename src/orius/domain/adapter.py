@@ -6,13 +6,14 @@ the migration window.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Callable
+from collections.abc import Callable
+from typing import Any
 
 # Type aliases for domain-generic objects used throughout the ORIUS pipeline.
 State = Any
 Action = Any
 UncertaintySet = Any
-Config = Dict[str, Any]
+Config = dict[str, Any]
 
 
 class Plant(ABC):
@@ -77,9 +78,7 @@ class DomainAdapter(ABC):
         pass
 
     @abstractmethod
-    def project_to_safe_set(
-        self, candidate_action: Action, uncertainty_set: UncertaintySet
-    ) -> Action:
+    def project_to_safe_set(self, candidate_action: Action, uncertainty_set: UncertaintySet) -> Action:
         """
         Repairs a candidate action to ensure it is safe.
 
@@ -90,7 +89,7 @@ class DomainAdapter(ABC):
         pass
 
     @abstractmethod
-    def get_metrics(self) -> Dict[str, Callable[[Any], float]]:
+    def get_metrics(self) -> dict[str, Callable[[Any], float]]:
         """
         Returns a dictionary of domain-specific metric functions for evaluation.
         The key is the metric name and the value is a callable that computes it.
@@ -98,7 +97,7 @@ class DomainAdapter(ABC):
         pass
 
     @abstractmethod
-    def get_oqe_features(self, telemetry: Any) -> Dict[str, float]:
+    def get_oqe_features(self, telemetry: Any) -> dict[str, float]:
         """
         Computes domain-specific features for the Observation Quality Engine (OQE)
         from a raw telemetry event.

@@ -162,7 +162,10 @@ def test_price_scalar_broadcast_and_shape_validation(monkeypatch: pytest.MonkeyP
         price: np.ndarray,
     ) -> dict:
         det_prices.append(np.asarray(price, dtype=float))
-        return {"battery_charge_mw": np.zeros_like(load_forecast), "battery_discharge_mw": np.zeros_like(load_forecast)}
+        return {
+            "battery_charge_mw": np.zeros_like(load_forecast),
+            "battery_discharge_mw": np.zeros_like(load_forecast),
+        }
 
     def fake_rob(
         load_lower_bound: np.ndarray,
@@ -172,7 +175,10 @@ def test_price_scalar_broadcast_and_shape_validation(monkeypatch: pytest.MonkeyP
         robust_config: DummyRobustConfig,
     ) -> dict:
         robust_prices.append(np.asarray(price, dtype=float))
-        return {"battery_charge_mw": np.zeros_like(load_lower_bound), "battery_discharge_mw": np.zeros_like(load_lower_bound)}
+        return {
+            "battery_charge_mw": np.zeros_like(load_lower_bound),
+            "battery_discharge_mw": np.zeros_like(load_lower_bound),
+        }
 
     monkeypatch.setattr(rg, "_solve_deterministic_dispatch", fake_det)
     monkeypatch.setattr(rg, "_solve_robust_dispatch", fake_rob)

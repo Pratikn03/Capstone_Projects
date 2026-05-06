@@ -1,4 +1,5 @@
 """Comprehensive tests for CPSBench battery plant model."""
+
 from __future__ import annotations
 
 import pytest
@@ -7,8 +8,14 @@ from orius.cpsbench_iot.plant import BatteryPlant
 
 
 def _plant(**kw):
-    defaults = dict(soc_mwh=50.0, min_soc_mwh=10.0, max_soc_mwh=90.0,
-                    charge_eff=0.95, discharge_eff=0.95, dt_hours=1.0)
+    defaults = {
+        "soc_mwh": 50.0,
+        "min_soc_mwh": 10.0,
+        "max_soc_mwh": 90.0,
+        "charge_eff": 0.95,
+        "discharge_eff": 0.95,
+        "dt_hours": 1.0,
+    }
     defaults.update(kw)
     return BatteryPlant(**defaults)
 

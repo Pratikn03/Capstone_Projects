@@ -1,23 +1,24 @@
 """
 Tests for DC³S coverage theorem — formal guarantee verification.
 """
+
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
+from orius.dc3s.calibration import build_uncertainty_set
 from orius.dc3s.coverage_theorem import (
     assert_coverage_guarantee,
     compute_empirical_coverage,
     inflation_lower_bound,
     verify_inflation_geq_one,
 )
-from orius.dc3s.calibration import build_uncertainty_set
-
 
 # ---------------------------------------------------------------------------
 # verify_inflation_geq_one
 # ---------------------------------------------------------------------------
+
 
 def test_verify_inflation_geq_one_valid() -> None:
     """Inflation ≥ 1 should pass without error."""
@@ -42,6 +43,7 @@ def test_verify_inflation_geq_one_boundary() -> None:
 # ---------------------------------------------------------------------------
 # compute_empirical_coverage
 # ---------------------------------------------------------------------------
+
 
 def test_compute_empirical_coverage_all_covered() -> None:
     y = np.array([1.0, 2.0, 3.0])
@@ -78,6 +80,7 @@ def test_compute_empirical_coverage_shape_mismatch() -> None:
 # assert_coverage_guarantee
 # ---------------------------------------------------------------------------
 
+
 def test_assert_coverage_guarantee_passes_with_high_coverage() -> None:
     rng = np.random.default_rng(0)
     y = rng.normal(0, 1, size=500)
@@ -103,6 +106,7 @@ def test_assert_coverage_guarantee_fails_with_low_coverage() -> None:
 # Core theorem: DC³S inflated intervals are at least as wide as base intervals
 # ---------------------------------------------------------------------------
 
+
 def test_dc3s_inflation_monotonically_widens_intervals() -> None:
     """
     Formal theorem check: for infl ≥ 1, the DC³S interval is a superset of
@@ -112,7 +116,7 @@ def test_dc3s_inflation_monotonically_widens_intervals() -> None:
     yhat = rng.normal(500, 50, size=100)
     q = np.full(100, 30.0)  # base conformal half-width
     w_t_values = rng.uniform(0.05, 1.0, size=100)
-    drift_flags = (rng.uniform(size=100) < 0.1)
+    drift_flags = rng.uniform(size=100) < 0.1
 
     base_lower = yhat - q
     base_upper = yhat + q
@@ -120,8 +124,11 @@ def test_dc3s_inflation_monotonically_widens_intervals() -> None:
     for i in range(100):
         cfg = {"k_quality": 0.8, "k_drift": 0.6, "infl_max": 3.0}
         lo_dc3s, hi_dc3s, meta = build_uncertainty_set(
-            yhat=yhat[i], q=q[i], w_t=w_t_values[i],
-            drift_flag=bool(drift_flags[i]), cfg=cfg,
+            yhat=yhat[i],
+            q=q[i],
+            w_t=w_t_values[i],
+            drift_flag=bool(drift_flags[i]),
+            cfg=cfg,
         )
         inflation = meta["inflation"]
         # Guarantee: inflation ≥ 1
@@ -137,8 +144,8 @@ def test_dc3s_inflation_monotonically_widens_intervals() -> None:
 
 def test_dc3s_recovers_base_at_perfect_telemetry_no_drift() -> None:
     """Corollary: when w_t=1 and drift=False, infl=1 and DC³S = base interval."""
-    yhat = np.array([500.0])
-    q = np.array([30.0])
+    np.array([500.0])
+    np.array([30.0])
     cfg = {"k_quality": 0.8, "k_drift": 0.6, "infl_max": 3.0}
     lo, hi, meta = build_uncertainty_set(yhat=500.0, q=30.0, w_t=1.0, drift_flag=False, cfg=cfg)
     assert meta["inflation"] == pytest.approx(1.0)
@@ -149,6 +156,7 @@ def test_dc3s_recovers_base_at_perfect_telemetry_no_drift() -> None:
 # ---------------------------------------------------------------------------
 # inflation_lower_bound
 # ---------------------------------------------------------------------------
+
 
 def test_inflation_lower_bound_is_always_one() -> None:
     """The minimum possible inflation (w_t=1, no drift) is always exactly 1."""

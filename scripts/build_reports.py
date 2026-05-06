@@ -1,30 +1,30 @@
 """Script: build reports."""
+
 from __future__ import annotations
 
 import argparse
 import json
 import math
 import sys
-from dataclasses import dataclass
-from pathlib import Path
 import warnings
+from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import yaml 
+import yaml
 
 repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
     # Ensure local package imports resolve when running this script standalone.
     sys.path.insert(0, str(repo_root / "src"))
 
-from orius.forecasting.baselines import persistence_24h
-from orius.forecasting.ml_gbm import train_gbm, predict_gbm
 from orius.forecasting.backtest import multi_horizon_metrics
+from orius.forecasting.baselines import persistence_24h
+from orius.forecasting.ml_gbm import predict_gbm, train_gbm
 from orius.forecasting.predict import load_model_bundle, predict_next_24h
-from orius.optimizer.lp_dispatch import optimize_dispatch
 from orius.forecasting.uncertainty.conformal import load_conformal
+from orius.optimizer.lp_dispatch import optimize_dispatch
 
 # ── Lazy torch / DL imports (only needed when DL models are enabled) ──
 torch = None  # type: ignore[assignment]
@@ -37,6 +37,7 @@ TCNForecaster = None  # type: ignore[assignment]
 SeqConfig = None  # type: ignore[assignment]
 TimeSeriesWindowDataset = None  # type: ignore[assignment]
 
+
 def _ensure_torch():
     """Import torch and DL modules on first use."""
     global torch, DataLoader, LSTMForecaster, NBEATSForecaster, PatchTSTForecaster
@@ -45,12 +46,15 @@ def _ensure_torch():
         return
     import torch as _torch
     from torch.utils.data import DataLoader as _DL
+
+    from orius.forecasting.datasets import SeqConfig as _SC
+    from orius.forecasting.datasets import TimeSeriesWindowDataset as _TSWD
     from orius.forecasting.dl_lstm import LSTMForecaster as _LSTM
     from orius.forecasting.dl_nbeats import NBEATSForecaster as _NB
     from orius.forecasting.dl_patchtst import PatchTSTForecaster as _PT
-    from orius.forecasting.dl_tft import TFTForecaster as _TFT
     from orius.forecasting.dl_tcn import TCNForecaster as _TCN
-    from orius.forecasting.datasets import SeqConfig as _SC, TimeSeriesWindowDataset as _TSWD
+    from orius.forecasting.dl_tft import TFTForecaster as _TFT
+
     torch = _torch
     DataLoader = _DL
     LSTMForecaster = _LSTM
@@ -60,37 +64,21 @@ def _ensure_torch():
     TCNForecaster = _TCN
     SeqConfig = _SC
     TimeSeriesWindowDataset = _TSWD
+
+
+from orius.anomaly.detect import detect_anomalies
+from orius.forecasting.baselines import moving_average
+from orius.monitoring.retraining import compute_data_drift, load_monitoring_config
 from orius.optimizer.baselines import (
+    greedy_price_dispatch,
     grid_only_dispatch,
     naive_battery_dispatch,
     peak_shaving_dispatch,
-    greedy_price_dispatch,
 )
-from orius.anomaly.detect import detect_anomalies
 from orius.optimizer.impact import impact_summary
-from orius.monitoring.retraining import load_monitoring_config, compute_data_drift
-from orius.utils.metrics import rmse, mae, mape, smape, daylight_mape, r2_score
+from orius.publication.report_context import ReportContext, ensure_dir
+from orius.utils.metrics import daylight_mape, mae, mape, r2_score, rmse, smape
 from orius.utils.scaler import StandardScaler
-from orius.forecasting.baselines import moving_average
-
-
-@dataclass
-class ReportContext:
-    repo_root: Path
-    features_path: Path
-    splits_dir: Path
-    models_dir: Path
-    reports_dir: Path
-    publication_dir: Path
-    uncertainty_artifacts_dir: Path | None = None
-    backtests_dir: Path | None = None
-    current_dataset: str | None = None
-    targets: list[str] | None = None  # Override for multi-domain (e.g. speed_mps, power_mw)
-
-
-def ensure_dir(path: Path):
-    # Key: CLI/reporting helper
-    path.mkdir(parents=True, exist_ok=True)
 
 
 def _load_forecast_cfg(ctx: ReportContext) -> dict:
@@ -116,7 +104,9 @@ def _resolve_uncertainty_artifacts_dir(ctx: ReportContext, cfg: dict) -> Path:
 def _resolve_backtests_template(ctx: ReportContext, cfg: dict, suffix: str) -> str:
     if ctx.backtests_dir is not None:
         return str(ctx.backtests_dir / f"{{target}}_{suffix}.npz")
-    default = "artifacts/backtests/calibration.npz" if suffix == "calibration" else "artifacts/backtests/test.npz"
+    default = (
+        "artifacts/backtests/calibration.npz" if suffix == "calibration" else "artifacts/backtests/test.npz"
+    )
     key = "calibration_npz" if suffix == "calibration" else "test_npz"
     return str(cfg.get(key, default))
 
@@ -249,7 +239,9 @@ def _extract_prediction_outputs(
             if arr.shape[1] == n_quantiles:
                 arr = np.transpose(arr, (0, 2, 1))
             else:
-                raise ValueError(f"Quantile prediction array shape {arr.shape} does not match {n_quantiles} quantiles")
+                raise ValueError(
+                    f"Quantile prediction array shape {arr.shape} does not match {n_quantiles} quantiles"
+                )
         arr = np.sort(arr[:, -horizon:, :], axis=-1)
         median_idx = int(np.argmin(np.abs(np.asarray(quantile_levels, dtype=float) - 0.5)))
         point = arr[:, :, median_idx]
@@ -311,6 +303,7 @@ def _load_optimization_config(ctx: ReportContext) -> dict:
     cfg_path = ctx.repo_root / "configs" / "optimization.yaml"
     if cfg_path.exists():
         import yaml
+
         # Allow report generation to respect the same dispatch constraints as training.
         return yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
     return {}
@@ -456,7 +449,7 @@ def load_split_data(ctx: ReportContext):
         df = pd.read_parquet(ctx.features_path).sort_values("timestamp")
         n = len(df)
         train_df = df.iloc[: int(n * 0.7)]
-        test_df = df.iloc[int(n * 0.85):]
+        test_df = df.iloc[int(n * 0.85) :]
         return train_df, test_df
     return None, None
 
@@ -503,7 +496,9 @@ def build_multi_horizon(ctx: ReportContext):
         baseline = multi_horizon_metrics(y_true, y_pred, horizons, target)
 
         # Quick GBM baseline for reference at multiple horizons.
-        feat_cols = [c for c in train_df.columns if c not in drop_cols and pd.api.types.is_numeric_dtype(train_df[c])]
+        feat_cols = [
+            c for c in train_df.columns if c not in drop_cols and pd.api.types.is_numeric_dtype(train_df[c])
+        ]
         if not feat_cols:
             result["targets"][target] = {
                 "status": "skipped",
@@ -511,8 +506,8 @@ def build_multi_horizon(ctx: ReportContext):
             }
             continue
 
-        aligned_train = train_df[feat_cols + [target]].dropna(subset=[target]).copy()
-        aligned_test = test_df[feat_cols + [target]].dropna(subset=[target]).copy()
+        aligned_train = train_df[[*feat_cols, target]].dropna(subset=[target]).copy()
+        aligned_test = test_df[[*feat_cols, target]].dropna(subset=[target]).copy()
         if aligned_train.empty or aligned_test.empty:
             result["targets"][target] = {
                 "status": "skipped",
@@ -523,7 +518,9 @@ def build_multi_horizon(ctx: ReportContext):
         X_train = aligned_train[feat_cols].to_numpy()
         y_train = aligned_train[target].to_numpy()
         X_test = aligned_test[feat_cols].to_numpy()
-        _, gbm = train_gbm(X_train, y_train, params={"n_estimators": 200, "learning_rate": 0.05, "random_state": 42})
+        _, gbm = train_gbm(
+            X_train, y_train, params={"n_estimators": 200, "learning_rate": 0.05, "random_state": 42}
+        )
         gbm_pred = predict_gbm(gbm, X_test)
         gbm = multi_horizon_metrics(aligned_test[target].to_numpy(), gbm_pred, horizons, target)
 
@@ -574,7 +571,19 @@ def make_sample_figures(ctx: ReportContext):
     ensure_dir(fig_dir)
 
     if ctx.features_path.exists():
-        df = pd.read_parquet(ctx.features_path).sort_values("timestamp")
+        df = pd.read_parquet(ctx.features_path)
+        if "timestamp" in df.columns:
+            df = df.sort_values("timestamp")
+            sample_x_col = "timestamp"
+        elif {"scenario_id", "step_index"}.issubset(df.columns):
+            # AV/nuPlan surfaces are ordered by scenario/step rather than wall-clock time.
+            # Use a synthetic sample index for figures so report generation stays generic.
+            df = df.sort_values(["scenario_id", "step_index"])
+            sample_x_col = "__sample_index"
+            df[sample_x_col] = np.arange(len(df), dtype=int)
+        else:
+            sample_x_col = "__sample_index"
+            df[sample_x_col] = np.arange(len(df), dtype=int)
         targets = _report_targets(ctx)
         targets = [t for t in targets if t in df.columns]
         if targets:
@@ -585,7 +594,7 @@ def make_sample_figures(ctx: ReportContext):
             colors = ["#1f77b4", "#2ca02c", "#ff7f0e"]
             recent = df.tail(min(7 * 24, len(df)))
             for i, t in enumerate(targets[:3]):
-                recent.plot(x="timestamp", y=t, ax=ax[i], color=colors[i % 3], title=f"{t} (sample)")
+                recent.plot(x=sample_x_col, y=t, ax=ax[i], color=colors[i % 3], title=f"{t} (sample)")
             plt.tight_layout()
             fig.savefig(fig_dir / "forecast_sample.png", dpi=300, bbox_inches="tight")
             plt.close()
@@ -599,12 +608,14 @@ def make_sample_figures(ctx: ReportContext):
         load = np.full(24, 8000.0)
         renew = np.full(24, 3200.0)
         plan = optimize_dispatch(load, renew, cfg)
-        df = pd.DataFrame({
-            "grid_mw": plan["grid_mw"],
-            "battery_charge_mw": plan["battery_charge_mw"],
-            "battery_discharge_mw": plan["battery_discharge_mw"],
-            "soc_mwh": plan["soc_mwh"],
-        })
+        df = pd.DataFrame(
+            {
+                "grid_mw": plan["grid_mw"],
+                "battery_charge_mw": plan["battery_charge_mw"],
+                "battery_discharge_mw": plan["battery_discharge_mw"],
+                "soc_mwh": plan["soc_mwh"],
+            }
+        )
         fig, ax = plt.subplots(2, 1, figsize=(12, 5), sharex=True)
         df[["grid_mw", "battery_charge_mw", "battery_discharge_mw"]].plot(ax=ax[0], title="Dispatch (sample)")
         df[["soc_mwh"]].plot(ax=ax[1], title="Battery SOC (sample)")
@@ -616,14 +627,26 @@ def make_sample_figures(ctx: ReportContext):
     if train_df is not None and test_df is not None:
         current_df = test_df.tail(min(7 * 24, len(test_df)))
         drop_cols = _report_drop_cols(ctx)
-        feature_cols = [c for c in train_df.columns if c not in drop_cols and pd.api.types.is_numeric_dtype(train_df[c])]
+        feature_cols = [
+            c for c in train_df.columns if c not in drop_cols and pd.api.types.is_numeric_dtype(train_df[c])
+        ]
         cfg = load_monitoring_config()
-        drift = compute_data_drift(train_df, current_df, feature_cols, float(cfg.get("data_drift", {}).get("p_value_threshold", 0.01)))
+        drift = compute_data_drift(
+            train_df,
+            current_df,
+            feature_cols,
+            float(cfg.get("data_drift", {}).get("p_value_threshold", 0.01)),
+        )
         columns = list(drift.get("columns", {}).keys())[:10]
         pvals = [drift["columns"][c].get("p_value") for c in columns]
         fig, ax = plt.subplots(figsize=(8, 3))
         ax.bar(columns, pvals)
-        ax.axhline(float(cfg.get("data_drift", {}).get("p_value_threshold", 0.01)), color="red", linestyle="--", label="threshold")
+        ax.axhline(
+            float(cfg.get("data_drift", {}).get("p_value_threshold", 0.01)),
+            color="red",
+            linestyle="--",
+            label="threshold",
+        )
         ax.set_title("Data Drift p-values (sample)")
         ax.set_ylabel("p-value")
         ax.tick_params(axis="x", rotation=45)
@@ -640,7 +663,11 @@ def make_demo_gif(ctx: ReportContext):
     if not ctx.features_path.exists():
         return None
 
-    df = pd.read_parquet(ctx.features_path).sort_values("timestamp")
+    df = pd.read_parquet(ctx.features_path)
+    if "timestamp" in df.columns:
+        df = df.sort_values("timestamp")
+    elif {"scenario_id", "step_index"}.issubset(df.columns):
+        df = df.sort_values(["scenario_id", "step_index"])
     df = df.tail(72)
     targets = _report_targets(ctx)
     targets = [t for t in targets if t in df.columns]
@@ -679,7 +706,7 @@ def plot_model_comparison(ctx: ReportContext, metrics: dict):
 
     model_names = set()
     for _, data in targets.items():
-        for model in data.keys():
+        for model in data:
             if model != "n_features":
                 model_names.add(model)
     models = sorted(model_names)
@@ -716,10 +743,7 @@ def plot_model_comparison(ctx: ReportContext, metrics: dict):
 
 def refresh_metrics_from_models(ctx: ReportContext) -> dict:
     report_path = ctx.reports_dir / "week2_metrics.json"
-    if report_path.exists():
-        metrics = json.loads(report_path.read_text(encoding="utf-8"))
-    else:
-        metrics = {"targets": {}}
+    metrics = json.loads(report_path.read_text(encoding="utf-8")) if report_path.exists() else {"targets": {}}
 
     train_df, test_df = load_split_data(ctx)
     if test_df is None:
@@ -781,7 +805,9 @@ def refresh_metrics_from_models(ctx: ReportContext) -> dict:
                         metrics["targets"][target][kind]["uncertainty"] = {
                             "picp_90": meta.get("picp_90", meta.get("global_coverage")),
                             "picp_95": meta.get("picp_95"),
-                            "mean_interval_width": meta.get("mean_interval_width", meta.get("global_mean_width")),
+                            "mean_interval_width": meta.get(
+                                "mean_interval_width", meta.get("global_mean_width")
+                            ),
                             "pinball_loss_q05": meta.get("pinball_loss_q05"),
                             "pinball_loss_q50": meta.get("pinball_loss_q50"),
                             "pinball_loss_q95": meta.get("pinball_loss_q95"),
@@ -807,11 +833,11 @@ def compute_baseline_metrics(ctx: ReportContext) -> dict:
         pers = persistence_24h(test_df, target)
         ma = moving_average(test_df, target, 24)
 
-        def _eval(pred):
-            mask = np.isfinite(y_true) & np.isfinite(pred)
+        def _eval(pred, current_y_true=y_true, current_target=target):
+            mask = np.isfinite(current_y_true) & np.isfinite(pred)
             if mask.sum() == 0:
                 return None
-            return _compute_metrics(y_true[mask], pred[mask], target)
+            return _compute_metrics(current_y_true[mask], pred[mask], current_target)
 
         out[target] = {
             "persistence_24h": _eval(pers),
@@ -821,7 +847,14 @@ def compute_baseline_metrics(ctx: ReportContext) -> dict:
     return out
 
 
-def plot_arbitrage_dispatch(ctx: ReportContext, hours: np.ndarray, price_curve: np.ndarray, grid_load: np.ndarray, optimized_load: np.ndarray, battery_flow: np.ndarray):
+def plot_arbitrage_dispatch(
+    ctx: ReportContext,
+    hours: np.ndarray,
+    price_curve: np.ndarray,
+    grid_load: np.ndarray,
+    optimized_load: np.ndarray,
+    battery_flow: np.ndarray,
+):
     """
     Generates the Level-4 Arbitrage Optimization plot.
     battery_flow: positive = discharge, negative = charge
@@ -832,37 +865,51 @@ def plot_arbitrage_dispatch(ctx: ReportContext, hours: np.ndarray, price_curve: 
     fig, ax1 = plt.subplots(figsize=(12, 6))
 
     # Plot Market Price (signal) and grid load (action) on dual axes.
-    color = 'tab:red'
-    ax1.set_xlabel('Hour of Day', fontsize=12, fontweight='bold')
-    ax1.set_ylabel('Electricity Price ($/MWh)', color=color, fontsize=12, fontweight='bold')
-    ax1.plot(hours, price_curve, color=color, linestyle='--', linewidth=2, label='Market Price', alpha=0.6)
-    ax1.tick_params(axis='y', labelcolor=color)
+    color = "tab:red"
+    ax1.set_xlabel("Hour of Day", fontsize=12, fontweight="bold")
+    ax1.set_ylabel("Electricity Price ($/MWh)", color=color, fontsize=12, fontweight="bold")
+    ax1.plot(hours, price_curve, color=color, linestyle="--", linewidth=2, label="Market Price", alpha=0.6)
+    ax1.tick_params(axis="y", labelcolor=color)
     ax1.grid(True, alpha=0.3)
 
     # Second axis for grid/battery power.
     ax2 = ax1.twinx()
-    color = 'tab:blue'
-    ax2.set_ylabel('Power (MW)', color=color, fontsize=12, fontweight='bold')
+    color = "tab:blue"
+    ax2.set_ylabel("Power (MW)", color=color, fontsize=12, fontweight="bold")
 
     # Baseline grid import without optimization.
-    ax2.plot(hours, grid_load, color='gray', alpha=0.4, linewidth=2, label='Baseline Grid Load')
+    ax2.plot(hours, grid_load, color="gray", alpha=0.4, linewidth=2, label="Baseline Grid Load")
 
     # Optimized grid import from LP dispatch.
-    ax2.plot(hours, optimized_load, color=color, linewidth=3, label='ORIUS Optimized Load')
+    ax2.plot(hours, optimized_load, color=color, linewidth=3, label="ORIUS Optimized Load")
 
     # Highlight arbitrage windows (charge at low price, discharge at high price).
     # Green area = Charging (Money saved later)
-    ax2.fill_between(hours, grid_load, optimized_load, 
-                     where=(np.array(battery_flow) < 0), color='green', alpha=0.3, label='Charging (Low Price)')
+    ax2.fill_between(
+        hours,
+        grid_load,
+        optimized_load,
+        where=(np.array(battery_flow) < 0),
+        color="green",
+        alpha=0.3,
+        label="Charging (Low Price)",
+    )
     # Orange area = Discharging (Cost Avoided)
-    ax2.fill_between(hours, grid_load, optimized_load, 
-                     where=(np.array(battery_flow) > 0), color='orange', alpha=0.5, label='Discharging (High Price)')
+    ax2.fill_between(
+        hours,
+        grid_load,
+        optimized_load,
+        where=(np.array(battery_flow) > 0),
+        color="orange",
+        alpha=0.5,
+        label="Discharging (High Price)",
+    )
 
     # Presentation polish for README‑ready output.
-    plt.title('ORIUS Decision Logic: Arbitrage Optimization', fontsize=16, fontweight='bold', pad=20)
+    plt.title("ORIUS Decision Logic: Arbitrage Optimization", fontsize=16, fontweight="bold", pad=20)
     lines_1, labels_1 = ax1.get_legend_handles_labels()
     lines_2, labels_2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='upper left', frameon=True, shadow=True)
+    ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc="upper left", frameon=True, shadow=True)
 
     plt.tight_layout()
     out_path = fig_dir / "arbitrage_optimization.png"
@@ -965,7 +1012,9 @@ def build_impact_report(ctx: ReportContext):
     greedy = greedy_price_dispatch(load, renew, cfg, price_series=price, carbon_series=carbon_for_opt)
 
     # ORIUS uses forecast-driven dispatch when available.
-    optimized = optimize_dispatch(f_load, f_renew, cfg, forecast_price=price, forecast_carbon_kg=carbon_for_opt)
+    optimized = optimize_dispatch(
+        f_load, f_renew, cfg, forecast_price=price, forecast_carbon_kg=carbon_for_opt
+    )
     # Oracle upper bound: perfect-forecast dispatch using actuals.
     oracle = optimize_dispatch(load, renew, cfg, forecast_price=price, forecast_carbon_kg=carbon_for_opt)
 
@@ -1016,8 +1065,10 @@ def build_impact_report(ctx: ReportContext):
 
     moer_summary = None
     if moer is not None:
+
         def _moer_kg(plan):
             return float(np.sum(np.asarray(plan["grid_mw"]) * moer))
+
         moer_summary = {
             "baseline_moer_kg": _moer_kg(baseline),
             "orius_moer_kg": _moer_kg(optimized),
@@ -1106,11 +1157,12 @@ def build_impact_report(ctx: ReportContext):
         battery_flow = np.array(optimized["battery_discharge_mw"]) - np.array(optimized["battery_charge_mw"])
         # optimized_load (grid import) is roughly load - renewables - battery_flow (simplified for viz)
         # But we can just use the grid_mw from the plan
-        grid_load_baseline = np.maximum(0, load - renew) # Simple baseline
+        grid_load_baseline = np.maximum(0, load - renew)  # Simple baseline
         grid_load_optimized = np.array(optimized["grid_mw"])
-        
-        arb_plot_path = plot_arbitrage_dispatch(ctx, np.arange(horizon), price, grid_load_baseline, grid_load_optimized, battery_flow)
 
+        arb_plot_path = plot_arbitrage_dispatch(
+            ctx, np.arange(horizon), price, grid_load_baseline, grid_load_optimized, battery_flow
+        )
 
     def _fmt(val, digits=2):
         if val is None:
@@ -1124,7 +1176,9 @@ def build_impact_report(ctx: ReportContext):
 
     lines = []
     lines.append("# Impact Evaluation — Baseline vs ORIUS\n\n")
-    lines.append("This report compares dispatch outcomes for the same 7‑day forecast window (selected from the test split).\n\n")
+    lines.append(
+        "This report compares dispatch outcomes for the same 7‑day forecast window (selected from the test split).\n\n"
+    )
     lines.append(f"- Horizon: {horizon} hours (7 days)\n")
     lines.append(f"- Window index: {win_start}–{win_end}\n")
     lines.append("- Forecast source: test split (proxy for day‑ahead forecast)\n")
@@ -1151,17 +1205,27 @@ def build_impact_report(ctx: ReportContext):
     lines.append("\n")
 
     lines.append("## Savings vs Baseline (ORIUS vs Grid‑only)\n")
-    lines.append(f"- Cost savings: {_fmt(impact.get('cost_savings_usd'))} ({_fmt_pct(impact.get('cost_savings_pct'))})\n")
-    lines.append(f"- Carbon reduction: {_fmt(impact.get('carbon_reduction_kg'))} kg ({_fmt_pct(impact.get('carbon_reduction_pct'))})\n\n")
+    lines.append(
+        f"- Cost savings: {_fmt(impact.get('cost_savings_usd'))} ({_fmt_pct(impact.get('cost_savings_pct'))})\n"
+    )
+    lines.append(
+        f"- Carbon reduction: {_fmt(impact.get('carbon_reduction_kg'))} kg ({_fmt_pct(impact.get('carbon_reduction_pct'))})\n\n"
+    )
     lines.append(f"- Carbon source used for optimization: {carbon_source}\n\n")
 
     lines.append("## Savings vs Naive Battery (ORIUS vs Naive)\n")
-    lines.append(f"- Cost savings: {_fmt(impact_naive.get('cost_savings_usd'))} ({_fmt_pct(impact_naive.get('cost_savings_pct'))})\n")
-    lines.append(f"- Carbon reduction: {_fmt(impact_naive.get('carbon_reduction_kg'))} kg ({_fmt_pct(impact_naive.get('carbon_reduction_pct'))})\n\n")
+    lines.append(
+        f"- Cost savings: {_fmt(impact_naive.get('cost_savings_usd'))} ({_fmt_pct(impact_naive.get('cost_savings_pct'))})\n"
+    )
+    lines.append(
+        f"- Carbon reduction: {_fmt(impact_naive.get('carbon_reduction_kg'))} kg ({_fmt_pct(impact_naive.get('carbon_reduction_pct'))})\n\n"
+    )
 
     lines.append("## Oracle Gap (ORIUS vs Perfect‑Forecast Upper Bound)\n")
     lines.append(f"- Oracle cost: {_fmt(oracle.get('expected_cost_usd'))}\n")
-    lines.append(f"- Gap vs oracle: {_fmt(optimized.get('expected_cost_usd') - oracle.get('expected_cost_usd'))}\n\n")
+    lines.append(
+        f"- Gap vs oracle: {_fmt(optimized.get('expected_cost_usd') - oracle.get('expected_cost_usd'))}\n\n"
+    )
 
     if moer_summary is not None:
         lines.append("## Marginal Emissions (MOER)\n")
@@ -1364,9 +1428,7 @@ def build_case_study(ctx: ReportContext, days: int = 90) -> dict | None:
         failure_ts = pd.Timestamp(failure_day).tz_localize(tz)
         week_start = failure_ts - pd.Timedelta(days=3)
         week_end = failure_ts + pd.Timedelta(days=3)
-        week_df = case_df[
-            (case_df["timestamp"] >= week_start) & (case_df["timestamp"] <= week_end)
-        ]
+        week_df = case_df[(case_df["timestamp"] >= week_start) & (case_df["timestamp"] <= week_end)]
     else:
         week_df = case_df.tail(7 * 24)
 
@@ -1472,7 +1534,9 @@ def build_model_cards(ctx: ReportContext, metrics: dict | None = None):
         lines.append("\n## Intended Use\n")
         lines.append("Day‑ahead forecasting for grid planning and dispatch optimization.\n")
         lines.append("\n## Limitations\n")
-        lines.append("Performance depends on feature availability and data quality; retraining is required as grid conditions shift.\n")
+        lines.append(
+            "Performance depends on feature availability and data quality; retraining is required as grid conditions shift.\n"
+        )
 
         (cards_dir / f"{target}.md").write_text("".join(lines), encoding="utf-8")
 
@@ -1490,7 +1554,9 @@ def build_formal_report(
     lines = []
     lines.append("# Formal Evaluation Report\n\n")
     lines.append("## Summary\n")
-    lines.append("This report summarizes forecasting performance, backtesting, and decision‑support outputs for ORIUS.\n\n")
+    lines.append(
+        "This report summarizes forecasting performance, backtesting, and decision‑support outputs for ORIUS.\n\n"
+    )
 
     if targets:
         lines.append("## Model Metrics (Test Split)\n")
@@ -1544,7 +1610,9 @@ def build_formal_report(
         lines.append(f"![]({multi_horizon_plot.relative_to(ctx.reports_dir).as_posix()})\n\n")
 
     lines.append("## Conclusions\n")
-    lines.append("GBM provides a strong baseline on the OPSD data, while sequence models capture temporal structure for longer horizons. Optimization outputs are cost‑ and carbon‑aware and suitable for operator decision support.\n")
+    lines.append(
+        "GBM provides a strong baseline on the OPSD data, while sequence models capture temporal structure for longer horizons. Optimization outputs are cost‑ and carbon‑aware and suitable for operator decision support.\n"
+    )
 
     out_path = ctx.reports_dir / "formal_evaluation_report.md"
     ensure_dir(ctx.reports_dir)
@@ -1714,7 +1782,9 @@ def build_publication_uncertainty_artifacts(ctx: ReportContext) -> None:
                         "global_coverage": row.get("picp_90", "not_applicable"),
                         "global_mean_width": row.get("mean_width", "not_applicable"),
                         "true_soc_violation_rate": row.get("true_soc_violation_rate", "not_applicable"),
-                        "true_soc_violation_severity_p95_mwh": row.get("true_soc_violation_severity_p95_mwh", "not_applicable"),
+                        "true_soc_violation_severity_p95_mwh": row.get(
+                            "true_soc_violation_severity_p95_mwh", "not_applicable"
+                        ),
                         "cost_delta_pct": row.get("cost_delta_pct", "not_applicable"),
                     }
                 )
@@ -1755,7 +1825,9 @@ def build_publication_uncertainty_artifacts(ctx: ReportContext) -> None:
     fig_path = publication_dir / "fig_transfer_coverage.png"
     fig, ax = plt.subplots(figsize=(7, 4))
     table5_numeric = table5.copy()
-    table5_numeric["global_coverage_numeric"] = pd.to_numeric(table5_numeric["global_coverage"], errors="coerce")
+    table5_numeric["global_coverage_numeric"] = pd.to_numeric(
+        table5_numeric["global_coverage"], errors="coerce"
+    )
     transfer_numeric = table5_numeric.dropna(subset=["global_coverage_numeric"])
     if not transfer_numeric.empty:
         ax.bar(
@@ -1787,7 +1859,9 @@ def main():
     parser.add_argument("--uncertainty-artifacts-dir", default=None)
     parser.add_argument("--backtests-dir", default=None)
     parser.add_argument("--current-dataset", default=None)
-    parser.add_argument("--targets", default=None, help="Comma-separated targets for multi-domain (e.g. speed_mps,power_mw)")
+    parser.add_argument(
+        "--targets", default=None, help="Comma-separated targets for multi-domain (e.g. speed_mps,power_mw)"
+    )
     args = parser.parse_args()
 
     # Silence known LightGBM feature‑name warning for cleaner logs.
@@ -1807,7 +1881,9 @@ def main():
         models_dir=repo_root / args.models_dir,
         reports_dir=repo_root / args.reports_dir,
         publication_dir=repo_root / (args.publication_dir or "reports/publication"),
-        uncertainty_artifacts_dir=(repo_root / args.uncertainty_artifacts_dir) if args.uncertainty_artifacts_dir else None,
+        uncertainty_artifacts_dir=(repo_root / args.uncertainty_artifacts_dir)
+        if args.uncertainty_artifacts_dir
+        else None,
         backtests_dir=(repo_root / args.backtests_dir) if args.backtests_dir else None,
         current_dataset=str(args.current_dataset).upper() if args.current_dataset else None,
         targets=targets,

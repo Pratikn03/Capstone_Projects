@@ -1,4 +1,5 @@
 """Smoke test for CPSBench-IoT runner outputs and determinism."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -25,8 +26,16 @@ def test_cpsbench_runner_smoke_and_determinism(tmp_path):
     _assert_outputs(out_a)
     _assert_outputs(out_b)
 
-    main_a = pd.read_csv(out_a / "dc3s_main_table.csv").sort_values(["scenario", "seed", "controller"]).reset_index(drop=True)
-    main_b = pd.read_csv(out_b / "dc3s_main_table.csv").sort_values(["scenario", "seed", "controller"]).reset_index(drop=True)
+    main_a = (
+        pd.read_csv(out_a / "dc3s_main_table.csv")
+        .sort_values(["scenario", "seed", "controller"])
+        .reset_index(drop=True)
+    )
+    main_b = (
+        pd.read_csv(out_b / "dc3s_main_table.csv")
+        .sort_values(["scenario", "seed", "controller"])
+        .reset_index(drop=True)
+    )
     required_cols = {
         "true_soc_violation_rate",
         "true_soc_violation_severity_mean",

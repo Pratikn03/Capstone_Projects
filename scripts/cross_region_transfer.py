@@ -27,15 +27,15 @@ Outputs
     reports/publication/cross_region_transfer.csv
     reports/publication/cross_region_transfer.png
 """
+
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import yaml
 
 repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
@@ -43,30 +43,29 @@ if str(repo_root / "src") not in sys.path:
 
 from orius.cpsbench_iot.runner import run_suite
 
-
 # ---------------------------------------------------------------------------
 # US-scale load parameters (EIA-930 MISO approximation)
 # Derived from README metrics: MISO mean load ~13800 MW vs OPSD Germany ~50000 MW
 # Ratio ≈ 0.276 (scale) + small positive bias for MISO baseline floor
 # ---------------------------------------------------------------------------
 US_FAULT_OVERRIDES = {
-    "load_scale":       0.28,       # MISO load is ~28% of OPSD Germany
-    "renewables_scale": 0.35,       # MISO renewable mix is lower
-    "load_bias_mw":     500.0,      # MISO baseline floor
-    "price_scale":      0.85,       # USD vs EUR rough parity after exchange
-    "carbon_scale":     1.10,       # US grid is slightly more carbon-intensive
+    "load_scale": 0.28,  # MISO load is ~28% of OPSD Germany
+    "renewables_scale": 0.35,  # MISO renewable mix is lower
+    "load_bias_mw": 500.0,  # MISO baseline floor
+    "price_scale": 0.85,  # USD vs EUR rough parity after exchange
+    "carbon_scale": 1.10,  # US grid is slightly more carbon-intensive
 }
 
 DE_SCENARIOS = ["nominal", "dropout", "spikes", "drift_combo"]
 US_SCENARIOS = ["nominal", "dropout", "spikes", "drift_combo"]
 
-DEFAULT_SEEDS   = [11, 22, 33, 44, 55]
+DEFAULT_SEEDS = [11, 22, 33, 44, 55]
 DEFAULT_HORIZON = 168
 
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Cross-region DC³S transfer evaluation")
-    p.add_argument("--seeds",   nargs="*", type=int, default=None)
+    p.add_argument("--seeds", nargs="*", type=int, default=None)
     p.add_argument("--horizon", type=int, default=None)
     p.add_argument("--out-dir", default="reports/publication")
     return p.parse_args()
@@ -103,17 +102,19 @@ def _run_region(
 def _build_transfer_table(de_df: pd.DataFrame, us_df: pd.DataFrame) -> pd.DataFrame:
     """Combine DE and US results, compute per-region mean/std."""
     combined = pd.concat([de_df, us_df], ignore_index=True)
-    metrics = [c for c in [
-        "true_soc_violation_rate", "intervention_rate",
-        "picp_90", "mean_interval_width",
-        "true_soc_violation_severity_p95"
-    ] if c in combined.columns]
+    metrics = [
+        c
+        for c in [
+            "true_soc_violation_rate",
+            "intervention_rate",
+            "picp_90",
+            "mean_interval_width",
+            "true_soc_violation_severity_p95",
+        ]
+        if c in combined.columns
+    ]
 
-    summary = (
-        combined
-        .groupby(["region", "controller", "scenario"], sort=True)[metrics]
-        .agg(["mean", "std"])
-    )
+    summary = combined.groupby(["region", "controller", "scenario"], sort=True)[metrics].agg(["mean", "std"])
     summary.columns = ["_".join(c) for c in summary.columns]
     return summary.reset_index()
 
@@ -121,6 +122,7 @@ def _build_transfer_table(de_df: pd.DataFrame, us_df: pd.DataFrame) -> pd.DataFr
 def _build_transfer_plot(transfer_df: pd.DataFrame, out_dir: Path) -> None:
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except ImportError:
@@ -136,8 +138,11 @@ def _build_transfer_plot(transfer_df: pd.DataFrame, out_dir: Path) -> None:
         return
 
     metric_col = next(
-        (c for c in ["true_soc_violation_rate_mean", "violation_rate_mean", "picp_90_mean"]
-         if c in transfer_df.columns),
+        (
+            c
+            for c in ["true_soc_violation_rate_mean", "violation_rate_mean", "picp_90_mean"]
+            if c in transfer_df.columns
+        ),
         None,
     )
     if metric_col is None:
@@ -153,7 +158,8 @@ def _build_transfer_plot(transfer_df: pd.DataFrame, out_dir: Path) -> None:
         sub = transfer_df[transfer_df["region"] == region]
         vals = [
             sub[sub["controller"] == ctrl][metric_col].mean()
-            if ctrl in sub["controller"].values else float("nan")
+            if ctrl in sub["controller"].values
+            else float("nan")
             for ctrl in available
         ]
         ax.bar(x + (i - 0.5) * width, vals, width, label=f"{region}", color=colors[region], alpha=0.85)
@@ -174,9 +180,11 @@ def _build_transfer_plot(transfer_df: pd.DataFrame, out_dir: Path) -> None:
 
 def _print_transfer_summary(de_df: pd.DataFrame, us_df: pd.DataFrame) -> None:
     """Print a compact comparison table for dc3s_wrapped across regions."""
-    key_metrics = [c for c in [
-        "true_soc_violation_rate", "intervention_rate", "picp_90"
-    ] if c in de_df.columns or c in us_df.columns]
+    key_metrics = [
+        c
+        for c in ["true_soc_violation_rate", "intervention_rate", "picp_90"]
+        if c in de_df.columns or c in us_df.columns
+    ]
 
     print("\n" + "=" * 70)
     print("CROSS-REGION TRANSFER SUMMARY  (dc3s_wrapped)")
@@ -184,10 +192,16 @@ def _print_transfer_summary(de_df: pd.DataFrame, us_df: pd.DataFrame) -> None:
     print(f"{'Metric':<30} {'DE (source)':>16} {'US (transfer)':>16}")
     print("-" * 70)
     for metric in key_metrics:
-        de_val = de_df[de_df["controller"] == "dc3s_wrapped"][metric].mean() \
-            if "controller" in de_df.columns and metric in de_df.columns else float("nan")
-        us_val = us_df[us_df["controller"] == "dc3s_wrapped"][metric].mean() \
-            if "controller" in us_df.columns and metric in us_df.columns else float("nan")
+        de_val = (
+            de_df[de_df["controller"] == "dc3s_wrapped"][metric].mean()
+            if "controller" in de_df.columns and metric in de_df.columns
+            else float("nan")
+        )
+        us_val = (
+            us_df[us_df["controller"] == "dc3s_wrapped"][metric].mean()
+            if "controller" in us_df.columns and metric in us_df.columns
+            else float("nan")
+        )
         label = metric.replace("true_soc_", "").replace("_", " ")
         print(f"  {label:<28} {de_val:>16.4f} {us_val:>16.4f}")
     print("=" * 70)
@@ -197,8 +211,8 @@ def _print_transfer_summary(de_df: pd.DataFrame, us_df: pd.DataFrame) -> None:
 
 
 def main() -> None:
-    args  = _parse_args()
-    seeds   = args.seeds   or DEFAULT_SEEDS
+    args = _parse_args()
+    seeds = args.seeds or DEFAULT_SEEDS
     horizon = args.horizon or DEFAULT_HORIZON
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -207,15 +221,16 @@ def main() -> None:
     print(f"  Seeds  : {seeds}")
     print(f"  Horizon: {horizon}h")
     print(f"  DE scenarios: {DE_SCENARIOS}")
-    print(f"  US overrides: load_scale={US_FAULT_OVERRIDES['load_scale']}, "
-          f"renewables_scale={US_FAULT_OVERRIDES['renewables_scale']}\n")
+    print(
+        f"  US overrides: load_scale={US_FAULT_OVERRIDES['load_scale']}, "
+        f"renewables_scale={US_FAULT_OVERRIDES['renewables_scale']}\n"
+    )
 
     print("▶ Running DE (source region) ...")
     de_df = _run_region("DE", DE_SCENARIOS, seeds, horizon, out_dir, fault_overrides=None)
 
     print("▶ Running US (transfer region) ...")
-    us_df = _run_region("US", US_SCENARIOS, seeds, horizon, out_dir,
-                        fault_overrides=US_FAULT_OVERRIDES)
+    us_df = _run_region("US", US_SCENARIOS, seeds, horizon, out_dir, fault_overrides=US_FAULT_OVERRIDES)
 
     if de_df.empty and us_df.empty:
         print("No data collected — check CPSBench runner.")

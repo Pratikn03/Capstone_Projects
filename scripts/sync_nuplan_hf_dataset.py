@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Upload completed local nuPlan archives to a private Hugging Face dataset."""
+
 from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
 import tempfile
-
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = REPO_ROOT / "src"
@@ -16,12 +16,13 @@ if str(SRC_DIR) not in sys.path:
 
 from orius.av_nuplan import DEFAULT_TRAIN_GLOB, resolve_nuplan_train_archives
 
-
 DEFAULT_REPO_ID = "pratikn03/orius-nuplan-private"
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Sync completed nuPlan zip archives to a private HF dataset repo")
+    parser = argparse.ArgumentParser(
+        description="Sync completed nuPlan zip archives to a private HF dataset repo"
+    )
     parser.add_argument("--repo-id", default=DEFAULT_REPO_ID)
     parser.add_argument("--train-zip", type=Path, action="append", default=None)
     parser.add_argument("--train-dir", type=Path, action="append", default=[REPO_ROOT])

@@ -1,12 +1,14 @@
 """Controller adapters used by CPSBench-IoT evaluation runs."""
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import json
 import math
 import os
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -20,8 +22,8 @@ from orius.dc3s.guarantee_checks import evaluate_guarantee_checks
 from orius.dc3s.quality import compute_reliability
 from orius.dc3s.shield import repair_action
 from orius.optimizer import optimize_dispatch
-from orius.optimizer.scenario_robust_dispatch import optimize_scenario_robust_dispatch
 from orius.optimizer.robust_dispatch import RobustDispatchConfig, optimize_robust_dispatch
+from orius.optimizer.scenario_robust_dispatch import optimize_scenario_robust_dispatch
 
 
 def _as_array(values: Any, horizon: int | None = None) -> np.ndarray:
@@ -176,10 +178,18 @@ def deterministic_lp_dispatch(
         )
     except Exception:
         zeros = np.zeros_like(load_forecast)
-        dispatch = {"battery_charge_mw": zeros.tolist(), "battery_discharge_mw": zeros.tolist(), "soc_mwh": []}
+        dispatch = {
+            "battery_charge_mw": zeros.tolist(),
+            "battery_discharge_mw": zeros.tolist(),
+            "soc_mwh": [],
+        }
 
-    proposed_charge = _as_array(dispatch.get("battery_charge_mw", np.zeros_like(load_forecast)), horizon=len(load_forecast))
-    proposed_discharge = _as_array(dispatch.get("battery_discharge_mw", np.zeros_like(load_forecast)), horizon=len(load_forecast))
+    proposed_charge = _as_array(
+        dispatch.get("battery_charge_mw", np.zeros_like(load_forecast)), horizon=len(load_forecast)
+    )
+    proposed_discharge = _as_array(
+        dispatch.get("battery_discharge_mw", np.zeros_like(load_forecast)), horizon=len(load_forecast)
+    )
     if dispatch.get("soc_mwh"):
         soc = _as_array(dispatch.get("soc_mwh"), horizon=len(load_forecast))
         safe_charge = proposed_charge.copy()
@@ -207,7 +217,9 @@ def deterministic_lp_dispatch(
         "interval_upper": upper,
         "certificates": [None] * len(load_forecast),
         "constraints": constraints,
-        "expected_cost_usd": float(dispatch.get("expected_cost_usd")) if dispatch.get("expected_cost_usd") is not None else None,
+        "expected_cost_usd": float(dispatch.get("expected_cost_usd"))
+        if dispatch.get("expected_cost_usd") is not None
+        else None,
         "carbon_kg": float(dispatch.get("carbon_kg")) if dispatch.get("carbon_kg") is not None else None,
     }
 
@@ -251,10 +263,18 @@ def robust_fixed_interval_dispatch(
             verbose=False,
         )
     except Exception:
-        robust = {"battery_charge_mw": np.zeros_like(load_forecast).tolist(), "battery_discharge_mw": np.zeros_like(load_forecast).tolist(), "feasible": False}
+        robust = {
+            "battery_charge_mw": np.zeros_like(load_forecast).tolist(),
+            "battery_discharge_mw": np.zeros_like(load_forecast).tolist(),
+            "feasible": False,
+        }
 
-    proposed_charge = _as_array(robust.get("battery_charge_mw", np.zeros_like(load_forecast)), horizon=len(load_forecast))
-    proposed_discharge = _as_array(robust.get("battery_discharge_mw", np.zeros_like(load_forecast)), horizon=len(load_forecast))
+    proposed_charge = _as_array(
+        robust.get("battery_charge_mw", np.zeros_like(load_forecast)), horizon=len(load_forecast)
+    )
+    proposed_discharge = _as_array(
+        robust.get("battery_discharge_mw", np.zeros_like(load_forecast)), horizon=len(load_forecast)
+    )
     safe_charge, safe_discharge, soc = _simulate_soc(
         charge=proposed_charge,
         discharge=proposed_discharge,
@@ -275,7 +295,9 @@ def robust_fixed_interval_dispatch(
         "interval_upper": upper,
         "certificates": [None] * len(load_forecast),
         "constraints": constraints,
-        "expected_cost_usd": float(robust.get("total_cost")) if robust.get("total_cost") is not None else None,
+        "expected_cost_usd": float(robust.get("total_cost"))
+        if robust.get("total_cost") is not None
+        else None,
         "carbon_kg": None,
     }
 
@@ -359,8 +381,12 @@ def scenario_robust_dispatch(
             "binding_scenario": None,
         }
 
-    proposed_charge = _as_array(robust.get("battery_charge_mw", np.zeros_like(load_forecast_arr)), horizon=horizon)
-    proposed_discharge = _as_array(robust.get("battery_discharge_mw", np.zeros_like(load_forecast_arr)), horizon=horizon)
+    proposed_charge = _as_array(
+        robust.get("battery_charge_mw", np.zeros_like(load_forecast_arr)), horizon=horizon
+    )
+    proposed_discharge = _as_array(
+        robust.get("battery_discharge_mw", np.zeros_like(load_forecast_arr)), horizon=horizon
+    )
     safe_charge, safe_discharge, soc = _simulate_soc(
         charge=proposed_charge,
         discharge=proposed_discharge,
@@ -503,7 +529,10 @@ def _dc3s_dispatch_impl(
         event = dict(telemetry_events[t])
         if "ts_utc" not in event:
             event["ts_utc"] = str(event.get("timestamp", t))
-        ftit_cfg = {**dict(dc3s_cfg.get("ftit", {})), "law": str(dc3s_cfg.get("law", "linear")).strip().lower()}
+        ftit_cfg = {
+            **dict(dc3s_cfg.get("ftit", {})),
+            "law": str(dc3s_cfg.get("law", "linear")).strip().lower(),
+        }
 
         w_t, flags = compute_reliability(
             event,
@@ -514,10 +543,7 @@ def _dc3s_dispatch_impl(
             ftit_cfg=ftit_cfg,
         )
         residual = abs(float(load_true[t]) - float(load_forecast[t]))
-        if variant == "no_drift":
-            drift = {"drift": False}
-        else:
-            drift = detector.update(residual)
+        drift = {"drift": False} if variant == "no_drift" else detector.update(residual)
         ftit_state = update_ftit_state(
             adaptive_state=adaptive_state,
             fault_flags=flags.get("fault_flags", {}),
@@ -568,7 +594,9 @@ def _dc3s_dispatch_impl(
             "current_soc_mwh": current_soc,
             "last_net_mw": float(safe_discharge[t - 1] - safe_charge[t - 1]) if t > 0 else 0.0,
             "ramp_mw": float(dc3s_cfg.get("shield", {}).get("max_ramp_mw", 0.0) or 0.0),
-            "degradation_cost_per_mwh": float(opt_cfg.get("battery", {}).get("degradation_cost_per_mwh", 10.0)),
+            "degradation_cost_per_mwh": float(
+                opt_cfg.get("battery", {}).get("degradation_cost_per_mwh", 10.0)
+            ),
             "max_grid_import_mw": float(opt_cfg.get("grid", {}).get("max_import_mw", 500.0)),
             "default_price_per_mwh": float(np.mean(price)),
             "risk_weight_worst_case": float(opt_cfg.get("robust", {}).get("risk_weight_worst_case", 1.0)),
@@ -594,11 +622,14 @@ def _dc3s_dispatch_impl(
         safe_charge[t] = float(safe_action["charge_mw"])
         safe_discharge[t] = float(safe_action["discharge_mw"])
         interventions[t] = (
-            abs(safe_charge[t] - proposed_charge[t]) > 1e-6 or abs(safe_discharge[t] - proposed_discharge[t]) > 1e-6
+            abs(safe_charge[t] - proposed_charge[t]) > 1e-6
+            or abs(safe_discharge[t] - proposed_discharge[t]) > 1e-6
         )
         eff = max(float(constraints["efficiency"]), 1e-6)
         current_soc = current_soc + eff * safe_charge[t] - safe_discharge[t] / eff
-        current_soc = min(float(constraints["max_soc_mwh"]), max(float(constraints["min_soc_mwh"]), current_soc))
+        current_soc = min(
+            float(constraints["max_soc_mwh"]), max(float(constraints["min_soc_mwh"]), current_soc)
+        )
         soc[t] = current_soc
 
         cert = make_certificate(
@@ -790,7 +821,9 @@ def aci_conformal_dispatch(
             "current_soc_mwh": current_soc,
             "last_net_mw": float(safe_discharge[t - 1] - safe_charge[t - 1]) if t > 0 else 0.0,
             "ramp_mw": float(dc3s_cfg.get("shield", {}).get("max_ramp_mw", 0.0) or 0.0),
-            "degradation_cost_per_mwh": float(opt_cfg.get("battery", {}).get("degradation_cost_per_mwh", 10.0)),
+            "degradation_cost_per_mwh": float(
+                opt_cfg.get("battery", {}).get("degradation_cost_per_mwh", 10.0)
+            ),
             "max_grid_import_mw": float(opt_cfg.get("grid", {}).get("max_import_mw", 500.0)),
             "default_price_per_mwh": float(np.mean(price_arr)),
             "risk_weight_worst_case": float(opt_cfg.get("robust", {}).get("risk_weight_worst_case", 1.0)),
@@ -811,7 +844,9 @@ def aci_conformal_dispatch(
         safe_discharge[t] = float(safe_action["discharge_mw"])
         eff = max(float(constraints["efficiency"]), 1e-6)
         current_soc = current_soc + eff * safe_charge[t] - safe_discharge[t] / eff
-        current_soc = min(float(constraints["max_soc_mwh"]), max(float(constraints["min_soc_mwh"]), current_soc))
+        current_soc = min(
+            float(constraints["max_soc_mwh"]), max(float(constraints["min_soc_mwh"]), current_soc)
+        )
         soc[t] = current_soc
 
         err = 1.0 if abs(ytrue - yhat) > q_t else 0.0
@@ -962,7 +997,10 @@ def deterministic_lp_step(
         "interval_lower_t": float(lower[0]),
         "interval_upper_t": float(upper[0]),
         "constraints": constraints,
-        "expected_cost_usd_step": float(price_window[0] * max(0.0, load_obs_window[0] - renew_obs_window[0] - safe["discharge_mw"] + safe["charge_mw"])),
+        "expected_cost_usd_step": float(
+            price_window[0]
+            * max(0.0, load_obs_window[0] - renew_obs_window[0] - safe["discharge_mw"] + safe["charge_mw"])
+        ),
         "certificate": None,
     }
 
@@ -1023,7 +1061,10 @@ def robust_fixed_interval_step(
         "interval_lower_t": float(lower[0]),
         "interval_upper_t": float(upper[0]),
         "constraints": constraints,
-        "expected_cost_usd_step": float(price_window[0] * max(0.0, load_obs_window[0] - renew_obs_window[0] - safe["discharge_mw"] + safe["charge_mw"])),
+        "expected_cost_usd_step": float(
+            price_window[0]
+            * max(0.0, load_obs_window[0] - renew_obs_window[0] - safe["discharge_mw"] + safe["charge_mw"])
+        ),
         "certificate": None,
     }
 
@@ -1047,12 +1088,16 @@ def naive_safe_clip_step(
         proposed["charge_mw"] = 0.60 * constraints["max_charge_mw"]
     elif 17 <= hour <= 21:
         proposed["discharge_mw"] = 0.60 * constraints["max_discharge_mw"]
-    safe = project_action_observed_soc(action=proposed, observed_soc_mwh=observed_soc_mwh, constraints=constraints)
+    safe = project_action_observed_soc(
+        action=proposed, observed_soc_mwh=observed_soc_mwh, constraints=constraints
+    )
     lower, upper = _default_interval(np.asarray([float(load_obs_t)]))
     grid_import_t = max(0.0, float(load_obs_t - renew_obs_t - safe["discharge_mw"] + safe["charge_mw"]))
     deg_cost = float(cfg.get("battery", {}).get("degradation_cost_per_mwh", 10.0))
     dt = float(cfg.get("time_step_hours", 1.0))
-    expected_cost_t = float(price_t * grid_import_t * dt + deg_cost * (safe["charge_mw"] + safe["discharge_mw"]) * dt)
+    expected_cost_t = float(
+        price_t * grid_import_t * dt + deg_cost * (safe["charge_mw"] + safe["discharge_mw"]) * dt
+    )
     carbon_kg_t = float(carbon_t * grid_import_t * dt)
     return {
         "policy": "naive_safe_clip",
@@ -1202,7 +1247,12 @@ def _dc3s_step_impl(
         controller=policy_name,
         proposed_action=proposed,
         safe_action=safe,
-        uncertainty={"lower": [float(lo[0])], "upper": [float(hi[0])], "meta": meta, "shield_repair": repair_meta},
+        uncertainty={
+            "lower": [float(lo[0])],
+            "upper": [float(hi[0])],
+            "meta": meta,
+            "shield_repair": repair_meta,
+        },
         reliability={"w_t": float(w_t), "flags": flags},
         drift=drift,
         model_hash=model_hash,
@@ -1210,7 +1260,9 @@ def _dc3s_step_impl(
         prev_hash=dc3s_state.prev_hash,
         dispatch_plan=base.get("dispatch_plan"),
         intervened=bool(repair_meta.get("repaired", False)),
-        intervention_reason=_derive_intervention_reason(repair_meta, bool(repair_meta.get("repaired", False))),
+        intervention_reason=_derive_intervention_reason(
+            repair_meta, bool(repair_meta.get("repaired", False))
+        ),
         reliability_w=float(w_t),
         drift_flag=bool(drift.get("drift", False)),
         inflation=float(meta.get("inflation", 1.0)),
@@ -1233,7 +1285,10 @@ def _dc3s_step_impl(
         "interval_lower_t": float(lo[0]),
         "interval_upper_t": float(hi[0]),
         "constraints": constraints,
-        "expected_cost_usd_step": float(price_window[0] * max(0.0, load_obs_window[0] - renew_obs_window[0] - safe["discharge_mw"] + safe["charge_mw"])),
+        "expected_cost_usd_step": float(
+            price_window[0]
+            * max(0.0, load_obs_window[0] - renew_obs_window[0] - safe["discharge_mw"] + safe["charge_mw"])
+        ),
         "certificate": certificate,
         "reliability_w": float(w_t),
         "drift_flag": bool(drift.get("drift", False)),

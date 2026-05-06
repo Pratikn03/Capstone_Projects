@@ -5,9 +5,11 @@ with sampled load scenarios.  This is the "strong control baseline" needed
 for R1 reviewer credibility — it re-solves at every step rather than
 committing to a single open-loop plan.
 """
+
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 import numpy as np
 
@@ -110,21 +112,21 @@ def scenario_mpc_dispatch(
         lo = scenarios.min(axis=0)
         hi = scenarios.max(axis=0)
 
-        common = dict(
-            battery_capacity_mwh=bc["capacity_mwh"],
-            battery_max_charge_mw=bc["max_charge_mw"],
-            battery_max_discharge_mw=bc["max_discharge_mw"],
-            battery_charge_efficiency=bc["charge_efficiency"],
-            battery_discharge_efficiency=bc["discharge_efficiency"],
-            battery_initial_soc_mwh=current_soc,
-            battery_min_soc_mwh=bc["min_soc_mwh"],
-            battery_max_soc_mwh=bc["max_soc_mwh"],
-            max_grid_import_mw=bc["max_grid_import_mw"],
-            default_price_per_mwh=float(np.mean(pr_window)),
-            degradation_cost_per_mwh=bc["degradation_cost_per_mwh"],
-            time_step_hours=bc["time_step_hours"],
-            solver_name=str(cfg.get("solver_name", "appsi_highs")),
-        )
+        common = {
+            "battery_capacity_mwh": bc["capacity_mwh"],
+            "battery_max_charge_mw": bc["max_charge_mw"],
+            "battery_max_discharge_mw": bc["max_discharge_mw"],
+            "battery_charge_efficiency": bc["charge_efficiency"],
+            "battery_discharge_efficiency": bc["discharge_efficiency"],
+            "battery_initial_soc_mwh": current_soc,
+            "battery_min_soc_mwh": bc["min_soc_mwh"],
+            "battery_max_soc_mwh": bc["max_soc_mwh"],
+            "max_grid_import_mw": bc["max_grid_import_mw"],
+            "default_price_per_mwh": float(np.mean(pr_window)),
+            "degradation_cost_per_mwh": bc["degradation_cost_per_mwh"],
+            "time_step_hours": bc["time_step_hours"],
+            "solver_name": str(cfg.get("solver_name", "appsi_highs")),
+        }
 
         result: dict[str, Any]
         if use_cvar:

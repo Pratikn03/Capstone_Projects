@@ -1,21 +1,23 @@
 """Forecasting: standalone LSTM trainer (legacy script)."""
+
 from __future__ import annotations
 
 import argparse
 import json
-import yaml
-import joblib
-import pandas as pd
 from pathlib import Path
 
+import joblib
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+import yaml
 from sklearn.preprocessing import StandardScaler
+from torch.utils.data import DataLoader
 
+from orius.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
 from orius.forecasting.dl_lstm import LSTMForecaster
-from orius.forecasting.datasets import TimeSeriesWindowDataset, SeqConfig
+
 
 def train_epoch(model, loader, optimizer, criterion, device):
     """Run one training epoch for the LSTM."""
@@ -23,15 +25,16 @@ def train_epoch(model, loader, optimizer, criterion, device):
     total_loss = 0.0
     for X_batch, y_batch in loader:
         X_batch, y_batch = X_batch.to(device), y_batch.to(device)
-        
+
         optimizer.zero_grad()
         preds = model(X_batch)
         loss = criterion(preds, y_batch)
         loss.backward()
         optimizer.step()
-        
+
         total_loss += loss.item() * X_batch.size(0)
     return total_loss / len(loader.dataset)
+
 
 def validate(model, loader, criterion, device):
     """Evaluate on the validation set."""
@@ -45,6 +48,7 @@ def validate(model, loader, criterion, device):
             total_loss += loss.item() * X_batch.size(0)
     return total_loss / len(loader.dataset)
 
+
 def main():
     """CLI entrypoint for the legacy LSTM trainer."""
     parser = argparse.ArgumentParser(description="Train LSTM Forecaster")
@@ -57,7 +61,7 @@ def main():
     # 1) Load config.
     with open(args.config) as f:
         cfg = yaml.safe_load(f)
-    
+
     target_col = cfg.get("target", "load_mw")
     feature_cols = cfg.get("features", [])
     train_cfg = cfg.get("training", {})
@@ -68,16 +72,13 @@ def main():
     batch_size = train_cfg.get("batch_size", 64)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    print(f"Training LSTM on {device}. Target: {target_col}")
-
     # 2) Load data splits.
     train_df = pd.read_parquet(args.train_path)
     val_df = pd.read_parquet(args.val_path)
 
     # 3) Leakage-free scaling: fit scaler ONLY on training data.
-    print("Scaling data (fit on train only)...")
     scaler = StandardScaler()
-    
+
     # We scale all input features. If target is in features, it gets scaled too.
     X_train_raw = train_df[feature_cols].values
     X_val_raw = val_df[feature_cols].values
@@ -88,15 +89,15 @@ def main():
     # We also need to know which column index is the target to extract y
     try:
         target_idx = feature_cols.index(target_col)
-    except ValueError:
-        raise ValueError(f"Target {target_col} must be in features list for this implementation.")
+    except ValueError as exc:
+        raise ValueError(f"Target {target_col} must be in features list for this implementation.") from exc
 
     y_train_scaled = X_train_scaled[:, target_idx]
     y_val_scaled = X_val_scaled[:, target_idx]
 
     # 4) Create sequence datasets.
     seq_cfg = SeqConfig(lookback=lookback, horizon=horizon)
-    
+
     train_ds = TimeSeriesWindowDataset(X_train_scaled, y_train_scaled, seq_cfg)
     val_ds = TimeSeriesWindowDataset(X_val_scaled, y_val_scaled, seq_cfg)
 
@@ -109,7 +110,7 @@ def main():
         hidden_size=model_cfg.get("hidden_size", 64),
         num_layers=model_cfg.get("num_layers", 2),
         dropout=model_cfg.get("dropout", 0.1),
-        horizon=horizon
+        horizon=horizon,
     ).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=train_cfg.get("learning_rate", 1e-3))
@@ -119,17 +120,14 @@ def main():
     best_val_loss = float("inf")
     patience = train_cfg.get("patience", 5)
     patience_counter = 0
-    
+
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     model_path = out_dir / "lstm_model.pt"
 
-    print("Starting training...")
-    for epoch in range(train_cfg.get("epochs", 20)):
-        train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
+    for _epoch in range(train_cfg.get("epochs", 20)):
+        train_epoch(model, train_loader, optimizer, criterion, device)
         val_loss = validate(model, val_loader, criterion, device)
-        
-        print(f"Epoch {epoch+1}: Train Loss={train_loss:.4f}, Val Loss={val_loss:.4f}")
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
@@ -138,19 +136,17 @@ def main():
         else:
             patience_counter += 1
             if patience_counter >= patience:
-                print("Early stopping triggered.")
                 break
 
     # 7) Save artifacts.
     scaler_path = out_dir / "lstm_scaler.pkl"
     joblib.dump(scaler, scaler_path)
-    print(f"Saved model to {model_path}")
-    print(f"Saved scaler to {scaler_path}")
-    
+
     # Save metadata
     meta = {"features": feature_cols, "target": target_col, "target_idx": target_idx, "config": cfg}
     with open(out_dir / "lstm_meta.json", "w") as f:
         json.dump(meta, f, indent=2)
+
 
 if __name__ == "__main__":
     main()

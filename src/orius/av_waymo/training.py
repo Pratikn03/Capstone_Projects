@@ -1,13 +1,13 @@
 """Training and calibration helpers for the Waymo AV dry run."""
+
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
 import hashlib
 import json
-from pathlib import Path
 import pickle
-import sys
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -18,7 +18,7 @@ import pyarrow.parquet as pq
 from orius.forecasting.ml_gbm import predict_gbm, train_gbm
 from orius.forecasting.uncertainty.conformal import ConformalConfig, ConformalInterval, save_conformal
 from orius.forecasting.uncertainty.shift_aware import ShiftAwareConfig
-
+from orius.release.artifact_loader import load_pickle_artifact
 
 HORIZON_LABELS: dict[str, int] = {"1s": 10, "2s": 20, "4s": 40}
 TARGETS = ("ego_speed_mps", "relative_gap_m")
@@ -47,7 +47,7 @@ META_COLUMNS = {
 
 
 def _emit_progress(event: Mapping[str, Any]) -> None:
-    print(json.dumps(event, sort_keys=True), file=sys.stderr, flush=True)
+    pass
 
 
 @dataclass(slots=True)
@@ -99,7 +99,10 @@ def assign_split(scenario_id: str) -> str:
 def assign_balanced_splits(scenario_ids: Iterable[str]) -> dict[str, str]:
     """Assign deterministic non-empty train/calibration/val/test splits for bounded surfaces."""
     labels = ("train", "calibration", "val", "test")
-    unique_ids = sorted({str(scenario_id) for scenario_id in scenario_ids}, key=lambda value: hashlib.sha256(value.encode("utf-8")).hexdigest())
+    unique_ids = sorted(
+        {str(scenario_id) for scenario_id in scenario_ids},
+        key=lambda value: hashlib.sha256(value.encode("utf-8")).hexdigest(),
+    )
     if len(unique_ids) < len(labels):
         return {scenario_id: assign_split(scenario_id) for scenario_id in unique_ids}
     return {scenario_id: labels[index % len(labels)] for index, scenario_id in enumerate(unique_ids)}
@@ -112,12 +115,14 @@ def _has_value(value: Any) -> bool:
         if pd.isna(value):
             return False
     except (TypeError, ValueError):
-        pass
+        return str(value) != ""
     return str(value) != ""
 
 
 def _split_strategy_error(split_strategy: str) -> ValueError:
-    return ValueError(f"Unsupported split_strategy={split_strategy!r}; expected one of {SUPPORTED_SPLIT_STRATEGIES}.")
+    return ValueError(
+        f"Unsupported split_strategy={split_strategy!r}; expected one of {SUPPORTED_SPLIT_STRATEGIES}."
+    )
 
 
 def _read_split_metadata(replay_windows_path: Path) -> tuple[pd.DataFrame, list[str]]:
@@ -135,7 +140,10 @@ def _group_key(row: pd.Series) -> tuple[str, list[str]]:
     if _has_value(row.get("source_archive_id")) and _has_value(row.get("db_entry")):
         return f"archive={row['source_archive_id']}|db={row['db_entry']}", ["source_archive_id", "db_entry"]
     if _has_value(row.get("source_archive_id")) and _has_value(row.get("shard_id")):
-        return f"archive={row['source_archive_id']}|shard={row['shard_id']}", ["source_archive_id", "shard_id"]
+        return f"archive={row['source_archive_id']}|shard={row['shard_id']}", [
+            "source_archive_id",
+            "shard_id",
+        ]
     if _has_value(row.get("shard_id")):
         return f"shard={row['shard_id']}", ["shard_id"]
     return f"scenario={row['scenario_id']}", ["scenario_id"]
@@ -172,7 +180,9 @@ def _target_split_counts(n_items: int) -> dict[str, int]:
     return counts
 
 
-def assign_grouped_archive_db_city_splits(scenario_frame: pd.DataFrame) -> tuple[dict[str, str], dict[str, Any]]:
+def assign_grouped_archive_db_city_splits(
+    scenario_frame: pd.DataFrame,
+) -> tuple[dict[str, str], dict[str, Any]]:
     """Assign 70/10/10/10 splits by nuPlan archive+DB group, stratified by city."""
     if "scenario_id" not in scenario_frame.columns:
         raise ValueError("scenario_frame must include scenario_id for grouped AV splitting.")
@@ -197,7 +207,7 @@ def assign_grouped_archive_db_city_splits(scenario_frame: pd.DataFrame) -> tuple
     for city, city_groups in group_frame.groupby("_split_city", sort=True):
         ordered_group_keys = sorted(
             city_groups["_split_group_key"].astype(str).tolist(),
-            key=lambda value: hashlib.sha256(f"{city}|{value}".encode("utf-8")).hexdigest(),
+            key=lambda value: hashlib.sha256(f"{city}|{value}".encode()).hexdigest(),
         )
         target_counts = _target_split_counts(len(ordered_group_keys))
         offset = 0
@@ -215,14 +225,21 @@ def assign_grouped_archive_db_city_splits(scenario_frame: pd.DataFrame) -> tuple
     metadata = {
         "split_group_columns": sorted(group_columns_seen),
         "split_group_count": int(group_frame["_split_group_key"].nunique()),
-        "split_group_counts": {str(key): int(value) for key, value in group_frame["split"].value_counts().sort_index().items()},
+        "split_group_counts": {
+            str(key): int(value) for key, value in group_frame["split"].value_counts().sort_index().items()
+        },
         "split_city_group_counts": {
-            str(city): {str(key): int(value) for key, value in city_frame["split"].value_counts().sort_index().items()}
+            str(city): {
+                str(key): int(value) for key, value in city_frame["split"].value_counts().sort_index().items()
+            }
             for city, city_frame in group_frame.groupby("_split_city", sort=True)
         },
         "split_weights": {key: float(value) for key, value in SPLIT_WEIGHTS.items()},
     }
-    split_map = {str(row["scenario_id"]): str(row["split"]) for _, row in frame.drop_duplicates("scenario_id").iterrows()}
+    split_map = {
+        str(row["scenario_id"]): str(row["split"])
+        for _, row in frame.drop_duplicates("scenario_id").iterrows()
+    }
     return split_map, metadata
 
 
@@ -339,12 +356,16 @@ def build_feature_tables(
         )
         step_features["split"] = step_features["scenario_id"].astype(str).map(split_map)
         if step_features["split"].isna().any():
-            missing = sorted(step_features.loc[step_features["split"].isna(), "scenario_id"].astype(str).unique())
+            missing = sorted(
+                step_features.loc[step_features["split"].isna(), "scenario_id"].astype(str).unique()
+            )
             raise ValueError(f"Feature split map is missing scenario IDs: {missing[:5]}")
         step_features_path = out_path / "step_features.parquet"
         step_features.to_parquet(step_features_path, index=False)
 
-        anchor_features = step_features[step_features["step_index"] == int(step_features["step_index"].min())].copy()
+        anchor_features = step_features[
+            step_features["step_index"] == int(step_features["step_index"].min())
+        ].copy()
         anchor_features_path = out_path / "anchor_features.parquet"
         anchor_features.to_parquet(anchor_features_path, index=False)
 
@@ -358,7 +379,10 @@ def build_feature_tables(
             "anchor_row_count": int(len(anchor_features)),
             "scenario_count": int(anchor_features["scenario_id"].nunique()),
             "split_strategy": split_strategy,
-            "split_counts": {str(key): int(value) for key, value in anchor_features["split"].value_counts().sort_index().items()},
+            "split_counts": {
+                str(key): int(value)
+                for key, value in anchor_features["split"].value_counts().sort_index().items()
+            },
             **split_metadata,
             "artifacts": {
                 "step_features": str(step_features_path),
@@ -376,7 +400,7 @@ def build_feature_tables(
             "split_strategy": split_strategy,
         }
     )
-    scenario_index_path = replay_windows_path.parent / "scenario_index.parquet"
+    replay_windows_path.parent / "scenario_index.parquet"
     scenario_frame, _ = _read_split_metadata(replay_windows_path)
     split_map, split_metadata = _split_map_for_strategy(
         scenario_frame=scenario_frame,
@@ -478,7 +502,10 @@ def build_feature_tables(
         "scenario_count": int(anchor_features["scenario_id"].nunique()),
         "split_strategy": split_strategy,
         "streaming": True,
-        "split_counts": {str(key): int(value) for key, value in anchor_features["split"].value_counts().sort_index().items()},
+        "split_counts": {
+            str(key): int(value)
+            for key, value in anchor_features["split"].value_counts().sort_index().items()
+        },
         **split_metadata,
         "artifacts": {
             "step_features": str(step_features_path),
@@ -503,7 +530,9 @@ def _raw_feature_columns(df: pd.DataFrame) -> list[str]:
     return [col for col in df.columns if col not in META_COLUMNS and col not in target_cols]
 
 
-def prepare_feature_matrix(df: pd.DataFrame, *, feature_columns: list[str] | None = None) -> tuple[pd.DataFrame, list[str]]:
+def prepare_feature_matrix(
+    df: pd.DataFrame, *, feature_columns: list[str] | None = None
+) -> tuple[pd.DataFrame, list[str]]:
     work = df.copy()
     bool_cols = [col for col in work.columns if work[col].dtype == bool]
     for col in bool_cols:
@@ -521,7 +550,9 @@ def _feature_stats(matrix: pd.DataFrame) -> tuple[dict[str, float], dict[str, fl
     return mean, std
 
 
-def _estimate_shift_scores(matrix: pd.DataFrame, feature_mean: Mapping[str, float], feature_std: Mapping[str, float]) -> np.ndarray:
+def _estimate_shift_scores(
+    matrix: pd.DataFrame, feature_mean: Mapping[str, float], feature_std: Mapping[str, float]
+) -> np.ndarray:
     z_values = []
     for col in matrix.columns:
         mean = float(feature_mean[col])
@@ -540,7 +571,9 @@ def widening_factor(reliability: np.ndarray, shift_score: np.ndarray) -> np.ndar
     return np.clip(factor, 1.0, 3.0)
 
 
-def widen_bounds(lower: np.ndarray, upper: np.ndarray, reliability: np.ndarray, shift_score: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def widen_bounds(
+    lower: np.ndarray, upper: np.ndarray, reliability: np.ndarray, shift_score: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     center = 0.5 * (lower + upper)
     half_width = 0.5 * (upper - lower)
     factor = widening_factor(reliability, shift_score)
@@ -678,7 +711,9 @@ def train_dry_run_models(
                     "split": split_name,
                     "base_coverage": float(np.mean((y_split >= lower) & (y_split <= upper))),
                     "base_mean_width": float(np.mean(upper - lower)),
-                    "widened_coverage": float(np.mean((y_split >= widened_lower) & (y_split <= widened_upper))),
+                    "widened_coverage": float(
+                        np.mean((y_split >= widened_lower) & (y_split <= widened_upper))
+                    ),
                     "widened_mean_width": float(np.mean(widened_upper - widened_lower)),
                     "mean_widening_factor": float(np.mean(factor)),
                 }
@@ -754,8 +789,7 @@ def train_dry_run_models(
 
 
 def load_model_bundle(path: str | Path) -> ModelBundle:
-    with Path(path).open("rb") as handle:
-        payload = pickle.load(handle)
+    payload = load_pickle_artifact(path)
     return ModelBundle(
         target=str(payload["target"]),
         horizon_label=str(payload["horizon_label"]),
@@ -769,7 +803,9 @@ def load_model_bundle(path: str | Path) -> ModelBundle:
     )
 
 
-def predict_interval_from_bundle(bundle: ModelBundle, feature_frame: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def predict_interval_from_bundle(
+    bundle: ModelBundle, feature_frame: pd.DataFrame
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     X, _ = prepare_feature_matrix(feature_frame.copy(), feature_columns=bundle.feature_columns)
     lower = predict_gbm(bundle.lower_model, X) - bundle.qhat
     upper = predict_gbm(bundle.upper_model, X) + bundle.qhat

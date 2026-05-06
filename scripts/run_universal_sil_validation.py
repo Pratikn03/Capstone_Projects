@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Generate software-in-loop validation artifacts for peer ORIUS domains."""
+
 from __future__ import annotations
 
 import argparse
 import csv
-from copy import deepcopy
 import json
 import os
 import statistics
 import sys
+from copy import deepcopy
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -21,10 +22,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-
 from _dataset_registry import get_runtime_dataset_config, get_runtime_dataset_path
 from run_all_domain_eval import DOMAINS, eval_domain
-
 
 RUNTIME_DOMAINS = ("av", "healthcare")
 MAX_P95_LATENCY_MS = 50.0
@@ -157,11 +156,19 @@ def main() -> int:
                 "maturity_tier": maturity_tier,
                 "support_tier_enabled": allow_support_tier,
                 "data_source": episodes[0]["data_source"],
-                "baseline_tsvr_mean": round(_mean([float(ep["violation_rate_before_pct"]) for ep in episodes]), 2),
-                "orius_tsvr_mean": round(_mean([float(ep["violation_rate_after_pct"]) for ep in episodes]), 2),
+                "baseline_tsvr_mean": round(
+                    _mean([float(ep["violation_rate_before_pct"]) for ep in episodes]), 2
+                ),
+                "orius_tsvr_mean": round(
+                    _mean([float(ep["violation_rate_after_pct"]) for ep in episodes]), 2
+                ),
                 "repair_rate_pct": round(_mean([float(ep["repair_rate_pct"]) for ep in episodes]), 2),
-                "certificate_rate_pct": round(_mean([float(ep["certificate_rate_pct"]) for ep in episodes]), 2),
-                "runtime_error_rate_pct": round(_mean([float(ep["runtime_error_rate_pct"]) for ep in episodes]), 2),
+                "certificate_rate_pct": round(
+                    _mean([float(ep["certificate_rate_pct"]) for ep in episodes]), 2
+                ),
+                "runtime_error_rate_pct": round(
+                    _mean([float(ep["runtime_error_rate_pct"]) for ep in episodes]), 2
+                ),
                 "mean_reliability": round(_mean([float(ep["mean_reliability"]) for ep in episodes]), 4),
                 "p95_latency_ms": round(_mean([float(ep["p95_latency_ms"]) for ep in episodes]), 3),
                 "sil_pass": all(

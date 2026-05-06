@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Refresh repo-truthful provenance manifests for the active 3-domain ORIUS program."""
+
 from __future__ import annotations
 
 import argparse
@@ -19,7 +20,6 @@ from orius.data_pipeline.real_data_contract import (
     utc_now_iso,
     write_json,
 )
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 STATUS_REPORT_PATH = REPO_ROOT / "reports" / "real_data_contract_status.json"
@@ -240,7 +240,9 @@ REFRESHERS = {
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Refresh ORIUS real-data manifests for the active 3-domain program")
+    parser = argparse.ArgumentParser(
+        description="Refresh ORIUS real-data manifests for the active 3-domain program"
+    )
     parser.add_argument("--domain", dest="domains", action="append", choices=sorted(REFRESHERS.keys()))
     args = parser.parse_args()
 

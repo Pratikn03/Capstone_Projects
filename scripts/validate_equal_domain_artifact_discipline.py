@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate equal artifact-discipline outputs for Battery, AV, and Healthcare."""
+
 from __future__ import annotations
 
 import csv
@@ -7,10 +8,11 @@ import json
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
-AV_RUNTIME_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+AV_RUNTIME_DIR = (
+    REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+)
 PROMOTED_RUNTIME_MAX_TSVR = 1e-3
 PROMOTED_RUNTIME_MIN_PASS_RATE = 1.0 - PROMOTED_RUNTIME_MAX_TSVR
 
@@ -81,9 +83,13 @@ def main() -> int:
     findings: list[str] = []
     gate_rows = _read_csv(PUBLICATION_DIR / "equal_domain_artifact_discipline.csv")
     if {row["domain"] for row in gate_rows} != REQUIRED_DOMAINS:
-        findings.append("equal_domain_artifact_discipline.csv must contain exactly the three promoted domains")
+        findings.append(
+            "equal_domain_artifact_discipline.csv must contain exactly the three promoted domains"
+        )
 
-    payload = json.loads((PUBLICATION_DIR / "equal_domain_artifact_discipline.json").read_text(encoding="utf-8"))
+    payload = json.loads(
+        (PUBLICATION_DIR / "equal_domain_artifact_discipline.json").read_text(encoding="utf-8")
+    )
     if payload.get("claim_scope") != "equal_artifact_discipline_not_equal_universal_closure":
         findings.append("equal-domain JSON must preserve the non-universal-closure claim scope")
 
@@ -112,7 +118,7 @@ def main() -> int:
             findings.append(f"{domain}: runtime_comparator_traces.csv is empty")
 
         families = {item["baseline_family"] for item in comparator_rows}
-        if not REQUIRED_BASELINE_FAMILIES <= families:
+        if not families >= REQUIRED_BASELINE_FAMILIES:
             findings.append(f"{domain}: missing required baseline families")
         for item in comparator_rows:
             if item["metric_surface"] != "runtime_denominator":
@@ -121,12 +127,15 @@ def main() -> int:
                 findings.append(f"{domain}: forbidden comparator surface/status in {item['baseline_family']}")
         if domain in {"Autonomous Vehicles", "Medical and Healthcare Monitoring"}:
             independent_rows = [
-                item for item in comparator_rows
+                item
+                for item in comparator_rows
                 if item.get("baseline_family") not in {"orius_full_stack", "degenerate_fallback_runtime"}
             ]
             controllers = [item.get("controller", "") for item in independent_rows]
             if any(item.get("independent_baseline") != "True" for item in independent_rows):
-                findings.append(f"{domain}: claim-carrying baselines must be marked independent_baseline=True")
+                findings.append(
+                    f"{domain}: claim-carrying baselines must be marked independent_baseline=True"
+                )
             if len(controllers) != len(set(controllers)):
                 findings.append(f"{domain}: claim-carrying baselines must use unique controllers")
 
@@ -141,7 +150,10 @@ def main() -> int:
             findings.append(f"{domain}: ORIUS runtime_witness_pass_rate below promoted pass-rate floor")
         if _safe_float(orius.get("useful_work_total")) <= _safe_float(degenerate.get("useful_work_total")):
             findings.append(f"{domain}: ORIUS useful work must exceed degenerate fallback")
-        if domain in {"Autonomous Vehicles", "Medical and Healthcare Monitoring"} and _safe_float(orius.get("fallback_activation_rate")) > 0.50:
+        if (
+            domain in {"Autonomous Vehicles", "Medical and Healthcare Monitoring"}
+            and _safe_float(orius.get("fallback_activation_rate")) > 0.50
+        ):
             findings.append(f"{domain}: ORIUS fallback/max-alert rate must be <= 0.50")
 
         if {item["ablation_name"] for item in ablation_rows} != REQUIRED_ABLATIONS:
@@ -156,9 +168,13 @@ def main() -> int:
             findings.append(f"{domain}: negative controls must exactly cover required controls")
         for item in negative_rows:
             if item["surface"] != "runtime_denominator":
-                findings.append(f"{domain}: negative control {item['control_name']} is not runtime_denominator")
+                findings.append(
+                    f"{domain}: negative control {item['control_name']} is not runtime_denominator"
+                )
             if _forbidden(item.get("surface", "")) or _forbidden(item.get("status", "")):
-                findings.append(f"{domain}: forbidden negative-control surface/status in {item['control_name']}")
+                findings.append(
+                    f"{domain}: forbidden negative-control surface/status in {item['control_name']}"
+                )
 
     manifest_path = PUBLICATION_DIR / "equal_domain_reproducibility_manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))

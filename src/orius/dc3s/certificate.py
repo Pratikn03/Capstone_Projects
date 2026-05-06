@@ -1,18 +1,26 @@
 """Dispatch certification and audit persistence for DC3S."""
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import contextlib
 import hashlib
 import hmac
 import json
 import os
+from collections.abc import Iterable, Mapping
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
+from uuid import uuid4
 
-import numpy as np
 import duckdb
+import numpy as np
 import pandas as pd
 
+from orius.security.policy import (
+    get_active_certificate_key_id,
+    get_certificate_key,
+)
 
 CERTIFICATE_SCHEMA_VERSION = "orius.certificate.v1"
 DEFAULT_CERTIFICATE_ISSUER = "orius.runtime"
@@ -29,11 +37,11 @@ def _to_json_safe(obj: Any) -> Any:
     """Convert numpy types to JSON-serializable Python types."""
     if isinstance(obj, np.ndarray):
         return obj.tolist()
-    if isinstance(obj, (np.floating, np.integer)):
+    if isinstance(obj, np.floating | np.integer):
         return float(obj) if isinstance(obj, np.floating) else int(obj)
     if isinstance(obj, dict):
         return {k: _to_json_safe(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple)):
+    if isinstance(obj, list | tuple):
         return [_to_json_safe(x) for x in obj]
     return obj
 
@@ -62,11 +70,16 @@ def _certificate_signature_payload(certificate: Mapping[str, Any]) -> bytes:
     return _canonical_bytes(payload)
 
 
-def _resolve_signing_secret(secret: str | bytes | None = None) -> bytes:
+def _resolve_signing_secret(secret: str | bytes | None = None, *, key_id: str | None = None) -> bytes:
     if isinstance(secret, bytes):
         key = secret
     else:
-        key_text = secret if secret is not None else os.getenv("ORIUS_CERTIFICATE_SIGNING_KEY", "")
+        configured_secret = get_certificate_key(key_id) if secret is None else None
+        key_text = (
+            secret
+            if secret is not None
+            else configured_secret or os.getenv("ORIUS_CERTIFICATE_SIGNING_KEY", "")
+        )
         key = str(key_text).encode("utf-8")
     if not key:
         raise RuntimeError("certificate signing key is required")
@@ -133,10 +146,8 @@ def normalize_certificate_schema(
                     continue
 
     if cert.get("expires_at_step") in (None, "") and cert.get("validity_horizon_H_t") not in (None, ""):
-        try:
+        with contextlib.suppress(TypeError, ValueError):
             cert["expires_at_step"] = int(cert.get("validity_horizon_H_t"))
-        except (TypeError, ValueError):
-            pass
 
     cert.setdefault("theorem_contracts", {})
     cert.setdefault("signature", None)
@@ -206,7 +217,7 @@ def make_certificate(
         "public_key_id": public_key_id,
         "command_id": command_id,
         "certificate_id": command_id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "device_id": device_id,
         "zone_id": zone_id,
         "controller": controller,
@@ -226,11 +237,15 @@ def make_certificate(
         "inflation": float(inflation) if inflation is not None else None,
         "validity_score": float(validity_score) if validity_score is not None else None,
         "adaptive_quantile": float(adaptive_quantile) if adaptive_quantile is not None else None,
-        "conditional_coverage_gap": float(conditional_coverage_gap) if conditional_coverage_gap is not None else None,
+        "conditional_coverage_gap": float(conditional_coverage_gap)
+        if conditional_coverage_gap is not None
+        else None,
         "runtime_interval_policy": runtime_interval_policy,
         "coverage_group_key": coverage_group_key,
         "shift_alert_flag": bool(shift_alert_flag) if shift_alert_flag is not None else None,
-        "guarantee_checks_passed": bool(guarantee_checks_passed) if guarantee_checks_passed is not None else None,
+        "guarantee_checks_passed": bool(guarantee_checks_passed)
+        if guarantee_checks_passed is not None
+        else None,
         "guarantee_fail_reasons": list(guarantee_fail_reasons or []),
         "true_soc_violation_after_apply": (
             bool(true_soc_violation_after_apply) if true_soc_violation_after_apply is not None else None
@@ -274,10 +289,11 @@ def sign_certificate(
     if not verification["valid"]:
         raise RuntimeError(f"cannot sign invalid certificate: {verification['reason']}")
 
+    resolved_key_id = key_id or get_active_certificate_key_id()
     cert["signature_algorithm"] = CERTIFICATE_SIGNATURE_ALGORITHM
-    cert["public_key_id"] = key_id or os.getenv("ORIUS_CERTIFICATE_KEY_ID", DEFAULT_CERTIFICATE_KEY_ID)
+    cert["public_key_id"] = resolved_key_id
     cert["signature"] = hmac.new(
-        _resolve_signing_secret(secret),
+        _resolve_signing_secret(secret, key_id=resolved_key_id),
         _certificate_signature_payload(cert),
         hashlib.sha256,
     ).hexdigest()
@@ -292,7 +308,12 @@ def verify_certificate_signature(
     cert = normalize_certificate_schema(certificate)
     observed = cert.get("signature")
     if observed in (None, ""):
-        return {"valid": False, "reason": "signature_missing", "expected_signature": None, "observed_signature": observed}
+        return {
+            "valid": False,
+            "reason": "signature_missing",
+            "expected_signature": None,
+            "observed_signature": observed,
+        }
     if cert.get("signature_algorithm") != CERTIFICATE_SIGNATURE_ALGORITHM:
         return {
             "valid": False,
@@ -301,9 +322,14 @@ def verify_certificate_signature(
             "observed_signature": observed,
         }
     try:
-        secret_bytes = _resolve_signing_secret(secret)
+        secret_bytes = _resolve_signing_secret(secret, key_id=str(cert.get("public_key_id") or ""))
     except RuntimeError:
-        return {"valid": False, "reason": "signing_key_missing", "expected_signature": None, "observed_signature": observed}
+        return {
+            "valid": False,
+            "reason": "signing_key_missing",
+            "expected_signature": None,
+            "observed_signature": observed,
+        }
     expected = hmac.new(secret_bytes, _certificate_signature_payload(cert), hashlib.sha256).hexdigest()
     valid = hmac.compare_digest(str(observed), expected)
     return {
@@ -336,7 +362,9 @@ def verify_certificate(
         "observed_hash": observed_hash,
         "expected_hash": expected_hash,
         "signature": signature_verification,
-        "reason": None if valid else (
+        "reason": None
+        if valid
+        else (
             str(signature_verification["reason"]) if signature_verification is not None else "hash_mismatch"
         ),
     }
@@ -412,7 +440,9 @@ def _table_columns(conn: duckdb.DuckDBPyConnection, table_name: str) -> set[str]
     return {str(row[1]) for row in rows}
 
 
-def _add_column_if_missing(conn: duckdb.DuckDBPyConnection, table_name: str, column_name: str, column_type: str) -> None:
+def _add_column_if_missing(
+    conn: duckdb.DuckDBPyConnection, table_name: str, column_name: str, column_type: str
+) -> None:
     if column_name in _table_columns(conn, table_name):
         return
     conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
@@ -484,6 +514,122 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
     _add_column_if_missing(conn, table_name, "reliability_feature_basis", "VARCHAR")
 
 
+def _event_table_name(table_name: str) -> str:
+    return f"{table_name}_events"
+
+
+def _ensure_event_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> str:
+    event_table = _event_table_name(table_name)
+    conn.execute(
+        f"""
+        CREATE TABLE IF NOT EXISTS {event_table} (
+            event_id VARCHAR PRIMARY KEY,
+            command_id VARCHAR,
+            certificate_hash VARCHAR,
+            prev_hash VARCHAR,
+            event_hash VARCHAR,
+            prev_event_hash VARCHAR,
+            payload_json VARCHAR,
+            signature VARCHAR,
+            public_key_id VARCHAR,
+            created_at VARCHAR
+        )
+        """
+    )
+    return event_table
+
+
+def _latest_event_hash(conn: duckdb.DuckDBPyConnection, event_table: str) -> str | None:
+    row = conn.execute(
+        f"""
+        SELECT event_hash
+        FROM {event_table}
+        ORDER BY created_at DESC, event_id DESC
+        LIMIT 1
+        """
+    ).fetchone()
+    return None if row is None else str(row[0])
+
+
+def _event_hash(
+    *,
+    command_id: str,
+    certificate_hash: str,
+    prev_event_hash: str | None,
+    payload_json: str,
+) -> str:
+    return _sha256_bytes(
+        _canonical_bytes(
+            {
+                "command_id": command_id,
+                "certificate_hash": certificate_hash,
+                "prev_event_hash": prev_event_hash,
+                "payload_json": payload_json,
+            }
+        )
+    )
+
+
+def _store_certificate_event(
+    conn: duckdb.DuckDBPyConnection,
+    *,
+    certificate: Mapping[str, Any],
+    table_name: str,
+) -> None:
+    event_table = _ensure_event_store(conn, table_name)
+    command_id = str(certificate.get("command_id"))
+    certificate_hash = str(certificate.get("certificate_hash"))
+    existing = conn.execute(
+        f"""
+        SELECT certificate_hash
+        FROM {event_table}
+        WHERE command_id = ?
+        """,
+        [command_id],
+    ).fetchall()
+    if any(str(row[0]) == certificate_hash for row in existing):
+        return
+    if existing:
+        raise RuntimeError(f"conflicting certificate overwrite rejected for command_id={command_id}")
+
+    payload_json = json.dumps(certificate, ensure_ascii=True, sort_keys=True)
+    prev_event_hash = _latest_event_hash(conn, event_table)
+    event_hash = _event_hash(
+        command_id=command_id,
+        certificate_hash=certificate_hash,
+        prev_event_hash=prev_event_hash,
+        payload_json=payload_json,
+    )
+    conn.execute(
+        f"""
+        INSERT INTO {event_table} (
+            event_id,
+            command_id,
+            certificate_hash,
+            prev_hash,
+            event_hash,
+            prev_event_hash,
+            payload_json,
+            signature,
+            public_key_id,
+            created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            str(uuid4()),
+            command_id,
+            certificate_hash,
+            certificate.get("prev_hash"),
+            event_hash,
+            prev_event_hash,
+            payload_json,
+            certificate.get("signature"),
+            certificate.get("public_key_id"),
+            datetime.now(UTC).isoformat(),
+        ],
+    )
+
+
 def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_name: str) -> None:
     certificate = normalize_certificate_schema(certificate)
     db_path = Path(duckdb_path)
@@ -491,6 +637,7 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
     conn = duckdb.connect(str(db_path))
     try:
         _ensure_store(conn, table_name)
+        _store_certificate_event(conn, certificate=certificate, table_name=table_name)
         conn.execute(_insert_sql(table_name), _certificate_row(certificate))
     finally:
         conn.close()
@@ -579,8 +726,11 @@ def _certificate_row(certificate: Mapping[str, Any]) -> list[Any]:
     ]
 
 
-def store_certificates_batch(certificates: Iterable[Mapping[str, Any]], duckdb_path: str, table_name: str) -> None:
-    rows = [_certificate_row(certificate) for certificate in certificates]
+def store_certificates_batch(
+    certificates: Iterable[Mapping[str, Any]], duckdb_path: str, table_name: str
+) -> None:
+    normalized = [normalize_certificate_schema(certificate) for certificate in certificates]
+    rows = [_certificate_row(certificate) for certificate in normalized]
     if not rows:
         return
     db_path = Path(duckdb_path)
@@ -588,6 +738,98 @@ def store_certificates_batch(certificates: Iterable[Mapping[str, Any]], duckdb_p
     conn = duckdb.connect(str(db_path))
     try:
         _ensure_store(conn, table_name)
+        event_table = _ensure_event_store(conn, table_name)
+        existing_events = {
+            str(command_id): str(certificate_hash)
+            for command_id, certificate_hash in conn.execute(
+                f"""
+                SELECT command_id, certificate_hash
+                FROM {event_table}
+                """
+            ).fetchall()
+        }
+        prev_event_hash = _latest_event_hash(conn, event_table)
+        event_rows: list[dict[str, Any]] = []
+        created_at = datetime.now(UTC).isoformat()
+        for certificate in normalized:
+            command_id = str(certificate.get("command_id"))
+            certificate_hash = str(certificate.get("certificate_hash"))
+            existing_hash = existing_events.get(command_id)
+            if existing_hash == certificate_hash:
+                continue
+            if existing_hash is not None:
+                raise RuntimeError(f"conflicting certificate overwrite rejected for command_id={command_id}")
+
+            payload_json = json.dumps(certificate, ensure_ascii=True, sort_keys=True)
+            event_hash = _event_hash(
+                command_id=command_id,
+                certificate_hash=certificate_hash,
+                prev_event_hash=prev_event_hash,
+                payload_json=payload_json,
+            )
+            event_rows.append(
+                {
+                    "event_id": str(uuid4()),
+                    "command_id": command_id,
+                    "certificate_hash": certificate_hash,
+                    "prev_hash": certificate.get("prev_hash"),
+                    "event_hash": event_hash,
+                    "prev_event_hash": prev_event_hash,
+                    "payload_json": payload_json,
+                    "signature": certificate.get("signature"),
+                    "public_key_id": certificate.get("public_key_id"),
+                    "created_at": created_at,
+                }
+            )
+            existing_events[command_id] = certificate_hash
+            prev_event_hash = event_hash
+
+        if event_rows:
+            event_frame = pd.DataFrame(
+                event_rows,
+                columns=[
+                    "event_id",
+                    "command_id",
+                    "certificate_hash",
+                    "prev_hash",
+                    "event_hash",
+                    "prev_event_hash",
+                    "payload_json",
+                    "signature",
+                    "public_key_id",
+                    "created_at",
+                ],
+            )
+            conn.register("certificate_batch_event_rows", event_frame)
+            conn.execute(
+                f"""
+                INSERT INTO {event_table} (
+                    event_id,
+                    command_id,
+                    certificate_hash,
+                    prev_hash,
+                    event_hash,
+                    prev_event_hash,
+                    payload_json,
+                    signature,
+                    public_key_id,
+                    created_at
+                )
+                SELECT
+                    event_id,
+                    command_id,
+                    certificate_hash,
+                    prev_hash,
+                    event_hash,
+                    prev_event_hash,
+                    payload_json,
+                    signature,
+                    public_key_id,
+                    created_at
+                FROM certificate_batch_event_rows
+                """
+            )
+            conn.unregister("certificate_batch_event_rows")
         frame = pd.DataFrame(rows, columns=_INSERT_COLUMNS)
         conn.register("certificate_batch_rows", frame)
         conn.execute(
@@ -612,6 +854,19 @@ def get_certificate(command_id: str, duckdb_path: str, table_name: str) -> dict[
     conn = duckdb.connect(str(db_path))
     try:
         _ensure_store(conn, table_name)
+        event_table = _ensure_event_store(conn, table_name)
+        row = conn.execute(
+            f"""
+            SELECT payload_json
+            FROM {event_table}
+            WHERE command_id = ?
+            ORDER BY created_at DESC, event_id DESC
+            LIMIT 1
+            """,
+            [command_id],
+        ).fetchone()
+        if row is not None:
+            return json.loads(str(row[0]))
         row = conn.execute(
             f"SELECT payload_json FROM {table_name} WHERE command_id = ?",
             [command_id],
