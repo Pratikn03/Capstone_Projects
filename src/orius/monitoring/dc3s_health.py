@@ -11,6 +11,8 @@ import duckdb
 import numpy as np
 import yaml
 
+from orius.utils.sql import validate_sql_identifier
+
 DEFAULT_DC3S_HEALTH = {
     "enabled": True,
     "lookback_hours": 24,
@@ -227,6 +229,7 @@ def compute_dc3s_health(
         "sustained_breach_counts": {},
     }
 
+    validate_sql_identifier(table_name, "table name")
     db_path = Path(duckdb_path)
     if not db_path.exists():
         return output
