@@ -124,6 +124,7 @@ def test_run_dc3s_ablation_matrix_primary_gate_uses_sweep(monkeypatch, tmp_path:
         seeds=list(range(10)),
         horizon=24,
         cfg_path=cfg_path,
+        publication_dir=None,
     )
     assert payload["overall_pass"] is True
 
@@ -154,4 +155,5 @@ def test_run_dc3s_ablation_matrix_enforces_primary_gate(monkeypatch, tmp_path: P
             seeds=list(range(10)),
             horizon=24,
             cfg_path=cfg_path,
+            publication_dir=None,
         )

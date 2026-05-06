@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import shutil
 import subprocess
 import sys
@@ -12,6 +13,12 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_TEX = REPO_ROOT / "appendices" / "app_c_all_theorems.tex"
 OUTPUT_PDF = REPO_ROOT / "appendices" / "app_c_all_theorems.pdf"
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Build the standalone Appendix C all-theorems bundle")
+    parser.add_argument("--output-pdf", default=str(OUTPUT_PDF))
+    return parser.parse_args()
 
 
 def _run(cmd: list[str]) -> None:
@@ -44,6 +51,10 @@ def _build_with_pdflatex(outdir: Path) -> None:
 
 
 def main() -> int:
+    args = _parse_args()
+    output_pdf = Path(args.output_pdf)
+    if not output_pdf.is_absolute():
+        output_pdf = REPO_ROOT / output_pdf
     if not SOURCE_TEX.exists():
         raise SystemExit(f"missing source TeX: {SOURCE_TEX}")
 
@@ -62,9 +73,13 @@ def main() -> int:
         built_pdf = outdir / f"{SOURCE_TEX.stem}.pdf"
         if not built_pdf.exists():
             raise SystemExit(f"expected PDF not found: {built_pdf}")
-        shutil.copy2(built_pdf, OUTPUT_PDF)
+        output_pdf.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(built_pdf, output_pdf)
 
-    print(OUTPUT_PDF.relative_to(REPO_ROOT))
+    try:
+        print(output_pdf.relative_to(REPO_ROOT))
+    except ValueError:
+        print(output_pdf)
     return 0
 
 

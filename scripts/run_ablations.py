@@ -574,6 +574,7 @@ def run_dc3s_ablation_matrix(
     cfg_path: Path = Path("configs/dc3s_ablations.yaml"),
     precomputed_main_csv: Path | None = None,
     precomputed_sweep_csv: Path | None = None,
+    publication_dir: Path | None = Path("reports/publication"),
 ) -> dict:
     cfg = _load_dc3s_ablation_cfg(cfg_path)
     if len(seeds) != 10:
@@ -837,12 +838,16 @@ def run_dc3s_ablation_matrix(
     stats_summary["overall_pass"] = bool(primary_pass)
     stats_path.write_text(json.dumps(stats_summary, indent=2), encoding="utf-8")
 
-    publication_dir = Path("reports/publication")
-    publication_dir.mkdir(parents=True, exist_ok=True)
-    summary_df.to_csv(publication_dir / "table2_ablations.csv", index=False, float_format="%.6f")
-    (publication_dir / "stats_summary.json").write_text(
-        stats_path.read_text(encoding="utf-8"), encoding="utf-8"
-    )
+    if publication_dir is not None:
+        publication_dir.mkdir(parents=True, exist_ok=True)
+        summary_df.to_csv(
+            publication_dir / "table2_ablations.csv",
+            index=False,
+            float_format="%.6f",
+        )
+        (publication_dir / "stats_summary.json").write_text(
+            stats_path.read_text(encoding="utf-8"), encoding="utf-8"
+        )
 
     result = {
         "rows": int(len(summary_df)),

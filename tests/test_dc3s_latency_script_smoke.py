@@ -19,6 +19,8 @@ def test_dc3s_latency_script_smoke(tmp_path: Path) -> None:
             "20",
             "--out",
             str(out_path),
+            "--publication-csv",
+            "",
         ],
         cwd=repo_root,
         check=True,

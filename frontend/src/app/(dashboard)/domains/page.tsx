@@ -79,7 +79,7 @@ const DOMAINS: Domain[] = [
     ir: '0.0%',
     status: 'verified',
     statusLabel: 'Locked artifact',
-    description: 'Reference witness row for the defended battery proof spine. T5 is a definition; T8/T9/T10 are supporting; draft extensions stay out of the defended headline count.',
+    description: 'Reference witness row for the defended battery proof spine. T5 is a definition; T8 is supporting; T9/T10 are supporting rows; draft extensions stay out of the defended headline count.',
   },
   {
     key: 'av',

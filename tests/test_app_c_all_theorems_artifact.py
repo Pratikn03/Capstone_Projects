@@ -26,18 +26,19 @@ def test_app_c_all_theorems_sources_are_present_and_labeled() -> None:
     assert "All ORIUS Theorem Surfaces" in text
 
 
-def test_app_c_all_theorems_build_script_generates_pdf_when_toolchain_exists() -> None:
+def test_app_c_all_theorems_build_script_generates_pdf_when_toolchain_exists(tmp_path: Path) -> None:
     if shutil.which("latexmk") is None and shutil.which("pdflatex") is None:
         pytest.skip("latexmk/pdflatex not available")
 
+    output_pdf = tmp_path / "app_c_all_theorems.pdf"
     completed = subprocess.run(
-        [sys.executable, str(APPENDIX_SCRIPT)],
+        [sys.executable, str(APPENDIX_SCRIPT), "--output-pdf", str(output_pdf)],
         cwd=REPO_ROOT,
         check=True,
         capture_output=True,
         text=True,
     )
 
-    assert "appendices/app_c_all_theorems.pdf" in completed.stdout
-    assert APPENDIX_PDF.exists()
-    assert APPENDIX_PDF.stat().st_size > 0
+    assert str(output_pdf) in completed.stdout
+    assert output_pdf.exists()
+    assert output_pdf.stat().st_size > 0

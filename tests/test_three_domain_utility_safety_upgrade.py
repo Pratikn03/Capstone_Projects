@@ -27,12 +27,10 @@ def test_healthcare_interval_rows_use_calibration_bins_and_finite_sample_quantil
             }
         )
     calibration_rows.extend(
-        {"reliability": 0.5, "spo2_pct": 96.0, "forecast_spo2_pct": 96.0}
-        for _ in range(10)
+        {"reliability": 0.5, "spo2_pct": 96.0, "forecast_spo2_pct": 96.0} for _ in range(10)
     )
     calibration_rows.extend(
-        {"reliability": 1.0, "spo2_pct": 97.0, "forecast_spo2_pct": 97.0}
-        for _ in range(10)
+        {"reliability": 1.0, "spo2_pct": 97.0, "forecast_spo2_pct": 97.0} for _ in range(10)
     )
     eval_rows = [
         {"reliability": 0.1, "spo2_pct": 85.0, "forecast_spo2_pct": 95.0},

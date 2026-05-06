@@ -13,7 +13,9 @@ from orius.forecasting.stats import (
 )
 
 
-def _synthetic(seed: int = 0, n: int = 500, sigma_a: float = 1.0, sigma_b: float = 0.5) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _synthetic(
+    seed: int = 0, n: int = 500, sigma_a: float = 1.0, sigma_b: float = 0.5
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     rng = np.random.default_rng(seed)
     y = rng.normal(0.0, 2.0, n)
     pred_a = y + rng.normal(0.0, sigma_a, n)

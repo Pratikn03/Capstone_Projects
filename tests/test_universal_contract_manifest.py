@@ -77,7 +77,9 @@ def test_universal_contract_manifest_validator_fails_on_missing_domain_slot(tmp_
     result = validator.validate_manifest(manifest_path=manifest_path, summary_path=summary_path)
 
     assert result["pass"] is False
-    assert any("av: missing required universal contract slot runtime_trace" in item for item in result["failures"])
+    assert any(
+        "av: missing required universal contract slot runtime_trace" in item for item in result["failures"]
+    )
 
 
 def test_universal_contract_manifest_validator_fails_on_av_road_overclaim(tmp_path: Path) -> None:

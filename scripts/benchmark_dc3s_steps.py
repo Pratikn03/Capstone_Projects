@@ -37,6 +37,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--iterations", type=int, default=10000)
     parser.add_argument("--warmup", type=int, default=200)
     parser.add_argument("--out", default="reports/dc3s_latency_benchmark.json")
+    parser.add_argument(
+        "--publication-csv",
+        default="reports/publication/dc3s_latency_summary.csv",
+        help="Optional publication CSV output path. Use an empty string to disable.",
+    )
     return parser.parse_args()
 
 
@@ -366,7 +371,8 @@ def main() -> None:
         warmup=max(0, int(args.warmup)),
         out_path=Path(args.out),
     )
-    _write_latency_csv(payload["benchmarks"], REPO_ROOT / "reports/publication/dc3s_latency_summary.csv")
+    if str(args.publication_csv).strip():
+        _write_latency_csv(payload["benchmarks"], REPO_ROOT / str(args.publication_csv))
     print(_render_markdown_table(payload["benchmarks"]))
 
 

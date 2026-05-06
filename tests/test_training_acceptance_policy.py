@@ -8,14 +8,7 @@ from scripts.train_dataset import _evaluate_against_baseline
 
 def _write_metrics(path: Path, targets: dict[str, dict[str, float]]) -> None:
     path.write_text(
-        json.dumps(
-            {
-                "targets": {
-                    target: {"gbm": metrics}
-                    for target, metrics in targets.items()
-                }
-            }
-        ),
+        json.dumps({"targets": {target: {"gbm": metrics} for target, metrics in targets.items()}}),
         encoding="utf-8",
     )
 
@@ -68,9 +61,7 @@ def test_fast_profile_acceptance_allows_explicit_absolute_tolerance(tmp_path: Pa
                 "metric": "mape",
                 "metric_by_target": {"spo2_pct": "rmse"},
                 "profile_overrides": {
-                    "production-max-fast": {
-                        "absolute_regression_tolerance_by_target": {"spo2_pct": 0.06}
-                    }
+                    "production-max-fast": {"absolute_regression_tolerance_by_target": {"spo2_pct": 0.06}}
                 },
                 "require_non_regression": True,
             }
@@ -99,9 +90,7 @@ def test_strict_profile_rejects_same_regression_without_tolerance(tmp_path: Path
                 "metric": "mape",
                 "metric_by_target": {"spo2_pct": "rmse"},
                 "profile_overrides": {
-                    "production-max-fast": {
-                        "absolute_regression_tolerance_by_target": {"spo2_pct": 0.06}
-                    }
+                    "production-max-fast": {"absolute_regression_tolerance_by_target": {"spo2_pct": 0.06}}
                 },
                 "require_non_regression": True,
             }

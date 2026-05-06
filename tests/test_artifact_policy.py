@@ -29,10 +29,7 @@ def test_inventory_preserves_tracked_flag_for_untracked_paths(monkeypatch) -> No
 
     monkeypatch.setattr(artifact_classifier, "_git_paths", fake_git_paths)
 
-    rows = {
-        str(row["path"]): row
-        for row in artifact_classifier.iter_inventory(include_untracked=True)
-    }
+    rows = {str(row["path"]): row for row in artifact_classifier.iter_inventory(include_untracked=True)}
 
     assert rows["src/orius/dc3s/certificate.py"]["tracked"] is True
     assert rows["reports/run/runtime_traces.csv"]["tracked"] is False

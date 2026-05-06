@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from fastapi import APIRouter, Security
+from fastapi import APIRouter, Query, Security
 
 from orius.forecasting.predict import load_model_bundle
 from orius.monitoring.dc3s_health import compute_dc3s_health, load_dc3s_audit_config, load_dc3s_health_config
@@ -102,7 +102,12 @@ def _compute_dc3s_health_block(update_state: bool = False) -> dict[str, Any] | N
 
 
 @router.get("")
-def monitor(api_key: str = Security(get_api_key)) -> dict[str, Any]:
+def monitor(
+    api_key: str = Security(get_api_key),
+    write_report: bool = Query(
+        False, description="Write reports/monitoring_report.md as an explicit side effect."
+    ),
+) -> dict[str, Any]:
     verify_scope("read", api_key)
     cfg = load_monitoring_config()
     dc3s_health = _compute_dc3s_health_block(update_state=False)
@@ -122,7 +127,8 @@ def monitor(api_key: str = Security(get_api_key)) -> dict[str, Any]:
                 "last_trained_days_ago": decision.last_trained_days_ago,
             },
         }
-        write_monitoring_report(payload, out_path="reports/monitoring_report.md")
+        if write_report:
+            write_monitoring_report(payload, out_path="reports/monitoring_report.md")
         return payload
 
     df = pd.read_parquet(features_path).sort_values("timestamp")
@@ -184,7 +190,8 @@ def monitor(api_key: str = Security(get_api_key)) -> dict[str, Any]:
         },
     }
 
-    write_monitoring_report(payload, out_path="reports/monitoring_report.md")
+    if write_report:
+        write_monitoring_report(payload, out_path="reports/monitoring_report.md")
     return payload
 
 
