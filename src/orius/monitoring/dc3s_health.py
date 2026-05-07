@@ -11,6 +11,8 @@ import duckdb
 import numpy as np
 import yaml
 
+from orius.utils.sql import validate_sql_identifier
+
 DEFAULT_DC3S_HEALTH = {
     "enabled": True,
     "lookback_hours": 24,
@@ -227,6 +229,7 @@ def compute_dc3s_health(
         "sustained_breach_counts": {},
     }
 
+    validate_sql_identifier(table_name, "table name")
     db_path = Path(duckdb_path)
     if not db_path.exists():
         return output
@@ -245,7 +248,7 @@ def compute_dc3s_health(
         if not table_exists or int(table_exists[0]) == 0:
             return output
 
-        table_cols = {str(row[1]) for row in conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()}
+        table_cols = {str(row[1]) for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()}
         intervened_col = "intervened" if "intervened" in table_cols else "NULL AS intervened"
         intervention_reason_col = (
             "intervention_reason" if "intervention_reason" in table_cols else "NULL AS intervention_reason"

@@ -6,9 +6,12 @@ from pathlib import Path
 
 import pandas as pd
 
+from orius.utils.sql import validate_sql_identifier
+
 
 def write_sql(df: pd.DataFrame, path: Path, table: str = "features", engine: str = "duckdb") -> None:
     """Write a DataFrame into a SQL database (DuckDB or SQLite)."""
+    validate_sql_identifier(table, "table name")
     path.parent.mkdir(parents=True, exist_ok=True)
     if engine == "duckdb":
         try:

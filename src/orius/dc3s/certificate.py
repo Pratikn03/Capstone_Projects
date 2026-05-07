@@ -21,6 +21,7 @@ from orius.security.policy import (
     get_active_certificate_key_id,
     get_certificate_key,
 )
+from orius.utils.sql import validate_column_type, validate_sql_identifier
 
 CERTIFICATE_SCHEMA_VERSION = "orius.certificate.v1"
 DEFAULT_CERTIFICATE_ISSUER = "orius.runtime"
@@ -436,19 +437,23 @@ def verify_certificate_chain(
 
 
 def _table_columns(conn: duckdb.DuckDBPyConnection, table_name: str) -> set[str]:
-    rows = conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()
+    validate_sql_identifier(table_name, "table name")
+    rows = conn.execute(f"PRAGMA table_info({table_name})").fetchall()
     return {str(row[1]) for row in rows}
 
 
 def _add_column_if_missing(
     conn: duckdb.DuckDBPyConnection, table_name: str, column_name: str, column_type: str
 ) -> None:
-    if column_name in _table_columns(conn, table_name):
+    validate_sql_identifier(column_name, "column name")
+    validate_column_type(column_type)
+    if column_name in _table_columns(conn, table_name):  # _table_columns validates table_name
         return
     conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
 
 
 def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
+    validate_sql_identifier(table_name, "table name")
     conn.execute(
         f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
