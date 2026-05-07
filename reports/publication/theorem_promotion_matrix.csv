@@ -1,0 +1,13 @@
+theorem_id,title,status,statement_complete,assumptions_complete,proof_file,code_anchor,tests_count,artifacts_count,claim_boundary,promotion_ready
+T5,Finite-Horizon Certificate Validity,flagship_theorem,yes,yes,appendices/proofs/T5_certificate_validity.tex,src/orius/dc3s/temporal_theorems.py,3,4,"finite-horizon runtime certificate; invalidates on contradictory evidence",yes
+T8,Graceful Degradation Dominance with Useful Work,flagship_theorem,yes,yes,appendices/proofs/T8_graceful_dominance.tex,src/orius/benchmarks/graceful_degradation.py,2,4,"paired-policy dominance under identical admissible fault traces",yes
+T9,Impossibility of Quality-Ignorant Mandatory Release,flagship_theorem,yes,yes,appendices/proofs/T9_no_free_safety.tex,src/orius/universal_theory/ambiguity.py,1,3,"mandatory observation-only release class only",yes
+T10,Boundary-Indistinguishability Lower Bound,flagship_theorem,yes,yes,appendices/proofs/T10_boundary_lower_bound.tex,src/orius/universal_theory/boundary_indistinguishability.py,1,3,"two-state lower bound, not global minimax frontier",yes
+T11Byz,Byzantine-Robust Reliability Aggregation,flagship_theorem,yes,yes,appendices/proofs/T11Byz_robust_reliability.tex,src/orius/dc3s/quality.py,2,3,"b-trimmed aggregator valid only for b<n/2",yes
+Tstale,Stale-Hold Uncertainty Growth,flagship_theorem,yes,yes,appendices/proofs/Tstale_uncertainty_growth.tex,src/orius/universal_theory/stale_decay.py,1,3,"bounded-drift stale-hold expansion only",yes
+Tminimax,Finite Ambiguity-Class Minimax Lower Bound,scoped_flagship_theorem,yes,yes,appendices/proofs/Tminimax_finite_ambiguity.tex,src/orius/universal_theory/minimax_boundary.py,1,2,"finite two-state ambiguity class only",yes
+Tsensor,Sensor Necessity Under Adapter Semantics,flagship_theorem,yes,yes,appendices/proofs/Tsensor_sensor_necessity.tex,src/orius/universal_theory/sensor_necessity.py,1,2,"depends on disjoint-safe-core witness under missing sensor coordinate",yes
+L1,Reliability-Monotone Inflation,flagship_lemma,yes,yes,appendices/proofs/L1_reliability_inflation.tex,src/orius/universal_theory/runtime_laws.py,1,1,"runtime proxy law",yes
+L2,Safe-Set Antitonicity,flagship_lemma,yes,yes,appendices/proofs/L2_safe_set_antitonicity.tex,src/orius/universal_theory/runtime_laws.py,1,1,"set-inclusion law",yes
+L3,Intervention Threshold,flagship_lemma,yes,yes,appendices/proofs/L3_intervention_threshold.tex,src/orius/universal_theory/runtime_laws.py,1,1,"release-time certified action filter",yes
+L4,Observation-Ambiguity Safety Sandwich,flagship_lemma,yes,yes,appendices/proofs/L4_ambiguity_sandwich.tex,src/orius/universal_theory/runtime_laws.py,1,1,"lower-side T9/T10, upper-side T2/T3 coupling",yes

@@ -1,0 +1,18 @@
+{
+  "theorem_id": "Tstale",
+  "title": "Stale-Hold Uncertainty Growth",
+  "status": "flagship_theorem",
+  "assumptions": [
+    "bounded latent drift",
+    "no fresh observations for s steps"
+  ],
+  "proof_file": "appendices/proofs/Tstale_uncertainty_growth.tex",
+  "code_anchor": "src/orius/universal_theory/stale_decay.py",
+  "tests": [
+    "tests/test_Tstale_uncertainty_growth.py"
+  ],
+  "artifacts": [
+    "reports/publication/Tstale_radius_growth.csv"
+  ],
+  "claim_boundary": "conservative runtime growth rule under stale-hold conditions"
+}

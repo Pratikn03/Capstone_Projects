@@ -1,0 +1,18 @@
+{
+  "theorem_id": "T11Byz",
+  "title": "Byzantine-Robust Reliability Aggregation",
+  "status": "flagship_theorem",
+  "assumptions": [
+    "b<n/2 Byzantine channels",
+    "honest interval width 2rho"
+  ],
+  "proof_file": "appendices/proofs/T11Byz_robust_reliability.tex",
+  "code_anchor": "src/orius/dc3s/quality.py",
+  "tests": [
+    "tests/test_T11Byz_robust_oqe.py"
+  ],
+  "artifacts": [
+    "reports/publication/T11Byz_corruption_sweep.csv"
+  ],
+  "claim_boundary": "robustness guarantee applies only below 50% corruption threshold"
+}

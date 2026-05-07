@@ -1,0 +1,18 @@
+{
+  "theorem_id": "T8",
+  "title": "Graceful Degradation Dominance with Useful Work",
+  "status": "flagship_theorem",
+  "assumptions": [
+    "paired admissible fault trace",
+    "shared utility metric"
+  ],
+  "proof_file": "appendices/proofs/T8_graceful_dominance.tex",
+  "code_anchor": "src/orius/benchmarks/graceful_degradation.py",
+  "tests": [
+    "tests/test_T8_graceful_dominance.py"
+  ],
+  "artifacts": [
+    "reports/publication/T8_graceful_policy_comparison.csv"
+  ],
+  "claim_boundary": "dominance theorem applies to compared policy class and shared trace"
+}
