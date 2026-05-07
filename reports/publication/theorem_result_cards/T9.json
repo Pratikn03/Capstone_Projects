@@ -1,0 +1,19 @@
+{
+  "theorem_id": "T9",
+  "title": "Impossibility of Quality-Ignorant Mandatory Release",
+  "status": "flagship_theorem",
+  "assumptions": [
+    "mandatory release",
+    "observation-only policy",
+    "empty common safe core"
+  ],
+  "proof_file": "appendices/proofs/T9_no_free_safety.tex",
+  "code_anchor": "src/orius/universal_theory/ambiguity.py",
+  "tests": [
+    "tests/test_T9_mandatory_release_impossibility.py"
+  ],
+  "artifacts": [
+    "reports/publication/T9_ambiguity_witnesses.csv"
+  ],
+  "claim_boundary": "impossibility is specific to mandatory observation-only controllers"
+}

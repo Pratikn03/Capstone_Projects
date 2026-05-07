@@ -1,0 +1,19 @@
+{
+  "theorem_id": "Tminimax",
+  "title": "Finite Ambiguity-Class Minimax Lower Bound",
+  "status": "scoped_flagship_theorem",
+  "assumptions": [
+    "finite two-state class",
+    "TV <= epsilon",
+    "disjoint safe sets"
+  ],
+  "proof_file": "appendices/proofs/Tminimax_finite_ambiguity.tex",
+  "code_anchor": "src/orius/universal_theory/minimax_boundary.py",
+  "tests": [
+    "tests/test_Tminimax_finite_ambiguity.py"
+  ],
+  "artifacts": [
+    "reports/publication/Tminimax_boundary_grid.csv"
+  ],
+  "claim_boundary": "scoped minimax lower bound only; no global optimality claim"
+}

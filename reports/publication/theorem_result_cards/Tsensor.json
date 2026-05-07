@@ -1,0 +1,18 @@
+{
+  "theorem_id": "Tsensor",
+  "title": "Sensor Necessity Under Adapter Semantics",
+  "status": "flagship_theorem",
+  "assumptions": [
+    "missing informative coordinate",
+    "disjoint-safe witness pair"
+  ],
+  "proof_file": "appendices/proofs/Tsensor_sensor_necessity.tex",
+  "code_anchor": "src/orius/universal_theory/sensor_necessity.py",
+  "tests": [
+    "tests/test_Tsensor_necessity.py"
+  ],
+  "artifacts": [
+    "reports/publication/Tsensor_sensor_ablation.csv"
+  ],
+  "claim_boundary": "necessity holds under observation-only mandatory release semantics"
+}
