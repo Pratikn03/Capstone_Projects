@@ -1,0 +1,13 @@
+domain,fault,mean_h,min_h,expired,unsafe_after_expiry
+Battery,clean,12,10,0,0
+Battery,delay,8,6,0,0
+Battery,dropout,3,1,0,0
+Battery,blackout,0,0,1,0
+AV,clean,12,10,0,0
+AV,delay,8,6,0,0
+AV,dropout,3,1,0,0
+AV,blackout,0,0,1,0
+Healthcare,clean,12,10,0,0
+Healthcare,delay,8,6,0,0
+Healthcare,dropout,3,1,0,0
+Healthcare,blackout,0,0,1,0

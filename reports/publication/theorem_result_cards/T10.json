@@ -1,0 +1,19 @@
+{
+  "theorem_id": "T10",
+  "title": "Boundary-Indistinguishability Lower Bound",
+  "status": "flagship_theorem",
+  "assumptions": [
+    "two-state boundary pair",
+    "disjoint safe sets",
+    "TV <= epsilon"
+  ],
+  "proof_file": "appendices/proofs/T10_boundary_lower_bound.tex",
+  "code_anchor": "src/orius/universal_theory/boundary_indistinguishability.py",
+  "tests": [
+    "tests/test_T10_boundary_lower_bound.py"
+  ],
+  "artifacts": [
+    "reports/publication/T10_lower_bound_curve.csv"
+  ],
+  "claim_boundary": "two-state lower bound witness, not full frontier optimality"
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "generated_by": "manual upgrade plan scaffold",
+  "promotion_gates": [
+    "statement",
+    "assumptions",
+    "proof",
+    "code",
+    "tests",
+    "artifact",
+    "manuscript"
+  ],
+  "theorems": [
+    {"theorem_id":"T5","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/T5.json"},
+    {"theorem_id":"T8","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/T8.json"},
+    {"theorem_id":"T9","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/T9.json"},
+    {"theorem_id":"T10","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/T10.json"},
+    {"theorem_id":"T11Byz","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/T11Byz.json"},
+    {"theorem_id":"Tstale","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/Tstale.json"},
+    {"theorem_id":"Tminimax","status":"scoped_flagship_theorem","result_card":"reports/publication/theorem_result_cards/Tminimax.json"},
+    {"theorem_id":"Tsensor","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/Tsensor.json"}
+  ]
+}

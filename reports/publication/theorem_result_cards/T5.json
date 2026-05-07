@@ -1,0 +1,21 @@
+{
+  "theorem_id": "T5",
+  "title": "Finite-Horizon Certificate Validity",
+  "status": "flagship_theorem",
+  "assumptions": [
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5"
+  ],
+  "proof_file": "appendices/proofs/T5_certificate_validity.tex",
+  "code_anchor": "src/orius/dc3s/temporal_theorems.py",
+  "tests": [
+    "tests/test_T5_certificate_validity.py"
+  ],
+  "artifacts": [
+    "reports/publication/T5_certificate_horizon_by_fault.csv"
+  ],
+  "claim_boundary": "finite-horizon runtime certificate, not universal plant-time law"
+}

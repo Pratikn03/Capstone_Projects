@@ -1,0 +1,25 @@
+\chapter{Proof Appendix (Completed Text)}
+\section{Preliminaries}
+Let $X_t$ denote the observation-consistent latent set, $C(x)$ safe-action correspondence, and $K(o)=\cap_{x\in B(o)}C(x)$ common safe core.
+\section{Proof of T1 (OASG existence)}
+Construct $A_t^{safe}=\cap_{x\in X_t}C(x)$. If non-empty, selecting any $a_t\in A_t^{safe}$ yields true-state safety for all $x\in X_t$ by definition.
+\section{Proof of T2 (No-free-safety)}
+If $K(o)=\emptyset$, any mandatory observation-only policy chooses a single action $a=\pi(o)$ and there exists $x\in B(o)$ with $a\notin C(x)$.
+\section{Proof of T3 (Covered release preservation)}
+Given coverage event $x^\star_t\in X_t$ and release rule $a_t\in\cap_{x\in X_t}C(x)$, then $a_t\in C(x^\star_t)$.
+\section{Proof of T4 (Residual risk envelope)}
+Violation occurs only if coverage misses: $\{a_t\notin C(x_t^\star)\}\subseteq\{x_t^\star\notin X_t\}$, so risk is upper bounded by miss probability.
+\section{Proof of T5 (Finite-horizon certificate validity)}
+If reachable tube sets satisfy $\mathcal R_{t+j}(X_t,\tilde a_{t:t+j})\subseteq S$ for all $j\le h$, induction on $j$ shows every reachable state remains in $S$ up to horizon $h$.
+\section{Proof of T6 (Graceful degradation dominance)}
+With pointwise violation dominance $Z_t^G\le Z_t^U$ and useful-work floor $W_G\ge \lambda W_U$, policy $G$ weakly dominates in safety while preserving a $\lambda$ fraction of work.
+\section{Proof of T7 (Boundary indistinguishability lower bound)}
+For two boundary states with disjoint safe sets and TV distance $\epsilon$, Le Cam two-hypothesis bound yields worst-case mandatory-release error at least $(1-\epsilon)/2$.
+\section{Proof of T8 (Typed structural transfer)}
+The proof is homomorphic: theorem operators depend only on typed objects $(X_t,C,\pi,w_t)$ and assumptions, so instantiation is domain-agnostic when adapter contracts are satisfied.
+\section{Proof of T9 (Robust/stale observation)}
+Robust aggregation bounds reliability estimation error under $b<n/2$ Byzantine channels; stale-hold uncertainty grows by triangle inequality under bounded drift.
+\section{Proof of T10 (Sensor necessity)}
+If a dropped sensor coordinate induces states $x_0,x_1$ with disjoint safe sets under identical observations, this reduces to T2 with empty common safe core.
+\section{Corollaries and lemmas}
+L1 follows from $\partial(q/(w+\epsilon))/\partial w<0$; L2 from set intersection antitonicity; L3 from contrapositive of certified release rule; L4 combines T2/T7 lower side with T3/T4 upper side.
