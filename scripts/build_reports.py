@@ -706,8 +706,10 @@ def plot_model_comparison(ctx: ReportContext, metrics: dict):
 
     model_names = set()
     for _, data in targets.items():
-        for model in data:
-            if model != "n_features":
+        if not isinstance(data, dict):
+            continue
+        for model, payload in data.items():
+            if model != "n_features" and isinstance(payload, dict):
                 model_names.add(model)
     models = sorted(model_names)
     if not models:
@@ -719,7 +721,12 @@ def plot_model_comparison(ctx: ReportContext, metrics: dict):
         for k in metric_keys:
             vals = []
             for _, data in targets.items():
-                v = data.get(m, {}).get(k)
+                if not isinstance(data, dict):
+                    continue
+                model_payload = data.get(m, {})
+                if not isinstance(model_payload, dict):
+                    continue
+                v = model_payload.get(k)
                 if v is not None:
                     vals.append(v)
             means[m][k] = float(np.mean(vals)) if vals else None
@@ -1510,6 +1517,8 @@ def build_model_cards(ctx: ReportContext, metrics: dict | None = None):
     ensure_dir(cards_dir)
 
     for target, data in targets.items():
+        if not isinstance(data, dict):
+            continue
         lines = [f"# Model Card — {target}\n"]
         lines.append("## Overview\n")
         lines.append("Forecasting model trained on OPSD Germany time‑series.\n")
@@ -1522,6 +1531,8 @@ def build_model_cards(ctx: ReportContext, metrics: dict | None = None):
             lines.append("|---|---:|---:|---:|---:|\n")
         for model, vals in data.items():
             if model == "n_features":
+                continue
+            if not isinstance(vals, dict):
                 continue
             if target == "solar_mw":
                 lines.append(
@@ -1561,6 +1572,8 @@ def build_formal_report(
     if targets:
         lines.append("## Model Metrics (Test Split)\n")
         for target, data in targets.items():
+            if not isinstance(data, dict):
+                continue
             lines.append(f"### {target}\n")
             if target == "solar_mw":
                 lines.append("| Model | RMSE | MAE | sMAPE | MAPE | Daylight‑MAPE |\n")
@@ -1570,6 +1583,8 @@ def build_formal_report(
                 lines.append("|---|---:|---:|---:|---:|\n")
             for model, vals in data.items():
                 if model == "n_features":
+                    continue
+                if not isinstance(vals, dict):
                     continue
                 if target == "solar_mw":
                     lines.append(
@@ -1592,7 +1607,7 @@ def build_formal_report(
                 lines.append("| Baseline | RMSE | MAE | sMAPE | MAPE |\n")
                 lines.append("|---|---:|---:|---:|---:|\n")
             for name, vals in data.items():
-                if vals is None:
+                if not isinstance(vals, dict):
                     continue
                 if target == "solar_mw":
                     lines.append(
