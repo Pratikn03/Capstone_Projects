@@ -191,6 +191,32 @@ def _load_json_dict(path: Path) -> dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
+def _initial_training_report(
+    *,
+    existing_report: dict[str, Any],
+    preserve_existing_targets: bool,
+    device: str,
+    quantiles: list[float],
+    manifest_id: Any,
+) -> dict[str, Any]:
+    """Build the report payload for this invocation.
+
+    Target-split recovery runs must preserve metrics from earlier target
+    invocations because ``week2_metrics.json`` is the downstream gate artifact.
+    Full runs intentionally start from a clean report to avoid stale targets.
+    """
+    if preserve_existing_targets and existing_report:
+        report = json.loads(json.dumps(existing_report))
+        if not isinstance(report.get("targets"), dict):
+            report["targets"] = {}
+    else:
+        report = {"targets": {}}
+    report["device"] = device
+    report["quantiles"] = quantiles
+    report["manifest_id"] = manifest_id
+    return report
+
+
 def _reuse_existing_model_metrics(
     *,
     existing_report: dict[str, Any],
@@ -1953,18 +1979,24 @@ def main():
 
     rep_dir = Path(args.reports_dir or cfg["reports"]["out_dir"])
     rep_dir.mkdir(parents=True, exist_ok=True)
-    existing_report = _load_json_dict(rep_dir / "week2_metrics.json") if args.skip_existing else {}
+    preserve_existing_targets = bool(args.targets)
+    existing_report = (
+        _load_json_dict(rep_dir / "week2_metrics.json")
+        if (args.skip_existing or preserve_existing_targets)
+        else {}
+    )
 
-    report = {
-        "device": device,
-        "quantiles": quantiles,
-        "targets": {},
-        "manifest_id": manifest.get("run_id"),
-    }
+    report = _initial_training_report(
+        existing_report=existing_report,
+        preserve_existing_targets=preserve_existing_targets,
+        device=device,
+        quantiles=quantiles,
+        manifest_id=manifest.get("run_id"),
+    )
     backtest_cfg = cfg.get("backtest", {})
     backtest_enabled = bool(backtest_cfg.get("enabled", False))
     backtest_payload = {"targets": {}} if backtest_enabled else None
-    if backtest_enabled and args.skip_existing:
+    if backtest_enabled and (args.skip_existing or preserve_existing_targets):
         existing_backtest_path = Path(
             args.walk_forward_report or backtest_cfg.get("out_path", rep_dir / "walk_forward_report.json")
         )
