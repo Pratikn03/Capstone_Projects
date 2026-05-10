@@ -201,6 +201,41 @@ def test_model_quality_gate_records_candidate_failures_without_blocking_release(
     assert "gradient stability" in "\n".join(result["candidate_findings"])
 
 
+def test_model_quality_gate_uses_matching_domain_config_for_boundary_checks(tmp_path: Path) -> None:
+    metrics_path = tmp_path / "reports" / "runs" / "de" / "R" / "week2_metrics.json"
+    de_config = tmp_path / "train_forecast.yaml"
+    av_config = tmp_path / "train_forecast_av.yaml"
+    out_path = tmp_path / "model_quality_gate.json"
+    payload = _strong_metrics()
+    payload["targets"]["load_mw"]["gbm"]["tuning_meta"]["selected_params"] = {"n_estimators": 900}
+    _write_json(metrics_path, payload)
+    _write_json(
+        de_config,
+        {
+            "dataset": {"key": "DE"},
+            "tuning": {"params": {"baseline_gbm": {"n_estimators": {"type": "int", "low": 100, "high": 1000}}}},
+        },
+    )
+    _write_json(
+        av_config,
+        {
+            "dataset": {"key": "AV"},
+            "tuning": {"params": {"baseline_gbm": {"n_estimators": {"type": "int", "low": 100, "high": 600}}}},
+        },
+    )
+
+    result = builder.build_model_quality_gate(
+        metrics_paths=[metrics_path],
+        config_paths=[de_config, av_config],
+        out_path=out_path,
+    )
+
+    tuning_gate = result["models"][0]["gates"]["hyperparameter_tuning"]
+    assert result["pass"] is True
+    assert tuning_gate["status"] == "pass"
+    assert tuning_gate["metrics"]["boundary_hits"] == []
+
+
 def test_model_quality_gate_can_make_candidate_failures_blocking_by_policy(tmp_path: Path) -> None:
     metrics_path = tmp_path / "week2_metrics.json"
     out_path = tmp_path / "model_quality_gate.json"

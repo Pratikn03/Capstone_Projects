@@ -254,6 +254,44 @@ def _config_param_specs(configs: list[dict[str, Any]], model_key: str) -> dict[s
     return merged
 
 
+def _config_dataset_key(config: dict[str, Any]) -> str | None:
+    dataset = config.get("dataset") if isinstance(config.get("dataset"), dict) else {}
+    key = dataset.get("key")
+    return str(key).strip().upper() if key else None
+
+
+def _metrics_dataset_key(metrics_path: Path, payload: dict[str, Any]) -> str | None:
+    dataset = payload.get("dataset") if isinstance(payload.get("dataset"), dict) else {}
+    key = dataset.get("key") or payload.get("dataset_key")
+    if key:
+        return str(key).strip().upper()
+    parts = {part.lower() for part in metrics_path.parts}
+    if "healthcare" in parts:
+        return "HEALTHCARE"
+    if "av" in parts or "orius_av" in parts:
+        return "AV"
+    if "de" in parts:
+        return "DE"
+    try:
+        if metrics_path.resolve() == (REPO_ROOT / "reports" / "week2_metrics.json").resolve():
+            return "DE"
+    except OSError:
+        pass
+    return None
+
+
+def _configs_for_metrics(
+    metrics_path: Path,
+    payload: dict[str, Any],
+    configs: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    key = _metrics_dataset_key(metrics_path, payload)
+    if key is None:
+        return configs
+    matched = [config for config in configs if _config_dataset_key(config) == key]
+    return matched or configs
+
+
 def _selected_param_at_boundary(value: Any, spec: dict[str, Any], boundary_fraction: float) -> bool:
     low = _finite_float(spec.get("low"))
     high = _finite_float(spec.get("high"))
@@ -469,11 +507,12 @@ def build_model_quality_gate(
 
     rows: list[dict[str, Any]] = []
     for metrics_path in metrics_paths:
+        payload = _load_structured(metrics_path)
         rows.extend(
             _model_rows_for_metrics(
                 metrics_path=metrics_path,
-                payload=_load_structured(metrics_path),
-                configs=configs,
+                payload=payload,
+                configs=_configs_for_metrics(metrics_path, payload, configs),
                 policy=merged_policy,
             )
         )
