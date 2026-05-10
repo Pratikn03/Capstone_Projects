@@ -160,6 +160,8 @@ def test_model_quality_gate_accepts_fixed_deep_architecture_without_tuning(tmp_p
 
     assert result["pass"] is True
     rows = {row["model"]: row for row in result["models"]}
+    assert rows["gbm"]["release_model"] is True
+    assert rows["lstm"]["release_model"] is False
     assert rows["lstm"]["gates"]["hyperparameter_tuning"]["status"] == "pass"
     assert "fixed deep architecture" in rows["lstm"]["gates"]["hyperparameter_tuning"]["detail"]
 
@@ -174,11 +176,47 @@ def test_model_quality_gate_can_require_deep_tuning_when_policy_demands_it(tmp_p
     result = builder.build_model_quality_gate(
         metrics_paths=[metrics_path],
         out_path=out_path,
-        policy={"require_deep_hyperparameter_tuning": True},
+        policy={"require_deep_hyperparameter_tuning": True, "block_candidate_models": True},
     )
 
     assert result["pass"] is False
     assert "missing hyperparameter tuning metadata" in "\n".join(result["blockers"])
+
+
+def test_model_quality_gate_records_candidate_failures_without_blocking_release(tmp_path: Path) -> None:
+    metrics_path = tmp_path / "week2_metrics.json"
+    out_path = tmp_path / "model_quality_gate.json"
+    payload = _strong_metrics()
+    payload["targets"]["load_mw"]["tft"] = _strong_deep_model()
+    payload["targets"]["load_mw"]["tft"]["r2"] = -0.5
+    payload["targets"]["load_mw"]["tft"]["training_summary"]["non_finite_loss"] = True
+    _write_json(metrics_path, payload)
+
+    result = builder.build_model_quality_gate(metrics_paths=[metrics_path], out_path=out_path)
+
+    assert result["pass"] is True
+    assert result["blockers"] == []
+    assert result["summary"]["blocking_release_model_count"] == 0
+    assert result["summary"]["candidate_blocking_model_count"] == 1
+    assert "gradient stability" in "\n".join(result["candidate_findings"])
+
+
+def test_model_quality_gate_can_make_candidate_failures_blocking_by_policy(tmp_path: Path) -> None:
+    metrics_path = tmp_path / "week2_metrics.json"
+    out_path = tmp_path / "model_quality_gate.json"
+    payload = _strong_metrics()
+    payload["targets"]["load_mw"]["tft"] = _strong_deep_model()
+    payload["targets"]["load_mw"]["tft"]["r2"] = -0.5
+    _write_json(metrics_path, payload)
+
+    result = builder.build_model_quality_gate(
+        metrics_paths=[metrics_path],
+        out_path=out_path,
+        policy={"block_candidate_models": True},
+    )
+
+    assert result["pass"] is False
+    assert "underfit risk" in "\n".join(result["blockers"])
 
 
 def test_model_quality_gate_blocks_missing_architecture_and_calibration(tmp_path: Path) -> None:
@@ -212,9 +250,10 @@ def test_model_quality_gate_detects_overfit_underfit_and_gradient_instability(tm
 
     assert result["pass"] is False
     blockers = "\n".join(result["blockers"])
+    candidate_findings = "\n".join(result["candidate_findings"])
     assert "overfit" in blockers
     assert "underfit" in blockers
-    assert "gradient stability" in blockers
+    assert "gradient stability" in candidate_findings
 
 
 def test_model_quality_validator_rejects_hand_edited_pass(tmp_path: Path) -> None:

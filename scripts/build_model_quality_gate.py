@@ -54,6 +54,8 @@ DEFAULT_POLICY = {
     "max_grad_norm": 100.0,
     "min_picp_90": 0.85,
     "max_picp_90": 0.99,
+    "release_model_keys": ["gbm"],
+    "block_candidate_models": False,
 }
 
 
@@ -429,11 +431,18 @@ def _model_rows_for_metrics(
             for name, (gate, gate_blockers) in assessments:
                 gates[name] = gate
                 blockers.extend(gate_blockers)
+            release_keys = policy.get("release_model_keys", ["gbm"])
+            if isinstance(release_keys, str):
+                release_keys = [release_keys]
+            if not isinstance(release_keys, list):
+                release_keys = ["gbm"]
+            is_release_model = model_key in {str(key).strip() for key in release_keys}
             rows.append(
                 {
                     "metrics_path": str(metrics_path),
                     "target": str(target),
                     "model": str(model_key),
+                    "release_model": bool(is_release_model),
                     "status": "pass" if not blockers else "block",
                     "blockers": blockers,
                     "gates": gates,
@@ -468,9 +477,18 @@ def build_model_quality_gate(
                 policy=merged_policy,
             )
         )
-    blockers = [
+    block_candidate_models = bool(merged_policy.get("block_candidate_models", False))
+    release_rows = [row for row in rows if bool(row.get("release_model"))]
+    release_blockers = [
         f"{row['metrics_path']}:{row['target']}:{row['model']} - {blocker}"
         for row in rows
+        if bool(row.get("release_model")) or block_candidate_models
+        for blocker in row["blockers"]
+    ]
+    candidate_findings = [
+        f"{row['metrics_path']}:{row['target']}:{row['model']} - {blocker}"
+        for row in rows
+        if not bool(row.get("release_model"))
         for blocker in row["blockers"]
     ]
     result = {
@@ -478,13 +496,19 @@ def build_model_quality_gate(
         "source_metrics": {str(path): _sha256_file(path) for path in metrics_paths},
         "config_paths": [str(path) for path in config_paths],
         "policy": merged_policy,
-        "pass": not blockers and bool(rows),
+        "pass": not release_blockers and bool(release_rows),
         "summary": {
             "metrics_file_count": len(metrics_paths),
             "model_count": len(rows),
             "blocking_model_count": sum(1 for row in rows if row["status"] != "pass"),
+            "release_model_count": len(release_rows),
+            "blocking_release_model_count": sum(1 for row in release_rows if row["status"] != "pass"),
+            "candidate_blocking_model_count": sum(
+                1 for row in rows if not bool(row.get("release_model")) and row["status"] != "pass"
+            ),
         },
-        "blockers": blockers,
+        "blockers": release_blockers,
+        "candidate_findings": candidate_findings,
         "models": rows,
     }
     out_path.parent.mkdir(parents=True, exist_ok=True)
