@@ -5,6 +5,7 @@ import pytest
 from orius.forecasting.train import (
     _initial_training_report,
     _load_json_dict,
+    _merge_target_metrics,
     _reuse_existing_model_metrics,
 )
 
@@ -100,3 +101,40 @@ def test_initial_training_report_resets_targets_for_full_run():
 
     assert report["targets"] == {}
     assert report["manifest_id"] == "fresh"
+
+
+def test_merge_target_metrics_preserves_existing_models_for_target_split():
+    report = {
+        "targets": {
+            "target_a": {
+                "gbm": {"rmse": 1.0},
+                "lstm": {"rmse": 2.0},
+            }
+        }
+    }
+
+    _merge_target_metrics(
+        report=report,
+        target="target_a",
+        target_res={"tcn": {"rmse": 3.0}},
+        preserve_existing_targets=True,
+    )
+
+    assert report["targets"]["target_a"] == {
+        "gbm": {"rmse": 1.0},
+        "lstm": {"rmse": 2.0},
+        "tcn": {"rmse": 3.0},
+    }
+
+
+def test_merge_target_metrics_replaces_target_for_full_run():
+    report = {"targets": {"target_a": {"gbm": {"rmse": 1.0}}}}
+
+    _merge_target_metrics(
+        report=report,
+        target="target_a",
+        target_res={"lstm": {"rmse": 2.0}},
+        preserve_existing_targets=False,
+    )
+
+    assert report["targets"]["target_a"] == {"lstm": {"rmse": 2.0}}

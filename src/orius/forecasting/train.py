@@ -244,6 +244,33 @@ def _reuse_existing_model_metrics(
     return json.loads(json.dumps(metrics))
 
 
+def _merge_target_metrics(
+    *,
+    report: dict[str, Any],
+    target: str,
+    target_res: dict[str, Any],
+    preserve_existing_targets: bool,
+) -> None:
+    """Merge metrics for target-split/model-split recovery runs.
+
+    Target recovery may run one target, or even one model for one target, per
+    process. In that mode, replacing the whole target payload would discard
+    metrics produced by earlier invocations. Full multi-target runs still
+    replace target payloads so stale metrics cannot leak into a clean run.
+    """
+    if not preserve_existing_targets:
+        report.setdefault("targets", {})[target] = target_res
+        return
+
+    existing = report.setdefault("targets", {}).get(target, {})
+    if not isinstance(existing, dict):
+        existing = {}
+    merged = json.loads(json.dumps(existing))
+    for model_key, metrics in target_res.items():
+        merged[model_key] = metrics
+    report["targets"][target] = merged
+
+
 def _apply_deep_training_overrides(
     cfg: dict[str, Any],
     *,
