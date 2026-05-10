@@ -10,9 +10,12 @@ conformal:
 
 target_overrides:
   # Solar has strong regime shift around dawn/dusk and under-covered in the
-  # predeployment CPU release without a conservative multiplier.
+  # predeployment CPU release with horizon-wise calibration. The calibration
+  # split is too sparse per horizon for this target, so pool CQR scores across
+  # horizons and keep the conservative multiplier explicit.
   solar_mw:
     conformal:
+      horizon_wise: false
       q_multiplier: 1.35
   # Healthcare HR drift under-covers with plain CQR in QMAX smoke runs.
   # Keep this explicit in the artifact as a conservative monitoring multiplier.

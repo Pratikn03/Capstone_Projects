@@ -136,6 +136,8 @@ def _assess_generalization(
         "test_rmse": test_rmse,
         "train_validation_rmse_ratio": _ratio(val_rmse, train_rmse),
         "validation_test_rmse_ratio": _ratio(test_rmse, val_rmse),
+        "max_train_validation_rmse_ratio": float(policy["max_train_validation_rmse_ratio"]),
+        "max_validation_test_rmse_ratio": float(policy["max_validation_test_rmse_ratio"]),
     }
     if train_rmse is None:
         blockers.append("missing train split metrics for overfit/underfit audit")
@@ -303,6 +305,44 @@ def _configs_for_metrics(
         return configs
     matched = [config for config in configs if _config_dataset_key(config) == key]
     return matched or configs
+
+
+def _merge_policy_overrides(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Merge only known flat policy keys from a config override block."""
+    merged = dict(base)
+    for key, value in override.items():
+        if key in DEFAULT_POLICY:
+            merged[key] = value
+    return merged
+
+
+def _policy_for_model_row(
+    *,
+    base_policy: dict[str, Any],
+    configs: list[dict[str, Any]],
+    target: str,
+    model_key: str,
+) -> dict[str, Any]:
+    """Resolve domain/target/model quality-gate overrides for one model row."""
+    policy = dict(base_policy)
+    for config in configs:
+        gate_cfg = config.get("model_quality_gate")
+        if not isinstance(gate_cfg, dict):
+            continue
+        policy_block = gate_cfg.get("policy")
+        if isinstance(policy_block, dict):
+            policy = _merge_policy_overrides(policy, policy_block)
+
+        target_overrides = gate_cfg.get("target_overrides")
+        target_block = target_overrides.get(target) if isinstance(target_overrides, dict) else None
+        if isinstance(target_block, dict):
+            policy = _merge_policy_overrides(policy, target_block)
+
+        model_overrides = gate_cfg.get("model_overrides")
+        model_block = model_overrides.get(model_key) if isinstance(model_overrides, dict) else None
+        if isinstance(model_block, dict):
+            policy = _merge_policy_overrides(policy, model_block)
+    return policy
 
 
 def _selected_param_at_boundary(value: Any, spec: dict[str, Any], boundary_fraction: float) -> bool:
@@ -476,16 +516,22 @@ def _model_rows_for_metrics(
                 continue
             if not isinstance(model_payload, dict):
                 continue
+            row_policy = _policy_for_model_row(
+                base_policy=policy,
+                configs=configs,
+                target=str(target),
+                model_key=str(model_key),
+            )
             gates: dict[str, dict[str, Any]] = {}
             blockers: list[str] = []
             assessments = (
-                ("generalization", _assess_generalization(model_payload, policy)),
-                ("underfit", _assess_underfit(model_payload, policy)),
+                ("generalization", _assess_generalization(model_payload, row_policy)),
+                ("underfit", _assess_underfit(model_payload, row_policy)),
                 ("architecture", _assess_architecture(model_key, target_payload, model_payload)),
-                ("hyperparameter_tuning", _assess_tuning(model_key, model_payload, configs, policy)),
-                ("calibration", _assess_calibration(model_payload, policy)),
-                ("latency", _assess_latency(model_payload, policy)),
-                ("gradient_stability", _assess_gradient_stability(model_key, model_payload, policy)),
+                ("hyperparameter_tuning", _assess_tuning(model_key, model_payload, configs, row_policy)),
+                ("calibration", _assess_calibration(model_payload, row_policy)),
+                ("latency", _assess_latency(model_payload, row_policy)),
+                ("gradient_stability", _assess_gradient_stability(model_key, model_payload, row_policy)),
             )
             for name, (gate, gate_blockers) in assessments:
                 gates[name] = gate
@@ -505,6 +551,11 @@ def _model_rows_for_metrics(
                     "status": "pass" if not blockers else "block",
                     "blockers": blockers,
                     "gates": gates,
+                    "effective_policy": {
+                        key: row_policy[key]
+                        for key in sorted(row_policy)
+                        if row_policy.get(key) != policy.get(key)
+                    },
                 }
             )
     return rows

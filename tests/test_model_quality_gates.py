@@ -338,6 +338,41 @@ def test_model_quality_gate_can_block_train_val_gap_by_policy(tmp_path: Path) ->
     assert "validation/train" in "\n".join(result["blockers"])
 
 
+def test_model_quality_gate_applies_target_specific_policy_override(tmp_path: Path) -> None:
+    metrics_path = tmp_path / "reports" / "runs" / "healthcare" / "R" / "week2_metrics.json"
+    config_path = tmp_path / "train_forecast_healthcare.yaml"
+    out_path = tmp_path / "model_quality_gate.json"
+    payload = _strong_metrics()
+    payload["targets"] = {"respiratory_rate": payload["targets"]["load_mw"]}
+    model = payload["targets"]["respiratory_rate"]["gbm"]
+    model["split_metrics"]["validation"]["rmse"] = 10.0
+    model["split_metrics"]["test"]["rmse"] = 16.0
+    _write_json(metrics_path, payload)
+    _write_json(
+        config_path,
+        {
+            "dataset": {"key": "HEALTHCARE"},
+            "model_quality_gate": {
+                "target_overrides": {
+                    "respiratory_rate": {"max_validation_test_rmse_ratio": 1.75}
+                }
+            },
+        },
+    )
+
+    result = builder.build_model_quality_gate(
+        metrics_paths=[metrics_path],
+        config_paths=[config_path],
+        out_path=out_path,
+    )
+
+    row = result["models"][0]
+    assert result["pass"] is True
+    assert row["gates"]["generalization"]["status"] == "pass"
+    assert row["gates"]["generalization"]["metrics"]["max_validation_test_rmse_ratio"] == 1.75
+    assert row["effective_policy"]["max_validation_test_rmse_ratio"] == 1.75
+
+
 def test_model_quality_validator_rejects_hand_edited_pass(tmp_path: Path) -> None:
     metrics_path = tmp_path / "week2_metrics.json"
     out_path = tmp_path / "model_quality_gate.json"

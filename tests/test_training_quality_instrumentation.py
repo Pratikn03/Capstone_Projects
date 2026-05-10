@@ -88,6 +88,8 @@ def test_sequence_architecture_summary_records_regularization_and_capacity() -> 
 
 
 def test_select_torch_device_prefers_mps_when_cuda_is_unavailable(monkeypatch) -> None:
+    monkeypatch.delenv("ORIUS_TORCH_DEVICE", raising=False)
+
     class FakeCuda:
         @staticmethod
         def is_available() -> bool:

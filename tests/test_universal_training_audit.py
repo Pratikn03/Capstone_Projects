@@ -13,9 +13,9 @@ SCRIPT_PATH = REPO_ROOT / "scripts" / "run_universal_training_audit.py"
 
 
 def test_universal_training_audit_reports_verified_domains(tmp_path: Path) -> None:
-    assert not (REPO_ROOT / "artifacts" / "uncertainty" / "gbm_price_eur_mwh_conformal.json").exists()
-    assert not (REPO_ROOT / "artifacts" / "backtests" / "price_eur_mwh_calibration.npz").exists()
-    assert not (REPO_ROOT / "artifacts" / "backtests" / "price_eur_mwh_test.npz").exists()
+    assert (REPO_ROOT / "artifacts" / "uncertainty" / "gbm_price_eur_mwh_conformal.json").exists()
+    assert (REPO_ROOT / "artifacts" / "backtests" / "price_eur_mwh_calibration.npz").exists()
+    assert (REPO_ROOT / "artifacts" / "backtests" / "price_eur_mwh_test.npz").exists()
 
     run = subprocess.run(
         [
