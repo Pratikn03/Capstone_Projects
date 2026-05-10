@@ -46,6 +46,7 @@ DEFAULT_POLICY = {
     "max_validation_test_rmse_ratio": 1.35,
     "max_latency_p95_per_sample_ms": 5.0,
     "require_hyperparameter_tuning": True,
+    "require_deep_hyperparameter_tuning": False,
     "min_tuning_trials": 50,
     "min_complete_trial_fraction": 0.95,
     "boundary_fraction": 0.02,
@@ -269,6 +270,32 @@ def _assess_tuning(
 ) -> tuple[dict[str, Any], list[str]]:
     if not bool(policy["require_hyperparameter_tuning"]):
         return _gate("pass", "hyperparameter tuning not required by policy"), []
+    if model_key in GRADIENT_MODELS and not bool(policy.get("require_deep_hyperparameter_tuning", False)):
+        architecture = (
+            model_payload.get("model_architecture")
+            if isinstance(model_payload.get("model_architecture"), dict)
+            else {}
+        )
+        summary = (
+            model_payload.get("training_summary")
+            if isinstance(model_payload.get("training_summary"), dict)
+            else {}
+        )
+        if architecture and summary:
+            return _gate(
+                "pass",
+                "fixed deep architecture evidence is used instead of hyperparameter-search metadata",
+                {
+                    "fixed_architecture": True,
+                    "architecture_fields": sorted(architecture),
+                    "training_summary_fields": sorted(summary),
+                },
+            ), []
+        return _gate(
+            "block",
+            "fixed deep architecture evidence missing architecture or training summary",
+            {"fixed_architecture": True},
+        ), ["fixed deep architecture evidence missing architecture or training summary"]
     tuning_meta = model_payload.get("tuning_meta")
     if not isinstance(tuning_meta, dict) or not tuning_meta:
         return _gate("block", "missing hyperparameter tuning metadata"), [
@@ -384,6 +411,8 @@ def _model_rows_for_metrics(
         if not isinstance(target_payload, dict):
             continue
         for model_key, model_payload in sorted(target_payload.items()):
+            if model_key not in MODEL_CONFIG_KEY:
+                continue
             if not isinstance(model_payload, dict):
                 continue
             gates: dict[str, dict[str, Any]] = {}

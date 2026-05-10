@@ -42,6 +42,36 @@ def _strong_metrics() -> dict:
     }
 
 
+def _strong_deep_model() -> dict:
+    return {
+        "rmse": 12.0,
+        "r2": 0.7,
+        "split_metrics": {
+            "train": {"rmse": 10.0},
+            "validation": {"rmse": 10.4},
+            "test": {"rmse": 12.0},
+        },
+        "latency": {"p95_per_sample_ms": 0.4},
+        "uncertainty": {"picp_90": 0.92, "mean_interval_width": 2.5},
+        "model_architecture": {
+            "lookback": 24,
+            "horizon": 6,
+            "dropout": 0.1,
+            "gradient_clip": 1.0,
+            "early_stopping_patience": 4,
+        },
+        "training_summary": {
+            "epochs_ran": 4,
+            "best_val_loss": 0.8,
+            "last_train_loss": 0.7,
+            "last_val_loss": 0.8,
+            "non_finite_loss": False,
+            "gradient_clipped_fraction": 0.1,
+            "max_grad_norm": 14.0,
+        },
+    }
+
+
 def _config() -> dict:
     return {
         "tuning": {
@@ -103,6 +133,54 @@ def test_model_quality_gate_blocks_missing_train_latency_and_tuning(tmp_path: Pa
     assert "hyperparameter tuning" in blockers
 
 
+def test_model_quality_gate_skips_non_model_metadata_rows(tmp_path: Path) -> None:
+    metrics_path = tmp_path / "week2_metrics.json"
+    out_path = tmp_path / "model_quality_gate.json"
+    payload = _strong_metrics()
+    payload["targets"]["load_mw"]["challenger_metrics"] = {"rmse": 999.0}
+    payload["targets"]["load_mw"]["retention_decision"] = "keep_incumbent"
+    payload["targets"]["load_mw"]["retention_reason"] = "unit-test metadata"
+    _write_json(metrics_path, payload)
+
+    result = builder.build_model_quality_gate(metrics_paths=[metrics_path], out_path=out_path)
+
+    assert result["pass"] is True
+    assert result["summary"]["model_count"] == 1
+    assert [row["model"] for row in result["models"]] == ["gbm"]
+
+
+def test_model_quality_gate_accepts_fixed_deep_architecture_without_tuning(tmp_path: Path) -> None:
+    metrics_path = tmp_path / "week2_metrics.json"
+    out_path = tmp_path / "model_quality_gate.json"
+    payload = _strong_metrics()
+    payload["targets"]["load_mw"]["lstm"] = _strong_deep_model()
+    _write_json(metrics_path, payload)
+
+    result = builder.build_model_quality_gate(metrics_paths=[metrics_path], out_path=out_path)
+
+    assert result["pass"] is True
+    rows = {row["model"]: row for row in result["models"]}
+    assert rows["lstm"]["gates"]["hyperparameter_tuning"]["status"] == "pass"
+    assert "fixed deep architecture" in rows["lstm"]["gates"]["hyperparameter_tuning"]["detail"]
+
+
+def test_model_quality_gate_can_require_deep_tuning_when_policy_demands_it(tmp_path: Path) -> None:
+    metrics_path = tmp_path / "week2_metrics.json"
+    out_path = tmp_path / "model_quality_gate.json"
+    payload = _strong_metrics()
+    payload["targets"]["load_mw"]["lstm"] = _strong_deep_model()
+    _write_json(metrics_path, payload)
+
+    result = builder.build_model_quality_gate(
+        metrics_paths=[metrics_path],
+        out_path=out_path,
+        policy={"require_deep_hyperparameter_tuning": True},
+    )
+
+    assert result["pass"] is False
+    assert "missing hyperparameter tuning metadata" in "\n".join(result["blockers"])
+
+
 def test_model_quality_gate_blocks_missing_architecture_and_calibration(tmp_path: Path) -> None:
     metrics_path = tmp_path / "week2_metrics.json"
     out_path = tmp_path / "model_quality_gate.json"
@@ -125,39 +203,9 @@ def test_model_quality_gate_detects_overfit_underfit_and_gradient_instability(tm
     payload = _strong_metrics()
     payload["targets"]["load_mw"]["gbm"]["split_metrics"]["validation"]["rmse"] = 22.0
     payload["targets"]["load_mw"]["gbm"]["r2"] = -0.2
-    payload["targets"]["load_mw"]["lstm"] = {
-        "rmse": 12.0,
-        "r2": 0.7,
-        "split_metrics": {
-            "train": {"rmse": 10.0},
-            "validation": {"rmse": 10.4},
-            "test": {"rmse": 12.0},
-        },
-        "latency": {"p95_per_sample_ms": 0.4},
-        "uncertainty": {"picp_90": 0.92, "mean_interval_width": 2.5},
-        "model_architecture": {
-            "lookback": 24,
-            "horizon": 6,
-            "dropout": 0.1,
-            "gradient_clip": 1.0,
-            "early_stopping_patience": 4,
-        },
-        "training_summary": {
-            "epochs_ran": 4,
-            "best_val_loss": 0.8,
-            "last_train_loss": 0.7,
-            "last_val_loss": 0.8,
-            "non_finite_loss": True,
-            "gradient_clipped_fraction": 0.9,
-            "max_grad_norm": 14.0,
-        },
-        "tuning_meta": {
-            "enabled": True,
-            "n_trials": 100,
-            "n_complete_trials": 100,
-            "selected_params": {"learning_rate": 0.001},
-        },
-    }
+    payload["targets"]["load_mw"]["lstm"] = _strong_deep_model()
+    payload["targets"]["load_mw"]["lstm"]["training_summary"]["non_finite_loss"] = True
+    payload["targets"]["load_mw"]["lstm"]["training_summary"]["gradient_clipped_fraction"] = 0.9
     _write_json(metrics_path, payload)
 
     result = builder.build_model_quality_gate(metrics_paths=[metrics_path], out_path=out_path)
