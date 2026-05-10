@@ -1,4 +1,5 @@
 """Two-state indistinguishability lower-bound helpers (T10)."""
+
 from __future__ import annotations
 
 from collections.abc import Sequence

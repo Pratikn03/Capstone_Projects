@@ -1,0 +1,16 @@
+\paragraph{Theorem T11Byz: Byzantine-Robust Reliability Aggregation.}
+Suppose \(n\) telemetry channels emit scores in \([0,1]\), at most
+\(b<n/2\) are Byzantine, and \(\hat w_t\) is the \(b\)-trimmed mean. If the
+honest scores lie in an interval of radius \(\rho\) around \(w_t^H\), then
+\[
+  |\hat w_t-w_t^H|\le \rho .
+\]
+
+\paragraph{Proof.}
+Trimming removes the \(b\) smallest and \(b\) largest reported values. Since at
+most \(b\) reports are Byzantine, every value that can remain after trimming
+and influence the trimmed mean lies between the minimum and maximum honest
+interval endpoints, or is paired with an extreme Byzantine value already
+removed by the trimming budget. Hence all retained values lie in
+\([w_t^H-\rho,w_t^H+\rho]\). Their arithmetic mean also lies in this interval,
+which proves the bound. The theorem makes no claim for \(b\ge n/2\).

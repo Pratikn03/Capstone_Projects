@@ -282,18 +282,18 @@ disturbance envelope~$\sigma_d$, and the runtime calibration pipeline.  The
 June defense package therefore uses an aggressive cut.
 
 \paragraph{Strict defended theorem core.}
-The active theorem inventory spans T1--T11, L1--L4, and several extension
-rows, but only a strict subset carries the main defense burden.
+The active theorem inventory spans T1--T11, L1--L4, and scoped extension
+rows.  The final promotion gate now assigns each active row to a defended
+class rather than leaving draft theorem debt in the register.
 \begin{description}
-  \item[Flagship defended.] T1, T2, T3a, T4, T6, T7, T11, and
-    T\textsubscript{trajectory\_PAC}.  These rows must have aligned proof,
-    code witness, tests, worked examples, and bounded scope notes.
-  \item[Supporting defended.] T3b, T8, T11\textsubscript{Byz}, and
-    T\textsubscript{stale}.  These rows remain citable, but they do not carry
-    the flagship novelty or theory score on their own.
-  \item[Draft / non-defended extensions.] T5, T9, T10, L1--L4,
-    T\textsubscript{minimax}, and T\textsubscript{sensor\_converse}.  These
-    rows remain visible only as scoped draft material.
+  \item[Flagship theorem.] T1, T2, T3a, T4, T5, T6, T7, T8, T9, T10, T11,
+    T11\textsubscript{Byz}, T\textsubscript{stale}, and
+    T\textsubscript{trajectory\_PAC}.
+  \item[Flagship corollary.] T3b.
+  \item[Flagship lemma.] L1--L4.
+  \item[Scoped flagship theorem.] T\textsubscript{minimax} and
+    T\textsubscript{sensor}, with explicit finite-ambiguity and adapter
+    semantics boundaries.
 \end{description}
 
 \paragraph{Active empirical lane.}

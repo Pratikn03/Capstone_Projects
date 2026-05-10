@@ -1,0 +1,12 @@
+\paragraph{Theorem Tsensor: Sensor Necessity Under Adapter Semantics.}
+Let \(x^j\) be a latent coordinate on which the safe-action map depends. If the
+observation map contains no information about \(x^j\), and there exist
+\(x_0,x_1\) differing only in \(x^j\) with
+\(C(x_0)\cap C(x_1)=\varnothing\), then no observation-only mandatory-release
+policy can certify safety without additional sensing, uncertainty expansion,
+fallback, or denial.
+
+\paragraph{Proof.}
+Since \(h\) omits \(x^j\), the two states produce the same observation and lie
+in the same ambiguity class. Their safe-action sets are disjoint, so the common
+safe core of that class is empty. The result follows immediately from T9.

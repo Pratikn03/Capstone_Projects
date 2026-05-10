@@ -1,0 +1,9 @@
+theorem_id,title,status,code_anchor,test_anchor
+T1,OASG Existence,flagship_theorem,src/orius/orius_bench/metrics_engine.py,tests/test_oasg_metrics.py
+T2,Safety Preservation,flagship_theorem,src/orius/dc3s/guarantee_checks.py,tests/test_dc3s_guarantee_checks.py
+T3a,ORIUS Core Envelope Derivation,flagship_theorem,src/orius/universal_theory/risk_bounds.py,tests/test_dc3s_coverage_theorem.py
+T3b,ORIUS Core Aggregation Corollary,flagship_corollary,src/orius/universal_theory/risk_bounds.py,tests/test_active_theorem_audit.py
+T4,Observation Necessity / No Free Safety,flagship_theorem,src/orius/dc3s/supporting_results.py,tests/test_unification.py
+T6,Certificate Expiration Bound,flagship_theorem,src/orius/universal_theory/battery_instantiation.py,tests/test_dc3s_temporal_theorems.py
+T7,Feasible Fallback Existence,flagship_theorem,src/orius/universal_theory/battery_instantiation.py,tests/test_dc3s_temporal_theorems.py
+T11,Typed Structural Transfer,flagship_theorem,src/orius/universal_theory/contracts.py,tests/test_theoretical_guarantees_hypothesis.py

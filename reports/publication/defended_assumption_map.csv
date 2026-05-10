@@ -1,55 +1,55 @@
 theorem_id,defense_tier,item_type,item,resolution_status,evidence_location
-T1,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:55
-T1,flagship_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:67
-T1,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:86
-T1,flagship_defended,appendix_assumption,A11,registered,appendices/app_b_assumptions.tex:174
-T1,flagship_defended,appendix_assumption,A12,registered,appendices/app_b_assumptions.tex:185
-T2,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:55
-T2,flagship_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:67
-T2,flagship_defended,appendix_assumption,A3,registered,appendices/app_b_assumptions.tex:77
-T2,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:86
-T2,flagship_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:93
-T2,flagship_defended,appendix_assumption,A7,registered,appendices/app_b_assumptions.tex:114
-T3a,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:55
-T3a,flagship_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:67
-T3a,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:86
-T3a,flagship_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:93
-T3a,flagship_defended,appendix_assumption,A6,registered,appendices/app_b_assumptions.tex:106
-T3a,flagship_defended,appendix_assumption,A7,registered,appendices/app_b_assumptions.tex:114
-T3a,flagship_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:143
-T3b,supporting_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:55
-T3b,supporting_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:67
-T3b,supporting_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:86
-T3b,supporting_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:93
-T3b,supporting_defended,appendix_assumption,A6,registered,appendices/app_b_assumptions.tex:106
-T3b,supporting_defended,appendix_assumption,A7,registered,appendices/app_b_assumptions.tex:114
-T3b,supporting_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:143
-T4,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:55
-T4,flagship_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:67
-T4,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:86
-T4,flagship_defended,appendix_assumption,A11,registered,appendices/app_b_assumptions.tex:174
-T5,draft_non_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:55
-T5,draft_non_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:67
-T5,draft_non_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:86
-T5,draft_non_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:93
-T5,draft_non_defended,appendix_assumption,A6,registered,appendices/app_b_assumptions.tex:106
-T5,draft_non_defended,appendix_assumption,A7,registered,appendices/app_b_assumptions.tex:114
-T5,draft_non_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:143
-T6,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:86
-T6,flagship_defended,appendix_assumption,A7,registered,appendices/app_b_assumptions.tex:114
-T6,flagship_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:143
-T7,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:55
-T7,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:86
-T7,flagship_defended,appendix_assumption,A8,registered,appendices/app_b_assumptions.tex:124
-T8,supporting_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:55
-T8,supporting_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:67
-T8,supporting_defended,appendix_assumption,A3,registered,appendices/app_b_assumptions.tex:77
-T8,supporting_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:86
-T8,supporting_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:93
-T8,supporting_defended,appendix_assumption,A8,registered,appendices/app_b_assumptions.tex:124
-T9,supporting_defended,appendix_assumption,A10b,registered,appendices/app_b_assumptions.tex:164
-T9,supporting_defended,appendix_assumption,A11,registered,appendices/app_b_assumptions.tex:174
-T10,supporting_defended,appendix_assumption,A13,registered,appendices/app_b_assumptions.tex:195
+T1,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
+T1,flagship_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:65
+T1,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
+T1,flagship_defended,appendix_assumption,A11,registered,appendices/app_b_assumptions.tex:172
+T1,flagship_defended,appendix_assumption,A12,registered,appendices/app_b_assumptions.tex:183
+T2,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
+T2,flagship_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:65
+T2,flagship_defended,appendix_assumption,A3,registered,appendices/app_b_assumptions.tex:75
+T2,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
+T2,flagship_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:91
+T2,flagship_defended,appendix_assumption,A7,registered,appendices/app_b_assumptions.tex:112
+T3a,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
+T3a,flagship_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:65
+T3a,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
+T3a,flagship_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:91
+T3a,flagship_defended,appendix_assumption,A6,registered,appendices/app_b_assumptions.tex:104
+T3a,flagship_defended,appendix_assumption,A7,registered,appendices/app_b_assumptions.tex:112
+T3a,flagship_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:141
+T3b,supporting_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
+T3b,supporting_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:65
+T3b,supporting_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
+T3b,supporting_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:91
+T3b,supporting_defended,appendix_assumption,A6,registered,appendices/app_b_assumptions.tex:104
+T3b,supporting_defended,appendix_assumption,A7,registered,appendices/app_b_assumptions.tex:112
+T3b,supporting_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:141
+T4,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
+T4,flagship_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:65
+T4,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
+T4,flagship_defended,appendix_assumption,A11,registered,appendices/app_b_assumptions.tex:172
+T5,draft_non_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
+T5,draft_non_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:65
+T5,draft_non_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
+T5,draft_non_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:91
+T5,draft_non_defended,appendix_assumption,A6,registered,appendices/app_b_assumptions.tex:104
+T5,draft_non_defended,appendix_assumption,A7,registered,appendices/app_b_assumptions.tex:112
+T5,draft_non_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:141
+T6,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
+T6,flagship_defended,appendix_assumption,A7,registered,appendices/app_b_assumptions.tex:112
+T6,flagship_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:141
+T7,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
+T7,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
+T7,flagship_defended,appendix_assumption,A8,registered,appendices/app_b_assumptions.tex:122
+T8,supporting_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
+T8,supporting_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:65
+T8,supporting_defended,appendix_assumption,A3,registered,appendices/app_b_assumptions.tex:75
+T8,supporting_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
+T8,supporting_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:91
+T8,supporting_defended,appendix_assumption,A8,registered,appendices/app_b_assumptions.tex:122
+T9,supporting_defended,appendix_assumption,A10b,registered,appendices/app_b_assumptions.tex:162
+T9,supporting_defended,appendix_assumption,A11,registered,appendices/app_b_assumptions.tex:172
+T10,supporting_defended,appendix_assumption,A13,registered,appendices/app_b_assumptions.tex:193
 T11,flagship_defended,typed_obligation,Coverage obligation for the observation-consistent state set.,runtime_linked,src/orius/universal_theory/contracts.py:630
 T11,flagship_defended,typed_obligation,Soundness of the tightened safe-action set.,runtime_linked,src/orius/universal_theory/contracts.py:630
 T11,flagship_defended,typed_obligation,Repair membership in the tightened safe-action set.,runtime_linked,src/orius/universal_theory/contracts.py:630
@@ -86,19 +86,19 @@ T_EQ_AV_RuntimeArtifactPackage,supporting_defended,typed_obligation,Vehicle ORIU
 T_EQ_HC_RuntimeArtifactPackage,supporting_defended,typed_obligation,Healthcare T11 and T6 runtime lemmas are linked.,runtime_linked,scripts/build_healthcare_runtime_artifacts.py:884
 T_EQ_HC_RuntimeArtifactPackage,supporting_defended,typed_obligation,"Healthcare comparator, ablation, and negative-control rows are runtime-denominator rows.",runtime_linked,scripts/build_healthcare_runtime_artifacts.py:884
 T_EQ_HC_RuntimeArtifactPackage,supporting_defended,typed_obligation,Healthcare ORIUS useful work exceeds always-alert useful work.,runtime_linked,scripts/build_healthcare_runtime_artifacts.py:884
-L1,draft_non_defended,theorem_local_assumption,Stylized binary-source surrogate lower envelope.,scoped_unresolved,appendices/app_c_full_proofs.tex:723
-L2,draft_non_defended,theorem_local_assumption,Domain-scoped proxy constant kappa_d is externally calibrated.,scoped_unresolved,appendices/app_c_full_proofs.tex:762
-L3,draft_non_defended,theorem_local_assumption,Stylized L2 capacity-proxy bridge.,scoped_unresolved,appendices/app_c_full_proofs.tex:796
-L4,draft_non_defended,theorem_local_assumption,Executable T3-style upper envelope.,scoped_unresolved,appendices/app_c_full_proofs.tex:835
-T11_Byzantine,supporting_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:143
+L1,draft_non_defended,theorem_local_assumption,Stylized binary-source surrogate lower envelope.,scoped_unresolved,appendices/app_c_full_proofs.tex:721
+L2,draft_non_defended,theorem_local_assumption,Domain-scoped proxy constant kappa_d is externally calibrated.,scoped_unresolved,appendices/app_c_full_proofs.tex:760
+L3,draft_non_defended,theorem_local_assumption,Stylized L2 capacity-proxy bridge.,scoped_unresolved,appendices/app_c_full_proofs.tex:794
+L4,draft_non_defended,theorem_local_assumption,Executable T3-style upper envelope.,scoped_unresolved,appendices/app_c_full_proofs.tex:833
+T11_Byzantine,supporting_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:141
 T11_Byzantine,supporting_defended,typed_obligation,Byzantine fraction f is strictly below 1/3.,proof_linked,src/orius/dc3s/theoretical_guarantees.py:1319
 T11_Byzantine,supporting_defended,typed_obligation,Trim fraction beta is at least f.,proof_linked,src/orius/dc3s/theoretical_guarantees.py:1319
 T11_Byzantine,supporting_defended,typed_obligation,Tail-contamination model places adversarial readings in the trimmed tails.,proof_linked,src/orius/dc3s/theoretical_guarantees.py:1319
-T_stale_decay,supporting_defended,appendix_assumption,A6,registered,appendices/app_b_assumptions.tex:106
-T_minimax,draft_non_defended,theorem_local_assumption,T3a/L1/L2 stylized lower-envelope bridge.,scoped_unresolved,appendices/app_c_full_proofs.tex:999
-T_sensor_converse,draft_non_defended,theorem_local_assumption,T3a/L2/L3 proxy threshold bridge.,scoped_unresolved,appendices/app_c_full_proofs.tex:1050
-T_trajectory_PAC,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:55
-T_trajectory_PAC,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:86
-T_trajectory_PAC,flagship_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:93
-T_trajectory_PAC,flagship_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:143
-T_trajectory_PAC,flagship_defended,typed_obligation,Bonferroni/union-bound aggregation over the horizon.,proof_linked,src/orius/universal_theory/risk_bounds.py:563
+T_stale_decay,supporting_defended,appendix_assumption,A6,registered,appendices/app_b_assumptions.tex:104
+T_minimax,draft_non_defended,theorem_local_assumption,T3a/L1/L2 stylized lower-envelope bridge.,scoped_unresolved,appendices/app_c_full_proofs.tex:997
+T_sensor_converse,draft_non_defended,theorem_local_assumption,T3a/L2/L3 proxy threshold bridge.,scoped_unresolved,appendices/app_c_full_proofs.tex:1048
+T_trajectory_PAC,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
+T_trajectory_PAC,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
+T_trajectory_PAC,flagship_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:91
+T_trajectory_PAC,flagship_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:141
+T_trajectory_PAC,flagship_defended,typed_obligation,Bonferroni/union-bound aggregation over the horizon.,proof_linked,src/orius/universal_theory/risk_bounds.py:621

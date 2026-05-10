@@ -1,18 +1,29 @@
 {
-  "theorem_id": "Tstale",
-  "title": "Stale-Hold Uncertainty Growth",
-  "status": "flagship_theorem",
-  "assumptions": [
-    "bounded latent drift",
-    "no fresh observations for s steps"
+  "artifact_hashes": {
+    "reports/publication/Tstale_certificate_decay.csv": "06c186d1e69b0f27d1844ec6ab289735b50c98da382b4b7bced91eff4e42a6aa",
+    "reports/publication/Tstale_radius_growth.csv": "73c3d8645a8c76a83ed5630b82a473e7cb6a98afb79ab23e09a3371378eb66f7",
+    "reports/publication/fig_Tstale_radius_vs_hold_duration.png": "0042a97862bb9cc61d54cc4b5a73419ac926f7cc322468107efd2b49709d9e85",
+    "reports/publication/fig_Tstale_radius_vs_hold_duration.svg": "709fa221ff098f8603632c2eafb704fc75230c706d3742366c51658c39c9e40b"
+  },
+  "artifacts": [
+    "reports/publication/Tstale_radius_growth.csv",
+    "reports/publication/Tstale_certificate_decay.csv",
+    "reports/publication/fig_Tstale_radius_vs_hold_duration.svg",
+    "reports/publication/fig_Tstale_radius_vs_hold_duration.png"
   ],
-  "proof_file": "appendices/proofs/Tstale_uncertainty_growth.tex",
+  "assumptions": [
+    "bounded_drift",
+    "stale_hold_interval",
+    "conservative_radius_update"
+  ],
+  "claim_boundary": "bounded-drift stale-hold expansion only",
   "code_anchor": "src/orius/universal_theory/stale_decay.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/proofs/Tstale_uncertainty_growth.tex",
+  "status": "flagship_theorem",
   "tests": [
     "tests/test_Tstale_uncertainty_growth.py"
   ],
-  "artifacts": [
-    "reports/publication/Tstale_radius_growth.csv"
-  ],
-  "claim_boundary": "conservative runtime growth rule under stale-hold conditions"
+  "theorem_id": "Tstale",
+  "title": "Stale-Hold Uncertainty Growth"
 }

@@ -1,0 +1,4 @@
+domain,ambiguity,core_empty,baseline_failure,orius_fallback
+Battery,stale SOC,1,1,1
+AV,stale TTC,1,1,1
+Healthcare,delayed vitals,1,1,1

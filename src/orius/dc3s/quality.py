@@ -25,7 +25,15 @@ import numpy as np
 
 from .ftit import FTIT_FAULT_KEYS, preview_fault_state
 
-__all__ = ["compute_reliability", "compute_reliability_robust", "w_t_as_capacity_proxy"]
+__all__ = [
+    "byzantine_channel_attack",
+    "byzantine_reliability_error_bound",
+    "compute_reliability",
+    "compute_reliability_robust",
+    "median_of_means_reliability",
+    "trimmed_mean_reliability",
+    "w_t_as_capacity_proxy",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -548,6 +556,79 @@ def compute_reliability(
 # ---------------------------------------------------------------------------
 # Byzantine-Resistant OQE (Phase 3)
 # ---------------------------------------------------------------------------
+
+
+def trimmed_mean_reliability(scores: Sequence[float], *, byzantine_budget: int) -> float:
+    """Return the b-trimmed mean reliability score used by T11Byz."""
+
+    values = sorted(float(score) for score in scores)
+    n = len(values)
+    b = int(byzantine_budget)
+    if n == 0:
+        raise ValueError("scores must be non-empty.")
+    if b < 0:
+        raise ValueError("byzantine_budget must be non-negative.")
+    if 2 * b >= n:
+        raise ValueError("T11Byz requires byzantine_budget < n/2.")
+    kept = values[b : n - b]
+    return float(sum(kept) / len(kept))
+
+
+def median_of_means_reliability(scores: Sequence[float], *, num_blocks: int) -> float:
+    """Return a median-of-means reliability aggregate for adversarial channels."""
+
+    values = [float(score) for score in scores]
+    if not values:
+        raise ValueError("scores must be non-empty.")
+    blocks = int(num_blocks)
+    if blocks <= 0:
+        raise ValueError("num_blocks must be positive.")
+    if blocks > len(values):
+        raise ValueError("num_blocks cannot exceed number of scores.")
+    sorted_values = sorted(values)
+    block_means: list[float] = []
+    for block in np.array_split(np.asarray(sorted_values, dtype=float), blocks):
+        block_means.append(float(np.mean(block)))
+    return float(statistics.median(block_means))
+
+
+def byzantine_channel_attack(
+    honest_scores: Sequence[float],
+    *,
+    byzantine_budget: int,
+    attack_value: float,
+) -> list[float]:
+    """Append adversarial reliability channels to an honest score vector."""
+
+    if byzantine_budget < 0:
+        raise ValueError("byzantine_budget must be non-negative.")
+    if not (0.0 <= float(attack_value) <= 1.0):
+        raise ValueError("attack_value must lie in [0, 1].")
+    return [float(score) for score in honest_scores] + [float(attack_value)] * int(byzantine_budget)
+
+
+def byzantine_reliability_error_bound(
+    honest_scores: Sequence[float],
+    observed_scores: Sequence[float],
+    *,
+    byzantine_budget: int,
+) -> dict[str, float | bool]:
+    """Check the T11Byz robust aggregation envelope against honest scores."""
+
+    honest = [float(score) for score in honest_scores]
+    if not honest:
+        raise ValueError("honest_scores must be non-empty.")
+    honest_center = float(sum(honest) / len(honest))
+    rho = max(abs(score - honest_center) for score in honest)
+    robust = trimmed_mean_reliability(observed_scores, byzantine_budget=byzantine_budget)
+    error = abs(robust - honest_center)
+    return {
+        "honest_center": honest_center,
+        "robust_score": robust,
+        "rho": float(rho),
+        "absolute_error": float(error),
+        "bound_satisfied": bool(error <= rho + 1e-12),
+    }
 
 
 def compute_reliability_robust(

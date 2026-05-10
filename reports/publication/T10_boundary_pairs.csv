@@ -1,0 +1,4 @@
+domain,pair,tv,disjoint_safe_sets,lower_bound
+Battery,low/high SOC,0.12,1,0.44
+AV,safe/unsafe gap,0.22,1,0.39
+Healthcare,stable/deteriorating,0.18,1,0.41

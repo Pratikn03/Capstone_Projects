@@ -1,0 +1,24 @@
+{
+  "artifact_hashes": {
+    "reports/publication/Tcore_existing_flagship_surfaces.csv": "9fe46c8b043d09800a7f1ad9052b08a8d62754ddc934dec35b58b01cf14f4bdc",
+    "reports/publication/fig_core_theorem_spine.png": "37f66d90a8d2bc055ec771e529de1b785beb7d2d14c693137c0418ed6d766676"
+  },
+  "artifacts": [
+    "reports/publication/Tcore_existing_flagship_surfaces.csv",
+    "reports/publication/fig_core_theorem_spine.png"
+  ],
+  "assumptions": [
+    "fixed_margin_quality_ignorant_controller",
+    "battery_arbitrage_reachability"
+  ],
+  "claim_boundary": "battery-row observation-necessity witness for fixed-margin quality-ignorant controllers",
+  "code_anchor": "src/orius/dc3s/supporting_results.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/app_c_full_proofs.tex",
+  "status": "flagship_theorem",
+  "tests": [
+    "tests/test_unification.py"
+  ],
+  "theorem_id": "T4",
+  "title": "Observation Necessity / No Free Safety"
+}

@@ -11,17 +11,17 @@
 This appendix is the human-readable companion to the machine-generated
 active theorem audit in \texttt{reports/publication/active\_theorem\_audit.*}.
 It does \emph{not} treat the live theorem inventory as one flat ladder.
-Instead it mirrors the registry-canonical split emitted by
-\texttt{defended\_theorem\_core.*}:
+Instead it mirrors the promotion-gated split emitted by
+\texttt{theorem\_promotion\_matrix.*}:
 \begin{itemize}
-  \item \textbf{Flagship defended}: T1, T2, T3a, T4, T6, T7, T11, and T\_trajectory\_PAC.
-  \item \textbf{Supporting defended}: T3b, T8, T11\textsubscript{Byz}, and T\textsubscript{stale}.
-  \item \textbf{Draft / non-defended}: T5, T9, T10, L1--L4,
-  T\textsubscript{minimax}, and T\textsubscript{sensor}.
+  \item \textbf{Flagship theorem}: T1, T2, T3a, T4, T5, T6, T7, T8, T9, T10,
+  T11, T11\textsubscript{Byz}, T\textsubscript{stale}, and T\_trajectory\_PAC.
+  \item \textbf{Flagship corollary}: T3b.
+  \item \textbf{Flagship lemma}: L1--L4.
+  \item \textbf{Scoped flagship theorem}: T\textsubscript{minimax} and T\textsubscript{sensor}.
 \end{itemize}
-This appendix audits the full live surface, but only the flagship and
-supporting tiers belong to the defended June core. The draft tier remains
-visible to prevent hidden drift, not to inflate the headline theorem count.
+This appendix audits the full live surface.  Historical drafts remain visible
+only as archived text and do not inflate the promoted theorem count.
 
 The certificate half-life remains a corollary, and safe-budget monotonicity
 remains a proposition. The tracked integrated theorem surface register still
@@ -263,12 +263,14 @@ harness in \texttt{src/orius/universal/contract.py}; focused tests in
 
 \section{Gap Audit Table}
 
-Table~\ref{tab:theorem-gap-audit} summarises the active T1--T11 audit surface,
-with the understanding that only a strict subset belongs to the June defended core.
+Table~\ref{tab:theorem-gap-audit} summarises the historical active T1--T11
+audit surface.  The publication-ready defended register is now the stricter
+promotion matrix, where every active theorem-like row has proof, code, tests,
+artifacts, hashes, and a claim boundary.
 
 \begin{table}[htbp]
 \centering
-\caption{Active T1--T11 theorem audit summary with flagship/supporting/draft posture}
+\caption{Historical T1--T11 theorem audit summary before promotion-gate closure}
 \label{tab:theorem-gap-audit}
 \small
 \resizebox{\textwidth}{!}{%

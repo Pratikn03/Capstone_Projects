@@ -1,5 +1,5 @@
 policy,tsvr,work,fallback,gdq,pass
-Blind,0.18,1.0,no,0.31,no
-Shutdown,0.0,0.0,yes,0.04,partial
-Ramp,0.06,0.62,yes,0.57,maybe
-ORIUS,0.02,0.78,yes,0.81,yes
+Blind,0.18,1.0,0,0.31,no
+Shutdown,0.0,0.0,12,0.04,partial
+Ramp,0.06,0.62,8,0.57,maybe
+ORIUS,0.02,0.78,5,0.81,yes

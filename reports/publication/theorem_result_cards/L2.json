@@ -1,0 +1,25 @@
+{
+  "artifact_hashes": {
+    "reports/publication/L1_L4_runtime_law_audit.csv": "6c12541ee9c23076ac73032d7c1b7b6ebb38ee9aecd2af05d3551465daccd5f2",
+    "reports/publication/fig_L2_uncertainty_vs_safe_set_size.png": "903ec15995f80648409d210385878ec18dd6c00ea54086ca87dfa2a2b6e88aaa",
+    "reports/publication/fig_L2_uncertainty_vs_safe_set_size.svg": "1e18fda581af47db7f7f40cff51b2069df43d9ae850791cb72fd44e2a5945c7e"
+  },
+  "artifacts": [
+    "reports/publication/L1_L4_runtime_law_audit.csv",
+    "reports/publication/fig_L2_uncertainty_vs_safe_set_size.svg",
+    "reports/publication/fig_L2_uncertainty_vs_safe_set_size.png"
+  ],
+  "assumptions": [
+    "set_inclusion"
+  ],
+  "claim_boundary": "set-inclusion law",
+  "code_anchor": "src/orius/universal_theory/runtime_laws.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/proofs/L2_safe_set_antitonicity.tex",
+  "status": "flagship_lemma",
+  "tests": [
+    "tests/test_runtime_law_suite.py"
+  ],
+  "theorem_id": "L2",
+  "title": "Safe-Set Antitonicity"
+}

@@ -1,0 +1,5 @@
+corrupt_pct,bound_satisfied,rho,observed_error
+0,1,0.03,0.01
+10,1,0.05,0.03
+20,1,0.08,0.05
+30,1,0.12,0.08

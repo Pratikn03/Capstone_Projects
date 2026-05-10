@@ -1,0 +1,10 @@
+\paragraph{Lemma L3: Intervention Threshold.}
+If a candidate action \(a_t\) lies outside
+\(\cap_{x\in X_t}C(x)\), any certified ORIUS release must repair, fallback, or
+deny release.
+
+\paragraph{Proof.}
+Membership in \(\cap_{x\in X_t}C(x)\) is exactly the condition for the action to
+be safe for every state covered by the runtime uncertainty set. If the action is
+outside that set, releasing it would violate the covered-release contract.
+Therefore a certified runtime must choose a repair, fallback, or denial path.

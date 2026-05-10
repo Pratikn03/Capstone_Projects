@@ -560,6 +560,64 @@ def pac_validity_horizon_bound(
 # ---------------------------------------------------------------------------
 
 
+def pac_trajectory_budget(step_risk_budgets: np.ndarray | list[float]) -> dict[str, float | int]:
+    """Aggregate finite-horizon per-step risk budgets for T_trajectory_PAC."""
+
+    budgets = _as_flat_float_array(step_risk_budgets, name="step_risk_budgets")
+    if np.any((budgets < 0.0) | (budgets > 1.0)):
+        raise ValueError("step_risk_budgets must lie in [0, 1].")
+    return {
+        "horizon": int(budgets.size),
+        "budget_sum": float(np.sum(budgets)),
+        "max_step_budget": float(np.max(budgets)),
+    }
+
+
+def trajectory_union_bound_certificate(
+    step_risk_budgets: np.ndarray | list[float],
+    *,
+    delta: float,
+) -> dict[str, float | int | bool | str]:
+    """Certify a trajectory by the Bonferroni/union-bound theorem."""
+
+    if not (0.0 < float(delta) < 1.0):
+        raise ValueError("delta must lie in (0, 1).")
+    budget = pac_trajectory_budget(step_risk_budgets)
+    violation_bound = min(1.0, float(budget["budget_sum"]))
+    passes = violation_bound <= float(delta) + 1e-12
+    return {
+        **budget,
+        "delta": float(delta),
+        "violation_probability_upper_bound": violation_bound,
+        "trajectory_safety_lower_bound": max(0.0, 1.0 - violation_bound),
+        "passes": bool(passes),
+        "bound_style": "bonferroni_union_bound",
+    }
+
+
+def validate_pac_certificate(
+    step_risk_budgets: np.ndarray | list[float],
+    *,
+    delta: float,
+    empirical_violation_rate: float | None = None,
+) -> dict[str, float | int | bool | str | None]:
+    """Validate the finite-horizon PAC certificate and optional empirical rate."""
+
+    result = dict(trajectory_union_bound_certificate(step_risk_budgets, delta=delta))
+    if empirical_violation_rate is None:
+        result["empirical_violation_rate"] = None
+        result["empirical_within_bound"] = None
+        return result
+    empirical = float(empirical_violation_rate)
+    if not (0.0 <= empirical <= 1.0):
+        raise ValueError("empirical_violation_rate must lie in [0, 1].")
+    result["empirical_violation_rate"] = empirical
+    result["empirical_within_bound"] = bool(
+        empirical <= float(result["violation_probability_upper_bound"]) + 1e-12
+    )
+    return result
+
+
 def pac_trajectory_safety_certificate(
     H: int,
     n_cal: int,

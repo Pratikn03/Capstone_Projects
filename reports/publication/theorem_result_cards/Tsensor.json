@@ -1,18 +1,27 @@
 {
-  "theorem_id": "Tsensor",
-  "title": "Sensor Necessity Under Adapter Semantics",
-  "status": "flagship_theorem",
-  "assumptions": [
-    "missing informative coordinate",
-    "disjoint-safe witness pair"
+  "artifact_hashes": {
+    "reports/publication/Tsensor_sensor_ablation.csv": "51368ae370fba187302fa019c8ddfe38ea12dd09c08c1cf149133eb753bf2d41",
+    "reports/publication/fig_Tsensor_safe_core_vs_sensor_drop.png": "e81961397c7422f5fde7774ae873bf68017e5280f634668749860fb67583f6d6",
+    "reports/publication/fig_Tsensor_safe_core_vs_sensor_drop.svg": "9a40882134a5914810f244a8d711d637424392c2e4477b90f2791b8cae5e74a3"
+  },
+  "artifacts": [
+    "reports/publication/Tsensor_sensor_ablation.csv",
+    "reports/publication/fig_Tsensor_safe_core_vs_sensor_drop.svg",
+    "reports/publication/fig_Tsensor_safe_core_vs_sensor_drop.png"
   ],
-  "proof_file": "appendices/proofs/Tsensor_sensor_necessity.tex",
+  "assumptions": [
+    "missing_latent_coordinate",
+    "safe_map_depends_on_coordinate",
+    "disjoint_safe_core_witness"
+  ],
+  "claim_boundary": "depends on disjoint-safe-core witness under missing sensor coordinate",
   "code_anchor": "src/orius/universal_theory/sensor_necessity.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/proofs/Tsensor_sensor_necessity.tex",
+  "status": "flagship_theorem",
   "tests": [
     "tests/test_Tsensor_necessity.py"
   ],
-  "artifacts": [
-    "reports/publication/Tsensor_sensor_ablation.csv"
-  ],
-  "claim_boundary": "necessity holds under observation-only mandatory release semantics"
+  "theorem_id": "Tsensor",
+  "title": "Sensor Necessity Under Adapter Semantics"
 }

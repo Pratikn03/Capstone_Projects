@@ -1,2 +1,29 @@
 \chapter{Claim-to-Evidence Matrix}
-Each theorem claim row includes: claim\_id, proof\_file, code\_anchor, test\_file, artifact\_path, status, and claim\_boundary.
+\label{app:claim-evidence}
+
+Every promoted theorem row is represented by a machine-readable result card in
+\path{reports/publication/theorem_result_cards/}.  Each card contains:
+\[
+\texttt{claim\_id},\quad
+\texttt{proof\_file},\quad
+\texttt{code\_anchor},\quad
+\texttt{test\_file},\quad
+\texttt{artifact\_path},\quad
+\texttt{status},\quad
+\texttt{claim\_boundary}.
+\]
+Artifact hashes are part of the evidence contract.  A theorem cannot be
+promoted by prose alone; if the artifact hash or path fails validation, the row
+is not publication-ready.
+
+\section{Evidence Families}
+The evidence families are certificate horizon and expiry (T5), safety-work
+frontier (T8), ambiguity witnesses (T9), boundary lower-bound curves (T10),
+Byzantine reliability sweeps (T11Byz), stale-hold growth (Tstale), trajectory
+PAC horizon sweeps (T\_trajectory\_PAC), runtime law audits (L1--L4), finite
+ambiguity minimax grids (Tminimax), and sensor-ablation witnesses (Tsensor).
+
+\section{Domain Lane}
+Battery, AV, and Healthcare provide the current three-domain evidence lane.
+T11Byz is required on Battery and optional on AV/Healthcare until those domains
+expose multi-channel adversarial telemetry artifacts.

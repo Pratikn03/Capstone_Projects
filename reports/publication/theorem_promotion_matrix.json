@@ -1,6 +1,5 @@
 {
-  "schema_version": "1.0",
-  "generated_by": "manual upgrade plan scaffold",
+  "generated_by": "scripts/run_theorem_closure_pack.py",
   "promotion_gates": [
     "statement",
     "assumptions",
@@ -8,16 +7,115 @@
     "code",
     "tests",
     "artifact",
+    "artifact_hash",
     "manuscript"
   ],
+  "schema_version": "2.0",
   "theorems": [
-    {"theorem_id":"T5","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/T5.json"},
-    {"theorem_id":"T8","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/T8.json"},
-    {"theorem_id":"T9","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/T9.json"},
-    {"theorem_id":"T10","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/T10.json"},
-    {"theorem_id":"T11Byz","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/T11Byz.json"},
-    {"theorem_id":"Tstale","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/Tstale.json"},
-    {"theorem_id":"Tminimax","status":"scoped_flagship_theorem","result_card":"reports/publication/theorem_result_cards/Tminimax.json"},
-    {"theorem_id":"Tsensor","status":"flagship_theorem","result_card":"reports/publication/theorem_result_cards/Tsensor.json"}
+    {
+      "result_card": "reports/publication/theorem_result_cards/T1.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T1"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T2.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T2"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T3a.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T3a"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T3b.json",
+      "status": "flagship_corollary",
+      "theorem_id": "T3b"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T4.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T4"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T5.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T5"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T6.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T6"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T7.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T7"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T8.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T8"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T9.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T9"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T10.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T10"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T11Byz.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T11Byz"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T11.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T11"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/Tstale.json",
+      "status": "flagship_theorem",
+      "theorem_id": "Tstale"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/Tminimax.json",
+      "status": "scoped_flagship_theorem",
+      "theorem_id": "Tminimax"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/Tsensor.json",
+      "status": "flagship_theorem",
+      "theorem_id": "Tsensor"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T_trajectory_PAC.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T_trajectory_PAC"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/L1.json",
+      "status": "flagship_lemma",
+      "theorem_id": "L1"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/L2.json",
+      "status": "flagship_lemma",
+      "theorem_id": "L2"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/L3.json",
+      "status": "flagship_lemma",
+      "theorem_id": "L3"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/L4.json",
+      "status": "flagship_lemma",
+      "theorem_id": "L4"
+    }
   ]
 }

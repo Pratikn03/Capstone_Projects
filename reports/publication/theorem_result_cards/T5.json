@@ -1,7 +1,20 @@
 {
-  "theorem_id": "T5",
-  "title": "Finite-Horizon Certificate Validity",
-  "status": "flagship_theorem",
+  "artifact_hashes": {
+    "reports/publication/T5_certificate_expiry_events.csv": "7c1668a7fbb32cbbe7b0e11f9af293913a3d2fa8facd68960888cb7acb8c4b83",
+    "reports/publication/T5_certificate_horizon_by_fault.csv": "18f85592b621078c973446cd2dda5ca441c350e1abde29645a7f1833819c1f20",
+    "reports/publication/fig_T5_horizon_vs_fault_severity.png": "d30e32013a36efe8744c4aa785d8030e087463bfbdd7e33ea6b74aabc0970738",
+    "reports/publication/fig_T5_horizon_vs_fault_severity.svg": "ef52af8ebbd8ad6d57588c30608c74c9169867785b36bb02f8107eafbdb5bf86",
+    "reports/publication/fig_T5_horizon_vs_reliability.png": "f2af8ac2d0af1c539c01beda3e731bacd0a8588bc4350f0f7d69005d643d7644",
+    "reports/publication/fig_T5_horizon_vs_reliability.svg": "03a66e0b0cac9239c89b7dae44c77f8f444eb0420881947e8309b96e693d39a3"
+  },
+  "artifacts": [
+    "reports/publication/T5_certificate_horizon_by_fault.csv",
+    "reports/publication/T5_certificate_expiry_events.csv",
+    "reports/publication/fig_T5_horizon_vs_reliability.svg",
+    "reports/publication/fig_T5_horizon_vs_fault_severity.svg",
+    "reports/publication/fig_T5_horizon_vs_reliability.png",
+    "reports/publication/fig_T5_horizon_vs_fault_severity.png"
+  ],
   "assumptions": [
     "A1",
     "A2",
@@ -9,13 +22,16 @@
     "A4",
     "A5"
   ],
-  "proof_file": "appendices/proofs/T5_certificate_validity.tex",
+  "claim_boundary": "finite-horizon runtime certificate; invalidates on contradictory evidence",
   "code_anchor": "src/orius/dc3s/temporal_theorems.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/proofs/T5_certificate_validity.tex",
+  "status": "flagship_theorem",
   "tests": [
-    "tests/test_T5_certificate_validity.py"
+    "tests/test_T5_certificate_validity.py",
+    "tests/test_certos_horizon_expiry.py",
+    "tests/test_certificate_invalidating_events.py"
   ],
-  "artifacts": [
-    "reports/publication/T5_certificate_horizon_by_fault.csv"
-  ],
-  "claim_boundary": "finite-horizon runtime certificate, not universal plant-time law"
+  "theorem_id": "T5",
+  "title": "Finite-Horizon Certificate Validity"
 }

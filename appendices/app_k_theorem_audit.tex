@@ -1,4 +1,30 @@
 \chapter{Theorem Audit Register}
-No draft theorem rows remain in the defended theorem register.
-Historical draft rows are archived-only.
-All active theorem surfaces pass proof/code/test/artifact gates.
+\label{app:theorem-audit}
+
+No draft theorem rows remain in the defended theorem register.  Historical
+draft surfaces are archived only and do not contribute to the active theorem
+count.  The active register is generated from
+\path{reports/publication/theorem_promotion_matrix.csv}; each promoted row has
+a result card with statement status, assumptions, proof file, code anchor,
+tests, artifacts, artifact hashes, manuscript anchor, and claim boundary.
+
+\section{Promotion Classes}
+\begin{description}
+  \item[Flagship theorem] Main defended result.
+  \item[Flagship corollary] Derived result whose proof burden is inherited from
+    a flagship theorem.
+  \item[Flagship lemma] Supporting runtime law with a narrow proof.
+  \item[Archived only] Historical text excluded from the defended register.
+\end{description}
+
+\section{Final Promoted Surface}
+The promoted surface is T1, T2, T3a, T3b, T4, T5, T6, T7, T8, T9, T10, T11,
+T11Byz, Tstale, T\_trajectory\_PAC, L1--L4, Tminimax, and Tsensor.  Tminimax is
+scoped to the finite ambiguity-class lower bound; no global minimax optimality
+claim is present.
+
+\section{Falsification Conditions}
+A promoted theorem must be demoted or patched if any referenced proof file,
+code anchor, test file, artifact, artifact hash, or claim-boundary note becomes
+missing or stale.  The CI-facing validator is
+\path{scripts/validate_theorem_promotion.py}.

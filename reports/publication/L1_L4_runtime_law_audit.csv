@@ -1,0 +1,5 @@
+law,runtime_check,pass,claim_boundary
+L1,inflation monotonicity,1,proxy margin law
+L2,safe-set antitonicity,1,set inclusion law
+L3,intervention threshold,1,certified release filter
+L4,ambiguity sandwich,1,T9/T10 lower and T2/T3 upper
