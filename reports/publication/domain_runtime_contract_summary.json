@@ -15,8 +15,8 @@
       "n_steps": 1152,
       "postcondition_pass_rate": 1.0,
       "scope_note": "Reference runtime witness for promoted ORIUS battery dispatch rows: T11 forward obligations plus the true safe-dispatch postcondition in the battery runtime trace.",
-      "t11_pass_rate": 1.0,
-      "witness_pass_rate": 1.0
+      "t11_pass_rate": 0.0,
+      "witness_pass_rate": 0.0
     },
     "healthcare": {
       "certificate_valid_rate": 1.0,
@@ -28,6 +28,8 @@
       "witness_pass_rate": 1.0
     }
   },
+  "full_witness_rows": 1669518,
+  "publication_witness_rows": 75,
   "scope_note": "Battery, AV, and healthcare instantiate the same T11 universal runtime-assurance contract with domain-native actions and bounded predeployment claim boundaries.",
   "source_theorem": "T11"
 }

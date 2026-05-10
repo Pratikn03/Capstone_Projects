@@ -48,8 +48,8 @@
         "n_steps": 1152,
         "postcondition_pass_rate": 1.0,
         "scope_note": "Reference runtime witness for promoted ORIUS battery dispatch rows: T11 forward obligations plus the true safe-dispatch postcondition in the battery runtime trace.",
-        "t11_pass_rate": 1.0,
-        "witness_pass_rate": 1.0
+        "t11_pass_rate": 0.0,
+        "witness_pass_rate": 0.0
       },
       "uncertainty_estimate": "artifacts/uncertainty"
     },

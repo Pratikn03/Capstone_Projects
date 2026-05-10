@@ -477,6 +477,7 @@ def write_domain_runtime_contract_artifacts(
     witnesses: Sequence[DomainRuntimeContractWitness],
     *,
     out_dir: Path,
+    publication_witnesses: Sequence[DomainRuntimeContractWitness] | None = None,
 ) -> dict[str, str]:
     out_dir.mkdir(parents=True, exist_ok=True)
     witness_path = out_dir / "domain_runtime_contract_witnesses.csv"
@@ -497,10 +498,11 @@ def write_domain_runtime_contract_artifacts(
         "passed",
         "scope_note",
     ]
+    rows_to_write = witnesses if publication_witnesses is None else publication_witnesses
     with witness_path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
-        for witness in witnesses:
+        for witness in rows_to_write:
             writer.writerow(witness.as_publication_row())
 
     summary_payload = {
@@ -510,6 +512,8 @@ def write_domain_runtime_contract_artifacts(
             "runtime-assurance contract with domain-native actions and bounded "
             "predeployment claim boundaries."
         ),
+        "publication_witness_rows": int(len(rows_to_write)),
+        "full_witness_rows": int(len(witnesses)),
         "domains": summarize_witnesses(witnesses),
     }
     summary_path.write_text(json.dumps(summary_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
