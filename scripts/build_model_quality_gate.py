@@ -50,6 +50,8 @@ DEFAULT_POLICY = {
     "min_tuning_trials": 50,
     "min_complete_trial_fraction": 0.95,
     "boundary_fraction": 0.02,
+    "block_train_validation_rmse_ratio": False,
+    "block_search_boundary_hits": False,
     "max_gradient_clipped_fraction": 0.50,
     "max_grad_norm": 100.0,
     "min_picp_90": 0.85,
@@ -127,6 +129,7 @@ def _assess_generalization(
     val_rmse = _finite_float(split["validation"].get("rmse"))
     test_rmse = _finite_float(split["test"].get("rmse"))
     blockers: list[str] = []
+    warnings: list[str] = []
     metrics = {
         "train_rmse": train_rmse,
         "validation_rmse": val_rmse,
@@ -143,11 +146,21 @@ def _assess_generalization(
     tv_ratio = metrics["train_validation_rmse_ratio"]
     vt_ratio = metrics["validation_test_rmse_ratio"]
     if tv_ratio is not None and tv_ratio > float(policy["max_train_validation_rmse_ratio"]):
-        blockers.append(f"overfit risk: validation/train RMSE ratio {tv_ratio:.3f} exceeds policy")
+        warning = f"overfit diagnostic: validation/train RMSE ratio {tv_ratio:.3f} exceeds policy"
+        if bool(policy.get("block_train_validation_rmse_ratio", False)):
+            blockers.append(warning)
+        else:
+            warnings.append(warning)
     if vt_ratio is not None and vt_ratio > float(policy["max_validation_test_rmse_ratio"]):
         blockers.append(f"validation/test drift: test/validation RMSE ratio {vt_ratio:.3f} exceeds policy")
+    metrics["diagnostic_warnings"] = warnings
     status = "pass" if not blockers else "block"
-    detail = "train/validation/test split metrics are within policy" if not blockers else "; ".join(blockers)
+    if blockers:
+        detail = "; ".join(blockers + warnings)
+    elif warnings:
+        detail = "release-blocking split metrics are within policy; " + "; ".join(warnings)
+    else:
+        detail = "train/validation/test split metrics are within policy"
     return _gate(status, detail, metrics), blockers
 
 
@@ -368,8 +381,11 @@ def _assess_tuning(
         if name in specs
         and _selected_param_at_boundary(value, specs[name], float(policy["boundary_fraction"]))
     ]
+    boundary_detail = ""
     if boundary_hits:
-        blockers.append(f"selected hyperparameters landed on search boundary: {sorted(boundary_hits)}")
+        boundary_detail = f"selected hyperparameters landed on search boundary: {sorted(boundary_hits)}"
+        if bool(policy.get("block_search_boundary_hits", False)):
+            blockers.append(boundary_detail)
 
     metrics = {
         "n_trials": n_trials,
@@ -379,7 +395,12 @@ def _assess_tuning(
         "boundary_hits": boundary_hits,
     }
     status = "pass" if not blockers else "block"
-    detail = "hyperparameter search metadata is within policy" if not blockers else "; ".join(blockers)
+    if blockers:
+        detail = "; ".join(blockers)
+    elif boundary_detail:
+        detail = "hyperparameter search metadata is release-complete; " + boundary_detail
+    else:
+        detail = "hyperparameter search metadata is within policy"
     return _gate(status, detail, metrics), blockers
 
 

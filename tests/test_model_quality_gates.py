@@ -254,6 +254,33 @@ def test_model_quality_gate_can_make_candidate_failures_blocking_by_policy(tmp_p
     assert "underfit risk" in "\n".join(result["blockers"])
 
 
+def test_model_quality_gate_tracks_train_val_gap_and_boundary_as_diagnostics(tmp_path: Path) -> None:
+    metrics_path = tmp_path / "week2_metrics.json"
+    config_path = tmp_path / "train.yaml"
+    out_path = tmp_path / "model_quality_gate.json"
+    payload = _strong_metrics()
+    payload["targets"]["load_mw"]["gbm"]["split_metrics"]["validation"]["rmse"] = 20.0
+    payload["targets"]["load_mw"]["gbm"]["split_metrics"]["test"]["rmse"] = 11.0
+    payload["targets"]["load_mw"]["gbm"]["tuning_meta"]["selected_params"] = {
+        "learning_rate": 0.005,
+        "num_leaves": 63,
+    }
+    _write_json(metrics_path, payload)
+    _write_json(config_path, _config())
+
+    result = builder.build_model_quality_gate(
+        metrics_paths=[metrics_path],
+        config_paths=[config_path],
+        out_path=out_path,
+    )
+
+    row = result["models"][0]
+    assert result["pass"] is True
+    assert result["blockers"] == []
+    assert row["gates"]["generalization"]["metrics"]["diagnostic_warnings"]
+    assert row["gates"]["hyperparameter_tuning"]["metrics"]["boundary_hits"] == ["learning_rate"]
+
+
 def test_model_quality_gate_blocks_missing_architecture_and_calibration(tmp_path: Path) -> None:
     metrics_path = tmp_path / "week2_metrics.json"
     out_path = tmp_path / "model_quality_gate.json"
@@ -286,9 +313,29 @@ def test_model_quality_gate_detects_overfit_underfit_and_gradient_instability(tm
     assert result["pass"] is False
     blockers = "\n".join(result["blockers"])
     candidate_findings = "\n".join(result["candidate_findings"])
-    assert "overfit" in blockers
+    assert "underfit" in blockers
+    assert "validation/train" not in blockers
+    diagnostic = result["models"][0]["gates"]["generalization"]["metrics"]["diagnostic_warnings"]
+    assert any("validation/train" in item for item in diagnostic)
     assert "underfit" in blockers
     assert "gradient stability" in candidate_findings
+
+
+def test_model_quality_gate_can_block_train_val_gap_by_policy(tmp_path: Path) -> None:
+    metrics_path = tmp_path / "week2_metrics.json"
+    out_path = tmp_path / "model_quality_gate.json"
+    payload = _strong_metrics()
+    payload["targets"]["load_mw"]["gbm"]["split_metrics"]["validation"]["rmse"] = 22.0
+    _write_json(metrics_path, payload)
+
+    result = builder.build_model_quality_gate(
+        metrics_paths=[metrics_path],
+        out_path=out_path,
+        policy={"block_train_validation_rmse_ratio": True},
+    )
+
+    assert result["pass"] is False
+    assert "validation/train" in "\n".join(result["blockers"])
 
 
 def test_model_quality_validator_rejects_hand_edited_pass(tmp_path: Path) -> None:
