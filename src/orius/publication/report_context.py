@@ -18,6 +18,7 @@ class ReportContext:
     backtests_dir: Path | None = None
     current_dataset: str | None = None
     targets: list[str] | None = None
+    model_filter: list[str] | None = None
 
 
 def ensure_dir(path: Path) -> None:

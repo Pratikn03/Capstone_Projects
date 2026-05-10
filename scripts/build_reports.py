@@ -748,6 +748,22 @@ def plot_model_comparison(ctx: ReportContext, metrics: dict):
     return out_path
 
 
+def report_model_enabled(ctx: ReportContext, kind: str) -> bool:
+    """Return whether a report pass should evaluate a model kind."""
+    model_filter = {m.strip().lower() for m in (ctx.model_filter or []) if m.strip()}
+    if not model_filter:
+        return True
+    aliases = {
+        "gbm": {"gbm", "gbm_lightgbm", "lightgbm"},
+        "lstm": {"lstm"},
+        "tcn": {"tcn"},
+        "nbeats": {"nbeats"},
+        "tft": {"tft"},
+        "patchtst": {"patchtst"},
+    }
+    return bool(model_filter & aliases.get(kind, {kind}))
+
+
 def refresh_metrics_from_models(ctx: ReportContext) -> dict:
     report_path = ctx.reports_dir / "week2_metrics.json"
     metrics = json.loads(report_path.read_text(encoding="utf-8")) if report_path.exists() else {"targets": {}}
@@ -761,40 +777,47 @@ def refresh_metrics_from_models(ctx: ReportContext) -> dict:
         return metrics
     unc_cfg = _load_uncertainty_cfg(ctx)
     unc_dir = _resolve_uncertainty_artifacts_dir(ctx, unc_cfg)
-    seq_model_kinds = ["lstm", "tcn", "nbeats", "tft", "patchtst"]
+    seq_model_kinds = [
+        kind
+        for kind in ["lstm", "tcn", "nbeats", "tft", "patchtst"]
+        if report_model_enabled(ctx, kind)
+    ]
     for target in targets:
         metrics.setdefault("targets", {}).setdefault(target, {})
 
-        gbm_path = None
-        for p in ctx.models_dir.glob(f"gbm_*_{target}.pkl"):
-            gbm_path = p
-            break
-        if gbm_path and gbm_path.exists():
-            bundle = load_model_bundle(gbm_path)
-            feat_cols = bundle.get("feature_cols", [])
-            if feat_cols:
-                aligned_test = _align_feature_frame(test_df, feat_cols)
-                X = aligned_test[feat_cols]
-                y = test_df[target].to_numpy()
-                pred = bundle["model"].predict(X)
-                m = _compute_metrics(y, pred, target)
-                m["model"] = gbm_path.stem.replace(f"_{target}", "")
-                metrics["targets"][target]["gbm"] = {
-                    **metrics["targets"][target].get("gbm", {}),
-                    **m,
-                }
-                meta = _load_model_uncertainty_meta(unc_dir, target, "gbm")
-                if meta:
-                    metrics["targets"][target]["gbm"]["uncertainty"] = {
-                        "picp_90": meta.get("picp_90", meta.get("global_coverage")),
-                        "picp_95": meta.get("picp_95"),
-                        "mean_interval_width": meta.get("mean_interval_width", meta.get("global_mean_width")),
-                        "pinball_loss_q05": meta.get("pinball_loss_q05"),
-                        "pinball_loss_q50": meta.get("pinball_loss_q50"),
-                        "pinball_loss_q95": meta.get("pinball_loss_q95"),
-                        "pinball_loss_mean": meta.get("pinball_loss_mean"),
-                        "winkler_score_90": meta.get("winkler_score_90"),
+        if report_model_enabled(ctx, "gbm"):
+            gbm_path = None
+            for p in ctx.models_dir.glob(f"gbm_*_{target}.pkl"):
+                gbm_path = p
+                break
+            if gbm_path and gbm_path.exists():
+                bundle = load_model_bundle(gbm_path)
+                feat_cols = bundle.get("feature_cols", [])
+                if feat_cols:
+                    aligned_test = _align_feature_frame(test_df, feat_cols)
+                    X = aligned_test[feat_cols]
+                    y = test_df[target].to_numpy()
+                    pred = bundle["model"].predict(X)
+                    m = _compute_metrics(y, pred, target)
+                    m["model"] = gbm_path.stem.replace(f"_{target}", "")
+                    metrics["targets"][target]["gbm"] = {
+                        **metrics["targets"][target].get("gbm", {}),
+                        **m,
                     }
+                    meta = _load_model_uncertainty_meta(unc_dir, target, "gbm")
+                    if meta:
+                        metrics["targets"][target]["gbm"]["uncertainty"] = {
+                            "picp_90": meta.get("picp_90", meta.get("global_coverage")),
+                            "picp_95": meta.get("picp_95"),
+                            "mean_interval_width": meta.get(
+                                "mean_interval_width", meta.get("global_mean_width")
+                            ),
+                            "pinball_loss_q05": meta.get("pinball_loss_q05"),
+                            "pinball_loss_q50": meta.get("pinball_loss_q50"),
+                            "pinball_loss_q95": meta.get("pinball_loss_q95"),
+                            "pinball_loss_mean": meta.get("pinball_loss_mean"),
+                            "winkler_score_90": meta.get("winkler_score_90"),
+                        }
 
         for kind in seq_model_kinds:
             path = ctx.models_dir / f"{kind}_{target}.pt"
@@ -1877,6 +1900,7 @@ def main():
     parser.add_argument(
         "--targets", default=None, help="Comma-separated targets for multi-domain (e.g. speed_mps,power_mw)"
     )
+    parser.add_argument("--models", default=None, help="Optional comma-separated model filter, e.g. gbm or gbm,lstm")
     args = parser.parse_args()
 
     # Silence known LightGBM feature‑name warning for cleaner logs.
@@ -1889,6 +1913,9 @@ def main():
     targets = None
     if args.targets:
         targets = [t.strip() for t in args.targets.split(",") if t.strip()]
+    model_filter = None
+    if args.models:
+        model_filter = [m.strip().lower() for m in args.models.split(",") if m.strip()]
     ctx = ReportContext(
         repo_root=repo_root,
         features_path=repo_root / args.features,
@@ -1902,6 +1929,7 @@ def main():
         backtests_dir=(repo_root / args.backtests_dir) if args.backtests_dir else None,
         current_dataset=str(args.current_dataset).upper() if args.current_dataset else None,
         targets=targets,
+        model_filter=model_filter,
     )
 
     # End‑to‑end report generation (figures + markdown + JSON summaries).

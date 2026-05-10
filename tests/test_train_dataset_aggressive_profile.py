@@ -38,6 +38,24 @@ def test_report_subprocesses_use_bounded_thread_environment(monkeypatch) -> None
         assert captured["env"][key] == "1"
 
 
+def test_generate_reports_forwards_model_filter(monkeypatch) -> None:
+    captured: dict = {}
+
+    def fake_run_command(cmd: list[str], description: str, timeout_seconds=None) -> bool:
+        captured["cmd"] = cmd
+        captured["description"] = description
+        return True
+
+    monkeypatch.setattr(td, "run_command", fake_run_command)
+
+    ok = td.generate_reports(td.DATASET_REGISTRY["AV"], models="gbm")
+
+    assert ok is True
+    assert captured["description"] == f"Generating reports for {td.DATASET_REGISTRY['AV'].display_name}"
+    assert "--models" in captured["cmd"]
+    assert _flag_value(captured["cmd"], "--models") == "gbm"
+
+
 def test_train_models_aggressive_profile_adds_expected_flags(monkeypatch) -> None:
     captured: dict = {}
 
