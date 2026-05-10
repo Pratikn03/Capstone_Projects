@@ -3264,7 +3264,12 @@ def main():
                         y_true_test, y_pred_test, horizon, target
                     )
 
-        report["targets"][target] = target_res
+        _merge_target_metrics(
+            report=report,
+            target=target,
+            target_res=target_res,
+            preserve_existing_targets=preserve_existing_targets,
+        )
 
     if uncertainty_enabled and conformal_payloads:
         backtests_dir = Path(
