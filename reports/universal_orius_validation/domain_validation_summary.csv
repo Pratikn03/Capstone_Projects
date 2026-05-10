@@ -1,4 +1,4 @@
-domain,baseline_tsvr_mean,orius_tsvr_mean,metric_surface
-battery,0.008333,0.000000,locked_publication_nominal
-vehicle,0.289250,0.000163,runtime_denominator
-healthcare,0.194489,0.000000,runtime_denominator
+domain,validation_status,maturity_tier,source_dataset,baseline_tsvr_mean,orius_tsvr_mean,orius_reduction_pct,closure_target_ready,closure_blocker,metric_surface,runtime_source,n_steps,strict_runtime_gate,certificate_valid_rate,t11_pass_rate,postcondition_pass_rate,runtime_witness_pass_rate
+battery,reference,reference,locked_battery_witness,0.0083,0.0000,100.0,True,battery_reference_witness,locked_publication_nominal,locked_battery_witness,,True,1.000000,1.000000,1.000000,1.000000
+healthcare,proof_validated,proof_validated,real_data,0.1945,0.0000,100.0,True,none,runtime_denominator,reports/healthcare/runtime_summary.csv,137262,True,1.000000,1.000000,1.000000,1.000000
+vehicle,proof_validated,proof_validated,real_data,0.2893,0.0002,99.9,True,none,runtime_denominator,reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv,1531104,True,0.999924,1.000000,0.999837,0.999837

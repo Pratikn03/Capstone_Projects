@@ -25,14 +25,14 @@ class TestValidateSqlIdentifier:
         "bad",
         [
             "a; DROP TABLE users--",
-            "table name",          # space
+            "table name",  # space
             "1starts_with_digit",  # leading digit
-            "",                    # empty
-            "col'injection",       # single quote
-            'col"injection',       # double quote
-            "col-name",            # hyphen
-            "col.name",            # dot
-            "col\x00null",         # null byte
+            "",  # empty
+            "col'injection",  # single quote
+            'col"injection',  # double quote
+            "col-name",  # hyphen
+            "col.name",  # dot
+            "col\x00null",  # null byte
         ],
     )
     def test_rejects_unsafe(self, bad: str):
@@ -56,10 +56,10 @@ class TestValidateColumnType:
     @pytest.mark.parametrize(
         "bad",
         [
-            "varchar",              # wrong case
-            "VARCHAR(255)",         # length suffix not in allowlist
-            "INT",                  # alias not in allowlist
-            "TEXT[]",               # array modifier
+            "varchar",  # wrong case
+            "VARCHAR(255)",  # length suffix not in allowlist
+            "INT",  # alias not in allowlist
+            "TEXT[]",  # array modifier
             "BOOLEAN; DROP TABLE",  # injection attempt
             "",
         ],
