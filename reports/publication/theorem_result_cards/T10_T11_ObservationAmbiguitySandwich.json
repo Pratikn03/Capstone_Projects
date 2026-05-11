@@ -1,0 +1,29 @@
+{
+  "artifact_hashes": {
+    "reports/publication/T10_lower_bound_curve.csv": "1432f0742e5746c95d7aaae0970c5dbc572302930abf3ced6afde7c91723b097",
+    "reports/publication/T9_ambiguity_witnesses.csv": "5326d8f1fc74fe5a00d022ebe4376f730c504fa2eb5e10df3150fd0242bf39fc",
+    "reports/publication/fig_L4_ambiguity_sandwich.png": "ee4cb05479e5dad79f52b14ee3e33910c590b35439217d1a435ed113aacefbe5",
+    "reports/publication/fig_L4_ambiguity_sandwich.svg": "ee5028e5124604f76e91a458273eca294e016bcf83841f81c22ba07cb5bda14e"
+  },
+  "artifacts": [
+    "reports/publication/T9_ambiguity_witnesses.csv",
+    "reports/publication/T10_lower_bound_curve.csv",
+    "reports/publication/fig_L4_ambiguity_sandwich.svg",
+    "reports/publication/fig_L4_ambiguity_sandwich.png"
+  ],
+  "assumptions": [
+    "observation_ambiguity_class",
+    "covered_uncertainty_set",
+    "alpha_coverage"
+  ],
+  "claim_boundary": "contract-universal covered observation ambiguity, not unrestricted global optimality",
+  "code_anchor": "src/orius/universal_theory/observation_ambiguity.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/app_c_full_proofs.tex",
+  "status": "flagship_corollary",
+  "tests": [
+    "tests/test_observation_ambiguity_optimality.py"
+  ],
+  "theorem_id": "T10_T11_ObservationAmbiguitySandwich",
+  "title": "Covered Observation-Ambiguity Optimality"
+}

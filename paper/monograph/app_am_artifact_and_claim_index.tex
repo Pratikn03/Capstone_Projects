@@ -52,7 +52,46 @@ The following generated surfaces define the defended manuscript state at any giv
   \item \texttt{reports/publication/orius\_runtime\_budget\_matrix.csv}
   \item \texttt{reports/publication/orius\_deployment\_validation\_scope.csv}
   \item \texttt{reports/publication/orius\_93plus\_gap\_matrix.csv}
+  \item \texttt{reports/publication/final\_training\_quality\_for\_paper.csv}
+  \item \texttt{reports/publication/final\_runtime\_safety\_for\_paper.csv}
+  \item \texttt{reports/publication/utility\_preserving\_safety\_scorecard.csv}
+  \item \texttt{reports/publication/final\_freeze\_validation\_for\_paper.csv}
+  \item \texttt{reports/publication/final\_paper\_results\_summary.json}
+  \item \texttt{reports/publication/orius\_research\_notebook\_inventory.csv}
+  \item \texttt{reports/publication/theorem\_promotion\_matrix.csv}
+  \item \texttt{reports/publication/theorem\_promotion\_matrix.json}
+  \item \texttt{reports/publication/theorem\_result\_cards/}
 \end{itemize}
+
+\section{Theorem promotion evidence surfaces}
+Table~\ref{tab:theorem-promotion-evidence-surfaces} records the compact
+artifacts that synchronize the updated theorem results and figures with the
+paper-facing theorem package.  These are promotion surfaces, not raw traces or
+private local datasets.
+
+\begin{longtable}{p{0.22\textwidth}p{0.40\textwidth}p{0.22\textwidth}}
+\caption{Updated theorem result and figure surfaces used by the manuscript.}
+\label{tab:theorem-promotion-evidence-surfaces}\\
+\toprule
+\textbf{Surface} & \textbf{Artifact} & \textbf{Manuscript role}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Surface} & \textbf{Artifact} & \textbf{Manuscript role}\\
+\midrule
+\endhead
+T5 & \path{reports/publication/T5_certificate_horizon_by_fault.csv}; \path{reports/publication/fig_T5_horizon_vs_reliability.png} & finite-horizon certificate validity\\
+T8 & \path{reports/publication/T8_graceful_policy_comparison.csv}; \path{reports/publication/fig_T8_safety_useful_work_frontier.png} & graceful degradation with useful work\\
+T9 & \path{reports/publication/T9_ambiguity_witnesses.csv}; \path{reports/publication/fig_T9_empty_safe_core_examples.png} & mandatory-release impossibility witnesses\\
+T10 & \path{reports/publication/T10_lower_bound_curve.csv}; \path{reports/publication/fig_T10_lower_bound_vs_tv.png} & boundary-indistinguishability lower bound\\
+\texttt{T11\_Byzantine} & \path{reports/publication/T11Byz_corruption_sweep.csv}; \path{reports/publication/fig_T11Byz_corruption_vs_safety.png} & robust reliability aggregation\\
+\texttt{T\_stale\_decay} & \path{reports/publication/Tstale_radius_growth.csv}; \path{reports/publication/fig_Tstale_radius_vs_hold_duration.png} & stale-hold uncertainty growth\\
+\texttt{T\_trajectory\_PAC} & \path{reports/publication/TPAC_horizon_sweep.csv}; \path{reports/publication/fig_TPAC_empirical_vs_bound.png} & finite-horizon PAC release certificate\\
+L1--L4 & \path{reports/publication/L1_L4_runtime_law_audit.csv}; \path{reports/publication/fig_L4_ambiguity_sandwich.png} & runtime monotonicity law suite\\
+\texttt{T\_minimax} & \path{reports/publication/Tminimax_boundary_grid.csv}; \path{reports/publication/fig_Tminimax_lower_upper_gap.png} & finite ambiguity-class minimax lower bound\\
+\texttt{T\_sensor\_converse} & \path{reports/publication/Tsensor_sensor_ablation.csv}; \path{reports/publication/fig_Tsensor_safe_core_vs_sensor_drop.png} & sensor necessity under adapter semantics\\
+\bottomrule
+\end{longtable}
 
 \section{Interpretation}
 The canonical readiness summary lives in Chapter~\ref{ch:universal-orius-across-domains}

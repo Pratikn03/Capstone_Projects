@@ -15,10 +15,12 @@ Instead it mirrors the promotion-gated split emitted by
 \texttt{theorem\_promotion\_matrix.*}:
 \begin{itemize}
   \item \textbf{Flagship theorem}: T1, T2, T3a, T4, T5, T6, T7, T8, T9, T10,
-  T11, T11\textsubscript{Byz}, T\textsubscript{stale}, and T\_trajectory\_PAC.
+  T11, \texttt{T11\_Byzantine}, \texttt{T\_stale\_decay}, and
+  \texttt{T\_trajectory\_PAC}.
   \item \textbf{Flagship corollary}: T3b.
   \item \textbf{Flagship lemma}: L1--L4.
-  \item \textbf{Scoped flagship theorem}: T\textsubscript{minimax} and T\textsubscript{sensor}.
+  \item \textbf{Scoped flagship theorem}: \texttt{T\_minimax}.  The sensor
+  converse is promoted as \texttt{T\_sensor\_converse}.
 \end{itemize}
 This appendix audits the full live surface.  Historical drafts remain visible
 only as archived text and do not inflate the promoted theorem count.
@@ -97,7 +99,7 @@ aggregation is algebraic bookkeeping rather than a new theorem burden.
 \textbf{Code anchor.} \texttt{src/orius/universal\_theory/risk\_bounds.py}
 (\texttt{compute\_episode\_risk\_bound()}).
 
-\subsection{Theorem 4: No Free Safety}
+\subsection{Theorem 4: Observation Necessity / No Free Safety}
 \label{sec:thm-no-free}
 
 \textbf{Statement.} Within the fixed-margin, quality-ignorant controller
@@ -263,14 +265,14 @@ harness in \texttt{src/orius/universal/contract.py}; focused tests in
 
 \section{Gap Audit Table}
 
-Table~\ref{tab:theorem-gap-audit} summarises the historical active T1--T11
-audit surface.  The publication-ready defended register is now the stricter
+Table~\ref{tab:theorem-gap-audit} summarises the promoted active T1--T11
+audit surface.  The publication-ready defended register is the stricter
 promotion matrix, where every active theorem-like row has proof, code, tests,
 artifacts, hashes, and a claim boundary.
 
 \begin{table}[htbp]
 \centering
-\caption{Historical T1--T11 theorem audit summary before promotion-gate closure}
+\caption{Promoted T1--T11 theorem audit summary after promotion-gate closure}
 \label{tab:theorem-gap-audit}
 \small
 \resizebox{\textwidth}{!}{%
@@ -282,14 +284,14 @@ T1 OASG Existence & Structural & Yes & Yes & Observed-vs-true split is explicit 
 T2 One-Step Safety Preservation & Yes (conditional one-step) & Yes & Yes & Shield + guarantee checks + unit tests anchor the theorem; coverage frequency handled separately \\
 T3a ORIUS Core Envelope Derivation & Paper-rigorous & Yes & Yes & Runtime theorem-contract summary now separates executable envelope algebra from the declared calibration bridge \\
 T3b ORIUS Core Aggregation Corollary & Corollary only & Yes & Yes & Supporting aggregation corollary derived from T3a by linearity of expectation \\
-T4 No Free Safety & Constructive witness & Yes & Partial & Battery proof gives an explicit degraded-observation sequence; broader baseline comparison remains empirical \\
-T5 Certificate Validity Horizon Definition & Explicit definition & Yes & Yes & Maximal forward-tube containment helper is constructive and excluded from defended theorem counts \\
+T4 Observation Necessity / No Free Safety & Constructive witness & Yes & Yes & Battery proof gives an explicit degraded-observation sequence and the promotion card states the mandatory-release scope \\
+T5 Finite-Horizon Certificate Validity & Flagship theorem & Yes & Yes & Reachable-tube containment, invalidating events, horizon artifacts, and result card close the promotion gate \\
 T6 Certificate Expiration Bound & V2-linked flagship theorem & Yes & Yes & Canonical helper is delta-aware, closed-form, and records explicit first-passage side conditions \\
 T7 Feasible Fallback Existence & Piecewise hold-or-safe-landing theorem & Yes & Yes & Runtime certifies interior safe hold, boundary recovery by safe landing, and fail-closed infeasibility \\
-T8 Graceful Degradation Dominance & Supporting sequence comparison & Partial & Yes & Defended only as a paired-sequence comparator under a shared fault trace; absorbing landing remains supporting-only \\
+T8 Graceful Degradation Dominance with Useful Work & Flagship theorem & Yes & Yes & Paired-trace safety dominance plus useful-work retention is backed by policy comparison artifacts \\
 \midrule
 T9 Universal Impossibility & Structural / scoped witness constant & Yes & Partial & $\varphi$-mixing + Azuma windowing remain explicit assumptions; battery T4 is the reference witness; Section~\ref{sec:thm-universal-impossibility} \\
-T10 Boundary-Indistinguishability Lower Bound & Narrowed stylized lower bound & Partial & Partial & Le~Cam step remains one-sided; the executable witness is a scoped lower-bound calculator, not a sharp frontier theorem \\
+T10 Boundary-Indistinguishability Lower Bound & Flagship theorem & Yes & Yes & Two-state TV lower bound is scoped to disjoint safe sets and finite boundary pairs; no global frontier claim \\
 T11 Typed Structural Transfer & Forward-only one-step transfer & Yes & Yes & Typed runtime artifacts now carry four-obligation summaries; the converse and mini-harness remain separate supporting surfaces \\
 \bottomrule
 \end{tabular}%
@@ -306,15 +308,15 @@ T11 Typed Structural Transfer & Forward-only one-step transfer & Yes & Yes & Typ
 \toprule
 \textbf{ID} & \textbf{Status} & \textbf{Code surface} & \textbf{Audit posture} & \textbf{Notes} \\
 \midrule
-L1 & Broken as standalone converse & \texttt{orius\_law.py} & Stylized surrogate only & Linear lower envelope retained for extension calculators only \\
-L2 & Broken as theorem of live OQE & \texttt{orius\_law.py}, \texttt{quality.py} & Proxy bridge only & Requires external justification of $\kappa_d$ and the capacity proxy \\
-L3 & Has a hole & \texttt{orius\_law.py} & Narrowed threshold calculator & Depends on L2 proxy plus the executable T3 upper envelope \\
-L4 & Has a hole & \texttt{orius\_law.py} & Stylized sandwich & Executable upper side plus proxy lower side; not a closed characterization \\
-T11\_Byzantine & Plausible but informal & \texttt{theoretical\_guarantees.py} & Bounded extension & Matches the trimmed-mean witness and tests \\
-T\_stale\_decay & Plausible but informal & \texttt{theoretical\_guarantees.py} & Bounded extension & Geometric decay is a design schedule, not a derived physical law \\
-T\_minimax & Broken as defended minimax theorem & \texttt{theoretical\_guarantees.py} & Stylized lower-envelope witness & Inherits the open L1/L2 proxy bridge \\
-T\_sensor\_converse & Broken as universal converse & \texttt{theoretical\_guarantees.py} & Stylized inverse threshold & Necessity only holds inside the L2/L3 proxy model \\
-T\_trajectory\_PAC & Plausible but informal & \texttt{risk\_bounds.py} & Defended as Bonferroni certificate & No separate Ville-strengthened theorem is claimed \\
+L1 & Flagship lemma & \texttt{runtime\_laws.py} & Promotion-gated & Reliability-margin inflation is monotone in the stated runtime law \\
+L2 & Flagship lemma & \texttt{runtime\_laws.py} & Promotion-gated & Safe-set antitonicity is stated as a set-containment lemma \\
+L3 & Flagship lemma & \texttt{runtime\_laws.py} & Promotion-gated & Unsafe candidate actions must repair, fallback, or deny release \\
+L4 & Flagship lemma & \texttt{runtime\_laws.py} & Promotion-gated & Observation-ambiguity sandwich is a scoped lower/upper law \\
+T11\_Byzantine & Flagship theorem & \texttt{quality.py} & Promotion-gated & Trimmed-mean reliability aggregation is valid for $b<n/2$ Byzantine channels \\
+T\_stale\_decay & Flagship theorem & \texttt{stale\_decay.py} & Promotion-gated & Stale-hold uncertainty growth follows from bounded latent drift \\
+T\_minimax & Scoped flagship theorem & \texttt{minimax\_boundary.py} & Promotion-gated & Finite ambiguity-class lower bound only; no unrestricted minimax optimality claim \\
+T\_sensor\_converse & Flagship theorem & \texttt{sensor\_necessity.py} & Promotion-gated & Sensor necessity holds under adapter semantics and disjoint safe sets \\
+T\_trajectory\_PAC & Flagship theorem & \texttt{risk\_bounds.py} & Promotion-gated & Bonferroni finite-horizon certificate; no separate Ville-strengthened claim \\
 \bottomrule
 \end{tabular}%
 }

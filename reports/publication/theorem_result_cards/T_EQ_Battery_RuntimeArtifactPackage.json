@@ -1,0 +1,26 @@
+{
+  "artifact_hashes": {
+    "reports/publication/equal_domain_artifact_discipline.csv": "adde1496ced72203257222b2043fb42f853bf8946857a4e06b4a1c8eca61f270",
+    "reports/publication/equal_domain_artifact_discipline.json": "de30bcdf4090e388aa0218d9fdbe47e0bd3fa6e7b2d89e41cc147d96afdde36f",
+    "reports/publication/equal_domain_artifact_discipline.md": "e77dda464bbb319ddf7dab1f4613e63e6f5341b264bb67388941886635c1e2a0"
+  },
+  "artifacts": [
+    "reports/publication/equal_domain_artifact_discipline.csv",
+    "reports/publication/equal_domain_artifact_discipline.json",
+    "reports/publication/equal_domain_artifact_discipline.md"
+  ],
+  "assumptions": [
+    "battery_runtime_denominator_artifacts",
+    "equal_domain_gate_pass"
+  ],
+  "claim_boundary": "artifact-discipline package, not a new battery theorem",
+  "code_anchor": "scripts/build_equal_domain_artifact_discipline.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/app_c_full_proofs.tex",
+  "status": "flagship_definition",
+  "tests": [
+    "tests/test_equal_domain_artifact_discipline.py"
+  ],
+  "theorem_id": "T_EQ_Battery_RuntimeArtifactPackage",
+  "title": "Battery Equal Artifact Discipline Package"
+}

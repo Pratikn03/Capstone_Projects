@@ -27,6 +27,14 @@ def rel(path: Path) -> str:
     return path.relative_to(REPO).as_posix()
 
 
+def remove_appledouble_sidecars(path: Path) -> None:
+    """Remove macOS AppleDouble sidecars from generated theorem-card outputs."""
+
+    for sidecar in path.glob("._*"):
+        if sidecar.is_file():
+            sidecar.unlink()
+
+
 def write_csv(path: Path, header: list[str], rows: list[list[Any]]) -> None:
     with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f, lineterminator="\n")
@@ -307,7 +315,7 @@ def generate_artifacts() -> dict[str, list[str]]:
         "corruption_pct",
         "robust_error",
     )
-    artifacts["T11Byz"] = [rel(p) for p in [t11_sweep, t11_error, t11_fig]]
+    artifacts["T11_Byzantine"] = [rel(p) for p in [t11_sweep, t11_error, t11_fig]]
 
     tstale_radius = OUT / "Tstale_radius_growth.csv"
     stale_rows = [[s, 1.0, 0.4, 1.0 + 0.4 * s] for s in [0, 1, 2, 4, 8, 12]]
@@ -326,14 +334,14 @@ def generate_artifacts() -> dict[str, list[str]]:
         "stale steps",
         "radius",
     )
-    artifacts["Tstale"] = [rel(p) for p in [tstale_radius, tstale_decay, tstale_fig]]
+    artifacts["T_stale_decay"] = [rel(p) for p in [tstale_radius, tstale_decay, tstale_fig]]
 
     tminimax_grid = OUT / "Tminimax_boundary_grid.csv"
     grid_rows = [[eps, (1 - eps) / 2, min(0.1, eps / 2)] for eps in [0.0, 0.1, 0.25, 0.5, 0.75, 1.0]]
     write_csv(tminimax_grid, ["epsilon", "obs_mandatory_lower_bound", "orius_upper_bound"], grid_rows)
     tminimax_fig = OUT / "fig_Tminimax_lower_upper_gap.svg"
     line_svg(tminimax_fig, "Tminimax Lower Bound", [(row[0], row[1]) for row in grid_rows], "epsilon", "risk")
-    artifacts["Tminimax"] = [rel(p) for p in [tminimax_grid, tminimax_fig]]
+    artifacts["T_minimax"] = [rel(p) for p in [tminimax_grid, tminimax_fig]]
 
     tsensor_ablation = OUT / "Tsensor_sensor_ablation.csv"
     write_csv(
@@ -349,7 +357,7 @@ def generate_artifacts() -> dict[str, list[str]]:
         [1, 1, 1],
         "empty core",
     )
-    artifacts["Tsensor"] = [rel(p) for p in [tsensor_ablation, tsensor_fig]]
+    artifacts["T_sensor_converse"] = [rel(p) for p in [tsensor_ablation, tsensor_fig]]
 
     tpac_sweep = OUT / "TPAC_horizon_sweep.csv"
     tpac_rows = [
@@ -407,6 +415,34 @@ def generate_artifacts() -> dict[str, list[str]]:
     artifacts["L2"] = [rel(p) for p in [law_audit, l2_fig]]
     artifacts["L3"] = [rel(p) for p in [law_audit, l3_fig]]
     artifacts["L4"] = [rel(p) for p in [law_audit, l4_fig]]
+
+    contract_artifacts = [
+        "reports/publication/domain_runtime_contract_witnesses.csv",
+        "reports/publication/domain_runtime_contract_summary.json",
+    ]
+    equal_domain_artifacts = [
+        "reports/publication/equal_domain_artifact_discipline.csv",
+        "reports/publication/equal_domain_artifact_discipline.json",
+        "reports/publication/equal_domain_artifact_discipline.md",
+    ]
+    artifacts["T10_T11_ObservationAmbiguitySandwich"] = [
+        "reports/publication/T9_ambiguity_witnesses.csv",
+        "reports/publication/T10_lower_bound_curve.csv",
+        "reports/publication/fig_L4_ambiguity_sandwich.svg",
+    ]
+    for theorem_id in (
+        "T11_AV_BrakeHold",
+        "T11_HC_FailSafeRelease",
+        "T6_AV_FallbackValidity",
+        "T6_HC_FallbackValidity",
+    ):
+        artifacts[theorem_id] = contract_artifacts
+    for theorem_id in (
+        "T_EQ_Battery_RuntimeArtifactPackage",
+        "T_EQ_AV_RuntimeArtifactPackage",
+        "T_EQ_HC_RuntimeArtifactPackage",
+    ):
+        artifacts[theorem_id] = equal_domain_artifacts
 
     for theorem_id, refs in list(artifacts.items()):
         augmented = list(refs)
@@ -526,7 +562,79 @@ def registry(artifacts: dict[str, list[str]]) -> list[dict[str, Any]]:
             "tests": ["tests/test_T10_boundary_lower_bound.py"],
             "claim_boundary": "two-state lower bound, not global minimax frontier",
         },
-        "T11Byz": {
+        "T10_T11_ObservationAmbiguitySandwich": {
+            "title": "Covered Observation-Ambiguity Optimality",
+            "status": "flagship_corollary",
+            "assumptions": ["observation_ambiguity_class", "covered_uncertainty_set", "alpha_coverage"],
+            "proof_file": "appendices/app_c_full_proofs.tex",
+            "code_anchor": "src/orius/universal_theory/observation_ambiguity.py",
+            "tests": ["tests/test_observation_ambiguity_optimality.py"],
+            "claim_boundary": "contract-universal covered observation ambiguity, not unrestricted global optimality",
+        },
+        "T11_AV_BrakeHold": {
+            "title": "AV Brake-Hold Runtime Lemma",
+            "status": "flagship_lemma",
+            "assumptions": ["T11_obligations_runtime_linked", "bounded_av_replay_row"],
+            "proof_file": "appendices/app_c_full_proofs.tex",
+            "code_anchor": "src/orius/universal_theory/domain_runtime_contracts.py",
+            "tests": ["tests/test_domain_runtime_contract_witnesses.py"],
+            "claim_boundary": "bounded AV replay brake-hold postcondition, not full autonomous-driving closure",
+        },
+        "T11_HC_FailSafeRelease": {
+            "title": "Healthcare Fail-Safe Release Runtime Lemma",
+            "status": "flagship_lemma",
+            "assumptions": ["T11_obligations_runtime_linked", "bounded_healthcare_monitoring_row"],
+            "proof_file": "appendices/app_c_full_proofs.tex",
+            "code_anchor": "src/orius/universal_theory/domain_runtime_contracts.py",
+            "tests": ["tests/test_domain_runtime_contract_witnesses.py"],
+            "claim_boundary": "bounded healthcare monitoring postcondition, not clinical deployment approval",
+        },
+        "T6_AV_FallbackValidity": {
+            "title": "AV One-Step Fallback Certificate Lemma",
+            "status": "flagship_lemma",
+            "assumptions": ["one_step_fallback_certificate", "fail_safe_av_brake_hold"],
+            "proof_file": "appendices/app_c_full_proofs.tex",
+            "code_anchor": "src/orius/universal_theory/domain_validity.py",
+            "tests": ["tests/test_domain_runtime_contract_witnesses.py"],
+            "claim_boundary": "one-step degraded fallback validity only",
+        },
+        "T6_HC_FallbackValidity": {
+            "title": "Healthcare One-Step Fallback Certificate Lemma",
+            "status": "flagship_lemma",
+            "assumptions": ["one_step_fallback_certificate", "fail_safe_healthcare_alert_release"],
+            "proof_file": "appendices/app_c_full_proofs.tex",
+            "code_anchor": "src/orius/universal_theory/domain_validity.py",
+            "tests": ["tests/test_domain_runtime_contract_witnesses.py"],
+            "claim_boundary": "one-step degraded fallback validity only",
+        },
+        "T_EQ_Battery_RuntimeArtifactPackage": {
+            "title": "Battery Equal Artifact Discipline Package",
+            "status": "flagship_definition",
+            "assumptions": ["battery_runtime_denominator_artifacts", "equal_domain_gate_pass"],
+            "proof_file": "appendices/app_c_full_proofs.tex",
+            "code_anchor": "scripts/build_equal_domain_artifact_discipline.py",
+            "tests": ["tests/test_equal_domain_artifact_discipline.py"],
+            "claim_boundary": "artifact-discipline package, not a new battery theorem",
+        },
+        "T_EQ_AV_RuntimeArtifactPackage": {
+            "title": "AV Equal Artifact Discipline Package",
+            "status": "flagship_definition",
+            "assumptions": ["av_runtime_denominator_artifacts", "equal_domain_gate_pass"],
+            "proof_file": "appendices/app_c_full_proofs.tex",
+            "code_anchor": "scripts/build_equal_domain_artifact_discipline.py",
+            "tests": ["tests/test_equal_domain_artifact_discipline.py"],
+            "claim_boundary": "bounded AV artifact-discipline package, not field closure",
+        },
+        "T_EQ_HC_RuntimeArtifactPackage": {
+            "title": "Healthcare Equal Artifact Discipline Package",
+            "status": "flagship_definition",
+            "assumptions": ["healthcare_runtime_denominator_artifacts", "equal_domain_gate_pass"],
+            "proof_file": "appendices/app_c_full_proofs.tex",
+            "code_anchor": "scripts/build_equal_domain_artifact_discipline.py",
+            "tests": ["tests/test_equal_domain_artifact_discipline.py"],
+            "claim_boundary": "bounded healthcare artifact-discipline package, not regulated deployment",
+        },
+        "T11_Byzantine": {
             "title": "Byzantine-Robust Reliability Aggregation",
             "status": "flagship_theorem",
             "assumptions": [
@@ -548,7 +656,7 @@ def registry(artifacts: dict[str, list[str]]) -> list[dict[str, Any]]:
             "tests": ["tests/test_theoretical_guarantees_hypothesis.py"],
             "claim_boundary": "forward four-obligation one-step transfer theorem; converse remains separate",
         },
-        "Tstale": {
+        "T_stale_decay": {
             "title": "Stale-Hold Uncertainty Growth",
             "status": "flagship_theorem",
             "assumptions": ["bounded_drift", "stale_hold_interval", "conservative_radius_update"],
@@ -557,16 +665,16 @@ def registry(artifacts: dict[str, list[str]]) -> list[dict[str, Any]]:
             "tests": ["tests/test_Tstale_uncertainty_growth.py"],
             "claim_boundary": "bounded-drift stale-hold expansion only",
         },
-        "Tminimax": {
+        "T_minimax": {
             "title": "Finite Ambiguity-Class Minimax Lower Bound",
-            "status": "scoped_flagship_theorem",
+            "status": "flagship_theorem",
             "assumptions": ["finite_two_state_class", "tv_bound", "disjoint_safe_sets"],
             "proof_file": "appendices/proofs/Tminimax_finite_ambiguity.tex",
             "code_anchor": "src/orius/universal_theory/minimax_boundary.py",
             "tests": ["tests/test_Tminimax_finite_ambiguity.py"],
             "claim_boundary": "finite two-state ambiguity class only",
         },
-        "Tsensor": {
+        "T_sensor_converse": {
             "title": "Sensor Necessity Under Adapter Semantics",
             "status": "flagship_theorem",
             "assumptions": [
@@ -636,6 +744,7 @@ def registry(artifacts: dict[str, list[str]]) -> list[dict[str, Any]]:
 
 
 def write_registry(cards: list[dict[str, Any]]) -> None:
+    remove_appledouble_sidecars(CARD_DIR)
     matrix_rows = []
     for card in cards:
         path = CARD_DIR / f"{card['theorem_id']}.json"
@@ -700,6 +809,7 @@ def write_registry(cards: list[dict[str, Any]]) -> None:
     (OUT / "theorem_promotion_matrix.json").write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
+    remove_appledouble_sidecars(CARD_DIR)
 
 
 def main() -> None:

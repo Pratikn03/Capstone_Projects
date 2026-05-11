@@ -233,6 +233,12 @@ def build_active_theorem_audit_payload() -> dict[str, Any]:
         for row in flagship_rows
     )
     return {
+        "authority_role": "historical_traceability",
+        "current_promotion_authority": {
+            "matrix": "reports/publication/theorem_promotion_matrix.json",
+            "result_cards": "reports/publication/theorem_result_cards/",
+            "validator": "scripts/validate_theorem_promotion.py",
+        },
         "authoritative_surfaces": registry["authoritative_surfaces"],
         "theorems": theorem_rows,
         "namespace_drift": registry.get("namespace_drift", []),
@@ -304,10 +310,13 @@ def render_active_theorem_audit_md(payload: dict[str, Any]) -> str:
     lines = [
         "# Active Theorem Audit",
         "",
-        "This file is generated from `reports/publication/theorem_registry.yml` and is the reconciled active audit surface for the live theorem program.",
+        "This file is generated from `reports/publication/theorem_registry.yml` as a historical traceability surface.",
+        "The current proof-strength and promotion authority is `reports/publication/theorem_promotion_matrix.json` plus `reports/publication/theorem_result_cards/*.json`, validated by `scripts/validate_theorem_promotion.py`.",
         "",
         "## Summary",
         "",
+        f"- Authority role: {payload['authority_role']}",
+        f"- Current promotion authority: {payload['current_promotion_authority']}",
         f"- Active theorem rows: {payload['summary']['active_theorem_count']}",
         f"- Rigor counts: {payload['summary']['rigor_counts']}",
         f"- Code correspondence counts: {payload['summary']['code_correspondence_counts']}",

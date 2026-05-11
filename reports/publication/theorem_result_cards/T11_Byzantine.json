@@ -25,6 +25,6 @@
     "tests/test_T11Byz_robust_oqe.py",
     "tests/test_adversarial_reliability_channels.py"
   ],
-  "theorem_id": "T11Byz",
+  "theorem_id": "T11_Byzantine",
   "title": "Byzantine-Robust Reliability Aggregation"
 }

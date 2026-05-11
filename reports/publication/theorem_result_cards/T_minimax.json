@@ -18,10 +18,10 @@
   "code_anchor": "src/orius/universal_theory/minimax_boundary.py",
   "manuscript_anchor": "chapters/ch5_theory.tex",
   "proof_file": "appendices/proofs/Tminimax_finite_ambiguity.tex",
-  "status": "scoped_flagship_theorem",
+  "status": "flagship_theorem",
   "tests": [
     "tests/test_Tminimax_finite_ambiguity.py"
   ],
-  "theorem_id": "Tminimax",
+  "theorem_id": "T_minimax",
   "title": "Finite Ambiguity-Class Minimax Lower Bound"
 }

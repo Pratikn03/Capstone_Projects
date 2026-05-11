@@ -19,11 +19,13 @@ is not publication-ready.
 \section{Evidence Families}
 The evidence families are certificate horizon and expiry (T5), safety-work
 frontier (T8), ambiguity witnesses (T9), boundary lower-bound curves (T10),
-Byzantine reliability sweeps (T11Byz), stale-hold growth (Tstale), trajectory
-PAC horizon sweeps (T\_trajectory\_PAC), runtime law audits (L1--L4), finite
-ambiguity minimax grids (Tminimax), and sensor-ablation witnesses (Tsensor).
+Byzantine reliability sweeps (\texttt{T11\_Byzantine}), stale-hold growth
+(\texttt{T\_stale\_decay}), trajectory PAC horizon sweeps
+(\texttt{T\_trajectory\_PAC}), runtime law audits (L1--L4), finite ambiguity
+minimax grids (\texttt{T\_minimax}), and sensor-ablation witnesses
+(\texttt{T\_sensor\_converse}).
 
 \section{Domain Lane}
 Battery, AV, and Healthcare provide the current three-domain evidence lane.
-T11Byz is required on Battery and optional on AV/Healthcare until those domains
-expose multi-channel adversarial telemetry artifacts.
+\texttt{T11\_Byzantine} is required on Battery and optional on AV/Healthcare
+until those domains expose multi-channel adversarial telemetry artifacts.

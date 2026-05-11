@@ -22,6 +22,6 @@
   "tests": [
     "tests/test_Tsensor_necessity.py"
   ],
-  "theorem_id": "Tsensor",
+  "theorem_id": "T_sensor_converse",
   "title": "Sensor Necessity Under Adapter Semantics"
 }

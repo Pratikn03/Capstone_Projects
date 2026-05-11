@@ -1,0 +1,24 @@
+{
+  "artifact_hashes": {
+    "reports/publication/domain_runtime_contract_summary.json": "dd2cbe0832d888311c1d1b726b61d6de010439a45ec13c5af897b4d5ed8c6e90",
+    "reports/publication/domain_runtime_contract_witnesses.csv": "85929fbc395305a69ff4af2a78b2ed2ba67dd1ba7b6afb1004c46172f89859a6"
+  },
+  "artifacts": [
+    "reports/publication/domain_runtime_contract_witnesses.csv",
+    "reports/publication/domain_runtime_contract_summary.json"
+  ],
+  "assumptions": [
+    "one_step_fallback_certificate",
+    "fail_safe_av_brake_hold"
+  ],
+  "claim_boundary": "one-step degraded fallback validity only",
+  "code_anchor": "src/orius/universal_theory/domain_validity.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/app_c_full_proofs.tex",
+  "status": "flagship_lemma",
+  "tests": [
+    "tests/test_domain_runtime_contract_witnesses.py"
+  ],
+  "theorem_id": "T6_AV_FallbackValidity",
+  "title": "AV One-Step Fallback Certificate Lemma"
+}

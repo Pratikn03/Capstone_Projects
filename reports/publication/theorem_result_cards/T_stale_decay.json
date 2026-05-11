@@ -24,6 +24,6 @@
   "tests": [
     "tests/test_Tstale_uncertainty_growth.py"
   ],
-  "theorem_id": "Tstale",
+  "theorem_id": "T_stale_decay",
   "title": "Stale-Hold Uncertainty Growth"
 }

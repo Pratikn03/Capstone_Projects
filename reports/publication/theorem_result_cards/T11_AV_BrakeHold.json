@@ -1,0 +1,24 @@
+{
+  "artifact_hashes": {
+    "reports/publication/domain_runtime_contract_summary.json": "dd2cbe0832d888311c1d1b726b61d6de010439a45ec13c5af897b4d5ed8c6e90",
+    "reports/publication/domain_runtime_contract_witnesses.csv": "85929fbc395305a69ff4af2a78b2ed2ba67dd1ba7b6afb1004c46172f89859a6"
+  },
+  "artifacts": [
+    "reports/publication/domain_runtime_contract_witnesses.csv",
+    "reports/publication/domain_runtime_contract_summary.json"
+  ],
+  "assumptions": [
+    "T11_obligations_runtime_linked",
+    "bounded_av_replay_row"
+  ],
+  "claim_boundary": "bounded AV replay brake-hold postcondition, not full autonomous-driving closure",
+  "code_anchor": "src/orius/universal_theory/domain_runtime_contracts.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/app_c_full_proofs.tex",
+  "status": "flagship_lemma",
+  "tests": [
+    "tests/test_domain_runtime_contract_witnesses.py"
+  ],
+  "theorem_id": "T11_AV_BrakeHold",
+  "title": "AV Brake-Hold Runtime Lemma"
+}

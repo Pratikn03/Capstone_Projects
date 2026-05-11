@@ -1,9 +1,12 @@
 # Active Theorem Audit
 
-This file is generated from `reports/publication/theorem_registry.yml` and is the reconciled active audit surface for the live theorem program.
+This file is generated from `reports/publication/theorem_registry.yml` as a historical traceability surface.
+The current proof-strength and promotion authority is `reports/publication/theorem_promotion_matrix.json` plus `reports/publication/theorem_result_cards/*.json`, validated by `scripts/validate_theorem_promotion.py`.
 
 ## Summary
 
+- Authority role: historical_traceability
+- Current promotion authority: {'matrix': 'reports/publication/theorem_promotion_matrix.json', 'result_cards': 'reports/publication/theorem_result_cards/', 'validator': 'scripts/validate_theorem_promotion.py'}
 - Active theorem rows: 29
 - Rigor counts: {'paper_rigorous': 6, 'proof_runtime_linked': 7, 'explicit_definition': 1, 'machine_checked_ready': 1, 'narrowed_supporting_surface': 3, 'mechanized_kernel_empirical_discharge': 2, 'artifact_runtime_linked': 3, 'stylized_surrogate': 1, 'proxy_bridge': 1, 'scoped_extension': 4}
 - Code correspondence counts: {'partial': 8, 'matches': 21}
@@ -46,7 +49,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: phenomenon_existence
 - Scope note: Defended as the battery witness-row OASG existence theorem under explicit arbitrage reachability and controller-fault independence assumptions.
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:837
-- Proof location: appendices/app_c_full_proofs.tex:44
+- Proof location: appendices/app_c_full_proofs.tex:46
 - Assumptions used: ['A1', 'A2', 'A4', 'A11', 'A12']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -71,7 +74,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: one_step_runtime_guarantee
 - Scope note: Defended as a one-step true-state postcondition whose tightened margin already absorbs the one-step model-error allowance.
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:1079
-- Proof location: appendices/app_c_full_proofs.tex:109
+- Proof location: appendices/app_c_full_proofs.tex:111
 - Assumptions used: ['A1', 'A2', 'A3', 'A4', 'A5', 'A7']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -98,7 +101,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: runtime_risk_budget_derivation
 - Scope note: Defended as the per-step envelope derivation under the explicit battery assumptions and the narrowed reliability-score interpretation.
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:1314
-- Proof location: appendices/app_c_full_proofs.tex:177
+- Proof location: appendices/app_c_full_proofs.tex:179
 - Assumptions used: ['A1', 'A2', 'A4', 'A5', 'A6', 'A7', 'A9']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -125,7 +128,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: runtime_risk_budget_aggregation
 - Scope note: Derived corollary that converts the predictable per-step budget into the episode-average envelope.
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:1409
-- Proof location: appendices/app_c_full_proofs.tex:177
+- Proof location: appendices/app_c_full_proofs.tex:179
 - Assumptions used: ['A1', 'A2', 'A4', 'A5', 'A6', 'A7', 'A9']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -149,7 +152,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: bounded_necessity_witness
 - Scope note: Defended as the observation-necessity witness for the fixed-margin quality-ignorant controller class on the battery row with explicit arbitrage reachability.
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:1647
-- Proof location: appendices/app_c_full_proofs.tex:239
+- Proof location: appendices/app_c_full_proofs.tex:241
 - Assumptions used: ['A1', 'A2', 'A4', 'A11']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -174,7 +177,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: temporal_validity_definition
 - Scope note: Kept as the constructive maximal forward-tube containment definition and excluded from defended theorem counts.
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:1852
-- Proof location: appendices/app_c_full_proofs.tex:292
+- Proof location: appendices/app_c_full_proofs.tex:294
 - Assumptions used: ['A1', 'A2', 'A4', 'A5', 'A6', 'A7', 'A9']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -198,7 +201,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: temporal_expiration_bound
 - Scope note: Defended as the confidence-aware closed-form battery expiration theorem with explicit delta dependence and first-passage side conditions.
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:1884
-- Proof location: appendices/app_c_full_proofs.tex:312
+- Proof location: appendices/app_c_full_proofs.tex:314
 - Assumptions used: ['A4', 'A7', 'A9']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -224,7 +227,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: piecewise_fallback_existence
 - Scope note: Defended as a battery-specific piecewise fallback theorem: safe hold on the interior, safe landing near the boundary, and fail-closed infeasibility otherwise.
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:1981
-- Proof location: appendices/app_c_full_proofs.tex:359
+- Proof location: appendices/app_c_full_proofs.tex:361
 - Assumptions used: ['A1', 'A4', 'A8']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -251,7 +254,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: graceful_degradation_extension
 - Scope note: Supporting comparison theorem at the sequence level; the strict absorbing-landing claim is not part of the defended headline core.
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:2011
-- Proof location: appendices/app_c_full_proofs.tex:378
+- Proof location: appendices/app_c_full_proofs.tex:380
 - Assumptions used: ['A1', 'A2', 'A3', 'A4', 'A5', 'A8']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -275,7 +278,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: impossibility_extension
 - Scope note: Defended as an assumption-qualified impossibility extension with Lean kernel coverage and three-domain empirical discharge of the A10b/A11 mixing and witness constants. The mathematical contract is A10b/A11 plus the no-free-safety witness; domain discharge is evidence, not an extra hidden assumption.
 - Statement location: chapters/ch37_universality_completeness.tex:137
-- Proof location: appendices/app_c_full_proofs.tex:420
+- Proof location: appendices/app_c_full_proofs.tex:422
 - Assumptions used: ['A10b', 'A11']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -301,7 +304,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: information_lower_bound_extension
 - Scope note: Defended as an assumption-qualified boundary-testing lower bound with Lean kernel coverage and three-domain empirical discharge of boundary mass, TV bridge, and paired safe/unsafe observation laws. The mathematical contract is A13 plus the displayed boundary-testing hypotheses; domain discharge is evidence, not an extra hidden assumption.
 - Statement location: chapters/ch37_universality_completeness.tex:238
-- Proof location: appendices/app_c_full_proofs.tex:462
+- Proof location: appendices/app_c_full_proofs.tex:464
 - Assumptions used: ['A13']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -327,7 +330,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: typed_transfer_theorem
 - Scope note: Defended as the forward four-obligation one-step transfer theorem; the converse remains a separate structural failure proposition.
 - Statement location: chapters/ch37_universality_completeness.tex:386
-- Proof location: appendices/app_c_full_proofs.tex:519
+- Proof location: appendices/app_c_full_proofs.tex:521
 - Assumptions used: []
 - Typed obligations: ['Coverage obligation for the observation-consistent state set.', 'Soundness of the tightened safe-action set.', 'Repair membership in the tightened safe-action set.', 'Fallback admissibility when the tightened set is empty.']
 - Unresolved assumptions: []
@@ -355,7 +358,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Program role: supporting_observation_ambiguity_optimality
 - Scope note: Supporting optimality corollary under covered observation ambiguity; contract-universal, not unrestricted-global; it does not assert unrestricted global optimality for all physical AI systems.
 - Statement location: chapters/ch37_universality_completeness.tex:434
-- Proof location: appendices/app_c_full_proofs.tex:554
+- Proof location: appendices/app_c_full_proofs.tex:556
 - Assumptions used: []
 - Typed obligations: ['Observation ambiguity classes are explicit.', 'The common safe core is computed as the intersection of state-conditioned safe action sets.', 'ORIUS releases only actions safe for every state in its covered uncertainty set.', 'Probabilistic coverage is reported as an alpha-bound rather than unconditional zero violation.', 'Coverage, safe-set correctness, repair membership, fallback admissibility, and adapter validity are typed proof obligations rather than empirical metrics.']
 - Unresolved assumptions: []
@@ -382,8 +385,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V1_runtime_linked
 - Program role: bounded_domain_transfer_lemma
 - Scope note: Supporting AV runtime lemma under forward-only T11; bounded to promoted ORIUS replay rows and the longitudinal brake-hold postcondition.
-- Statement location: appendices/app_c_full_proofs.tex:588
-- Proof location: appendices/app_c_full_proofs.tex:588
+- Statement location: appendices/app_c_full_proofs.tex:590
+- Proof location: appendices/app_c_full_proofs.tex:590
 - Assumptions used: []
 - Typed obligations: ['T11 coverage obligation is runtime-linked.', 'T11 sound safe-action set obligation is runtime-linked.', 'T11 repair-membership obligation is runtime-linked.', 'T11 fallback-admissibility obligation is runtime-linked.', 'True brake-hold runtime postcondition passes for the AV replay row.']
 - Unresolved assumptions: []
@@ -409,8 +412,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V1_runtime_linked
 - Program role: bounded_domain_transfer_lemma
 - Scope note: Supporting healthcare runtime lemma under forward-only T11; bounded to promoted MIMIC monitoring rows and the fail-safe alert-release postcondition.
-- Statement location: appendices/app_c_full_proofs.tex:608
-- Proof location: appendices/app_c_full_proofs.tex:608
+- Statement location: appendices/app_c_full_proofs.tex:610
+- Proof location: appendices/app_c_full_proofs.tex:610
 - Assumptions used: []
 - Typed obligations: ['T11 coverage obligation is runtime-linked.', 'T11 sound safe-action set obligation is runtime-linked.', 'T11 repair-membership obligation is runtime-linked.', 'T11 fallback-admissibility obligation is runtime-linked.', 'Healthcare true fail-safe alert-release runtime postcondition passes.']
 - Unresolved assumptions: []
@@ -436,8 +439,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V1_runtime_linked
 - Program role: bounded_domain_certificate_validity
 - Scope note: Supporting AV certificate-validity lemma under T6/T11; degraded full-brake fallback releases are one-step valid only.
-- Statement location: appendices/app_c_full_proofs.tex:627
-- Proof location: appendices/app_c_full_proofs.tex:627
+- Statement location: appendices/app_c_full_proofs.tex:629
+- Proof location: appendices/app_c_full_proofs.tex:629
 - Assumptions used: []
 - Typed obligations: ['T6 first-passage validity semantics for positive-margin hold certificates.', 'T11 runtime witness is linked.', 'Runtime witness: AV full-brake fallback action is emitted for degraded fallback rows.', 'Runtime witness: AV true brake-hold postcondition passes.']
 - Unresolved assumptions: []
@@ -461,8 +464,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V1_runtime_linked
 - Program role: bounded_domain_certificate_validity
 - Scope note: Supporting healthcare certificate-validity lemma under T6/T11; degraded max-alert fallback releases are one-step valid only.
-- Statement location: appendices/app_c_full_proofs.tex:644
-- Proof location: appendices/app_c_full_proofs.tex:644
+- Statement location: appendices/app_c_full_proofs.tex:646
+- Proof location: appendices/app_c_full_proofs.tex:646
 - Assumptions used: []
 - Typed obligations: ['T6 first-passage validity semantics for positive-margin hold certificates.', 'T11 runtime witness is linked.', 'Healthcare max-alert fallback action is emitted for degraded fallback rows.', 'Healthcare true fail-safe alert-release postcondition passes.']
 - Unresolved assumptions: []
@@ -486,8 +489,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V1_artifact_runtime_linked
 - Program role: equal_domain_artifact_discipline
 - Scope note: Supporting artifact-discipline row; it checks battery theorem, runtime, comparator, ablation, negative-control, utility, and reproducibility evidence without changing the flagship theorem tier.
-- Statement location: appendices/app_c_full_proofs.tex:660
-- Proof location: appendices/app_c_full_proofs.tex:660
+- Statement location: appendices/app_c_full_proofs.tex:662
+- Proof location: appendices/app_c_full_proofs.tex:662
 - Assumptions used: []
 - Typed obligations: ['Battery locked witness runtime trace exists.', 'Battery comparator, ablation, and negative-control rows are runtime-denominator rows.', 'Battery ORIUS useful work exceeds the degenerate safe-fallback comparator.']
 - Unresolved assumptions: []
@@ -511,8 +514,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V1_artifact_runtime_linked
 - Program role: equal_domain_artifact_discipline
 - Scope note: Supporting artifact-discipline row for the bounded AV replay contract; it does not assert full autonomous-driving field closure.
-- Statement location: appendices/app_c_full_proofs.tex:679
-- Proof location: appendices/app_c_full_proofs.tex:679
+- Statement location: appendices/app_c_full_proofs.tex:681
+- Proof location: appendices/app_c_full_proofs.tex:681
 - Assumptions used: []
 - Typed obligations: ['Vehicle T11 and T6 runtime lemmas are linked.', 'Vehicle comparator, ablation, and negative-control rows are runtime-denominator rows.', 'Vehicle ORIUS useful work exceeds always-brake useful work.']
 - Unresolved assumptions: []
@@ -537,8 +540,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V1_artifact_runtime_linked
 - Program role: equal_domain_artifact_discipline
 - Scope note: Supporting artifact-discipline row for the bounded healthcare monitoring contract; it does not assert regulated clinical deployment readiness.
-- Statement location: appendices/app_c_full_proofs.tex:697
-- Proof location: appendices/app_c_full_proofs.tex:697
+- Statement location: appendices/app_c_full_proofs.tex:699
+- Proof location: appendices/app_c_full_proofs.tex:699
 - Assumptions used: []
 - Typed obligations: ['Healthcare T11 and T6 runtime lemmas are linked.', 'Healthcare comparator, ablation, and negative-control rows are runtime-denominator rows.', 'Healthcare ORIUS useful work exceeds always-alert useful work.']
 - Unresolved assumptions: []
@@ -563,8 +566,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V0
 - Program role: stylized_law_extension
 - Scope note: Scoped surrogate law only.
-- Statement location: appendices/app_c_full_proofs.tex:721
-- Proof location: appendices/app_c_full_proofs.tex:721
+- Statement location: appendices/app_c_full_proofs.tex:723
+- Proof location: appendices/app_c_full_proofs.tex:723
 - Assumptions used: []
 - Typed obligations: []
 - Unresolved assumptions: ['Stylized binary-source surrogate lower envelope.']
@@ -587,8 +590,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V0
 - Program role: stylized_bridge_extension
 - Scope note: Proxy bridge only.
-- Statement location: appendices/app_c_full_proofs.tex:760
-- Proof location: appendices/app_c_full_proofs.tex:760
+- Statement location: appendices/app_c_full_proofs.tex:762
+- Proof location: appendices/app_c_full_proofs.tex:762
 - Assumptions used: []
 - Typed obligations: []
 - Unresolved assumptions: ['Domain-scoped proxy constant kappa_d is externally calibrated.']
@@ -611,8 +614,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V0
 - Program role: stylized_threshold_extension
 - Scope note: Threshold calculator only.
-- Statement location: appendices/app_c_full_proofs.tex:794
-- Proof location: appendices/app_c_full_proofs.tex:794
+- Statement location: appendices/app_c_full_proofs.tex:796
+- Proof location: appendices/app_c_full_proofs.tex:796
 - Assumptions used: []
 - Typed obligations: []
 - Unresolved assumptions: ['Stylized L2 capacity-proxy bridge.']
@@ -635,8 +638,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V0
 - Program role: stylized_sandwich_extension
 - Scope note: Stylized sandwich only.
-- Statement location: appendices/app_c_full_proofs.tex:833
-- Proof location: appendices/app_c_full_proofs.tex:833
+- Statement location: appendices/app_c_full_proofs.tex:835
+- Proof location: appendices/app_c_full_proofs.tex:835
 - Assumptions used: []
 - Typed obligations: []
 - Unresolved assumptions: ['Executable T3-style upper envelope.']
@@ -659,8 +662,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V1
 - Program role: robustness_extension
 - Scope note: Supporting bounded Byzantine robustness theorem under the stated trimmed-mean assumptions.
-- Statement location: appendices/app_c_full_proofs.tex:881
-- Proof location: appendices/app_c_full_proofs.tex:881
+- Statement location: appendices/app_c_full_proofs.tex:883
+- Proof location: appendices/app_c_full_proofs.tex:883
 - Assumptions used: ['A9']
 - Typed obligations: ['Byzantine fraction f is strictly below 1/3.', 'Trim fraction beta is at least f.', 'Tail-contamination model places adversarial readings in the trimmed tails.']
 - Unresolved assumptions: []
@@ -683,8 +686,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V1
 - Program role: policy_schedule_extension
 - Scope note: Supporting design-schedule theorem for stale-data degradation handling.
-- Statement location: appendices/app_c_full_proofs.tex:939
-- Proof location: appendices/app_c_full_proofs.tex:939
+- Statement location: appendices/app_c_full_proofs.tex:941
+- Proof location: appendices/app_c_full_proofs.tex:941
 - Assumptions used: ['A6']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -707,8 +710,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V0
 - Program role: stylized_minimax_extension
 - Scope note: Visible only as a stylized minimax extension.
-- Statement location: appendices/app_c_full_proofs.tex:997
-- Proof location: appendices/app_c_full_proofs.tex:997
+- Statement location: appendices/app_c_full_proofs.tex:999
+- Proof location: appendices/app_c_full_proofs.tex:999
 - Assumptions used: []
 - Typed obligations: []
 - Unresolved assumptions: ['T3a/L1/L2 stylized lower-envelope bridge.']
@@ -731,8 +734,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V0
 - Program role: stylized_sensor_threshold_extension
 - Scope note: Visible only as a proxy threshold extension.
-- Statement location: appendices/app_c_full_proofs.tex:1048
-- Proof location: appendices/app_c_full_proofs.tex:1048
+- Statement location: appendices/app_c_full_proofs.tex:1050
+- Proof location: appendices/app_c_full_proofs.tex:1050
 - Assumptions used: []
 - Typed obligations: []
 - Unresolved assumptions: ['T3a/L2/L3 proxy threshold bridge.']
@@ -755,8 +758,8 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Proof tier: V1
 - Program role: trajectory_certificate
 - Scope note: Defended as the implemented Bonferroni/union-bound trajectory certificate and nothing stronger.
-- Statement location: appendices/app_c_full_proofs.tex:1085
-- Proof location: appendices/app_c_full_proofs.tex:1085
+- Statement location: appendices/app_c_full_proofs.tex:1087
+- Proof location: appendices/app_c_full_proofs.tex:1087
 - Assumptions used: ['A1', 'A4', 'A5', 'A9']
 - Typed obligations: ['Bonferroni/union-bound aggregation over the horizon.']
 - Unresolved assumptions: []

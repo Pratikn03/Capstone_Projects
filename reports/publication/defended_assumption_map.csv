@@ -86,17 +86,17 @@ T_EQ_AV_RuntimeArtifactPackage,supporting_defended,typed_obligation,Vehicle ORIU
 T_EQ_HC_RuntimeArtifactPackage,supporting_defended,typed_obligation,Healthcare T11 and T6 runtime lemmas are linked.,runtime_linked,scripts/build_healthcare_runtime_artifacts.py:884
 T_EQ_HC_RuntimeArtifactPackage,supporting_defended,typed_obligation,"Healthcare comparator, ablation, and negative-control rows are runtime-denominator rows.",runtime_linked,scripts/build_healthcare_runtime_artifacts.py:884
 T_EQ_HC_RuntimeArtifactPackage,supporting_defended,typed_obligation,Healthcare ORIUS useful work exceeds always-alert useful work.,runtime_linked,scripts/build_healthcare_runtime_artifacts.py:884
-L1,draft_non_defended,theorem_local_assumption,Stylized binary-source surrogate lower envelope.,scoped_unresolved,appendices/app_c_full_proofs.tex:721
-L2,draft_non_defended,theorem_local_assumption,Domain-scoped proxy constant kappa_d is externally calibrated.,scoped_unresolved,appendices/app_c_full_proofs.tex:760
-L3,draft_non_defended,theorem_local_assumption,Stylized L2 capacity-proxy bridge.,scoped_unresolved,appendices/app_c_full_proofs.tex:794
-L4,draft_non_defended,theorem_local_assumption,Executable T3-style upper envelope.,scoped_unresolved,appendices/app_c_full_proofs.tex:833
+L1,draft_non_defended,theorem_local_assumption,Stylized binary-source surrogate lower envelope.,scoped_unresolved,appendices/app_c_full_proofs.tex:723
+L2,draft_non_defended,theorem_local_assumption,Domain-scoped proxy constant kappa_d is externally calibrated.,scoped_unresolved,appendices/app_c_full_proofs.tex:762
+L3,draft_non_defended,theorem_local_assumption,Stylized L2 capacity-proxy bridge.,scoped_unresolved,appendices/app_c_full_proofs.tex:796
+L4,draft_non_defended,theorem_local_assumption,Executable T3-style upper envelope.,scoped_unresolved,appendices/app_c_full_proofs.tex:835
 T11_Byzantine,supporting_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:141
 T11_Byzantine,supporting_defended,typed_obligation,Byzantine fraction f is strictly below 1/3.,proof_linked,src/orius/dc3s/theoretical_guarantees.py:1319
 T11_Byzantine,supporting_defended,typed_obligation,Trim fraction beta is at least f.,proof_linked,src/orius/dc3s/theoretical_guarantees.py:1319
 T11_Byzantine,supporting_defended,typed_obligation,Tail-contamination model places adversarial readings in the trimmed tails.,proof_linked,src/orius/dc3s/theoretical_guarantees.py:1319
 T_stale_decay,supporting_defended,appendix_assumption,A6,registered,appendices/app_b_assumptions.tex:104
-T_minimax,draft_non_defended,theorem_local_assumption,T3a/L1/L2 stylized lower-envelope bridge.,scoped_unresolved,appendices/app_c_full_proofs.tex:997
-T_sensor_converse,draft_non_defended,theorem_local_assumption,T3a/L2/L3 proxy threshold bridge.,scoped_unresolved,appendices/app_c_full_proofs.tex:1048
+T_minimax,draft_non_defended,theorem_local_assumption,T3a/L1/L2 stylized lower-envelope bridge.,scoped_unresolved,appendices/app_c_full_proofs.tex:999
+T_sensor_converse,draft_non_defended,theorem_local_assumption,T3a/L2/L3 proxy threshold bridge.,scoped_unresolved,appendices/app_c_full_proofs.tex:1050
 T_trajectory_PAC,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
 T_trajectory_PAC,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
 T_trajectory_PAC,flagship_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:91

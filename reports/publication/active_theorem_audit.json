@@ -1,4 +1,10 @@
 {
+  "authority_role": "historical_traceability",
+  "current_promotion_authority": {
+    "matrix": "reports/publication/theorem_promotion_matrix.json",
+    "result_cards": "reports/publication/theorem_result_cards/",
+    "validator": "scripts/validate_theorem_promotion.py"
+  },
   "authoritative_surfaces": {
     "statements_t1_t8": "chapters_merged/ch04_theoretical_foundations.tex",
     "statements_t9_t11": "chapters/ch37_universality_completeness.tex",
@@ -17,7 +23,7 @@
       "scope_note": "Defended as the battery witness-row OASG existence theorem under explicit arbitrage reachability and controller-fault independence assumptions.",
       "status": "active",
       "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:837",
-      "proof_location": "appendices/app_c_full_proofs.tex:44",
+      "proof_location": "appendices/app_c_full_proofs.tex:46",
       "assumptions_used": [
         "A1",
         "A2",
@@ -100,7 +106,7 @@
       "scope_note": "Defended as a one-step true-state postcondition whose tightened margin already absorbs the one-step model-error allowance.",
       "status": "active",
       "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1079",
-      "proof_location": "appendices/app_c_full_proofs.tex:109",
+      "proof_location": "appendices/app_c_full_proofs.tex:111",
       "assumptions_used": [
         "A1",
         "A2",
@@ -200,7 +206,7 @@
       "scope_note": "Defended as the per-step envelope derivation under the explicit battery assumptions and the narrowed reliability-score interpretation.",
       "status": "active",
       "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1314",
-      "proof_location": "appendices/app_c_full_proofs.tex:177",
+      "proof_location": "appendices/app_c_full_proofs.tex:179",
       "assumptions_used": [
         "A1",
         "A2",
@@ -307,7 +313,7 @@
       "scope_note": "Derived corollary that converts the predictable per-step budget into the episode-average envelope.",
       "status": "active",
       "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1409",
-      "proof_location": "appendices/app_c_full_proofs.tex:177",
+      "proof_location": "appendices/app_c_full_proofs.tex:179",
       "assumptions_used": [
         "A1",
         "A2",
@@ -395,7 +401,7 @@
       "scope_note": "Defended as the observation-necessity witness for the fixed-margin quality-ignorant controller class on the battery row with explicit arbitrage reachability.",
       "status": "active",
       "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1647",
-      "proof_location": "appendices/app_c_full_proofs.tex:239",
+      "proof_location": "appendices/app_c_full_proofs.tex:241",
       "assumptions_used": [
         "A1",
         "A2",
@@ -474,7 +480,7 @@
       "scope_note": "Kept as the constructive maximal forward-tube containment definition and excluded from defended theorem counts.",
       "status": "active",
       "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1852",
-      "proof_location": "appendices/app_c_full_proofs.tex:292",
+      "proof_location": "appendices/app_c_full_proofs.tex:294",
       "assumptions_used": [
         "A1",
         "A2",
@@ -562,7 +568,7 @@
       "scope_note": "Defended as the confidence-aware closed-form battery expiration theorem with explicit delta dependence and first-passage side conditions.",
       "status": "active",
       "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1884",
-      "proof_location": "appendices/app_c_full_proofs.tex:312",
+      "proof_location": "appendices/app_c_full_proofs.tex:314",
       "assumptions_used": [
         "A4",
         "A7",
@@ -641,7 +647,7 @@
       "scope_note": "Defended as a battery-specific piecewise fallback theorem: safe hold on the interior, safe landing near the boundary, and fail-closed infeasibility otherwise.",
       "status": "active",
       "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1981",
-      "proof_location": "appendices/app_c_full_proofs.tex:359",
+      "proof_location": "appendices/app_c_full_proofs.tex:361",
       "assumptions_used": [
         "A1",
         "A4",
@@ -726,7 +732,7 @@
       "scope_note": "Supporting comparison theorem at the sequence level; the strict absorbing-landing claim is not part of the defended headline core.",
       "status": "active",
       "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:2011",
-      "proof_location": "appendices/app_c_full_proofs.tex:378",
+      "proof_location": "appendices/app_c_full_proofs.tex:380",
       "assumptions_used": [
         "A1",
         "A2",
@@ -807,7 +813,7 @@
       "scope_note": "Defended as an assumption-qualified impossibility extension with Lean kernel coverage and three-domain empirical discharge of the A10b/A11 mixing and witness constants. The mathematical contract is A10b/A11 plus the no-free-safety witness; domain discharge is evidence, not an extra hidden assumption.",
       "status": "active",
       "statement_location": "chapters/ch37_universality_completeness.tex:137",
-      "proof_location": "appendices/app_c_full_proofs.tex:420",
+      "proof_location": "appendices/app_c_full_proofs.tex:422",
       "assumptions_used": [
         "A10b",
         "A11"
@@ -880,7 +886,7 @@
       "scope_note": "Defended as an assumption-qualified boundary-testing lower bound with Lean kernel coverage and three-domain empirical discharge of boundary mass, TV bridge, and paired safe/unsafe observation laws. The mathematical contract is A13 plus the displayed boundary-testing hypotheses; domain discharge is evidence, not an extra hidden assumption.",
       "status": "active",
       "statement_location": "chapters/ch37_universality_completeness.tex:238",
-      "proof_location": "appendices/app_c_full_proofs.tex:462",
+      "proof_location": "appendices/app_c_full_proofs.tex:464",
       "assumptions_used": [
         "A13"
       ],
@@ -947,7 +953,7 @@
       "scope_note": "Defended as the forward four-obligation one-step transfer theorem; the converse remains a separate structural failure proposition.",
       "status": "active",
       "statement_location": "chapters/ch37_universality_completeness.tex:386",
-      "proof_location": "appendices/app_c_full_proofs.tex:519",
+      "proof_location": "appendices/app_c_full_proofs.tex:521",
       "assumptions_used": [],
       "typed_obligations": [
         "Coverage obligation for the observation-consistent state set.",
@@ -1026,7 +1032,7 @@
       "scope_note": "Supporting optimality corollary under covered observation ambiguity; contract-universal, not unrestricted-global; it does not assert unrestricted global optimality for all physical AI systems.",
       "status": "active",
       "statement_location": "chapters/ch37_universality_completeness.tex:434",
-      "proof_location": "appendices/app_c_full_proofs.tex:554",
+      "proof_location": "appendices/app_c_full_proofs.tex:556",
       "assumptions_used": [],
       "typed_obligations": [
         "Observation ambiguity classes are explicit.",
@@ -1105,8 +1111,8 @@
       "program_role": "bounded_domain_transfer_lemma",
       "scope_note": "Supporting AV runtime lemma under forward-only T11; bounded to promoted ORIUS replay rows and the longitudinal brake-hold postcondition.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:588",
-      "proof_location": "appendices/app_c_full_proofs.tex:588",
+      "statement_location": "appendices/app_c_full_proofs.tex:590",
+      "proof_location": "appendices/app_c_full_proofs.tex:590",
       "assumptions_used": [],
       "typed_obligations": [
         "T11 coverage obligation is runtime-linked.",
@@ -1179,8 +1185,8 @@
       "program_role": "bounded_domain_transfer_lemma",
       "scope_note": "Supporting healthcare runtime lemma under forward-only T11; bounded to promoted MIMIC monitoring rows and the fail-safe alert-release postcondition.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:608",
-      "proof_location": "appendices/app_c_full_proofs.tex:608",
+      "statement_location": "appendices/app_c_full_proofs.tex:610",
+      "proof_location": "appendices/app_c_full_proofs.tex:610",
       "assumptions_used": [],
       "typed_obligations": [
         "T11 coverage obligation is runtime-linked.",
@@ -1253,8 +1259,8 @@
       "program_role": "bounded_domain_certificate_validity",
       "scope_note": "Supporting AV certificate-validity lemma under T6/T11; degraded full-brake fallback releases are one-step valid only.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:627",
-      "proof_location": "appendices/app_c_full_proofs.tex:627",
+      "statement_location": "appendices/app_c_full_proofs.tex:629",
+      "proof_location": "appendices/app_c_full_proofs.tex:629",
       "assumptions_used": [],
       "typed_obligations": [
         "T6 first-passage validity semantics for positive-margin hold certificates.",
@@ -1314,8 +1320,8 @@
       "program_role": "bounded_domain_certificate_validity",
       "scope_note": "Supporting healthcare certificate-validity lemma under T6/T11; degraded max-alert fallback releases are one-step valid only.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:644",
-      "proof_location": "appendices/app_c_full_proofs.tex:644",
+      "statement_location": "appendices/app_c_full_proofs.tex:646",
+      "proof_location": "appendices/app_c_full_proofs.tex:646",
       "assumptions_used": [],
       "typed_obligations": [
         "T6 first-passage validity semantics for positive-margin hold certificates.",
@@ -1375,8 +1381,8 @@
       "program_role": "equal_domain_artifact_discipline",
       "scope_note": "Supporting artifact-discipline row; it checks battery theorem, runtime, comparator, ablation, negative-control, utility, and reproducibility evidence without changing the flagship theorem tier.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:660",
-      "proof_location": "appendices/app_c_full_proofs.tex:660",
+      "statement_location": "appendices/app_c_full_proofs.tex:662",
+      "proof_location": "appendices/app_c_full_proofs.tex:662",
       "assumptions_used": [],
       "typed_obligations": [
         "Battery locked witness runtime trace exists.",
@@ -1434,8 +1440,8 @@
       "program_role": "equal_domain_artifact_discipline",
       "scope_note": "Supporting artifact-discipline row for the bounded AV replay contract; it does not assert full autonomous-driving field closure.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:679",
-      "proof_location": "appendices/app_c_full_proofs.tex:679",
+      "statement_location": "appendices/app_c_full_proofs.tex:681",
+      "proof_location": "appendices/app_c_full_proofs.tex:681",
       "assumptions_used": [],
       "typed_obligations": [
         "Vehicle T11 and T6 runtime lemmas are linked.",
@@ -1500,8 +1506,8 @@
       "program_role": "equal_domain_artifact_discipline",
       "scope_note": "Supporting artifact-discipline row for the bounded healthcare monitoring contract; it does not assert regulated clinical deployment readiness.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:697",
-      "proof_location": "appendices/app_c_full_proofs.tex:697",
+      "statement_location": "appendices/app_c_full_proofs.tex:699",
+      "proof_location": "appendices/app_c_full_proofs.tex:699",
       "assumptions_used": [],
       "typed_obligations": [
         "Healthcare T11 and T6 runtime lemmas are linked.",
@@ -1566,8 +1572,8 @@
       "program_role": "stylized_law_extension",
       "scope_note": "Scoped surrogate law only.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:721",
-      "proof_location": "appendices/app_c_full_proofs.tex:721",
+      "statement_location": "appendices/app_c_full_proofs.tex:723",
+      "proof_location": "appendices/app_c_full_proofs.tex:723",
       "assumptions_used": [],
       "typed_obligations": [],
       "assumption_locations": [],
@@ -1615,8 +1621,8 @@
       "program_role": "stylized_bridge_extension",
       "scope_note": "Proxy bridge only.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:760",
-      "proof_location": "appendices/app_c_full_proofs.tex:760",
+      "statement_location": "appendices/app_c_full_proofs.tex:762",
+      "proof_location": "appendices/app_c_full_proofs.tex:762",
       "assumptions_used": [],
       "typed_obligations": [],
       "assumption_locations": [],
@@ -1664,8 +1670,8 @@
       "program_role": "stylized_threshold_extension",
       "scope_note": "Threshold calculator only.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:794",
-      "proof_location": "appendices/app_c_full_proofs.tex:794",
+      "statement_location": "appendices/app_c_full_proofs.tex:796",
+      "proof_location": "appendices/app_c_full_proofs.tex:796",
       "assumptions_used": [],
       "typed_obligations": [],
       "assumption_locations": [],
@@ -1714,8 +1720,8 @@
       "program_role": "stylized_sandwich_extension",
       "scope_note": "Stylized sandwich only.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:833",
-      "proof_location": "appendices/app_c_full_proofs.tex:833",
+      "statement_location": "appendices/app_c_full_proofs.tex:835",
+      "proof_location": "appendices/app_c_full_proofs.tex:835",
       "assumptions_used": [],
       "typed_obligations": [],
       "assumption_locations": [],
@@ -1765,8 +1771,8 @@
       "program_role": "robustness_extension",
       "scope_note": "Supporting bounded Byzantine robustness theorem under the stated trimmed-mean assumptions.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:881",
-      "proof_location": "appendices/app_c_full_proofs.tex:881",
+      "statement_location": "appendices/app_c_full_proofs.tex:883",
+      "proof_location": "appendices/app_c_full_proofs.tex:883",
       "assumptions_used": [
         "A9"
       ],
@@ -1824,8 +1830,8 @@
       "program_role": "policy_schedule_extension",
       "scope_note": "Supporting design-schedule theorem for stale-data degradation handling.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:939",
-      "proof_location": "appendices/app_c_full_proofs.tex:939",
+      "statement_location": "appendices/app_c_full_proofs.tex:941",
+      "proof_location": "appendices/app_c_full_proofs.tex:941",
       "assumptions_used": [
         "A6"
       ],
@@ -1880,8 +1886,8 @@
       "program_role": "stylized_minimax_extension",
       "scope_note": "Visible only as a stylized minimax extension.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:997",
-      "proof_location": "appendices/app_c_full_proofs.tex:997",
+      "statement_location": "appendices/app_c_full_proofs.tex:999",
+      "proof_location": "appendices/app_c_full_proofs.tex:999",
       "assumptions_used": [],
       "typed_obligations": [],
       "assumption_locations": [],
@@ -1929,8 +1935,8 @@
       "program_role": "stylized_sensor_threshold_extension",
       "scope_note": "Visible only as a proxy threshold extension.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:1048",
-      "proof_location": "appendices/app_c_full_proofs.tex:1048",
+      "statement_location": "appendices/app_c_full_proofs.tex:1050",
+      "proof_location": "appendices/app_c_full_proofs.tex:1050",
       "assumptions_used": [],
       "typed_obligations": [],
       "assumption_locations": [],
@@ -1978,8 +1984,8 @@
       "program_role": "trajectory_certificate",
       "scope_note": "Defended as the implemented Bonferroni/union-bound trajectory certificate and nothing stronger.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:1085",
-      "proof_location": "appendices/app_c_full_proofs.tex:1085",
+      "statement_location": "appendices/app_c_full_proofs.tex:1087",
+      "proof_location": "appendices/app_c_full_proofs.tex:1087",
       "assumptions_used": [
         "A1",
         "A4",

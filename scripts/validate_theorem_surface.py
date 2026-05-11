@@ -163,7 +163,8 @@ SYNC_EXPECTATIONS = {
         "\\texttt{theorem\\_t3a}",
         "\\texttt{theorem\\_t3b}",
         "\\texttt{theorem\\_t11}",
-        "draft / non-defended",
+        "finite-horizon certificate validity",
+        "scoped flagship theorem",
     ],
 }
 

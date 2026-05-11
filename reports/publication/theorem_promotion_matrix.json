@@ -68,9 +68,49 @@
       "theorem_id": "T10"
     },
     {
-      "result_card": "reports/publication/theorem_result_cards/T11Byz.json",
+      "result_card": "reports/publication/theorem_result_cards/T10_T11_ObservationAmbiguitySandwich.json",
+      "status": "flagship_corollary",
+      "theorem_id": "T10_T11_ObservationAmbiguitySandwich"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T11_AV_BrakeHold.json",
+      "status": "flagship_lemma",
+      "theorem_id": "T11_AV_BrakeHold"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T11_HC_FailSafeRelease.json",
+      "status": "flagship_lemma",
+      "theorem_id": "T11_HC_FailSafeRelease"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T6_AV_FallbackValidity.json",
+      "status": "flagship_lemma",
+      "theorem_id": "T6_AV_FallbackValidity"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T6_HC_FallbackValidity.json",
+      "status": "flagship_lemma",
+      "theorem_id": "T6_HC_FallbackValidity"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T_EQ_Battery_RuntimeArtifactPackage.json",
+      "status": "flagship_definition",
+      "theorem_id": "T_EQ_Battery_RuntimeArtifactPackage"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T_EQ_AV_RuntimeArtifactPackage.json",
+      "status": "flagship_definition",
+      "theorem_id": "T_EQ_AV_RuntimeArtifactPackage"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T_EQ_HC_RuntimeArtifactPackage.json",
+      "status": "flagship_definition",
+      "theorem_id": "T_EQ_HC_RuntimeArtifactPackage"
+    },
+    {
+      "result_card": "reports/publication/theorem_result_cards/T11_Byzantine.json",
       "status": "flagship_theorem",
-      "theorem_id": "T11Byz"
+      "theorem_id": "T11_Byzantine"
     },
     {
       "result_card": "reports/publication/theorem_result_cards/T11.json",
@@ -78,19 +118,19 @@
       "theorem_id": "T11"
     },
     {
-      "result_card": "reports/publication/theorem_result_cards/Tstale.json",
+      "result_card": "reports/publication/theorem_result_cards/T_stale_decay.json",
       "status": "flagship_theorem",
-      "theorem_id": "Tstale"
+      "theorem_id": "T_stale_decay"
     },
     {
-      "result_card": "reports/publication/theorem_result_cards/Tminimax.json",
-      "status": "scoped_flagship_theorem",
-      "theorem_id": "Tminimax"
+      "result_card": "reports/publication/theorem_result_cards/T_minimax.json",
+      "status": "flagship_theorem",
+      "theorem_id": "T_minimax"
     },
     {
-      "result_card": "reports/publication/theorem_result_cards/Tsensor.json",
+      "result_card": "reports/publication/theorem_result_cards/T_sensor_converse.json",
       "status": "flagship_theorem",
-      "theorem_id": "Tsensor"
+      "theorem_id": "T_sensor_converse"
     },
     {
       "result_card": "reports/publication/theorem_result_cards/T_trajectory_PAC.json",

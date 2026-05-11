@@ -41,16 +41,16 @@ register.}
 \texttt{theorem\_t2} & one-step safety preservation & \path{src/orius/dc3s/guarantee\_checks.py} & code path & flagship defended \\
 \texttt{theorem\_t3a} & per-step ORIUS core envelope derivation & \path{src/orius/universal\_theory/risk\_bounds.py} & code path & flagship defended \\
 \texttt{theorem\_t3b} & episode ORIUS core aggregation corollary & \path{src/orius/universal\_theory/risk\_bounds.py} & code path & supporting defended \\
-\texttt{theorem\_t4} & no free safety & \path{src/orius/cpsbench\_iot/baselines.py} & code path & flagship defended \\
-\texttt{theorem\_t5} & certificate validity horizon definition & \path{src/orius/universal\_theory/battery\_instantiation.py} & code path & draft / non-defended \\
+\texttt{theorem\_t4} & observation necessity / no free safety & \path{src/orius/dc3s/supporting\_results.py} & code path & flagship theorem \\
+\texttt{theorem\_t5} & finite-horizon certificate validity & \path{src/orius/dc3s/temporal\_theorems.py} & code path & flagship theorem \\
 \texttt{theorem\_t6} & certificate expiration bound & \path{src/orius/universal\_theory/battery\_instantiation.py} & code path & flagship defended \\
 \texttt{theorem\_t7} & feasible fallback existence & \path{src/orius/dc3s/temporal\_theorems.py} & code path & flagship defended \\
-\texttt{theorem\_t8} & graceful degradation dominance & \path{src/orius/universal\_theory/battery\_instantiation.py} & code path & supporting defended \\
+\texttt{theorem\_t8} & graceful degradation dominance with useful work & \path{src/orius/benchmarks/graceful\_degradation.py} & code path & flagship theorem \\
 \texttt{theorem\_t11} & typed structural transfer & \path{src/orius/universal\_theory/contracts.py} & code path & flagship defended \\
-\texttt{theorem\_t11\_byz} & Byzantine-tolerant OQE bound & \path{src/orius/dc3s/theoretical_guarantees.py} & code path & supporting defended \\
-\texttt{theorem\_t\_stale} & stale-decay graceful degradation & \path{src/orius/dc3s/theoretical_guarantees.py} & code path & supporting defended \\
-\texttt{theorem\_t\_minimax} & tight OASG minimax tradeoff & \path{src/orius/dc3s/theoretical_guarantees.py} & code path & draft extension \\
-\texttt{theorem\_t\_sensor} & sensor quality converse & \path{src/orius/dc3s/theoretical_guarantees.py} & code path & draft extension \\
+\texttt{theorem\_t11\_byz} & Byzantine-robust reliability aggregation & \path{src/orius/dc3s/quality.py} & code path & flagship theorem \\
+\texttt{theorem\_t\_stale} & stale-hold uncertainty growth & \path{src/orius/universal\_theory/stale\_decay.py} & code path & flagship theorem \\
+\texttt{theorem\_t\_minimax} & finite ambiguity-class minimax lower bound & \path{src/orius/universal\_theory/minimax\_boundary.py} & code path & scoped flagship theorem \\
+\texttt{theorem\_t\_sensor} & sensor necessity under adapter semantics & \path{src/orius/universal\_theory/sensor\_necessity.py} & code path & flagship theorem \\
 \texttt{theorem\_t\_pac} & PAC trajectory safety certificate & \path{src/orius/universal\_theory/risk\_bounds.py} & code path & flagship defended \\
 \texttt{defended\_theorem\_core} & registry-canonical theorem core & \path{reports/publication/defended_theorem_core.json} & generated audit & canonical \\
 \texttt{active\_theorem\_audit} & full active theorem inventory with rigor ratings & \path{reports/publication/active_theorem_audit.json} & generated audit & canonical \\
@@ -109,15 +109,15 @@ T2 & 17 & \texttt{THM\_T2} & \path{src/orius/dc3s/guarantee\_checks.py} & \path{
 T3a & 18 & \texttt{THM\_T3A} & \path{src/orius/universal\_theory/risk\_bounds.py} & \path{reports/publication/reliability_group_coverage_phase3.csv} & flagship defended \\
 T3b & 18 & \texttt{COR\_T3B} & \path{src/orius/universal\_theory/risk\_bounds.py} & \path{reports/publication/reliability_group_coverage_phase3.csv} & supporting defended \\
 T4 & 19 & \texttt{THM\_T4} & \path{src/orius/cpsbench\_iot/baselines.py} & \path{reports/publication/fault_performance_table.csv} & flagship defended \\
-T5 & 20 & \texttt{DEF\_T5} & \path{src/orius/universal\_theory/battery\_instantiation.py} & \path{reports/blackout/blackout_study.csv} & draft / non-defended \\
+T5 & 20 & \texttt{THM\_T5} & \path{src/orius/dc3s/temporal\_theorems.py} & \path{reports/publication/T5_certificate_horizon_by_fault.csv} & flagship theorem \\
 T6 & 20 & \texttt{THM\_T6} & \path{src/orius/universal\_theory/battery\_instantiation.py} & \path{reports/blackout/blackout_study.csv} & flagship defended \\
 T7 & 20 & \texttt{THM\_T7} & \path{src/orius/dc3s/temporal\_theorems.py} & \path{reports/blackout/graceful_degradation_trace.csv} & flagship defended \\
-T8 & 20 & \texttt{THM\_T8} & \path{src/orius/universal\_theory/battery\_instantiation.py} & \path{reports/blackout/graceful_degradation_trace.csv} & supporting defended \\
+T8 & 20 & \texttt{THM\_T8} & \path{src/orius/benchmarks/graceful\_degradation.py} & \path{reports/publication/T8_graceful_policy_comparison.csv} & flagship theorem \\
 T11 & 37 & \texttt{THM\_T11} & \path{src/orius/universal\_theory/contracts.py} & \path{reports/publication/orius_transfer_obligation_table.csv} & flagship defended \\
-T11\textsubscript{Byz} & C & \texttt{THM\_T11\_BYZ} & \path{src/orius/dc3s/theoretical_guarantees.py} & App.~C (Proof~C.18) & supporting defended \\
-T\textsubscript{stale} & C & \texttt{THM\_T\_STALE} & \path{src/orius/dc3s/theoretical_guarantees.py} & App.~C (Proof~C.19) & supporting defended \\
-T\textsubscript{minimax} & C & \texttt{THM\_T\_MINIMAX} & \path{src/orius/dc3s/theoretical_guarantees.py} & App.~C (Proof~C.20) & draft extension \\
-T\textsubscript{sensor} & C & \texttt{THM\_T\_SENSOR} & \path{src/orius/dc3s/theoretical_guarantees.py} & App.~C (Proof~C.21) & draft extension \\
+\texttt{T11\_Byzantine} & C & \texttt{THM\_T11\_BYZ} & \path{src/orius/dc3s/quality.py} & \path{reports/publication/T11Byz_corruption_sweep.csv} & flagship theorem \\
+\texttt{T\_stale\_decay} & C & \texttt{THM\_T\_STALE} & \path{src/orius/universal\_theory/stale\_decay.py} & \path{reports/publication/Tstale_radius_growth.csv} & flagship theorem \\
+\texttt{T\_minimax} & C & \texttt{THM\_T\_MINIMAX} & \path{src/orius/universal\_theory/minimax\_boundary.py} & \path{reports/publication/Tminimax_boundary_grid.csv} & scoped flagship theorem \\
+\texttt{T\_sensor\_converse} & C & \texttt{THM\_T\_SENSOR} & \path{src/orius/universal\_theory/sensor\_necessity.py} & \path{reports/publication/Tsensor_sensor_ablation.csv} & flagship theorem \\
 T\textsubscript{PAC} & C & \texttt{THM\_T\_PAC} & \path{src/orius/universal\_theory/risk\_bounds.py} & App.~C (Proof~C.22) & flagship defended \\
 A1--A13 & 15 & \texttt{ASM\_REGISTER} & \path{configs/dc3s.yaml} & \path{orius-plan/assumption_register.md} & locked \\
 TRACE\_48H & 13 & \texttt{FIG\_TRACE\_48H} & \path{scripts/generate_48h_trace.py} & \path{reports/publication/48h_trace_final_de.csv} & locked \\

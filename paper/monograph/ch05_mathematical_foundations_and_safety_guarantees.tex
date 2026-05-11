@@ -1,27 +1,23 @@
 \chapter{Mathematical Foundations and Safety Guarantees}
 \label{ch:mathematical-foundations}
 
-\section{Why the theorem surface is intentionally narrow}
-ORIUS is not defended by one grand theorem claiming safety for every plant, every sensor
-regime, and every domain. The mathematical surface is intentionally narrower and therefore
-more durable. The theorem ladder states what can be proved once degraded observation is
-modeled explicitly, once reliability-conditioned uncertainty is admitted as part of the
-runtime object, and once repaired action or fallback is required before release.
+\section{Why the theorem surface is promotion-gated}
+ORIUS is not defended by one grand theorem claiming safety for every plant,
+every sensor regime, and every domain.  The mathematical surface is defended by
+a promotion gate: every active theorem-like row must have a statement,
+assumptions, proof, code anchor, tests, artifact evidence, artifact hashes, and
+a claim-boundary note before it is allowed to appear as a flagship theorem,
+flagship corollary, flagship lemma, or flagship definition.
 
-The monograph keeps that surface deliberately smaller than the dissertation's
-full formal register. The broader theorem/lemma/proposition lattice is part of
-the thesis governance apparatus; the paper-facing surface only carries the
-claims that remain central after proof hardening and claim-scope reduction.
-Concretely, the paper-facing surface is organized around four flagship theorem
-roles: the observation--action safety gap, observation necessity, ORIUS covered
-release preservation, and typed transfer under domain obligations. The permanent
-T1--T11 labels are retained as audit identifiers, not as a requirement that every
-numbered item be promoted to a headline theorem in the paper.
-
-That discipline matters because it keeps the dissertation from making a false choice
-between abstraction and implementation. The theorem surface is written against typed runtime
-objects, explicit assumptions, and artifact-backed diagnostics. As a result, the strongest
-claims are not merely conceptual and they are not merely empirical.
+The current manuscript-facing truth source is the theorem promotion matrix in
+\path{reports/publication/theorem_promotion_matrix.csv} and the corresponding
+result cards in \path{reports/publication/theorem_result_cards/}.  Historical
+draft/proxy rows are retained only as archived audit context; they are not part
+of the defended theorem register.  This keeps the dissertation from making a
+false choice between abstraction and implementation.  The theorem surface is
+written against typed runtime objects, explicit assumptions, and
+artifact-backed diagnostics.  As a result, the strongest claims are not merely
+conceptual and they are not merely empirical.
 
 \section{Notation and assumption discipline}
 The formal objects used in this chapter are simple but exact:
@@ -59,13 +55,39 @@ meaning of admissibility and true-state violation. The universal layer fixes the
 pattern of the failure event.
 
 \section{The paper-facing theorem surface}
-The paper-facing theory chapter carries four flagship theorem roles and a small
-set of supporting propositions/corollaries.  The full T1--T11 ladder remains in
-Appendix~\ref{app:proofs} and in the theorem registry for traceability; the paper
-does not ask the reader to treat all eleven identifiers as equally central main
-theorems.  The claim is deliberately conditional: ORIUS is safety-optimal under
-covered observation ambiguity, not globally optimal for every possible
-physical-AI system.
+The paper-facing theory chapter now carries a flagship-grade theorem package,
+not merely a short narrative subset.  The permanent T1--T11 labels remain
+stable for traceability, while newer scoped surfaces use stable identifiers such
+as \texttt{T11\_Byzantine}, \texttt{T\_stale\_decay},
+\texttt{T\_minimax}, and \texttt{T\_sensor\_converse}.  The claim is
+deliberately conditional: ORIUS is safety-optimal under covered observation
+ambiguity, not globally optimal for every possible physical-AI system.
+
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{Promotion-gated theorem package synchronized with the repository result cards.}
+\label{tab:promotion-gated-theorem-package}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llll}
+\toprule
+\textbf{Surface} & \textbf{Promoted status} & \textbf{Defended claim boundary} & \textbf{Result-card evidence}\\
+\midrule
+T1--T4 & Flagship theorems / corollaries & OASG, one-step preservation, envelope, and observation necessity under stated assumptions & \path{reports/publication/theorem_result_cards/T1.json}--\path{T4.json}\\
+T5 & Flagship theorem & Finite-horizon certificate validity; invalidates on contradictory evidence & \path{reports/publication/theorem_result_cards/T5.json}\\
+T6--T8 & Flagship theorems & Expiration, feasible fallback, and graceful degradation with useful work & \path{reports/publication/theorem_result_cards/T6.json}--\path{T8.json}\\
+T9--T10 & Flagship theorems & Mandatory-release impossibility and two-state boundary lower bound & \path{reports/publication/theorem_result_cards/T9.json}--\path{T10.json}\\
+\texttt{T10\_T11} sandwich & Flagship corollary & Observation-only lower bound versus ORIUS $\alpha$-covered upper bound & \path{reports/publication/theorem_result_cards/T10_T11_ObservationAmbiguitySandwich.json}\\
+T11 and domain lemmas & Flagship theorem / lemmas & Typed structural transfer and bounded AV/Healthcare runtime postconditions & \path{reports/publication/theorem_result_cards/T11.json}\\
+\texttt{T11\_Byzantine} & Flagship theorem & Robust aggregation only for $b<n/2$ Byzantine channels & \path{reports/publication/theorem_result_cards/T11_Byzantine.json}\\
+\texttt{T\_stale\_decay} & Flagship theorem & Stale-hold uncertainty growth under bounded drift & \path{reports/publication/theorem_result_cards/T_stale_decay.json}\\
+\texttt{T\_trajectory\_PAC} & Flagship theorem & Finite-horizon union-bound certificate, not a Ville-strengthened claim & \path{reports/publication/theorem_result_cards/T_trajectory_PAC.json}\\
+L1--L4 & Flagship lemmas & Runtime monotonicity and ambiguity-sandwich law suite & \path{reports/publication/theorem_result_cards/L1.json}--\path{L4.json}\\
+\texttt{T\_minimax} & Scoped flagship theorem & Finite ambiguity-class minimax lower bound; no global minimax optimality claim & \path{reports/publication/theorem_result_cards/T_minimax.json}\\
+\texttt{T\_sensor\_converse} & Flagship theorem & Sensor necessity under adapter semantics and disjoint safe sets & \path{reports/publication/theorem_result_cards/T_sensor_converse.json}\\
+\bottomrule
+\end{tabular}}
+\end{table}
 
 \begin{theorem}[OASG existence under degraded observation]
 \label{thm:oasg-existence}
@@ -159,6 +181,54 @@ Coverage and calibration validity are assumptions, not automatic conclusions\\
 \bottomrule
 \end{tabular}}
 \end{table}
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\IfFileExists{reports/publication/fig_T5_horizon_vs_reliability.png}{%
+\includegraphics[width=\linewidth]{reports/publication/fig_T5_horizon_vs_reliability.png}%
+}{%
+\fbox{\parbox{0.9\linewidth}{Missing T5 horizon figure}}%
+}
+\scriptsize\textit{T5 certificate horizon versus reliability.}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\IfFileExists{reports/publication/fig_T8_safety_useful_work_frontier.png}{%
+\includegraphics[width=\linewidth]{reports/publication/fig_T8_safety_useful_work_frontier.png}%
+}{%
+\fbox{\parbox{0.9\linewidth}{Missing T8 useful-work figure}}%
+}
+\scriptsize\textit{T8 safety--useful-work frontier.}
+\end{minipage}
+\caption{Temporal-certificate and graceful-degradation theorem artifacts.}
+\label{fig:theorem-temporal-graceful-artifacts}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\IfFileExists{reports/publication/fig_T10_lower_bound_vs_tv.png}{%
+\includegraphics[width=\linewidth]{reports/publication/fig_T10_lower_bound_vs_tv.png}%
+}{%
+\fbox{\parbox{0.9\linewidth}{Missing T10 lower-bound figure}}%
+}
+\scriptsize\textit{T10 lower bound versus total variation.}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\IfFileExists{reports/publication/fig_Tsensor_safe_core_vs_sensor_drop.png}{%
+\includegraphics[width=\linewidth]{reports/publication/fig_Tsensor_safe_core_vs_sensor_drop.png}%
+}{%
+\fbox{\parbox{0.9\linewidth}{Missing sensor-necessity figure}}%
+}
+\scriptsize\textit{\texttt{T\_sensor\_converse} safe core under sensor ablation.}
+\end{minipage}
+\caption{Observation-ambiguity lower-bound and sensor-necessity theorem artifacts.}
+\label{fig:theorem-ambiguity-sensor-artifacts}
+\end{figure}
 
 Appendix~\ref{app:proofs} is the authoritative proof index for the defended
 theorem program.  The paper-facing surface intentionally remains narrower: it
