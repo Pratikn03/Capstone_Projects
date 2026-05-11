@@ -52,6 +52,78 @@ signature status, append-only audit status, T11 status, and postcondition
 status.  The table is compact by design; it is the publication witness for the
 release contract, not a replacement for the raw runtime traces.
 
+\section{Final three-domain release results}
+The final manuscript-facing result surfaces are generated from the locked CPU
+release artifacts rather than from hand-entered prose.  They report model
+quality, claim-governing runtime safety, utility preservation against degenerate
+fail-safe references, and the freeze-validation gates that bound the current
+submission package.
+
+\IfFileExists{reports/publication/tbl_final_training_quality.tex}{%
+  \input{reports/publication/tbl_final_training_quality}%
+}{%
+  \input{../reports/publication/tbl_final_training_quality}%
+}
+
+\IfFileExists{reports/publication/tbl_final_runtime_safety.tex}{%
+  \input{reports/publication/tbl_final_runtime_safety}%
+}{%
+  \input{../reports/publication/tbl_final_runtime_safety}%
+}
+
+\IfFileExists{reports/publication/tbl_final_utility_preserving_safety.tex}{%
+  \input{reports/publication/tbl_final_utility_preserving_safety}%
+}{%
+  \input{../reports/publication/tbl_final_utility_preserving_safety}%
+}
+
+\IfFileExists{reports/publication/tbl_final_freeze_validation.tex}{%
+  \input{reports/publication/tbl_final_freeze_validation}%
+}{%
+  \input{../reports/publication/tbl_final_freeze_validation}%
+}
+
+Table~\ref{tbl:final-runtime-safety} is the governing safety table for the
+three-domain result: Battery and Healthcare close with zero ORIUS TSVR on the
+promoted runtime denominator, while AV is epsilon-closed on the bounded nuPlan
+replay/surrogate denominator.  Table~\ref{tbl:final-utility-preserving-safety}
+answers the most important conservatism objection: ORIUS is compared against
+immediate shutdown, always-brake, or always-alert references and must preserve
+useful work without adding material excess TSVR over those fail-safe policies.
+
+\begin{figure}[htbp]
+\centering
+\IfFileExists{reports/publication/fig_final_runtime_tsvr.png}{%
+  \includegraphics[width=0.86\textwidth]{reports/publication/fig_final_runtime_tsvr.png}%
+}{%
+  \includegraphics[width=0.86\textwidth]{../reports/publication/fig_final_runtime_tsvr.png}%
+}
+\caption{Final claim-governing runtime TSVR across Battery, AV, and Healthcare.}
+\label{fig:final-runtime-tsvr}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\IfFileExists{reports/publication/fig_final_training_picp90.png}{%
+  \includegraphics[width=0.88\textwidth]{reports/publication/fig_final_training_picp90.png}%
+}{%
+  \includegraphics[width=0.88\textwidth]{../reports/publication/fig_final_training_picp90.png}%
+}
+\caption{Final release-model PICP90 values for the manuscript-facing model-quality gate.}
+\label{fig:final-training-picp90}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\IfFileExists{reports/publication/fig_final_utility_delta.png}{%
+  \includegraphics[width=0.84\textwidth]{reports/publication/fig_final_utility_delta.png}%
+}{%
+  \includegraphics[width=0.84\textwidth]{../reports/publication/fig_final_utility_delta.png}%
+}
+\caption{Useful work preserved by ORIUS over each domain's degenerate fail-safe reference.}
+\label{fig:final-utility-delta}
+\end{figure}
+
 \section{Domain synthesis}
 The point of the synthesis is not to suggest that every row is interchangeable. It is to
 show how the same release-boundary grammar survives contact with different plants, action

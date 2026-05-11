@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-05-05T02:22:01Z",
+  "generated_at_utc": "2026-05-10T00:00:00Z",
   "status": "top_venue_defensible_predeployment_package",
   "primary_thesis_sentence": "ORIUS provides a reliability-aware runtime safety layer for physical AI under degraded observation, enforcing certificate-backed action release through uncertainty coverage, repair, and fallback.",
   "main_theory_claim": "Observation-only mandatory-release controllers face a lower bound under safety-relevant ambiguity; ORIUS achieves an alpha-bounded upper guarantee under covered uncertainty sets.",
@@ -21,7 +21,19 @@
     "source_positioning": "reports/publication/source_backed_research_positioning.csv",
     "uplift_scorecard": "reports/publication/orius_95plus_uplift_scorecard.csv",
     "uplift_scorecard_json": "reports/publication/orius_95plus_uplift_scorecard.json",
-    "uplift_scorecard_md": "reports/publication/orius_95plus_uplift_scorecard.md"
+    "uplift_scorecard_md": "reports/publication/orius_95plus_uplift_scorecard.md",
+    "final_training_quality_csv": "reports/publication/final_training_quality_for_paper.csv",
+    "final_runtime_safety_csv": "reports/publication/final_runtime_safety_for_paper.csv",
+    "final_freeze_validation_csv": "reports/publication/final_freeze_validation_for_paper.csv",
+    "final_training_quality_tex": "reports/publication/tbl_final_training_quality.tex",
+    "final_runtime_safety_tex": "reports/publication/tbl_final_runtime_safety.tex",
+    "final_utility_safety_tex": "reports/publication/tbl_final_utility_preserving_safety.tex",
+    "final_freeze_validation_tex": "reports/publication/tbl_final_freeze_validation.tex",
+    "final_training_picp_figure": "reports/publication/fig_final_training_picp90.png",
+    "final_runtime_tsvr_figure": "reports/publication/fig_final_runtime_tsvr.png",
+    "final_utility_delta_figure": "reports/publication/fig_final_utility_delta.png",
+    "final_paper_results_summary_json": "reports/publication/final_paper_results_summary.json",
+    "final_paper_results_summary_md": "reports/publication/final_paper_results_summary.md"
   },
   "source_anchors": [
     {
@@ -199,12 +211,36 @@
     }
   ],
   "uplift_95plus_achieved": false,
+  "final_paper_results": {
+    "generated_at_utc": "2026-05-10T00:00:00Z",
+    "release_id": "PREDEPLOY_SPLIT_CPU_20260507T163124Z",
+    "training_rows": 9,
+    "runtime_rows": 3,
+    "utility_rows": 3,
+    "freeze_rows": 5,
+    "outputs": {
+      "final_training_quality_csv": "reports/publication/final_training_quality_for_paper.csv",
+      "final_runtime_safety_csv": "reports/publication/final_runtime_safety_for_paper.csv",
+      "final_freeze_validation_csv": "reports/publication/final_freeze_validation_for_paper.csv",
+      "final_training_quality_tex": "reports/publication/tbl_final_training_quality.tex",
+      "final_runtime_safety_tex": "reports/publication/tbl_final_runtime_safety.tex",
+      "final_utility_safety_tex": "reports/publication/tbl_final_utility_preserving_safety.tex",
+      "final_freeze_validation_tex": "reports/publication/tbl_final_freeze_validation.tex",
+      "final_training_picp_figure": "reports/publication/fig_final_training_picp90.png",
+      "final_runtime_tsvr_figure": "reports/publication/fig_final_runtime_tsvr.png",
+      "final_utility_delta_figure": "reports/publication/fig_final_utility_delta.png",
+      "final_paper_results_summary_json": "reports/publication/final_paper_results_summary.json",
+      "final_paper_results_summary_md": "reports/publication/final_paper_results_summary.md"
+    },
+    "claim_boundary": "Bounded predeployment evidence only. The figures and tables do not claim road deployment, live clinical deployment, or physical field certification."
+  },
   "freeze_status": {
     "complete": true,
     "manifest_paths": [
-      "reports/predeployment_freeze/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/predeployment_release_manifest.json"
+      "reports/predeployment_freeze/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/predeployment_release_manifest.json",
+      "reports/predeployment_freeze/PREDEPLOY_SPLIT_CPU_20260507T163124Z/predeployment_release_manifest.json"
     ],
-    "latest_release_dir": "reports/predeployment_freeze/PREDEPLOY_QMAX10_GBM_20260502T174347Z",
+    "latest_release_dir": "reports/predeployment_freeze/PREDEPLOY_SPLIT_CPU_20260507T163124Z",
     "status_note": "freeze_complete_manifest_present"
   },
   "claim_ledger_present": true,

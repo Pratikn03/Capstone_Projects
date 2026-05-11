@@ -1,0 +1,23 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Final CPU release model quality used by the manuscript-facing ORIUS package.}
+\label{tbl:final-training-quality}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllrrl}
+\toprule
+Domain & Target & Model & RMSE & PICP90 & Status\\
+\midrule
+Battery & load\_mw & gbm & 254.470 & 93.0\% & pass\\
+Battery & price\_eur\_mwh & gbm & 4.896 & 91.5\% & pass\\
+Battery & solar\_mw & gbm & 243.177 & 91.7\% & pass\\
+Battery & wind\_mw & gbm & 107.445 & 96.5\% & pass\\
+AV & target\_ego\_speed\_mps\_\_1s & gbm & 0.029 & 92.0\% & pass\\
+AV & target\_relative\_gap\_m\_\_1s & gbm & 14.323 & 95.8\% & pass\\
+Healthcare & hr\_bpm & gbm & 1.521 & 90.3\% & pass\\
+Healthcare & respiratory\_rate & gbm & 0.653 & 89.4\% & pass\\
+Healthcare & spo2\_pct & gbm & 0.280 & 91.2\% & pass\\
+\bottomrule
+\end{tabular}
+}
+\end{table}

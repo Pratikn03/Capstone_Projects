@@ -1,6 +1,6 @@
-# ORIUS Claim Ledger — Battery + AV Submission Lane
+# ORIUS Claim Ledger — Three-Domain Runtime Package
 
-> Generated from the canonical closure artifacts.
+> Generated from the canonical runtime, theorem, and utility-preserving safety artifacts.
 
 ORIUS provides a reliability-aware runtime safety layer for physical AI under degraded observation, enforcing certificate-backed action release through uncertainty coverage, repair, and fallback.
 
@@ -16,42 +16,43 @@ promotion gates explicitly upgrade them.
 
 ## Governing Inputs
 
-- `reports/battery_av/overall/release_summary.json`
-- `reports/battery_av/overall/publication_closure_override.json`
-- `reports/publication/orius_equal_domain_parity_matrix.csv`
-- `reports/publication/theorem_promotion_scorecard.json`
-- `reports/publication/theorem_promotion_gates.csv`
-- `submission_scope=battery_av_only`
+- `reports/publication/three_domain_ml_benchmark.csv`
+- `reports/publication/three_domain_forecast_calibration_runtime_evidence.csv`
+- `reports/publication/runtime_release_contract_witnesses.csv`
+- `reports/publication/utility_preserving_safety_scorecard.csv`
+- `reports/publication/active_theorem_audit.csv`
+- `submission_scope=battery_av_healthcare`
 
 ## Bucket A — Directly Artifact-Backed
 
 | ID | Claim | Governing Artifact |
 |----|-------|-------------------|
-| A1 | Battery remains the `reference` witness row in the current submission lane. | `publication_closure_override.json` |
-| A2 | Battery canonical TSVR is 0.0% on 288 canonical runtime rows. | `reports/battery_av/battery/runtime_summary.csv`, `release_summary.json` |
-| A3 | Battery CertOS chain is valid with 0 certificates. | `reports/battery_av/battery/certos_verification_summary.json` |
-| A4 | AV remains the bounded `runtime_contract_closed` row. | `publication_closure_override.json` |
-| A5 | AV baseline TSVR is 51.4% and ORIUS TSVR is 0.0%. | `reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv` |
-| A6 | AV runtime rows total = 35,752; canonical ORIUS rows = 4,469. | `release_summary.json` |
-| A7 | AV ORIUS OASG cases identified = 93. | `reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/oasg_domain_summary.csv`, `release_summary.json` |
-| A8 | Only `battery` and `vehicle` are promoted rows under `submission_scope=battery_av_only`. | `reports/publication/orius_equal_domain_parity_matrix.csv` |
+| A1 | Battery remains the `reference` witness row. | `reports/publication/three_domain_ml_benchmark.csv` |
+| A2 | Battery baseline TSVR is 0.83% and ORIUS TSVR is 0.0%. | `reports/battery_av/battery/runtime_summary.csv`, `reports/publication/three_domain_ml_benchmark.csv` |
+| A3 | AV remains a bounded `runtime_contract_closed` row. | `reports/publication/three_domain_ml_benchmark.csv` |
+| A4 | AV baseline TSVR is 28.925% and ORIUS TSVR is 0.0163% on the promoted nuPlan runtime denominator. | `reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv` |
+| A5 | Healthcare remains a bounded `runtime_contract_closed` row. | `reports/publication/three_domain_ml_benchmark.csv` |
+| A6 | Healthcare baseline TSVR is 19.4489% and ORIUS TSVR is 0.0% on the promoted retrospective runtime denominator. | `reports/healthcare/runtime_summary.csv` |
+| A7 | All promoted domains emit the canonical runtime release contract witness fields. | `reports/publication/runtime_release_contract_witnesses.csv` |
+| A8 | ORIUS is utility-preserving relative to fail-safe references in Battery, AV, and Healthcare. | `reports/publication/utility_preserving_safety_scorecard.csv` |
 
 ## Bucket B — Bounded / Qualified Claims
 
 | ID | Claim | Qualification |
 |----|-------|---------------|
-| B1 | AV runtime-contract closure is real. | It is bounded to the current brake-hold release contract. |
-| B2 | Battery remains the deepest witness. | That does not imply equal maturity across domains outside the current battery+AV lane. |
-| B3 | Shift-aware uncertainty is active in both rows. | Coverage guarantees under arbitrary shift are not claimed from these artifacts. |
+| B1 | AV closed-loop/planner evidence is real. | It is bounded nuPlan kinematic/planner evidence, not road deployment or full autonomous-driving field closure. |
+| B2 | Healthcare runtime evidence is real. | It is retrospective monitoring evidence, not prospective clinical trial or live clinical deployment. |
+| B3 | Battery remains the deepest witness. | That does not imply equal real-world maturity across the promoted domains. |
+| B4 | Utility-preserving safety is claimed relative to fail-safe references. | It does not mean interventions/fallbacks are already optimized for deployment utility. |
 
 ## Bucket C — Explicitly Not Claimed
 
 | ID | Non-Claim | Governing Reason |
 |----|-----------|------------------|
-| C1 | Industrial is promoted in this submission. | `outside_current_submission_scope_battery_av_lane` |
-| C2 | Healthcare is promoted in this submission. | `outside_current_submission_scope_battery_av_lane` |
+| C1 | Industrial is promoted in this submission. | `outside_current_submission_scope_battery_av_healthcare_lane` |
+| C2 | Healthcare is live/prospective clinical validation. | Current evidence is retrospective monitoring only. |
 | C3 | Navigation is a promoted defended row. | It remains a non-promoted row in the current parity matrix. |
 | C4 | Aerospace is a promoted defended row. | It remains a non-promoted row in the current parity matrix. |
 | C5 | AV is full autonomous-driving field closure. | The current AV row is explicitly bounded. |
-| C6 | T9 is a promoted flagship theorem. | The generated promotion package keeps T9 `draft_non_defended` until Battery, AV, and Healthcare all discharge the witness constant, mixing bridge, mechanized proof, and remaining gates. |
-| C7 | T10 is a promoted flagship theorem. | The generated promotion package keeps T10 `draft_non_defended` until Battery, AV, and Healthcare all discharge the boundary-mass/TV bridge, mechanized proof, and remaining gates. |
+| C6 | T9 is a promoted flagship theorem. | The theorem promotion package promotes T9 as the scoped impossibility of quality-ignorant mandatory release, with ambiguity witnesses and explicit mandatory-release boundaries. |
+| C7 | T10 is a promoted flagship theorem. | The theorem promotion package promotes T10 as the two-state boundary-indistinguishability lower bound, not as an unrestricted global minimax theorem. |

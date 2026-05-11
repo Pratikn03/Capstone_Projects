@@ -26,6 +26,10 @@ orius_framework_proof/sil_validation/traces/*_seed[1-9].csv
 !publication/active_theorem_audit.json
 !publication/model_quality_gate.json
 !publication/three_domain_forecast_calibration_runtime_evidence.json
+!publication/utility_preserving_safety_scorecard.json
+!publication/utility_preserving_safety_scorecard.md
+!publication/final_paper_results_summary.json
+!publication/final_paper_results_summary.md
 !publication/t9_t10_research_scorecard.json
 !publication/t9_t10_assumption_discharge_scorecard.json
 !publication/t9_t10_mechanized_proof_status.json

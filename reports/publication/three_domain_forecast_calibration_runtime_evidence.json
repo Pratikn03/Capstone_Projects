@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-05-10T12:59:40Z",
+  "generated_at_utc": "2026-05-11T04:14:49Z",
   "row_count": 3,
   "source_policy": {
     "scope": "Battery + nuPlan AV + Healthcare only",
@@ -26,7 +26,7 @@
       "runtime_source": "reports/battery_av/battery/runtime_summary.csv",
       "runtime_trace_rows": "1152",
       "orius_runtime_rows": "288",
-      "baseline_tsvr": "0.008300",
+      "baseline_tsvr": "0.008333",
       "orius_tsvr": "0.000000",
       "oasg": "0.000000",
       "intervention_rate": "0.020833",

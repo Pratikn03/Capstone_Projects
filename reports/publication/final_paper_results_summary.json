@@ -1,0 +1,23 @@
+{
+  "generated_at_utc": "2026-05-10T00:00:00Z",
+  "release_id": "PREDEPLOY_SPLIT_CPU_20260507T163124Z",
+  "training_rows": 9,
+  "runtime_rows": 3,
+  "utility_rows": 3,
+  "freeze_rows": 5,
+  "outputs": {
+    "final_training_quality_csv": "reports/publication/final_training_quality_for_paper.csv",
+    "final_runtime_safety_csv": "reports/publication/final_runtime_safety_for_paper.csv",
+    "final_freeze_validation_csv": "reports/publication/final_freeze_validation_for_paper.csv",
+    "final_training_quality_tex": "reports/publication/tbl_final_training_quality.tex",
+    "final_runtime_safety_tex": "reports/publication/tbl_final_runtime_safety.tex",
+    "final_utility_safety_tex": "reports/publication/tbl_final_utility_preserving_safety.tex",
+    "final_freeze_validation_tex": "reports/publication/tbl_final_freeze_validation.tex",
+    "final_training_picp_figure": "reports/publication/fig_final_training_picp90.png",
+    "final_runtime_tsvr_figure": "reports/publication/fig_final_runtime_tsvr.png",
+    "final_utility_delta_figure": "reports/publication/fig_final_utility_delta.png",
+    "final_paper_results_summary_json": "reports/publication/final_paper_results_summary.json",
+    "final_paper_results_summary_md": "reports/publication/final_paper_results_summary.md"
+  },
+  "claim_boundary": "Bounded predeployment evidence only. The figures and tables do not claim road deployment, live clinical deployment, or physical field certification."
+}

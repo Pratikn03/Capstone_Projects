@@ -1,0 +1,6 @@
+gate,value,pass
+Split training,pass,yes
+Model-quality release gate,"13 release models, 0 blockers",yes
+Downstream freeze validators,15 validators,yes
+Runtime and stress gates,"three domains, 12 stress families",yes
+Release manifest,1307 hashed artifacts,yes

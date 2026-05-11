@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import csv
 import json
+import math
+import os
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
@@ -12,6 +14,8 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
+SPLIT_TRAINING_ROOT = REPO_ROOT / "reports" / "split_training"
+LATEST_RELEASE_ID_PATH = SPLIT_TRAINING_ROOT / "latest_release_id.txt"
 EXTERNAL_VALIDATION = (
     REPO_ROOT / "reports" / "predeployment_external_validation" / "external_validation_summary.csv"
 )
@@ -39,6 +43,18 @@ OUTPUTS = {
     "uplift_scorecard": PUBLICATION_DIR / "orius_95plus_uplift_scorecard.csv",
     "uplift_scorecard_json": PUBLICATION_DIR / "orius_95plus_uplift_scorecard.json",
     "uplift_scorecard_md": PUBLICATION_DIR / "orius_95plus_uplift_scorecard.md",
+    "final_training_quality_csv": PUBLICATION_DIR / "final_training_quality_for_paper.csv",
+    "final_runtime_safety_csv": PUBLICATION_DIR / "final_runtime_safety_for_paper.csv",
+    "final_freeze_validation_csv": PUBLICATION_DIR / "final_freeze_validation_for_paper.csv",
+    "final_training_quality_tex": PUBLICATION_DIR / "tbl_final_training_quality.tex",
+    "final_runtime_safety_tex": PUBLICATION_DIR / "tbl_final_runtime_safety.tex",
+    "final_utility_safety_tex": PUBLICATION_DIR / "tbl_final_utility_preserving_safety.tex",
+    "final_freeze_validation_tex": PUBLICATION_DIR / "tbl_final_freeze_validation.tex",
+    "final_training_picp_figure": PUBLICATION_DIR / "fig_final_training_picp90.png",
+    "final_runtime_tsvr_figure": PUBLICATION_DIR / "fig_final_runtime_tsvr.png",
+    "final_utility_delta_figure": PUBLICATION_DIR / "fig_final_utility_delta.png",
+    "final_paper_results_summary_json": PUBLICATION_DIR / "final_paper_results_summary.json",
+    "final_paper_results_summary_md": PUBLICATION_DIR / "final_paper_results_summary.md",
 }
 
 
@@ -188,6 +204,9 @@ SOURCE_ANCHORS = (
 
 
 def _utc_now() -> str:
+    override = os.environ.get("ORIUS_REPRODUCIBLE_TIMESTAMP")
+    if override:
+        return override
     return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
@@ -231,9 +250,404 @@ def _write_text(path: Path, text: str) -> None:
 
 def _safe_float(value: Any) -> float:
     try:
-        return float(value)
+        result = float(value)
     except (TypeError, ValueError):
         return 0.0
+    return result if math.isfinite(result) else 0.0
+
+
+def _read_json_optional(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _read_csv_optional(path: Path) -> list[dict[str, str]]:
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _active_release_id() -> str:
+    if LATEST_RELEASE_ID_PATH.exists():
+        return LATEST_RELEASE_ID_PATH.read_text(encoding="utf-8").strip()
+    release_dirs = sorted(path.name for path in SPLIT_TRAINING_ROOT.glob("PREDEPLOY*") if path.is_dir())
+    return release_dirs[-1] if release_dirs else ""
+
+
+def _split_release_dir() -> Path:
+    return SPLIT_TRAINING_ROOT / _active_release_id()
+
+
+def _freeze_release_dir() -> Path:
+    release_id = _active_release_id()
+    return FREEZE_ROOT / release_id if release_id else FREEZE_ROOT
+
+
+def _tex_escape(value: Any) -> str:
+    text = str(value)
+    replacements = {
+        "\\": r"\textbackslash{}",
+        "&": r"\&",
+        "%": r"\%",
+        "_": r"\_",
+        "#": r"\#",
+    }
+    for src, dst in replacements.items():
+        text = text.replace(src, dst)
+    return text
+
+
+def _format_float(value: Any, places: int = 3) -> str:
+    return f"{_safe_float(value):.{places}f}"
+
+
+def _format_percent(value: Any, places: int = 1) -> str:
+    return f"{100.0 * _safe_float(value):.{places}f}%"
+
+
+def _write_tex_table(
+    path: Path,
+    headers: list[str],
+    rows: list[list[Any]],
+    *,
+    caption: str,
+    label: str,
+    align: str | None = None,
+    resize_to_textwidth: bool = False,
+) -> None:
+    cols = align or ("l" + "r" * (len(headers) - 1))
+    lines = [
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\small",
+        rf"\caption{{{caption}}}",
+        rf"\label{{{label}}}",
+    ]
+    if resize_to_textwidth:
+        lines.append(r"\resizebox{\textwidth}{!}{%")
+    lines.extend(
+        [
+            rf"\begin{{tabular}}{{{cols}}}",
+            r"\toprule",
+            " & ".join(_tex_escape(cell) for cell in headers) + r"\\",
+            r"\midrule",
+        ]
+    )
+    for row in rows:
+        lines.append(" & ".join(_tex_escape(cell) for cell in row) + r"\\")
+    lines.extend([r"\bottomrule", r"\end{tabular}"])
+    if resize_to_textwidth:
+        lines.append(r"}")
+    lines.append(r"\end{table}")
+    _write_text(path, "\n".join(lines))
+
+
+def _domain_for_target(target: str) -> str:
+    if target in {"load_mw", "wind_mw", "solar_mw", "price_eur_mwh"}:
+        return "Battery"
+    if target.startswith("target_"):
+        return "AV"
+    return "Healthcare"
+
+
+def _paper_training_rows() -> list[dict[str, Any]]:
+    gate = _read_json_optional(_split_release_dir() / "candidate_model_quality_gate.json")
+    selected_targets = {
+        "load_mw",
+        "wind_mw",
+        "solar_mw",
+        "price_eur_mwh",
+        "target_ego_speed_mps__1s",
+        "target_relative_gap_m__1s",
+        "hr_bpm",
+        "spo2_pct",
+        "respiratory_rate",
+    }
+    rows = []
+    for row in gate.get("models", []):
+        target = str(row.get("target", ""))
+        if not row.get("release_model") or target not in selected_targets:
+            continue
+        calibration = row.get("gates", {}).get("calibration", {}).get("metrics", {})
+        generalization = row.get("gates", {}).get("generalization", {}).get("metrics", {})
+        rows.append(
+            {
+                "domain": _domain_for_target(target),
+                "target": target,
+                "model": row.get("model", "gbm"),
+                "rmse": _safe_float(generalization.get("test_rmse")),
+                "picp90": _safe_float(calibration.get("picp_90")),
+                "status": row.get("status", ""),
+            }
+        )
+    order = {"Battery": 0, "AV": 1, "Healthcare": 2}
+    return sorted(rows, key=lambda r: (order.get(str(r["domain"]), 99), str(r["target"])))
+
+
+def _paper_runtime_rows() -> list[dict[str, Any]]:
+    rows = []
+    for row in _read_csv_optional(PUBLICATION_DIR / "three_domain_runtime_safety_tradeoff.csv"):
+        rows.append(
+            {
+                "domain": row.get("domain", ""),
+                "baseline_tsvr": _safe_float(row.get("baseline_tsvr_mean")),
+                "orius_tsvr": _safe_float(row.get("orius_tsvr_mean")),
+                "relative_delta": _safe_float(row.get("relative_delta")),
+                "intervention": _safe_float(row.get("intervention_rate")),
+                "fallback": _safe_float(row.get("fallback_activation_rate")),
+                "certificate_valid": _safe_float(row.get("certificate_valid_release_rate")),
+                "runtime_witness": _safe_float(row.get("runtime_witness_pass_rate")),
+                "latency_p95_ms": _safe_float(row.get("runtime_latency_p95_ms")),
+            }
+        )
+    return rows
+
+
+def _paper_utility_rows() -> list[dict[str, Any]]:
+    rows = []
+    for row in _read_csv_optional(PUBLICATION_DIR / "utility_preserving_safety_scorecard.csv"):
+        rows.append(
+            {
+                "domain": row.get("domain", ""),
+                "reference": row.get("safety_reference_controller", ""),
+                "excess_tsvr": _safe_float(row.get("excess_tsvr_over_safety_reference")),
+                "utility_gain": row.get("utility_gain_over_safety_reference", ""),
+                "utility_delta": row.get("utility_delta_over_safety_reference", ""),
+                "fallback_reduction": row.get("fallback_reduction_vs_safety_reference", ""),
+                "intervention_reduction": row.get("intervention_reduction_vs_safety_reference", ""),
+                "gate": row.get("utility_preserving_safety_gate", ""),
+            }
+        )
+    return rows
+
+
+def _paper_freeze_rows() -> list[dict[str, Any]]:
+    split = _read_json_optional(_split_release_dir() / "combined_training_summary.json")
+    model_gate = _read_json_optional(_split_release_dir() / "candidate_model_quality_gate.json")
+    freeze_dir = _freeze_release_dir()
+    downstream = _read_json_optional(freeze_dir / "downstream_post_split_results.json")
+    runtime = _read_json_optional(freeze_dir / "final_runtime_stress_gates_post_split.json")
+    release = _read_json_optional(freeze_dir / "predeployment_release_manifest.json")
+    hashes = _read_json_optional(freeze_dir / "frozen_artifact_hashes.json")
+    return [
+        {
+            "gate": "Split training",
+            "value": split.get("overall_status", "missing"),
+            "pass": "yes" if split.get("overall_status") == "pass" else "no",
+        },
+        {
+            "gate": "Model-quality release gate",
+            "value": f"{sum(1 for row in model_gate.get('models', []) if row.get('release_model'))} release models, {len(model_gate.get('blockers', []))} blockers",
+            "pass": "yes" if model_gate.get("pass") else "no",
+        },
+        {
+            "gate": "Downstream freeze validators",
+            "value": f"{len(downstream.get('results', []))} validators",
+            "pass": "yes" if downstream.get("all_passed") else "no",
+        },
+        {
+            "gate": "Runtime and stress gates",
+            "value": "three domains, 12 stress families",
+            "pass": "yes" if runtime.get("all_passed") else "no",
+        },
+        {
+            "gate": "Release manifest",
+            "value": f"{len(hashes.get('artifacts', []))} hashed artifacts",
+            "pass": "yes" if release.get("all_passed") else "no",
+        },
+    ]
+
+
+def _bar_plot(path: Path, labels: list[str], values: list[float], *, title: str, ylabel: str) -> None:
+    import matplotlib.pyplot as plt
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(8.6, 4.8))
+    ax.bar(range(len(labels)), values, color="#285a84")
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, rotation=25, ha="right")
+    ax.set_title(title)
+    ax.set_ylabel(ylabel)
+    ax.grid(True, axis="y", alpha=0.25)
+    fig.tight_layout()
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+
+
+def _runtime_plot(path: Path, rows: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    labels = [str(row["domain"]).replace("Medical and Healthcare Monitoring", "Healthcare") for row in rows]
+    baseline = [float(row["baseline_tsvr"]) for row in rows]
+    orius = [float(row["orius_tsvr"]) for row in rows]
+    fig, ax = plt.subplots(figsize=(8.4, 4.8))
+    x = list(range(len(labels)))
+    width = 0.36
+    ax.bar([i - width / 2 for i in x], baseline, width, label="Baseline TSVR", color="#8c2d2d")
+    ax.bar([i + width / 2 for i in x], orius, width, label="ORIUS TSVR", color="#285a84")
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=15, ha="right")
+    ax.set_ylabel("TSVR")
+    ax.set_title("Claim-Governing Runtime TSVR")
+    ax.legend()
+    ax.grid(True, axis="y", alpha=0.25)
+    fig.tight_layout()
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+
+
+def _utility_delta_plot(path: Path, rows: list[dict[str, Any]]) -> None:
+    labels = [str(row["domain"]).replace("Medical and Healthcare Monitoring", "Healthcare") for row in rows]
+    values = [_safe_float(row.get("utility_delta")) for row in rows]
+    _bar_plot(path, labels, values, title="Useful Work Preserved Over Fail-Safe Reference", ylabel="Utility delta")
+
+
+def _build_final_paper_result_assets() -> dict[str, Any]:
+    training_rows = _paper_training_rows()
+    runtime_rows = _paper_runtime_rows()
+    utility_rows = _paper_utility_rows()
+    freeze_rows = _paper_freeze_rows()
+
+    _write_csv(
+        OUTPUTS["final_training_quality_csv"],
+        training_rows,
+        ["domain", "target", "model", "rmse", "picp90", "status"],
+    )
+    _write_csv(
+        OUTPUTS["final_runtime_safety_csv"],
+        runtime_rows,
+        [
+            "domain",
+            "baseline_tsvr",
+            "orius_tsvr",
+            "relative_delta",
+            "intervention",
+            "fallback",
+            "certificate_valid",
+            "runtime_witness",
+            "latency_p95_ms",
+        ],
+    )
+    _write_csv(OUTPUTS["final_freeze_validation_csv"], freeze_rows, ["gate", "value", "pass"])
+
+    _write_tex_table(
+        OUTPUTS["final_training_quality_tex"],
+        ["Domain", "Target", "Model", "RMSE", "PICP90", "Status"],
+        [
+            [
+                row["domain"],
+                row["target"],
+                row["model"],
+                _format_float(row["rmse"], 3),
+                _format_percent(row["picp90"], 1),
+                row["status"],
+            ]
+            for row in training_rows
+        ],
+        caption="Final CPU release model quality used by the manuscript-facing ORIUS package.",
+        label="tbl:final-training-quality",
+        align="lllrrl",
+        resize_to_textwidth=True,
+    )
+    _write_tex_table(
+        OUTPUTS["final_runtime_safety_tex"],
+        ["Domain", "Baseline TSVR", "ORIUS TSVR", "Reduction", "Fallback", "Cert-valid", "p95 ms"],
+        [
+            [
+                row["domain"],
+                _format_float(row["baseline_tsvr"], 6),
+                _format_float(row["orius_tsvr"], 6),
+                _format_percent(row["relative_delta"], 2),
+                _format_percent(row["fallback"], 1),
+                _format_percent(row["certificate_valid"], 1),
+                _format_float(row["latency_p95_ms"], 3),
+            ]
+            for row in runtime_rows
+        ],
+        caption="Final claim-governing runtime safety evidence across the three promoted ORIUS domains.",
+        label="tbl:final-runtime-safety",
+        align="lrrrrrr",
+        resize_to_textwidth=True,
+    )
+    _write_tex_table(
+        OUTPUTS["final_utility_safety_tex"],
+        ["Domain", "Fail-safe reference", "Excess TSVR", "Utility gain", "Utility delta", "Gate"],
+        [
+            [
+                row["domain"],
+                row["reference"],
+                _format_float(row["excess_tsvr"], 6),
+                "nonzero/zero" if str(row["utility_gain"]).lower() == "inf" else row["utility_gain"],
+                row["utility_delta"],
+                row["gate"],
+            ]
+            for row in utility_rows
+        ],
+        caption="Utility-preserving safety scorecard. ORIUS is compared with a degenerate fail-safe reference rather than only with unsafe persistence.",
+        label="tbl:final-utility-preserving-safety",
+        align="llrrrl",
+        resize_to_textwidth=True,
+    )
+    _write_tex_table(
+        OUTPUTS["final_freeze_validation_tex"],
+        ["Gate", "Value", "Pass"],
+        [[row["gate"], row["value"], row["pass"]] for row in freeze_rows],
+        caption="Final freeze and validation gates for the locked CPU release package.",
+        label="tbl:final-freeze-validation",
+        align="lll",
+    )
+
+    if training_rows:
+        _bar_plot(
+            OUTPUTS["final_training_picp_figure"],
+            [f"{row['domain']}:{row['target']}" for row in training_rows],
+            [float(row["picp90"]) for row in training_rows],
+            title="Final Release Model PICP90",
+            ylabel="PICP90",
+        )
+    if runtime_rows:
+        _runtime_plot(OUTPUTS["final_runtime_tsvr_figure"], runtime_rows)
+    if utility_rows:
+        _utility_delta_plot(OUTPUTS["final_utility_delta_figure"], utility_rows)
+
+    summary = {
+        "generated_at_utc": _utc_now(),
+        "release_id": _active_release_id(),
+        "training_rows": len(training_rows),
+        "runtime_rows": len(runtime_rows),
+        "utility_rows": len(utility_rows),
+        "freeze_rows": len(freeze_rows),
+        "outputs": {
+            key: _repo_rel(path)
+            for key, path in OUTPUTS.items()
+            if key.startswith("final_") or key in {"final_utility_safety_tex"}
+        },
+        "claim_boundary": (
+            "Bounded predeployment evidence only. The figures and tables do not claim road deployment, "
+            "live clinical deployment, or physical field certification."
+        ),
+    }
+    _write_json(OUTPUTS["final_paper_results_summary_json"], summary)
+    _write_text(
+        OUTPUTS["final_paper_results_summary_md"],
+        "\n".join(
+            [
+                "# Final Paper Results Assets",
+                "",
+                f"Release: `{summary['release_id']}`",
+                "",
+                f"- Training rows: `{summary['training_rows']}`",
+                f"- Runtime rows: `{summary['runtime_rows']}`",
+                f"- Utility scorecard rows: `{summary['utility_rows']}`",
+                f"- Freeze validation rows: `{summary['freeze_rows']}`",
+                "",
+                summary["claim_boundary"],
+            ]
+        ),
+    )
+    return summary
 
 
 def _freeze_status() -> dict[str, Any]:
@@ -758,6 +1172,7 @@ def build_package() -> dict[str, Any]:
     claim_ledger_text = _read_text(CLAIM_LEDGER)
     freeze = _freeze_status()
     uplift_scorecard = _build_uplift_scorecard(benchmark_rows, theorem_rows, external_rows, freeze)
+    final_paper_results = _build_final_paper_result_assets()
 
     matrix = _claim_matrix(benchmark_rows, equal_rows, theorem_rows, external_rows, training_rows, freeze)
     fieldnames = [
@@ -826,6 +1241,7 @@ def build_package() -> dict[str, Any]:
         "source_anchors": list(SOURCE_ANCHORS),
         "uplift_scorecard": uplift_scorecard,
         "uplift_95plus_achieved": all(row["current_status"] == "pass" for row in uplift_scorecard),
+        "final_paper_results": final_paper_results,
         "freeze_status": freeze,
         "claim_ledger_present": bool(claim_ledger_text.strip()),
         "domain_count": len(benchmark_rows),

@@ -1,6 +1,6 @@
 # Top-Venue Research Package: ORIUS / DC3S / GridPulse
 
-Generated: `2026-05-05T02:22:01Z`
+Generated: `2026-05-10T00:00:00Z`
 
 ## Positioning Verdict
 

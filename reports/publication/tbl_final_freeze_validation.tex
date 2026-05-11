@@ -1,0 +1,17 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Final freeze and validation gates for the locked CPU release package.}
+\label{tbl:final-freeze-validation}
+\begin{tabular}{lll}
+\toprule
+Gate & Value & Pass\\
+\midrule
+Split training & pass & yes\\
+Model-quality release gate & 13 release models, 0 blockers & yes\\
+Downstream freeze validators & 15 validators & yes\\
+Runtime and stress gates & three domains, 12 stress families & yes\\
+Release manifest & 1307 hashed artifacts & yes\\
+\bottomrule
+\end{tabular}
+\end{table}

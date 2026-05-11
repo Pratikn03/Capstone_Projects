@@ -1,0 +1,17 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Utility-preserving safety scorecard. ORIUS is compared with a degenerate fail-safe reference rather than only with unsafe persistence.}
+\label{tbl:final-utility-preserving-safety}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrl}
+\toprule
+Domain & Fail-safe reference & Excess TSVR & Utility gain & Utility delta & Gate\\
+\midrule
+Battery Energy Storage & immediate\_shutdown & 0.000000 & nonzero/zero & 10.100000 & True\\
+Autonomous Vehicles & always\_brake & 0.000000 & 3.985808 & 5869.636141 & True\\
+Medical and Healthcare Monitoring & always\_alert & 0.000000 & nonzero/zero & 142767.000000 & True\\
+\bottomrule
+\end{tabular}
+}
+\end{table}
