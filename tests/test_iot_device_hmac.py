@@ -87,6 +87,18 @@ def test_bad_iot_hmac_fails(monkeypatch, tmp_path):
     assert "device signature invalid" in response.text
 
 
+def test_revoked_iot_device_credential_fails(monkeypatch, tmp_path):
+    headers = _configure_security(monkeypatch, tmp_path)
+    monkeypatch.setenv("ORIUS_REVOKED_DEVICE_KEYS", json.dumps({"iot-dev-1": ["device-key-1"]}))
+    client = TestClient(app)
+    payload = _signed_payload(_telemetry_payload(), nonce="nonce-revoked")
+
+    response = client.post("/iot/telemetry", json=payload, headers=headers)
+
+    assert response.status_code == 403
+    assert "device credential revoked" in response.text
+
+
 def test_signed_iot_ack_passes_in_strict_mode(monkeypatch, tmp_path):
     headers = _configure_security(monkeypatch, tmp_path)
     client = TestClient(app)

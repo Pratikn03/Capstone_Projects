@@ -10,8 +10,8 @@ Project: ORIUS
 - **Retries for downloads**: OPSD/SMARD/Open‑Meteo/ElectricityMaps/WattTime use shared retryable HTTP sessions.  
 - **Deployment gate**: `scripts/validate_production_readiness.py --strict` fails closed unless API keys, model-hash enforcement, signed certificate provenance, and promoted runtime surfaces are available.
 - **Certificate provenance**: DC3S certificates support rotated `HMAC-SHA256` signatures through `ORIUS_CERTIFICATE_KEYS` and append-only certificate events. Unsigned certificates remain acceptable only for bounded research/offline validation.
-- **Model provenance**: production/staging model loading refuses pickle bundles without a sha256 sidecar or manifest before deserialization.
-- **Device identity**: IoT telemetry, command polling, and ACK paths support per-device HMAC identity with timestamp-skew and nonce-replay checks.
+- **Model provenance**: production/staging model loading refuses pickle/joblib/torch bundles without a sha256 sidecar or manifest before deserialization; strict torch loading refuses unsafe fallback when `weights_only=True` is unsupported.
+- **Device identity**: IoT telemetry, command polling, and ACK paths support per-device HMAC identity with timestamp-skew, nonce-replay checks, revocation, and mTLS ingress gating for deployment-grade profiles.
 
 ## Phase 2 — Operations
 - **Monitoring + alerting**: `scripts/run_monitoring.py` writes `reports/monitoring_summary.json` and can alert via `ORIUS_ALERT_WEBHOOK`.  
@@ -66,7 +66,34 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_paper_claims.py
 
 This profile is fail-closed for certificate signing and device identity. If keys are missing in `production` or `staging`, release paths should fail instead of emitting unsigned evidence.
 
+## Deployment-Grade / Field Claim Profile
+
+Do not use local env-file secrets for field/deployment claims. A deployment-grade claim additionally requires a managed secret source, device certificate ingress, final release manifests, and completed domain validation gates:
+
+```bash
+export ORIUS_SECRET_BACKEND=external_command   # or aws_kms/gcp_kms/azure_key_vault/hsm/vault
+export ORIUS_SECRETS_COMMAND="/absolute/path/secret-provider --format json"
+export ORIUS_REQUIRE_MTLS=1
+export ORIUS_DEVICE_CA_BUNDLE=/absolute/path/device-ca.pem
+export ORIUS_REVOKED_DEVICE_KEYS='{"edge-device-001": ["edge-key-2026-01"]}'
+export ORIUS_RELEASE_MANIFEST=/absolute/path/predeployment_release_manifest.json
+```
+
+The deployment-grade gate is intentionally stricter than local/server research mode:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_production_readiness.py \
+  --deployment-grade \
+  --release-manifest "$ORIUS_RELEASE_MANIFEST"
+```
+
+This gate should fail until an implemented managed secret source, mTLS/device provisioning, strict artifact manifests, the `orius_95_validation_manifest.json`, an explicit current `predeployment_release_manifest.json`, signed append-only release witnesses, and a clean Git tree are all present. Historical freeze manifests are not accepted by glob. That failure is correct if CARLA/nuPlan/HIL, healthcare held-out validation, or physical actuation evidence remains incomplete.
+
+Cloud/KMS/HSM/Vault labels are not enough by themselves in this local repo. Until a cloud provider adapter exists, deployment-grade validation expects `ORIUS_SECRET_BACKEND=external_command` and refuses certificate/device secrets provided directly through env vars or local secret files.
+
+Operational runbooks live in `docs/incident_response.md` and cover SLOs, failure budgets, rollback, certificate key compromise, device revocation, model artifact rollback, and physical actuation stop conditions.
+
 ## Notes
-- External tokens are not stored; use `.env` or environment variables.  
+- External tokens are not stored; use `.env`, local files outside Git, or managed secret backends.  
 - Robust dispatch uses quantile heuristics; scenario methods are optional future upgrades.  
-- Deployment-ready claims still require external environment controls, operational key rotation procedures, cloud/KMS or equivalent secret management, and domain-specific field/HIL validation beyond the current predeployment evidence.
+- Deployment-ready claims still require external environment controls, operational key rotation procedures, cloud/KMS/HSM or equivalent secret management, device provisioning/revocation/mTLS, and domain-specific field/HIL validation beyond the current predeployment evidence.

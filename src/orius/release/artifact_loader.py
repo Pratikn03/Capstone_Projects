@@ -170,11 +170,16 @@ def load_torch_artifact(
     verify_artifact_hash(artifact_path, required=required)
     import torch
 
+    strict = model_hash_required() if required is None else bool(required)
     try:
         return torch.load(artifact_path, map_location=map_location, weights_only=weights_only)
-    except TypeError:
+    except TypeError as exc:
+        if strict:
+            raise RuntimeError(
+                "Strict production torch loading requires torch.load(weights_only=True) support"
+            ) from exc
         return torch.load(artifact_path, map_location=map_location)
     except Exception:
-        if model_hash_required() if required is None else bool(required):
+        if strict:
             raise
         return torch.load(artifact_path, map_location=map_location)

@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import hashlib
 import pickle
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from orius.forecasting.predict import load_model_bundle
+from orius.release.artifact_loader import load_torch_artifact
 
 
 def _write_pickle(path: Path, payload: dict) -> str:
@@ -46,3 +49,22 @@ def test_load_model_bundle_requires_hash_in_production(tmp_path: Path, monkeypat
 
     with pytest.raises(RuntimeError, match="without sha256 manifest"):
         load_model_bundle(model_path)
+
+
+def test_torch_loader_refuses_unsafe_fallback_in_production(tmp_path: Path, monkeypatch) -> None:
+    model_path = tmp_path / "weights.pt"
+    digest = _write_pickle(model_path, {"weights": [1, 2, 3]})
+    model_path.with_name(f"{model_path.name}.sha256").write_text(
+        f"{digest}  {model_path.name}\n", encoding="utf-8"
+    )
+
+    def _fake_torch_load(_path, **kwargs):
+        if "weights_only" in kwargs:
+            raise TypeError("weights_only unsupported")
+        return {"loaded_without_weights_only": True}
+
+    monkeypatch.setitem(sys.modules, "torch", SimpleNamespace(load=_fake_torch_load))
+    monkeypatch.setenv("ORIUS_ENV", "production")
+
+    with pytest.raises(RuntimeError, match="weights_only"):
+        load_torch_artifact(model_path)

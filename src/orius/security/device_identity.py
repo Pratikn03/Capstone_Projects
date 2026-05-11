@@ -11,7 +11,7 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Any
 
-from .policy import device_signature_required, get_device_key
+from .policy import device_signature_required, get_device_key, is_device_credential_revoked
 
 DEVICE_SIGNATURE_ALGORITHM = "HMAC-SHA256"
 SIGNATURE_FIELD = "device_signature"
@@ -97,6 +97,13 @@ def verify_device_request(payload: Mapping[str, Any], *, now: datetime | None = 
 
     device_id = str(payload["device_id"])
     key_id = str(payload["device_key_id"])
+    if is_device_credential_revoked(device_id, key_id):
+        return {
+            "valid": False,
+            "required": strict,
+            "verified": False,
+            "reason": "device credential revoked",
+        }
     secret = get_device_key(device_id, key_id)
     if not secret:
         return {"valid": False, "required": strict, "verified": False, "reason": "device key missing"}

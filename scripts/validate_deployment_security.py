@@ -100,6 +100,24 @@ def validate() -> list[str]:
     )
     findings.extend(
         _missing_marker(
+            "src/orius/security/policy.py",
+            [
+                "secret_backend_is_managed",
+                "implemented_managed_secret_backend",
+                "ORIUS_SECRETS_COMMAND",
+                "ORIUS_REVOKED_DEVICE_KEYS",
+                "mtls_required",
+            ],
+        )
+    )
+    findings.extend(
+        _missing_marker(
+            "src/orius/security/device_identity.py",
+            ["is_device_credential_revoked", "device credential revoked"],
+        )
+    )
+    findings.extend(
+        _missing_marker(
             "src/orius/iot/store.py",
             ["iot_device_nonce", "record_device_nonce"],
         )
@@ -108,6 +126,23 @@ def validate() -> list[str]:
         _missing_marker(
             "src/orius/forecasting/predict.py",
             ["load_pickle_artifact", "weights_only=True", "Refusing to load unsigned model artifact"],
+        )
+    )
+    findings.extend(
+        _missing_marker(
+            "src/orius/release/artifact_loader.py",
+            ["Strict production torch loading requires"],
+        )
+    )
+    findings.extend(
+        _missing_marker(
+            "docs/incident_response.md",
+            [
+                "Certificate Key Compromise",
+                "Device Revocation",
+                "Model Artifact Rollback",
+                "physical actuation stop",
+            ],
         )
     )
     findings.extend(_validate_unsafe_loaders())

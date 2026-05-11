@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +14,16 @@ import yaml
 DEPLOYMENT_ENVS = {"staging", "production", "prod", "deploy", "deployment"}
 TRUE_VALUES = {"1", "true", "yes", "y", "on", "required", "strict"}
 DEFAULT_CERTIFICATE_KEY_ID = "orius.local.hmac"
+LOCAL_SECRET_BACKENDS = {"env", "local", "local_file", "file"}
+MANAGED_SECRET_BACKENDS = {
+    "external_command",
+    "aws_kms",
+    "gcp_kms",
+    "azure_key_vault",
+    "hsm",
+    "kms",
+    "vault",
+}
 
 
 def _env_name() -> str:
@@ -26,6 +38,16 @@ def _truthy_env(name: str) -> bool:
     return os.getenv(name, "").strip().lower() in TRUE_VALUES
 
 
+def _parse_secret_payload(raw: str) -> dict[str, Any]:
+    if not raw.strip():
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        parsed = yaml.safe_load(raw)
+    return dict(parsed or {}) if isinstance(parsed, dict) else {}
+
+
 def _parse_mapping(value: str | None) -> dict[str, Any]:
     if not value:
         return {}
@@ -35,31 +57,83 @@ def _parse_mapping(value: str | None) -> dict[str, Any]:
     path = Path(raw)
     if path.exists() and path.is_file():
         raw = path.read_text(encoding="utf-8")
+    return _parse_secret_payload(raw)
+
+
+def get_secret_backend() -> str:
+    """Return the configured secret backend class.
+
+    ``env`` and ``local_file`` are acceptable for local/server research runs.
+    Field/deployment-grade gates require a managed backend such as an external
+    command, KMS, HSM, or vault-backed provider.
+    """
+
+    configured = os.getenv("ORIUS_SECRET_BACKEND", "").strip().lower().replace("-", "_")
+    if configured:
+        return configured
+    if os.getenv("ORIUS_SECRETS_COMMAND", "").strip():
+        return "external_command"
+    if os.getenv("ORIUS_SECRETS_FILE", "").strip():
+        return "local_file"
+    return "env"
+
+
+def secret_backend_is_managed() -> bool:
+    return get_secret_backend() in MANAGED_SECRET_BACKENDS
+
+
+def implemented_managed_secret_backend() -> bool:
+    """Return true when this process can actually fetch managed secrets.
+
+    Cloud KMS/HSM/Vault labels are accepted as documentation labels, but this
+    local runtime currently implements managed retrieval through an explicit
+    external command. Deployment-grade validation must not pass on labels alone.
+    """
+
+    return get_secret_backend() == "external_command" and bool(
+        os.getenv("ORIUS_SECRETS_COMMAND", "").strip()
+    )
+
+
+def load_external_command_secrets() -> dict[str, Any]:
+    command = os.getenv("ORIUS_SECRETS_COMMAND", "").strip()
+    if not command:
+        return {}
     try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError:
-        parsed = yaml.safe_load(raw)
-    return dict(parsed or {}) if isinstance(parsed, dict) else {}
+        timeout = float(os.getenv("ORIUS_SECRETS_COMMAND_TIMEOUT_SECONDS", "5"))
+    except ValueError:
+        timeout = 5.0
+    args = shlex.split(command)
+    if not args:
+        return {}
+    completed = subprocess.run(  # noqa: S603 - command is explicit deployment configuration.
+        args,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
+    return _parse_secret_payload(completed.stdout)
 
 
 def load_security_secrets() -> dict[str, Any]:
-    """Load optional local secrets from ORIUS_SECRETS_FILE.
+    """Load optional secrets from a local file and/or managed command.
 
     The file is intentionally optional so test/dev environments can rely on
-    explicit env vars. Real secrets must stay outside Git.
+    explicit env vars. Deployment-grade gates should use ``external_command``,
+    KMS, HSM, or a vault-backed provider rather than repo-local files.
     """
 
+    secrets: dict[str, Any] = {}
     secrets_file = os.getenv("ORIUS_SECRETS_FILE", "").strip()
-    if not secrets_file:
-        return {}
-    path = Path(secrets_file)
-    if not path.exists():
-        raise RuntimeError(f"ORIUS_SECRETS_FILE does not exist: {path}")
-    try:
-        parsed = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        parsed = yaml.safe_load(path.read_text(encoding="utf-8"))
-    return dict(parsed or {}) if isinstance(parsed, dict) else {}
+    if secrets_file:
+        path = Path(secrets_file)
+        if not path.exists():
+            raise RuntimeError(f"ORIUS_SECRETS_FILE does not exist: {path}")
+        secrets.update(_parse_secret_payload(path.read_text(encoding="utf-8")))
+    if os.getenv("ORIUS_SECRETS_COMMAND", "").strip():
+        secrets.update(load_external_command_secrets())
+    return secrets
 
 
 def get_certificate_keys() -> dict[str, str]:
@@ -137,3 +211,59 @@ def device_signature_required() -> bool:
 
 def artifact_manifest_required() -> bool:
     return _truthy_env("ORIUS_REQUIRE_ARTIFACT_MANIFEST")
+
+
+def mtls_required() -> bool:
+    return _truthy_env("ORIUS_REQUIRE_MTLS")
+
+
+def get_device_ca_bundle_path() -> Path | None:
+    raw = os.getenv("ORIUS_DEVICE_CA_BUNDLE", "").strip()
+    return Path(raw) if raw else None
+
+
+def _normalize_revoked_device_credentials(raw: Any) -> set[tuple[str, str | None]]:
+    revoked: set[tuple[str, str | None]] = set()
+    if isinstance(raw, list | tuple | set):
+        for value in raw:
+            text = str(value)
+            if ":" in text:
+                device_id, key_id = text.split(":", 1)
+                revoked.add((device_id, key_id))
+            elif text:
+                revoked.add((text, None))
+    elif isinstance(raw, dict):
+        for device_id, value in raw.items():
+            if value is True:
+                revoked.add((str(device_id), None))
+            elif isinstance(value, list | tuple | set):
+                revoked.update((str(device_id), str(key_id)) for key_id in value)
+            elif isinstance(value, dict):
+                revoked.update(
+                    (str(device_id), str(key_id))
+                    for key_id, is_revoked in value.items()
+                    if bool(is_revoked)
+                )
+            elif value not in (None, "", False):
+                revoked.add((str(device_id), str(value)))
+    return revoked
+
+
+def get_revoked_device_credentials() -> set[tuple[str, str | None]]:
+    secrets = load_security_secrets()
+    revoked: set[tuple[str, str | None]] = set()
+    for source in (
+        secrets.get("revoked_devices"),
+        secrets.get("revoked_device_keys"),
+        secrets.get("ORIUS_REVOKED_DEVICE_KEYS"),
+        _parse_mapping(os.getenv("ORIUS_REVOKED_DEVICE_KEYS")),
+    ):
+        revoked.update(_normalize_revoked_device_credentials(source))
+    return revoked
+
+
+def is_device_credential_revoked(device_id: str, key_id: str | None = None) -> bool:
+    revoked = get_revoked_device_credentials()
+    return (str(device_id), None) in revoked or (
+        key_id is not None and (str(device_id), str(key_id)) in revoked
+    )
