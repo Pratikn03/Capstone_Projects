@@ -16,6 +16,29 @@ The normalized research workflow is anchored to these entrypoints:
 
 Legacy/internal scripts may still exist for compatibility, but they should not be used as the primary publication workflow.
 
+## Governance Rule
+
+New Python scripts must not enter the release surface silently. A script is valid
+only when it is referenced from Makefile/docs/tests/another tracked script, or
+classified in `configs/script_registry.yml` as `manual`, `local_only`,
+`archived`, or `entrypoint` with a reason. The gate is enforced by
+`scripts/validate_reproducibility_95.py`.
+
+Utility-preserving safety is part of the final release gate:
+
+```bash
+make utility-preserving-safety-verify
+```
+
+The theorem-promotion package is the current proof-strength authority:
+
+```bash
+make theorem-promotion-verify
+```
+
+`active_theorem_audit.*` remains historical traceability, not the current
+promotion authority.
+
 ## Script Categories
 
 ### Training & Model Management

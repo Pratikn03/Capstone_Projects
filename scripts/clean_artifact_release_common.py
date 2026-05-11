@@ -118,6 +118,8 @@ TABLE_FILES = [
     "reports/publication/three_domain_negative_controls.csv",
     "reports/publication/three_domain_reliability_calibration.csv",
     "reports/publication/three_domain_runtime_safety_tradeoff.csv",
+    "reports/publication/three_domain_utility_safety_dominance.csv",
+    "reports/publication/utility_preserving_safety_scorecard.csv",
     "reports/publication/what_orius_is_not_matrix.csv",
 ]
 

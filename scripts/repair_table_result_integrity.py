@@ -13,6 +13,7 @@ stays missing so the integrity audit can block or classify it as noncanonical.
 
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import re
@@ -498,7 +499,7 @@ def remove_synthetic_duckdb_fixed_values(path: Path) -> bool:
     return changed
 
 
-def main() -> int:
+def run_repair() -> dict[str, int]:
     changed_counts = {
         "csv": 0,
         "json": 0,
@@ -524,7 +525,39 @@ def main() -> int:
             changed_counts["duckdb"] += int(remove_synthetic_duckdb_fixed_values(path))
             changed_counts["duckdb"] += int(normalize_duckdb(path))
 
-    print(json.dumps({"repaired": changed_counts}, indent=2))
+    return changed_counts
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--write",
+        action="store_true",
+        help="Perform artifact mutations. Without this flag the script is a non-mutating check stub.",
+    )
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    if not args.write:
+        print(
+            json.dumps(
+                {
+                    "mode": "check_only",
+                    "writes_enabled": False,
+                    "message": (
+                        "repair_table_result_integrity.py is no longer part of the default PDF path; "
+                        "run make table-result-integrity-repair for explicit artifact mutation."
+                    ),
+                },
+                indent=2,
+            )
+        )
+        return 0
+
+    changed_counts = run_repair()
+    print(json.dumps({"mode": "write", "repaired": changed_counts}, indent=2))
     return 0
 
 

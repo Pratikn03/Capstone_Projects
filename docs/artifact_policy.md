@@ -28,8 +28,24 @@ Run:
 ```bash
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_generated_artifact_policy.py
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_no_appledouble.py --exclude-active
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_reproducibility_95.py --allow-dirty
 ```
 
 If a generated artifact must become canonical evidence, add a compact summary or
 manifest instead of the raw artifact. Any exception must be explicitly allowlisted
 in the validator with a comment explaining why it is reproducibility-critical.
+
+## Script Governance
+
+`scripts/*.py` files are release artifacts too. New scripts must be referenced
+from Makefile, docs, tests, or another tracked script. If a script is intentionally
+manual, local-only, archived, or a standalone entrypoint, classify it in
+`configs/script_registry.yml` with a non-empty reason. This prevents one-off
+AI/Codex helper scripts from becoming unreviewed release surface.
+
+## Table Repair Policy
+
+`scripts/repair_table_result_integrity.py` is an explicit manual repair tool.
+Default PDF targets must not run it. Use `make table-result-integrity-repair`
+only after an audit identifies repairable table hygiene problems, then rerun
+`make table-result-integrity-audit`.

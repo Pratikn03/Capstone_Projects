@@ -225,6 +225,7 @@ reports/**/*.pdf
 reports/healthcare/figures/demo.gif
 !paper/assets/figures/*.pdf
 !reports/publication/fig_*.pdf
+!reports/publication/orius_book_final_results.pdf
 
 # Large local runtime traces are regenerated from release artifacts and are not
 # GitHub-safe. Keep compact summaries/witnesses tracked instead.

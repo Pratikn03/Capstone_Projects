@@ -1,0 +1,96 @@
+# ORIUS script governance registry.
+#
+# Every tracked or untracked `scripts/*.py` must either be referenced from
+# Makefile/docs/tests/another script, or listed here with an explicit status and
+# reason. This keeps one-off Codex/AI helpers from silently becoming part of the
+# release surface.
+scripts:
+  scripts/build_theorem_summary_figures.py:
+    status: manual
+    reason: "Manual theorem-figure rebuild helper retained for publication refreshes outside the default gate."
+  scripts/recalibrate_conformal_from_backtests.py:
+    status: manual
+    reason: "Manual calibration-maintenance helper for backtest reruns, not a default release entrypoint."
+  scripts/run_theorem_evidence_av.py:
+    status: manual
+    reason: "Manual AV theorem-evidence refresh helper used after local AV data reruns."
+  scripts/run_theorem_evidence_battery.py:
+    status: manual
+    reason: "Manual battery theorem-evidence refresh helper used after local battery reruns."
+  scripts/run_theorem_evidence_healthcare.py:
+    status: manual
+    reason: "Manual healthcare theorem-evidence refresh helper used after local held-out replay reruns."
+  scripts/summarize_split_training.py:
+    status: manual
+    reason: "Manual split-training summarizer for local max-run reconciliation."
+
+legacy_manual_scripts:
+  reason: "Historical ORIUS helper retained outside the default release path; requires explicit invocation or a future refactor before becoming a release gate."
+  paths:
+    - scripts/_active_theorem_program.py
+    - scripts/_battery_wrappers_common.py
+    - scripts/_quick_verify_training.py
+    - scripts/analyze_thesis_vs_paper.py
+    - scripts/benchmark_latency.py
+    - scripts/build_av_per_step_lead_gap.py
+    - scripts/build_av_waymo_rss_bridge.py
+    - scripts/build_crash_av_dataset.py
+    - scripts/build_data_integrity_audit.py
+    - scripts/build_dense_domain_data.py
+    - scripts/build_half_life_tables.py
+    - scripts/build_metrics_snapshot.py
+    - scripts/build_nuscenes_av_bridge.py
+    - scripts/build_paper1_artifacts.py
+    - scripts/build_paper2_artifacts.py
+    - scripts/build_paper3_artifacts.py
+    - scripts/build_sweep_heatmap.py
+    - scripts/build_tbl04.py
+    - scripts/build_theorem_surface_register.py
+    - scripts/build_waymo_dataset_readiness.py
+    - scripts/cross_region_transfer.py
+    - scripts/fill_tbl08_from_phase1.py
+    - scripts/generate_all_domain_training_table.py
+    - scripts/generate_battery_domain_figures.py
+    - scripts/generate_committee_figures.py
+    - scripts/generate_reproducibility_appendix.py
+    - scripts/make_48h_fault_trace.py
+    - scripts/make_aging_tables.py
+    - scripts/make_fault_benchmark_tables.py
+    - scripts/make_fleet_tables.py
+    - scripts/make_hil_tables.py
+    - scripts/make_latency_tables.py
+    - scripts/make_probing_figures.py
+    - scripts/make_sweep_heatmaps.py
+    - scripts/merge_nuplan_av_surfaces.py
+    - scripts/package_regional_grounding_outputs.py
+    - scripts/prepare_datasets.py
+    - scripts/rebuild_battery_evidence.py
+    - scripts/regenerate_battery_checklist.py
+    - scripts/regenerate_committee_tables.py
+    - scripts/run_active_probe_eval.py
+    - scripts/run_adversarial_benchmark.py
+    - scripts/run_certos_vehicle_toy.py
+    - scripts/run_deep_theory_experiments.py
+    - scripts/run_evidence_artifacts.py
+    - scripts/run_fault_benchmark.py
+    - scripts/run_fault_packet_drop_table.py
+    - scripts/run_healthcare_max_input_training.py
+    - scripts/run_hil_trial.py
+    - scripts/run_mondrian_subgroup_eval.py
+    - scripts/run_multi_agent_scenario.py
+    - scripts/run_multi_domain_ablation.py
+    - scripts/run_multi_domain_framework.py
+    - scripts/run_orius_bench_replay_test.py
+    - scripts/run_paper3_runtime_linkage.py
+    - scripts/run_property_gap_experiments.py
+    - scripts/run_real_data_transfer.py
+    - scripts/run_reliability_group_audit.py
+    - scripts/run_spoofing_attack.py
+    - scripts/run_transfer_stress.py
+    - scripts/run_vehicle_benchmark.py
+    - scripts/stage_next_run_datasets.py
+    - scripts/sweep_hyperparameters.py
+    - scripts/sync_nuplan_hf_dataset.py
+    - scripts/sync_runtime_trace_certificate_schema.py
+    - scripts/verify_orius_bench_replay.py
+    - scripts/verify_paper3_policy_object.py

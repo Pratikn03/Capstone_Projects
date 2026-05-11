@@ -125,6 +125,11 @@ def main() -> None:
         [sys.executable, "scripts/validate_reproducibility_95.py", "--allow-dirty"],
         "reproducibility spine validation",
     )
+    _run(
+        [sys.executable, "scripts/validate_utility_preserving_safety.py"],
+        "utility-preserving safety validation",
+    )
+    _run([sys.executable, "scripts/validate_theorem_promotion.py"], "theorem promotion validation")
     _run([sys.executable, "scripts/validate_production_readiness.py"], "production readiness validation")
     _run(
         [sys.executable, "scripts/audit_leakage.py", "--config", "configs/publish_audit.yaml"],

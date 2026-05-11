@@ -1,4 +1,4 @@
-.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data table-result-integrity-repair table-result-integrity-audit na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact clean-artifact-release analyze-artifact av-datasets nuplan-av-surface healthcare-datasets multi-domain-datasets multi-domain-build universal-framework-figure universal-contract-check paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark t9-t10-research-build t9-t10-research-check t9-t10-research-verify t9-t10-assumption-build t9-t10-assumption-check t9-t10-assumption-verify t9-t10-mechanized-build theorem-promotion-build theorem-promotion-check theorem-promotion-verify theorem-promotion-require-promoted model-quality-build model-quality-check model-quality-verify model-quality-require-pass orius-monograph-assets review-compile orius-book orius-evidence-rerun camera-ready-assets camera-ready-verify camera-ready-freeze orius-review-pack orius-final ieee-assets ieee-main-compile ieee-detailed-compile ieee-appendix-compile ieee-pack ieee-prof-assets ieee-prof-main-compile ieee-prof-appa-compile ieee-prof-appb-compile ieee-prof-pack orius-flagship-manuscripts battery-deep-novelty phase3-proof-book app-c-flagship-proofs app-c-all-theorems external-ssd-setup external-ssd-shell external-ssd-verify external-ssd-preflight full-folder-audit pre-clean clean clean-status fresh-research pre-release appledouble-clean appledouble-check workspace-hygiene-check workspace-hygiene-clean baselines-advanced baseline-significance release release-smoke
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data table-result-integrity-repair table-result-integrity-audit na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact clean-artifact-release analyze-artifact av-datasets nuplan-av-surface healthcare-datasets multi-domain-datasets multi-domain-build universal-framework-figure universal-contract-check paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark paper3-four-policy-benchmark utility-preserving-safety-build utility-preserving-safety-check utility-preserving-safety-verify t9-t10-research-build t9-t10-research-check t9-t10-research-verify t9-t10-assumption-build t9-t10-assumption-check t9-t10-assumption-verify t9-t10-mechanized-build theorem-promotion-build theorem-promotion-check theorem-promotion-verify theorem-promotion-require-promoted model-quality-build model-quality-check model-quality-verify model-quality-require-pass orius-monograph-assets review-compile orius-book orius-evidence-rerun camera-ready-assets camera-ready-verify camera-ready-freeze orius-review-pack orius-final ieee-assets ieee-main-compile ieee-detailed-compile ieee-appendix-compile ieee-pack ieee-prof-assets ieee-prof-main-compile ieee-prof-appa-compile ieee-prof-appb-compile ieee-prof-pack orius-flagship-manuscripts battery-deep-novelty phase3-proof-book app-c-flagship-proofs app-c-all-theorems external-ssd-setup external-ssd-shell external-ssd-verify external-ssd-preflight full-folder-audit pre-clean clean clean-status fresh-research pre-release appledouble-clean appledouble-check workspace-hygiene-check workspace-hygiene-clean baselines-advanced baseline-significance release release-smoke
 
 PRE_RELEASE_TESTS = tests/test_submission_artifacts.py tests/test_three_domain_submission_lane.py tests/test_thesis_package_assets.py
 
@@ -517,16 +517,24 @@ t9-t10-assumption-verify: t9-t10-assumption-build t9-t10-assumption-check
 t9-t10-mechanized-build:
 	PYTHONPATH=src $(PYTHON) scripts/build_t9_t10_mechanized_status.py
 
-theorem-promotion-build: t9-t10-assumption-build t9-t10-mechanized-build
-	PYTHONPATH=src $(PYTHON) scripts/build_theorem_promotion_gates.py
+theorem-promotion-build:
+	PYTHONPATH=src $(PYTHON) scripts/run_theorem_closure_pack.py
 
 theorem-promotion-check:
-	PYTHONPATH=src $(PYTHON) scripts/validate_theorem_promotion_gates.py
+	PYTHONPATH=src $(PYTHON) scripts/validate_theorem_promotion.py
 
 theorem-promotion-require-promoted:
-	PYTHONPATH=src $(PYTHON) scripts/validate_theorem_promotion_gates.py --require-promoted T9 --require-promoted T10
+	PYTHONPATH=src $(PYTHON) scripts/validate_theorem_promotion.py
 
-theorem-promotion-verify: t9-t10-research-check t9-t10-assumption-check theorem-promotion-build theorem-promotion-check
+theorem-promotion-verify: theorem-promotion-build theorem-promotion-check
+
+utility-preserving-safety-build:
+	PYTHONPATH=src $(PYTHON) scripts/build_utility_preserving_safety_scorecard.py
+
+utility-preserving-safety-check:
+	PYTHONPATH=src $(PYTHON) scripts/validate_utility_preserving_safety.py
+
+utility-preserving-safety-verify: utility-preserving-safety-build utility-preserving-safety-check
 
 model-quality-build:
 	PYTHONPATH=src $(PYTHON) scripts/build_model_quality_gate.py
@@ -553,10 +561,9 @@ camera-ready-assets: ieee-assets
 	PYTHONPATH=src $(PYTHON) scripts/build_camera_ready_figures.py
 	PYTHONPATH=src $(PYTHON) scripts/build_camera_ready_figure_lineage.py --write
 
-paper-verify: orius-monograph-assets
+paper-verify: orius-monograph-assets theorem-promotion-verify utility-preserving-safety-verify
 	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py --paper orius_book.tex
 	PYTHONPATH=src $(PYTHON) scripts/validate_paper_claims.py --tex orius_book.tex
-	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py
 	PYTHONPATH=src $(PYTHON) scripts/audit_table_result_integrity.py
 
 camera-ready-verify: camera-ready-assets
@@ -564,7 +571,6 @@ camera-ready-verify: camera-ready-assets
 	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py --camera-ready
 	PYTHONPATH=src $(PYTHON) scripts/validate_paper_claims.py
 	PYTHONPATH=src $(PYTHON) scripts/verify_camera_ready_logs.py --waivers paper/camera_ready_warning_waivers.yaml --log paper/ieee/orius_ieee_main.log --log paper/ieee/orius_ieee_detailed_main.log
-	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py
 	PYTHONPATH=src $(PYTHON) scripts/audit_table_result_integrity.py
 
 # Paper 2: certificate half-life blackout benchmark
@@ -575,9 +581,7 @@ paper2-blackout-benchmark:
 paper3-four-policy-benchmark:
 	$(PYTHON) scripts/run_paper3_four_policy_benchmark.py
 
-paper-compile: orius-monograph-assets app-c-flagship-proofs app-c-all-theorems
-	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py
-	PYTHONPATH=src $(PYTHON) scripts/audit_table_result_integrity.py
+paper-compile: orius-monograph-assets theorem-promotion-verify utility-preserving-safety-verify app-c-flagship-proofs app-c-all-theorems
 	rm -f paper/paper.pdf paper/paper.log paper/paper.aux paper/paper.out paper/paper.bbl paper/paper.blg paper/paper.toc paper/paper.lof paper/paper.lot
 	rm -f orius_book.pdf orius_book.log orius_book.aux orius_book.out orius_book.bbl orius_book.blg orius_book.toc orius_book.lof orius_book.lot
 	find paper/monograph -maxdepth 1 -type f ! -name '._*' \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
@@ -741,7 +745,6 @@ orius-evidence-rerun: paper-assets orius-monograph-assets
 
 camera-ready-freeze:
 	PYTHONPATH=src $(PYTHON) scripts/run_camera_ready_freeze.py --external-root $(STRICT_EXTERNAL_LINK) --compute-lane hybrid --train-missing --repair-invalid-splits --seeds 3 --sil-seeds 3 --sil-rows 96 --horizon 48 --warning-waivers paper/camera_ready_warning_waivers.yaml
-	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py
 	PYTHONPATH=src $(PYTHON) scripts/audit_table_result_integrity.py
 
 full-folder-audit:
@@ -756,7 +759,6 @@ ifndef RELEASE_ID
 	$(error RELEASE_ID is not set. Usage: make paper-freeze RELEASE_ID=FINAL_20260312T000000Z)
 endif
 	$(PYTHON) scripts/post_training_paper_update.py --release-id $(RELEASE_ID) --out-dir reports/publication
-	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py
 	PYTHONPATH=src $(PYTHON) scripts/audit_table_result_integrity.py
 
 dc3s-demo:
@@ -824,7 +826,7 @@ refresh-data:
 	$(PYTHON) scripts/refresh_data_delta.py --dataset ALL --apply
 
 table-result-integrity-repair:
-	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py
+	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py --write
 
 table-result-integrity-audit:
 	PYTHONPATH=src $(PYTHON) scripts/audit_table_result_integrity.py
