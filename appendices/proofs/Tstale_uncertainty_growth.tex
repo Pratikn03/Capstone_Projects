@@ -1,0 +1,17 @@
+\paragraph{Theorem Tstale: Stale-Hold Uncertainty Growth.}
+Assume no fresh observation arrives for \(s\) steps and the latent state obeys
+\(\|x^\star_{t+k}-x^\star_{t+k-1}\|\le L\) for \(k=1,\ldots,s\). If the
+uncertainty radius at time \(t\) is \(r_t\), then the conservative stale-hold
+radius is \(r_{t+s}=r_t+Ls\).
+
+\paragraph{Proof.}
+By the triangle inequality,
+\[
+\|x^\star_{t+s}-x^\star_t\|
+\le \sum_{k=1}^s \|x^\star_{t+k}-x^\star_{t+k-1}\|
+\le Ls .
+\]
+Combining this drift radius with the existing uncertainty radius \(r_t\) gives
+\(r_t+Ls\). Therefore any certified release at \(t+s\) must be safe over the
+expanded set. This is a bounded-drift containment theorem, not a claim that a
+particular exponential decay schedule is physically derived.

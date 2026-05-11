@@ -1,18 +1,34 @@
 {
-  "theorem_id": "T8",
-  "title": "Graceful Degradation Dominance with Useful Work",
-  "status": "flagship_theorem",
-  "assumptions": [
-    "paired admissible fault trace",
-    "shared utility metric"
-  ],
-  "proof_file": "appendices/proofs/T8_graceful_dominance.tex",
-  "code_anchor": "src/orius/benchmarks/graceful_degradation.py",
-  "tests": [
-    "tests/test_T8_graceful_dominance.py"
-  ],
+  "artifact_hashes": {
+    "reports/publication/T8_graceful_policy_comparison.csv": "c94717f97a7ff25e8712bea3be0841bd789271bcaaba658dec4378fb4f6d698c",
+    "reports/publication/T8_useful_work_tradeoff.csv": "44a9d4bf48acc3b5d7959c21ffb6d3aee74ba708a42e02667c05bd5f03ad34db",
+    "reports/publication/fig_T8_gdq_by_fault_duration.png": "127e7a80bc61d4ff939694468269facd9e401aa400ad9a67223679e1db039837",
+    "reports/publication/fig_T8_gdq_by_fault_duration.svg": "99b3156e1b0f9cda6a3566a02de792c6b8bcadf5b724afd13d94847704cb4d84",
+    "reports/publication/fig_T8_safety_useful_work_frontier.png": "c3e6cb7708f76d566f932ed001997708b8f3503b0408398925a1ab67e71f8850",
+    "reports/publication/fig_T8_safety_useful_work_frontier.svg": "b04a38cfdb6521de45e898528449525d4d271364d068337a87cf64f0bf0f2f2b"
+  },
   "artifacts": [
-    "reports/publication/T8_graceful_policy_comparison.csv"
+    "reports/publication/T8_graceful_policy_comparison.csv",
+    "reports/publication/T8_useful_work_tradeoff.csv",
+    "reports/publication/fig_T8_safety_useful_work_frontier.svg",
+    "reports/publication/fig_T8_gdq_by_fault_duration.svg",
+    "reports/publication/fig_T8_safety_useful_work_frontier.png",
+    "reports/publication/fig_T8_gdq_by_fault_duration.png"
   ],
-  "claim_boundary": "dominance theorem applies to compared policy class and shared trace"
+  "assumptions": [
+    "paired_trace",
+    "admissible_fault_trace",
+    "lambda_work_declared"
+  ],
+  "claim_boundary": "paired-policy dominance under identical admissible fault traces",
+  "code_anchor": "src/orius/benchmarks/graceful_degradation.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/proofs/T8_graceful_dominance.tex",
+  "status": "flagship_theorem",
+  "tests": [
+    "tests/test_T8_graceful_dominance.py",
+    "tests/test_graceful_policy_useful_work.py"
+  ],
+  "theorem_id": "T8",
+  "title": "Graceful Degradation Dominance with Useful Work"
 }

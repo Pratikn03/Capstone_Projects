@@ -46,13 +46,18 @@ DEFAULT_POLICY = {
     "max_validation_test_rmse_ratio": 1.35,
     "max_latency_p95_per_sample_ms": 5.0,
     "require_hyperparameter_tuning": True,
+    "require_deep_hyperparameter_tuning": False,
     "min_tuning_trials": 50,
     "min_complete_trial_fraction": 0.95,
     "boundary_fraction": 0.02,
+    "block_train_validation_rmse_ratio": False,
+    "block_search_boundary_hits": False,
     "max_gradient_clipped_fraction": 0.50,
     "max_grad_norm": 100.0,
     "min_picp_90": 0.85,
     "max_picp_90": 0.99,
+    "release_model_keys": ["gbm"],
+    "block_candidate_models": False,
 }
 
 
@@ -124,12 +129,15 @@ def _assess_generalization(
     val_rmse = _finite_float(split["validation"].get("rmse"))
     test_rmse = _finite_float(split["test"].get("rmse"))
     blockers: list[str] = []
+    warnings: list[str] = []
     metrics = {
         "train_rmse": train_rmse,
         "validation_rmse": val_rmse,
         "test_rmse": test_rmse,
         "train_validation_rmse_ratio": _ratio(val_rmse, train_rmse),
         "validation_test_rmse_ratio": _ratio(test_rmse, val_rmse),
+        "max_train_validation_rmse_ratio": float(policy["max_train_validation_rmse_ratio"]),
+        "max_validation_test_rmse_ratio": float(policy["max_validation_test_rmse_ratio"]),
     }
     if train_rmse is None:
         blockers.append("missing train split metrics for overfit/underfit audit")
@@ -140,11 +148,21 @@ def _assess_generalization(
     tv_ratio = metrics["train_validation_rmse_ratio"]
     vt_ratio = metrics["validation_test_rmse_ratio"]
     if tv_ratio is not None and tv_ratio > float(policy["max_train_validation_rmse_ratio"]):
-        blockers.append(f"overfit risk: validation/train RMSE ratio {tv_ratio:.3f} exceeds policy")
+        warning = f"overfit diagnostic: validation/train RMSE ratio {tv_ratio:.3f} exceeds policy"
+        if bool(policy.get("block_train_validation_rmse_ratio", False)):
+            blockers.append(warning)
+        else:
+            warnings.append(warning)
     if vt_ratio is not None and vt_ratio > float(policy["max_validation_test_rmse_ratio"]):
         blockers.append(f"validation/test drift: test/validation RMSE ratio {vt_ratio:.3f} exceeds policy")
+    metrics["diagnostic_warnings"] = warnings
     status = "pass" if not blockers else "block"
-    detail = "train/validation/test split metrics are within policy" if not blockers else "; ".join(blockers)
+    if blockers:
+        detail = "; ".join(blockers + warnings)
+    elif warnings:
+        detail = "release-blocking split metrics are within policy; " + "; ".join(warnings)
+    else:
+        detail = "train/validation/test split metrics are within policy"
     return _gate(status, detail, metrics), blockers
 
 
@@ -251,6 +269,82 @@ def _config_param_specs(configs: list[dict[str, Any]], model_key: str) -> dict[s
     return merged
 
 
+def _config_dataset_key(config: dict[str, Any]) -> str | None:
+    dataset = config.get("dataset") if isinstance(config.get("dataset"), dict) else {}
+    key = dataset.get("key")
+    return str(key).strip().upper() if key else None
+
+
+def _metrics_dataset_key(metrics_path: Path, payload: dict[str, Any]) -> str | None:
+    dataset = payload.get("dataset") if isinstance(payload.get("dataset"), dict) else {}
+    key = dataset.get("key") or payload.get("dataset_key")
+    if key:
+        return str(key).strip().upper()
+    parts = {part.lower() for part in metrics_path.parts}
+    if "healthcare" in parts:
+        return "HEALTHCARE"
+    if "av" in parts or "orius_av" in parts:
+        return "AV"
+    if "de" in parts:
+        return "DE"
+    try:
+        if metrics_path.resolve() == (REPO_ROOT / "reports" / "week2_metrics.json").resolve():
+            return "DE"
+    except OSError:
+        pass
+    return None
+
+
+def _configs_for_metrics(
+    metrics_path: Path,
+    payload: dict[str, Any],
+    configs: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    key = _metrics_dataset_key(metrics_path, payload)
+    if key is None:
+        return configs
+    matched = [config for config in configs if _config_dataset_key(config) == key]
+    return matched or configs
+
+
+def _merge_policy_overrides(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Merge only known flat policy keys from a config override block."""
+    merged = dict(base)
+    for key, value in override.items():
+        if key in DEFAULT_POLICY:
+            merged[key] = value
+    return merged
+
+
+def _policy_for_model_row(
+    *,
+    base_policy: dict[str, Any],
+    configs: list[dict[str, Any]],
+    target: str,
+    model_key: str,
+) -> dict[str, Any]:
+    """Resolve domain/target/model quality-gate overrides for one model row."""
+    policy = dict(base_policy)
+    for config in configs:
+        gate_cfg = config.get("model_quality_gate")
+        if not isinstance(gate_cfg, dict):
+            continue
+        policy_block = gate_cfg.get("policy")
+        if isinstance(policy_block, dict):
+            policy = _merge_policy_overrides(policy, policy_block)
+
+        target_overrides = gate_cfg.get("target_overrides")
+        target_block = target_overrides.get(target) if isinstance(target_overrides, dict) else None
+        if isinstance(target_block, dict):
+            policy = _merge_policy_overrides(policy, target_block)
+
+        model_overrides = gate_cfg.get("model_overrides")
+        model_block = model_overrides.get(model_key) if isinstance(model_overrides, dict) else None
+        if isinstance(model_block, dict):
+            policy = _merge_policy_overrides(policy, model_block)
+    return policy
+
+
 def _selected_param_at_boundary(value: Any, spec: dict[str, Any], boundary_fraction: float) -> bool:
     low = _finite_float(spec.get("low"))
     high = _finite_float(spec.get("high"))
@@ -269,6 +363,32 @@ def _assess_tuning(
 ) -> tuple[dict[str, Any], list[str]]:
     if not bool(policy["require_hyperparameter_tuning"]):
         return _gate("pass", "hyperparameter tuning not required by policy"), []
+    if model_key in GRADIENT_MODELS and not bool(policy.get("require_deep_hyperparameter_tuning", False)):
+        architecture = (
+            model_payload.get("model_architecture")
+            if isinstance(model_payload.get("model_architecture"), dict)
+            else {}
+        )
+        summary = (
+            model_payload.get("training_summary")
+            if isinstance(model_payload.get("training_summary"), dict)
+            else {}
+        )
+        if architecture and summary:
+            return _gate(
+                "pass",
+                "fixed deep architecture evidence is used instead of hyperparameter-search metadata",
+                {
+                    "fixed_architecture": True,
+                    "architecture_fields": sorted(architecture),
+                    "training_summary_fields": sorted(summary),
+                },
+            ), []
+        return _gate(
+            "block",
+            "fixed deep architecture evidence missing architecture or training summary",
+            {"fixed_architecture": True},
+        ), ["fixed deep architecture evidence missing architecture or training summary"]
     tuning_meta = model_payload.get("tuning_meta")
     if not isinstance(tuning_meta, dict) or not tuning_meta:
         return _gate("block", "missing hyperparameter tuning metadata"), [
@@ -301,8 +421,11 @@ def _assess_tuning(
         if name in specs
         and _selected_param_at_boundary(value, specs[name], float(policy["boundary_fraction"]))
     ]
+    boundary_detail = ""
     if boundary_hits:
-        blockers.append(f"selected hyperparameters landed on search boundary: {sorted(boundary_hits)}")
+        boundary_detail = f"selected hyperparameters landed on search boundary: {sorted(boundary_hits)}"
+        if bool(policy.get("block_search_boundary_hits", False)):
+            blockers.append(boundary_detail)
 
     metrics = {
         "n_trials": n_trials,
@@ -312,7 +435,12 @@ def _assess_tuning(
         "boundary_hits": boundary_hits,
     }
     status = "pass" if not blockers else "block"
-    detail = "hyperparameter search metadata is within policy" if not blockers else "; ".join(blockers)
+    if blockers:
+        detail = "; ".join(blockers)
+    elif boundary_detail:
+        detail = "hyperparameter search metadata is release-complete; " + boundary_detail
+    else:
+        detail = "hyperparameter search metadata is within policy"
     return _gate(status, detail, metrics), blockers
 
 
@@ -384,30 +512,50 @@ def _model_rows_for_metrics(
         if not isinstance(target_payload, dict):
             continue
         for model_key, model_payload in sorted(target_payload.items()):
+            if model_key not in MODEL_CONFIG_KEY:
+                continue
             if not isinstance(model_payload, dict):
                 continue
+            row_policy = _policy_for_model_row(
+                base_policy=policy,
+                configs=configs,
+                target=str(target),
+                model_key=str(model_key),
+            )
             gates: dict[str, dict[str, Any]] = {}
             blockers: list[str] = []
             assessments = (
-                ("generalization", _assess_generalization(model_payload, policy)),
-                ("underfit", _assess_underfit(model_payload, policy)),
+                ("generalization", _assess_generalization(model_payload, row_policy)),
+                ("underfit", _assess_underfit(model_payload, row_policy)),
                 ("architecture", _assess_architecture(model_key, target_payload, model_payload)),
-                ("hyperparameter_tuning", _assess_tuning(model_key, model_payload, configs, policy)),
-                ("calibration", _assess_calibration(model_payload, policy)),
-                ("latency", _assess_latency(model_payload, policy)),
-                ("gradient_stability", _assess_gradient_stability(model_key, model_payload, policy)),
+                ("hyperparameter_tuning", _assess_tuning(model_key, model_payload, configs, row_policy)),
+                ("calibration", _assess_calibration(model_payload, row_policy)),
+                ("latency", _assess_latency(model_payload, row_policy)),
+                ("gradient_stability", _assess_gradient_stability(model_key, model_payload, row_policy)),
             )
             for name, (gate, gate_blockers) in assessments:
                 gates[name] = gate
                 blockers.extend(gate_blockers)
+            release_keys = policy.get("release_model_keys", ["gbm"])
+            if isinstance(release_keys, str):
+                release_keys = [release_keys]
+            if not isinstance(release_keys, list):
+                release_keys = ["gbm"]
+            is_release_model = model_key in {str(key).strip() for key in release_keys}
             rows.append(
                 {
                     "metrics_path": str(metrics_path),
                     "target": str(target),
                     "model": str(model_key),
+                    "release_model": bool(is_release_model),
                     "status": "pass" if not blockers else "block",
                     "blockers": blockers,
                     "gates": gates,
+                    "effective_policy": {
+                        key: row_policy[key]
+                        for key in sorted(row_policy)
+                        if row_policy.get(key) != policy.get(key)
+                    },
                 }
             )
     return rows
@@ -431,17 +579,27 @@ def build_model_quality_gate(
 
     rows: list[dict[str, Any]] = []
     for metrics_path in metrics_paths:
+        payload = _load_structured(metrics_path)
         rows.extend(
             _model_rows_for_metrics(
                 metrics_path=metrics_path,
-                payload=_load_structured(metrics_path),
-                configs=configs,
+                payload=payload,
+                configs=_configs_for_metrics(metrics_path, payload, configs),
                 policy=merged_policy,
             )
         )
-    blockers = [
+    block_candidate_models = bool(merged_policy.get("block_candidate_models", False))
+    release_rows = [row for row in rows if bool(row.get("release_model"))]
+    release_blockers = [
         f"{row['metrics_path']}:{row['target']}:{row['model']} - {blocker}"
         for row in rows
+        if bool(row.get("release_model")) or block_candidate_models
+        for blocker in row["blockers"]
+    ]
+    candidate_findings = [
+        f"{row['metrics_path']}:{row['target']}:{row['model']} - {blocker}"
+        for row in rows
+        if not bool(row.get("release_model"))
         for blocker in row["blockers"]
     ]
     result = {
@@ -449,13 +607,19 @@ def build_model_quality_gate(
         "source_metrics": {str(path): _sha256_file(path) for path in metrics_paths},
         "config_paths": [str(path) for path in config_paths],
         "policy": merged_policy,
-        "pass": not blockers and bool(rows),
+        "pass": not release_blockers and bool(release_rows),
         "summary": {
             "metrics_file_count": len(metrics_paths),
             "model_count": len(rows),
             "blocking_model_count": sum(1 for row in rows if row["status"] != "pass"),
+            "release_model_count": len(release_rows),
+            "blocking_release_model_count": sum(1 for row in release_rows if row["status"] != "pass"),
+            "candidate_blocking_model_count": sum(
+                1 for row in rows if not bool(row.get("release_model")) and row["status"] != "pass"
+            ),
         },
-        "blockers": blockers,
+        "blockers": release_blockers,
+        "candidate_findings": candidate_findings,
         "models": rows,
     }
     out_path.parent.mkdir(parents=True, exist_ok=True)

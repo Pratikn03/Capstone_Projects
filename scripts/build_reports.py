@@ -706,8 +706,10 @@ def plot_model_comparison(ctx: ReportContext, metrics: dict):
 
     model_names = set()
     for _, data in targets.items():
-        for model in data:
-            if model != "n_features":
+        if not isinstance(data, dict):
+            continue
+        for model, payload in data.items():
+            if model != "n_features" and isinstance(payload, dict):
                 model_names.add(model)
     models = sorted(model_names)
     if not models:
@@ -719,7 +721,12 @@ def plot_model_comparison(ctx: ReportContext, metrics: dict):
         for k in metric_keys:
             vals = []
             for _, data in targets.items():
-                v = data.get(m, {}).get(k)
+                if not isinstance(data, dict):
+                    continue
+                model_payload = data.get(m, {})
+                if not isinstance(model_payload, dict):
+                    continue
+                v = model_payload.get(k)
                 if v is not None:
                     vals.append(v)
             means[m][k] = float(np.mean(vals)) if vals else None
@@ -741,6 +748,22 @@ def plot_model_comparison(ctx: ReportContext, metrics: dict):
     return out_path
 
 
+def report_model_enabled(ctx: ReportContext, kind: str) -> bool:
+    """Return whether a report pass should evaluate a model kind."""
+    model_filter = {m.strip().lower() for m in (ctx.model_filter or []) if m.strip()}
+    if not model_filter:
+        return True
+    aliases = {
+        "gbm": {"gbm", "gbm_lightgbm", "lightgbm"},
+        "lstm": {"lstm"},
+        "tcn": {"tcn"},
+        "nbeats": {"nbeats"},
+        "tft": {"tft"},
+        "patchtst": {"patchtst"},
+    }
+    return bool(model_filter & aliases.get(kind, {kind}))
+
+
 def refresh_metrics_from_models(ctx: ReportContext) -> dict:
     report_path = ctx.reports_dir / "week2_metrics.json"
     metrics = json.loads(report_path.read_text(encoding="utf-8")) if report_path.exists() else {"targets": {}}
@@ -754,40 +777,47 @@ def refresh_metrics_from_models(ctx: ReportContext) -> dict:
         return metrics
     unc_cfg = _load_uncertainty_cfg(ctx)
     unc_dir = _resolve_uncertainty_artifacts_dir(ctx, unc_cfg)
-    seq_model_kinds = ["lstm", "tcn", "nbeats", "tft", "patchtst"]
+    seq_model_kinds = [
+        kind
+        for kind in ["lstm", "tcn", "nbeats", "tft", "patchtst"]
+        if report_model_enabled(ctx, kind)
+    ]
     for target in targets:
         metrics.setdefault("targets", {}).setdefault(target, {})
 
-        gbm_path = None
-        for p in ctx.models_dir.glob(f"gbm_*_{target}.pkl"):
-            gbm_path = p
-            break
-        if gbm_path and gbm_path.exists():
-            bundle = load_model_bundle(gbm_path)
-            feat_cols = bundle.get("feature_cols", [])
-            if feat_cols:
-                aligned_test = _align_feature_frame(test_df, feat_cols)
-                X = aligned_test[feat_cols]
-                y = test_df[target].to_numpy()
-                pred = bundle["model"].predict(X)
-                m = _compute_metrics(y, pred, target)
-                m["model"] = gbm_path.stem.replace(f"_{target}", "")
-                metrics["targets"][target]["gbm"] = {
-                    **metrics["targets"][target].get("gbm", {}),
-                    **m,
-                }
-                meta = _load_model_uncertainty_meta(unc_dir, target, "gbm")
-                if meta:
-                    metrics["targets"][target]["gbm"]["uncertainty"] = {
-                        "picp_90": meta.get("picp_90", meta.get("global_coverage")),
-                        "picp_95": meta.get("picp_95"),
-                        "mean_interval_width": meta.get("mean_interval_width", meta.get("global_mean_width")),
-                        "pinball_loss_q05": meta.get("pinball_loss_q05"),
-                        "pinball_loss_q50": meta.get("pinball_loss_q50"),
-                        "pinball_loss_q95": meta.get("pinball_loss_q95"),
-                        "pinball_loss_mean": meta.get("pinball_loss_mean"),
-                        "winkler_score_90": meta.get("winkler_score_90"),
+        if report_model_enabled(ctx, "gbm"):
+            gbm_path = None
+            for p in ctx.models_dir.glob(f"gbm_*_{target}.pkl"):
+                gbm_path = p
+                break
+            if gbm_path and gbm_path.exists():
+                bundle = load_model_bundle(gbm_path)
+                feat_cols = bundle.get("feature_cols", [])
+                if feat_cols:
+                    aligned_test = _align_feature_frame(test_df, feat_cols)
+                    X = aligned_test[feat_cols]
+                    y = test_df[target].to_numpy()
+                    pred = bundle["model"].predict(X)
+                    m = _compute_metrics(y, pred, target)
+                    m["model"] = gbm_path.stem.replace(f"_{target}", "")
+                    metrics["targets"][target]["gbm"] = {
+                        **metrics["targets"][target].get("gbm", {}),
+                        **m,
                     }
+                    meta = _load_model_uncertainty_meta(unc_dir, target, "gbm")
+                    if meta:
+                        metrics["targets"][target]["gbm"]["uncertainty"] = {
+                            "picp_90": meta.get("picp_90", meta.get("global_coverage")),
+                            "picp_95": meta.get("picp_95"),
+                            "mean_interval_width": meta.get(
+                                "mean_interval_width", meta.get("global_mean_width")
+                            ),
+                            "pinball_loss_q05": meta.get("pinball_loss_q05"),
+                            "pinball_loss_q50": meta.get("pinball_loss_q50"),
+                            "pinball_loss_q95": meta.get("pinball_loss_q95"),
+                            "pinball_loss_mean": meta.get("pinball_loss_mean"),
+                            "winkler_score_90": meta.get("winkler_score_90"),
+                        }
 
         for kind in seq_model_kinds:
             path = ctx.models_dir / f"{kind}_{target}.pt"
@@ -1510,6 +1540,8 @@ def build_model_cards(ctx: ReportContext, metrics: dict | None = None):
     ensure_dir(cards_dir)
 
     for target, data in targets.items():
+        if not isinstance(data, dict):
+            continue
         lines = [f"# Model Card — {target}\n"]
         lines.append("## Overview\n")
         lines.append("Forecasting model trained on OPSD Germany time‑series.\n")
@@ -1522,6 +1554,8 @@ def build_model_cards(ctx: ReportContext, metrics: dict | None = None):
             lines.append("|---|---:|---:|---:|---:|\n")
         for model, vals in data.items():
             if model == "n_features":
+                continue
+            if not isinstance(vals, dict):
                 continue
             if target == "solar_mw":
                 lines.append(
@@ -1561,6 +1595,8 @@ def build_formal_report(
     if targets:
         lines.append("## Model Metrics (Test Split)\n")
         for target, data in targets.items():
+            if not isinstance(data, dict):
+                continue
             lines.append(f"### {target}\n")
             if target == "solar_mw":
                 lines.append("| Model | RMSE | MAE | sMAPE | MAPE | Daylight‑MAPE |\n")
@@ -1570,6 +1606,8 @@ def build_formal_report(
                 lines.append("|---|---:|---:|---:|---:|\n")
             for model, vals in data.items():
                 if model == "n_features":
+                    continue
+                if not isinstance(vals, dict):
                     continue
                 if target == "solar_mw":
                     lines.append(
@@ -1592,7 +1630,7 @@ def build_formal_report(
                 lines.append("| Baseline | RMSE | MAE | sMAPE | MAPE |\n")
                 lines.append("|---|---:|---:|---:|---:|\n")
             for name, vals in data.items():
-                if vals is None:
+                if not isinstance(vals, dict):
                     continue
                 if target == "solar_mw":
                     lines.append(
@@ -1862,6 +1900,7 @@ def main():
     parser.add_argument(
         "--targets", default=None, help="Comma-separated targets for multi-domain (e.g. speed_mps,power_mw)"
     )
+    parser.add_argument("--models", default=None, help="Optional comma-separated model filter, e.g. gbm or gbm,lstm")
     args = parser.parse_args()
 
     # Silence known LightGBM feature‑name warning for cleaner logs.
@@ -1874,6 +1913,9 @@ def main():
     targets = None
     if args.targets:
         targets = [t.strip() for t in args.targets.split(",") if t.strip()]
+    model_filter = None
+    if args.models:
+        model_filter = [m.strip().lower() for m in args.models.split(",") if m.strip()]
     ctx = ReportContext(
         repo_root=repo_root,
         features_path=repo_root / args.features,
@@ -1887,6 +1929,7 @@ def main():
         backtests_dir=(repo_root / args.backtests_dir) if args.backtests_dir else None,
         current_dataset=str(args.current_dataset).upper() if args.current_dataset else None,
         targets=targets,
+        model_filter=model_filter,
     )
 
     # End‑to‑end report generation (figures + markdown + JSON summaries).

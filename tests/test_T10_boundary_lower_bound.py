@@ -1,4 +1,7 @@
-from orius.universal_theory.boundary_indistinguishability import estimate_total_variation, two_state_lower_bound
+from orius.universal_theory.boundary_indistinguishability import (
+    estimate_total_variation,
+    two_state_lower_bound,
+)
 
 
 def test_tv_extremes():

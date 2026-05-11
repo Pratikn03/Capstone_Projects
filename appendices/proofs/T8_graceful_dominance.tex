@@ -1,0 +1,15 @@
+\paragraph{Theorem T8: Graceful Degradation Dominance with Useful Work.}
+Let \(P_G\) be an ORIUS graceful-degradation policy and \(P_U\) an uncontrolled
+persistence policy evaluated on the same admissible fault trace. Let \(Z_t^G\)
+and \(Z_t^U\) be true-state violation indicators, and let \(W_G,W_U\) be useful
+work totals. If \(Z_t^G\le Z_t^U\) for all \(t\) and \(W_G\ge \lambda W_U\) for
+\(\lambda\in(0,1]\), then \(P_G\) weakly dominates \(P_U\) in safety while
+preserving at least a \(\lambda\)-fraction of useful work.
+
+\paragraph{Proof.}
+Summing the pointwise inequality gives
+\(\sum_t Z_t^G\le \sum_t Z_t^U\), so the graceful policy has no larger violation
+count or violation rate on the paired trace. The second hypothesis is exactly
+the useful-work lower bound. These two inequalities are the product-order
+dominance relation used by the theorem: safety is weakly improved and work is
+retained above the declared threshold.

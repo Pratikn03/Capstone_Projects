@@ -1,4 +1,5 @@
 """Stale-observation uncertainty growth helpers (Tstale)."""
+
 from __future__ import annotations
 
 

@@ -1,19 +1,29 @@
 {
-  "theorem_id": "T9",
-  "title": "Impossibility of Quality-Ignorant Mandatory Release",
-  "status": "flagship_theorem",
-  "assumptions": [
-    "mandatory release",
-    "observation-only policy",
-    "empty common safe core"
+  "artifact_hashes": {
+    "reports/publication/T9_ambiguity_witnesses.csv": "5326d8f1fc74fe5a00d022ebe4376f730c504fa2eb5e10df3150fd0242bf39fc",
+    "reports/publication/T9_empty_safe_core_rates.csv": "9ff662955abc9506264abe10c47895f04dbc699e3c4d10debb247a91e59cc4be",
+    "reports/publication/fig_T9_empty_safe_core_examples.png": "a53390203f4947d3aca010b44308a091f08ea20229f7582e4dbe56d4c1422a00",
+    "reports/publication/fig_T9_empty_safe_core_examples.svg": "39e84f0b7e45edbe726915518d9b4be6024d96329555a257aa132696f102df6a"
+  },
+  "artifacts": [
+    "reports/publication/T9_ambiguity_witnesses.csv",
+    "reports/publication/T9_empty_safe_core_rates.csv",
+    "reports/publication/fig_T9_empty_safe_core_examples.svg",
+    "reports/publication/fig_T9_empty_safe_core_examples.png"
   ],
-  "proof_file": "appendices/proofs/T9_no_free_safety.tex",
+  "assumptions": [
+    "mandatory_release",
+    "observation_only_policy",
+    "empty_safe_core"
+  ],
+  "claim_boundary": "mandatory observation-only release class only",
   "code_anchor": "src/orius/universal_theory/ambiguity.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/proofs/T9_no_free_safety.tex",
+  "status": "flagship_theorem",
   "tests": [
     "tests/test_T9_mandatory_release_impossibility.py"
   ],
-  "artifacts": [
-    "reports/publication/T9_ambiguity_witnesses.csv"
-  ],
-  "claim_boundary": "impossibility is specific to mandatory observation-only controllers"
+  "theorem_id": "T9",
+  "title": "Impossibility of Quality-Ignorant Mandatory Release"
 }

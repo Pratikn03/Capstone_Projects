@@ -1,0 +1,18 @@
+\paragraph{Theorem T10: Boundary-Indistinguishability Lower Bound.}
+Let \(x_0,x_1\) be two latent boundary states with observation laws \(P_0,P_1\).
+Assume \(d_{\mathrm{TV}}(P_0,P_1)\le\epsilon\) and
+\(C(x_0)\cap C(x_1)=\varnothing\). For any observation-only mandatory-release
+controller \(\pi\),
+\[
+  \sup_{i\in\{0,1\}}\Pr_{O\sim P_i}[\pi(O)\notin C(x_i)]
+  \ge \frac{1-\epsilon}{2}.
+\]
+
+\paragraph{Proof.}
+Because the safe-action sets are disjoint, for every observation \(O\) the
+action \(\pi(O)\) is unsafe for at least one of \(x_0,x_1\). Thus the sum of the
+two state-conditional losses dominates the probability mass on which the two
+experiments cannot be distinguished. Le Cam's two-point inequality bounds the
+best discrimination advantage by \(d_{\mathrm{TV}}(P_0,P_1)\le\epsilon\), so the
+average error over the two hypotheses is at least \((1-\epsilon)/2\). The
+maximum of the two risks is at least their average, giving the stated bound.

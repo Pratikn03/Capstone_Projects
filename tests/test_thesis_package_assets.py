@@ -153,8 +153,9 @@ def test_canonical_defense_surfaces_use_current_paths_and_strict_core_language()
         assert "src/gridpulse/" not in text, f"legacy path leaked in {path.relative_to(REPO_ROOT)}"
 
     introduction = (REPO_ROOT / "chapters" / "ch01_introduction.tex").read_text(encoding="utf-8")
-    assert "Flagship defended." in introduction
-    assert "Draft / non-defended extensions." in introduction
+    assert "Flagship theorem." in introduction
+    assert "Scoped flagship theorem." in introduction
+    assert "draft theorem debt" in introduction
 
     appendix_s = (REPO_ROOT / "appendices" / "app_s_claim_evidence_registers.tex").read_text(encoding="utf-8")
     assert "registry-canonical defended core" in appendix_s

@@ -1,19 +1,27 @@
 {
-  "theorem_id": "Tminimax",
-  "title": "Finite Ambiguity-Class Minimax Lower Bound",
-  "status": "scoped_flagship_theorem",
-  "assumptions": [
-    "finite two-state class",
-    "TV <= epsilon",
-    "disjoint safe sets"
+  "artifact_hashes": {
+    "reports/publication/Tminimax_boundary_grid.csv": "fe3ba42496cd938810dd631df845cef82112bae4d0b9ba3cb5aaa209f4606292",
+    "reports/publication/fig_Tminimax_lower_upper_gap.png": "d8415cccb0113a2130df7b1d8ab92fa2b4773628324b9cc1d707048c6b239b0e",
+    "reports/publication/fig_Tminimax_lower_upper_gap.svg": "5290b71149bde47731353427dbc81a529cc72cc3bbb570666d27eb1634d196f6"
+  },
+  "artifacts": [
+    "reports/publication/Tminimax_boundary_grid.csv",
+    "reports/publication/fig_Tminimax_lower_upper_gap.svg",
+    "reports/publication/fig_Tminimax_lower_upper_gap.png"
   ],
-  "proof_file": "appendices/proofs/Tminimax_finite_ambiguity.tex",
+  "assumptions": [
+    "finite_two_state_class",
+    "tv_bound",
+    "disjoint_safe_sets"
+  ],
+  "claim_boundary": "finite two-state ambiguity class only",
   "code_anchor": "src/orius/universal_theory/minimax_boundary.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/proofs/Tminimax_finite_ambiguity.tex",
+  "status": "scoped_flagship_theorem",
   "tests": [
     "tests/test_Tminimax_finite_ambiguity.py"
   ],
-  "artifacts": [
-    "reports/publication/Tminimax_boundary_grid.csv"
-  ],
-  "claim_boundary": "scoped minimax lower bound only; no global optimality claim"
+  "theorem_id": "Tminimax",
+  "title": "Finite Ambiguity-Class Minimax Lower Bound"
 }

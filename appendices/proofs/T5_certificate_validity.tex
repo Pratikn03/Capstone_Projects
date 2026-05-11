@@ -1,0 +1,21 @@
+\paragraph{Theorem T5: Finite-Horizon Certificate Validity.}
+Let \(X_t\) be the observation-consistent state set at issue time \(t\), let
+\(\tilde a_{t:t+h}\) be the certified action or fallback sequence, and let
+\(S\) be the domain safe-state set. Assume the forward reachable tube satisfies
+\[
+  \mathcal R_{t+j}(X_t,\tilde a_{t:t+j}) \subseteq S
+  \qquad j=0,\ldots,h .
+\]
+Then every release governed by the certificate is safe for \(h\) steps unless a
+certificate-invalidating event occurs.
+
+\paragraph{Proof.}
+At \(j=0\), all states consistent with the issued certificate lie in
+\(\mathcal R_t(X_t)\subseteq S\). Suppose the claim holds through step \(j<h\).
+By definition of the reachable tube, every state reachable after applying the
+certified prefix \(\tilde a_{t:t+j+1}\) lies in
+\(\mathcal R_{t+j+1}(X_t,\tilde a_{t:t+j+1})\). The containment assumption places
+that set inside \(S\). Induction proves safety for all \(j=0,\ldots,h\). If a
+fresh observation contradicts \(X_t\), the model, or the action sequence, the
+certificate is outside the theorem hypothesis and must be renewed, repaired, or
+expired by the runtime.

@@ -180,6 +180,97 @@ def _apply_gbm_thread_limits(params: dict[str, Any], threads: int | None) -> dic
     return updated
 
 
+def _load_json_dict(path: Path) -> dict[str, Any]:
+    """Load a JSON object from disk, returning an empty dict for missing/invalid files."""
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _initial_training_report(
+    *,
+    existing_report: dict[str, Any],
+    preserve_existing_targets: bool,
+    device: str,
+    quantiles: list[float],
+    manifest_id: Any,
+) -> dict[str, Any]:
+    """Build the report payload for this invocation.
+
+    Target-split recovery runs must preserve metrics from earlier target
+    invocations because ``week2_metrics.json`` is the downstream gate artifact.
+    Full runs intentionally start from a clean report to avoid stale targets.
+    """
+    if preserve_existing_targets and existing_report:
+        report = json.loads(json.dumps(existing_report))
+        if not isinstance(report.get("targets"), dict):
+            report["targets"] = {}
+    else:
+        report = {"targets": {}}
+    report["device"] = device
+    report["quantiles"] = quantiles
+    report["manifest_id"] = manifest_id
+    return report
+
+
+def _reuse_existing_model_metrics(
+    *,
+    existing_report: dict[str, Any],
+    target: str,
+    model_key: str,
+    artifact_path: Path,
+) -> dict[str, Any]:
+    """Return prior metrics for a skipped model artifact.
+
+    ``--skip-existing`` is only safe when the model artifact and its metrics
+    were produced by a completed previous run. A skipped model without metrics
+    would make the final ``week2_metrics.json`` incomplete, which later gates
+    correctly treat as a failed training run.
+    """
+    targets = existing_report.get("targets", {})
+    target_payload = targets.get(target, {}) if isinstance(targets, dict) else {}
+    metrics = target_payload.get(model_key, {}) if isinstance(target_payload, dict) else {}
+    if not isinstance(metrics, dict) or not metrics:
+        raise RuntimeError(
+            "Cannot use --skip-existing for "
+            f"{model_key}:{target}; artifact exists at {artifact_path}, "
+            "but prior week2_metrics.json does not contain matching metrics. "
+            "Rerun without --skip-existing or provide a completed reports directory."
+        )
+    return json.loads(json.dumps(metrics))
+
+
+def _merge_target_metrics(
+    *,
+    report: dict[str, Any],
+    target: str,
+    target_res: dict[str, Any],
+    preserve_existing_targets: bool,
+) -> None:
+    """Merge metrics for target-split/model-split recovery runs.
+
+    Target recovery may run one target, or even one model for one target, per
+    process. In that mode, replacing the whole target payload would discard
+    metrics produced by earlier invocations. Full multi-target runs still
+    replace target payloads so stale metrics cannot leak into a clean run.
+    """
+    if not preserve_existing_targets:
+        report.setdefault("targets", {})[target] = target_res
+        return
+
+    existing = report.setdefault("targets", {}).get(target, {})
+    if not isinstance(existing, dict):
+        existing = {}
+    merged = json.loads(json.dumps(existing))
+    for model_key, metrics in target_res.items():
+        merged[model_key] = metrics
+    report["targets"][target] = merged
+
+
 def _apply_deep_training_overrides(
     cfg: dict[str, Any],
     *,
@@ -1915,16 +2006,31 @@ def main():
 
     rep_dir = Path(args.reports_dir or cfg["reports"]["out_dir"])
     rep_dir.mkdir(parents=True, exist_ok=True)
+    preserve_existing_targets = bool(args.targets)
+    existing_report = (
+        _load_json_dict(rep_dir / "week2_metrics.json")
+        if (args.skip_existing or preserve_existing_targets)
+        else {}
+    )
 
-    report = {
-        "device": device,
-        "quantiles": quantiles,
-        "targets": {},
-        "manifest_id": manifest.get("run_id"),
-    }
+    report = _initial_training_report(
+        existing_report=existing_report,
+        preserve_existing_targets=preserve_existing_targets,
+        device=device,
+        quantiles=quantiles,
+        manifest_id=manifest.get("run_id"),
+    )
     backtest_cfg = cfg.get("backtest", {})
     backtest_enabled = bool(backtest_cfg.get("enabled", False))
     backtest_payload = {"targets": {}} if backtest_enabled else None
+    if backtest_enabled and (args.skip_existing or preserve_existing_targets):
+        existing_backtest_path = Path(
+            args.walk_forward_report or backtest_cfg.get("out_path", rep_dir / "walk_forward_report.json")
+        )
+        existing_backtest = _load_json_dict(existing_backtest_path)
+        if existing_backtest:
+            backtest_payload = existing_backtest
+            backtest_payload.setdefault("targets", {})
     tuning_cfg = dict(cfg.get("tuning", {}) or {})
     if args.n_trials is not None and args.n_trials > 0:
         tuning_cfg["n_trials"] = int(args.n_trials)
@@ -1996,6 +2102,13 @@ def main():
         if gbm_cfg.get("enabled", True) and (model_filter is None or "gbm" in model_filter):
             if args.skip_existing and has_gbm_artifact(target):
                 print(f"Skipping GBM for {target} (artifact exists)")
+                artifact_path = next(iter(art_dir.glob(f"gbm_*_{target}.pkl")), art_dir / f"gbm_{target}.pkl")
+                target_res["gbm"] = _reuse_existing_model_metrics(
+                    existing_report=existing_report,
+                    target=target,
+                    model_key="gbm",
+                    artifact_path=artifact_path,
+                )
             else:
                 gbm_params = _apply_gbm_thread_limits(dict(gbm_cfg.get("params", {})), args.gbm_threads)
                 gbm_params.setdefault("random_state", int(cfg.get("seed", 42)))
@@ -2286,6 +2399,12 @@ def main():
         if lstm_cfg.get("enabled", True) and (model_filter is None or "lstm" in model_filter):
             if args.skip_existing and (art_dir / f"lstm_{target}.pt").exists():
                 print(f"Skipping LSTM for {target} (artifact exists)")
+                target_res["lstm"] = _reuse_existing_model_metrics(
+                    existing_report=existing_report,
+                    target=target,
+                    model_key="lstm",
+                    artifact_path=art_dir / f"lstm_{target}.pt",
+                )
             else:
                 params = lstm_cfg.get("params", {})
                 # Scale features/targets for DL stability; store scalers with the model.
@@ -2463,6 +2582,12 @@ def main():
         if tcn_cfg.get("enabled", False) and (model_filter is None or "tcn" in model_filter):
             if args.skip_existing and (art_dir / f"tcn_{target}.pt").exists():
                 print(f"Skipping TCN for {target} (artifact exists)")
+                target_res["tcn"] = _reuse_existing_model_metrics(
+                    existing_report=existing_report,
+                    target=target,
+                    model_key="tcn",
+                    artifact_path=art_dir / f"tcn_{target}.pt",
+                )
             else:
                 params = tcn_cfg.get("params", {})
                 # Same scaling strategy as LSTM for comparability.
@@ -2638,6 +2763,12 @@ def main():
         if nbeats_cfg.get("enabled", False) and (model_filter is None or "nbeats" in model_filter):
             if args.skip_existing and (art_dir / f"nbeats_{target}.pt").exists():
                 print(f"Skipping N-BEATS for {target} (artifact exists)")
+                target_res["nbeats"] = _reuse_existing_model_metrics(
+                    existing_report=existing_report,
+                    target=target,
+                    model_key="nbeats",
+                    artifact_path=art_dir / f"nbeats_{target}.pt",
+                )
             else:
                 params = nbeats_cfg.get("params", {})
                 x_scaler = StandardScaler.fit(X_train)
@@ -2799,6 +2930,12 @@ def main():
         if tft_cfg.get("enabled", False) and (model_filter is None or "tft" in model_filter):
             if args.skip_existing and (art_dir / f"tft_{target}.pt").exists():
                 print(f"Skipping TFT for {target} (artifact exists)")
+                target_res["tft"] = _reuse_existing_model_metrics(
+                    existing_report=existing_report,
+                    target=target,
+                    model_key="tft",
+                    artifact_path=art_dir / f"tft_{target}.pt",
+                )
             else:
                 params = tft_cfg.get("params", {})
                 x_scaler = StandardScaler.fit(X_train)
@@ -2961,6 +3098,12 @@ def main():
         if patchtst_cfg.get("enabled", False) and (model_filter is None or "patchtst" in model_filter):
             if args.skip_existing and (art_dir / f"patchtst_{target}.pt").exists():
                 print(f"Skipping PatchTST for {target} (artifact exists)")
+                target_res["patchtst"] = _reuse_existing_model_metrics(
+                    existing_report=existing_report,
+                    target=target,
+                    model_key="patchtst",
+                    artifact_path=art_dir / f"patchtst_{target}.pt",
+                )
             else:
                 params = patchtst_cfg.get("params", {})
                 x_scaler = StandardScaler.fit(X_train)
@@ -3121,7 +3264,12 @@ def main():
                         y_true_test, y_pred_test, horizon, target
                     )
 
-        report["targets"][target] = target_res
+        _merge_target_metrics(
+            report=report,
+            target=target,
+            target_res=target_res,
+            preserve_existing_targets=preserve_existing_targets,
+        )
 
     if uncertainty_enabled and conformal_payloads:
         backtests_dir = Path(

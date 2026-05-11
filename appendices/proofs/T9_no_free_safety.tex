@@ -1,0 +1,18 @@
+\paragraph{Theorem T9: Impossibility of Quality-Ignorant Mandatory Release.}
+Let \(\Pi_{\mathrm{obs}}\) be mandatory-release controllers
+\(\pi:O\to A\). For observation \(o\), define
+\[
+  B(o)=\{x\in X:h(x)=o\},\qquad
+  K(o)=\bigcap_{x\in B(o)} C(x).
+\]
+If \(K(o)=\varnothing\), no controller in \(\Pi_{\mathrm{obs}}\) can guarantee
+true-state safety for all \(x\in B(o)\).
+
+\paragraph{Proof.}
+A mandatory observation-only controller must choose one action \(a=\pi(o)\) for
+the entire ambiguity class \(B(o)\). If that action were safe for every
+\(x\in B(o)\), then \(a\in\cap_{x\in B(o)}C(x)=K(o)\), contradicting
+\(K(o)=\varnothing\). Therefore some state in the ambiguity class makes
+\(\pi(o)\) unsafe. The claim is restricted to mandatory release; abstention,
+fallback, uncertainty expansion, or denial of release are outside
+\(\Pi_{\mathrm{obs}}\).

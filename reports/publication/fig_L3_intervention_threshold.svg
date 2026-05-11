@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="380">
+<rect width="100%" height="100%" fill="white"/>
+<text x="20" y="24" font-size="16" font-family="Arial">L3 Intervention Threshold</text>
+<line x1="60" y1="320" x2="650" y2="320" stroke="black"/>
+<line x1="60" y1="60" x2="60" y2="320" stroke="black"/>
+<rect x="80.0" y="320.0" width="124.8" height="0.0" fill="#2ca02c"/><text x="80.0" y="342" font-size="11" font-family="Arial">safe</text><rect x="253.3" y="190.0" width="124.8" height="130.0" fill="#2ca02c"/><text x="253.3" y="342" font-size="11" font-family="Arial">repair</text><rect x="426.7" y="60.0" width="124.8" height="260.0" fill="#2ca02c"/><text x="426.7" y="342" font-size="11" font-family="Arial">fallback</text>
+<text x="4" y="180" font-size="12" font-family="Arial" transform="rotate(-90 12,180)">intervention</text>
+</svg>

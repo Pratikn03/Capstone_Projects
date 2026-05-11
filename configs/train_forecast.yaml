@@ -201,6 +201,11 @@ tuning:
       learning_rate: {type: float, low: 0.005, high: 0.1, log: true}
       max_depth: {type: int, low: 8, high: 15}
       num_leaves: {type: int, low: 64, high: 512}
+      min_child_samples: {type: int, low: 15, high: 96}
+      subsample: {type: float, low: 0.65, high: 1.0}
+      colsample_bytree: {type: float, low: 0.65, high: 1.0}
+      reg_alpha: {type: float, low: 1e-4, high: 20.0, log: true}
+      reg_lambda: {type: float, low: 1e-4, high: 20.0, log: true}
     dl_lstm:
       hidden_size: {type: categorical, choices: [256, 512, 768, 1024]}
       num_layers: {type: int, low: 1, high: 3}

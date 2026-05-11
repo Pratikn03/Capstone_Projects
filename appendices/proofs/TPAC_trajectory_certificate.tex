@@ -1,0 +1,25 @@
+\paragraph{Theorem T\_trajectory\_PAC: Finite-Horizon PAC Release Certificate.}
+Let \(Z_t\) be the true-state violation event at step \(t\). Suppose
+\[
+  \Pr(Z_t=1)\le \epsilon_t,\qquad t=1,\ldots,T .
+\]
+Then
+\[
+  \Pr\left(\sum_{t=1}^{T}Z_t\ge 1\right)
+  \le \sum_{t=1}^{T}\epsilon_t .
+\]
+Therefore, if \(\sum_{t=1}^{T}\epsilon_t\le\delta\), the trajectory is
+violation-free with probability at least \(1-\delta\).
+
+\paragraph{Proof.}
+The event \(\{\sum_{t=1}^{T}Z_t\ge 1\}\) is the union of the per-step violation
+events \(\cup_{t=1}^{T}\{Z_t=1\}\). By the union bound,
+\[
+\Pr\left(\cup_{t=1}^{T}\{Z_t=1\}\right)
+\le \sum_{t=1}^{T}\Pr(Z_t=1)
+\le \sum_{t=1}^{T}\epsilon_t .
+\]
+If the sum is at most \(\delta\), then the complementary no-violation event has
+probability at least \(1-\delta\). This defended surface is exactly the
+finite-horizon Bonferroni certificate; it does not claim a Ville or
+supermartingale strengthening.

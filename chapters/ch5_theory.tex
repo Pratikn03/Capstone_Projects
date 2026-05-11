@@ -1,9 +1,57 @@
 \chapter{Theory Spine and Promotion Discipline}
-\section{Theorem promotion discipline}
-All active theorem surfaces must satisfy statement, assumptions, proof, code, tests, artifact, and manuscript alignment.
-\section{Core runtime objects}
-We model observation ambiguity classes, common-safe cores, coverage sets, and fallback contracts as typed runtime objects.
-\section{Theorem spine}
-T1 OASG existence; T2 no-free-safety; T3 covered release preservation; T4 residual-risk envelope; T5 certificate horizon; T6 graceful degradation; T7 ambiguity lower bound; T8 typed transfer; T9 robust/stale observation; T10 sensor necessity.
-\section{What remains empirical}
-Architecture universality claims remain separate from empirical closure and require three-domain evidence artifacts.
+\label{ch:theory-spine}
+
+\section{Theorem Promotion Discipline}
+The defended ORIUS theorem register is intentionally narrow.  A theorem-like
+surface is promoted only when it has exact variables, explicit assumptions, a
+proof, a code anchor, passing tests, publication artifacts, and manuscript
+language that states the claim boundary.  The executable gate is
+\path{scripts/validate_theorem_promotion.py}; the generated truth sources are
+\path{reports/publication/theorem_promotion_matrix.csv},
+\path{reports/publication/theorem_promotion_matrix.json}, and the result cards
+under \path{reports/publication/theorem_result_cards/}.
+
+This discipline prevents theorem-count inflation.  Historical draft rows are
+allowed in archival audits, but no row remains a draft theorem inside the
+defended theorem register.
+
+\section{Core Runtime Objects}
+The theory is written against typed runtime objects rather than domain
+storytelling: observation-consistent state sets \(X_t\), observation ambiguity
+classes \(B(o)\), common safe cores \(K(o)\), safe-action correspondences
+\(C(x)\), reliability scores \(w_t\), certificate horizons, and fallback
+contracts.  A domain adapter may instantiate these objects only after its
+safe-set semantics, calibration witness, runtime trace, and governance evidence
+are available.
+
+\section{Official Theorem Spine}
+The final spine is:
+\begin{enumerate}
+  \item OASG existence.
+  \item No-free-safety / quality-ignorant mandatory release impossibility.
+  \item Covered release preservation.
+  \item Residual-risk envelope and aggregation.
+  \item Certificate horizon and expiration.
+  \item Fallback existence and graceful degradation with useful work.
+  \item Boundary ambiguity lower bound and finite ambiguity minimax bound.
+  \item Typed structural transfer.
+  \item Robust and stale observation theorems.
+  \item Sensor necessity and runtime monotonicity laws.
+\end{enumerate}
+
+Not every row is equal-size novelty.  Some are flagship theorems, some are
+flagship corollaries, and L1--L4 are flagship lemmas.  The important invariant
+is that every active row is defended by proof, code, tests, artifacts, hashes,
+and a claim-boundary note.
+
+\section{Promoted Surfaces}
+The actively promoted surfaces are T1, T2, T3a, T3b, T4, T5, T6, T7, T8, T9,
+T10, T11, T11Byz, Tstale, T\_trajectory\_PAC, L1--L4, Tminimax, and Tsensor.
+Tminimax is explicitly scoped to finite two-state ambiguity classes; no global
+minimax optimality claim is made.
+
+\section{What Remains Empirical}
+Architecture universality is separate from empirical closure.  Battery, AV,
+and Healthcare evidence instantiate the promoted contracts; new domains must
+re-run the same adapter, calibration, runtime, and governance gates before
+claiming theorem transfer.

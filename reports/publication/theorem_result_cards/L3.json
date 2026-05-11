@@ -1,0 +1,26 @@
+{
+  "artifact_hashes": {
+    "reports/publication/L1_L4_runtime_law_audit.csv": "6c12541ee9c23076ac73032d7c1b7b6ebb38ee9aecd2af05d3551465daccd5f2",
+    "reports/publication/fig_L3_intervention_threshold.png": "aad70473d33069de9c4f28e4bf6609272252aa7595ddc238b51d60241dc3b092",
+    "reports/publication/fig_L3_intervention_threshold.svg": "12a64bd8f4937771b99da25d8068f568ab6f048529fd4cc1fdfe4597642b374b"
+  },
+  "artifacts": [
+    "reports/publication/L1_L4_runtime_law_audit.csv",
+    "reports/publication/fig_L3_intervention_threshold.svg",
+    "reports/publication/fig_L3_intervention_threshold.png"
+  ],
+  "assumptions": [
+    "covered_release_contract",
+    "candidate_outside_common_safe_core"
+  ],
+  "claim_boundary": "release-time certified action filter",
+  "code_anchor": "src/orius/universal_theory/runtime_laws.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/proofs/L3_intervention_threshold.tex",
+  "status": "flagship_lemma",
+  "tests": [
+    "tests/test_runtime_law_suite.py"
+  ],
+  "theorem_id": "L3",
+  "title": "Intervention Threshold"
+}

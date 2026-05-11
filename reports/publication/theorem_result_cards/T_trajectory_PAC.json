@@ -1,0 +1,32 @@
+{
+  "artifact_hashes": {
+    "reports/publication/TPAC_horizon_sweep.csv": "d928eff2ecfa18f01ff60d2881177dc5b62d38ec754fd75fa8cc050d782700fe",
+    "reports/publication/fig_TPAC_empirical_rate.png": "08d61cab2112f3d66f8df5c47bf093d20ddb657c60cb527045f45ca6fd2bafd4",
+    "reports/publication/fig_TPAC_empirical_rate.svg": "bdd442bade475ca6a23bf65fae13cbf756cd4eca309640307a589a2e5bc2260e",
+    "reports/publication/fig_TPAC_empirical_vs_bound.png": "872f28000aec02121fc8b81a6f3f5f080930bfb118310d67629b16dc591c1811",
+    "reports/publication/fig_TPAC_empirical_vs_bound.svg": "20434cbf80662cae24b101969fddf66182438b55a3f1aca4bd55657bc2ec7be3"
+  },
+  "artifacts": [
+    "reports/publication/TPAC_horizon_sweep.csv",
+    "reports/publication/fig_TPAC_empirical_vs_bound.svg",
+    "reports/publication/fig_TPAC_empirical_rate.svg",
+    "reports/publication/fig_TPAC_empirical_vs_bound.png",
+    "reports/publication/fig_TPAC_empirical_rate.png"
+  ],
+  "assumptions": [
+    "per_step_risk_budget",
+    "finite_horizon",
+    "union_bound_only"
+  ],
+  "claim_boundary": "Bonferroni/union-bound trajectory certificate; no Ville strengthening claimed",
+  "code_anchor": "src/orius/universal_theory/risk_bounds.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/proofs/TPAC_trajectory_certificate.tex",
+  "status": "flagship_theorem",
+  "tests": [
+    "tests/test_TPAC_trajectory_certificate.py",
+    "tests/test_theoretical_guarantees.py"
+  ],
+  "theorem_id": "T_trajectory_PAC",
+  "title": "Finite-Horizon PAC Release Certificate"
+}

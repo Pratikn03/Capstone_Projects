@@ -192,6 +192,9 @@ def test_av_and_healthcare_emit_domain_runtime_contract_witnesses() -> None:
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     assert summary["source_theorem"] == "T11"
     assert {"av", "healthcare"} <= set(summary["domains"])
+    witness_rows = list(csv.DictReader(witnesses_path.open()))
+    assert len(witness_rows) == summary["publication_witness_rows"]
+    assert summary["publication_witness_rows"] < summary["full_witness_rows"]
 
     trace_specs = {
         "av": (

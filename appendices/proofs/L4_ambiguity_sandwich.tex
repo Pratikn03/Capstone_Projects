@@ -1,0 +1,13 @@
+\paragraph{Lemma L4: Observation-Ambiguity Safety Sandwich.}
+Observation-only mandatory release inherits the lower-side ambiguity risks in
+T9 and T10. ORIUS covered release has upper-side risk bounded by its coverage
+miss probability under the T2/T3 covered-release contract.
+
+\paragraph{Proof.}
+The lower side follows by applying T9 to empty safe cores and T10 to two-state
+boundary ambiguity classes. For the upper side, ORIUS releases only actions
+safe over the covered state set. Thus violation can occur only when the true
+state is outside that covered set or an explicit runtime assumption is broken.
+Under the T2/T3 contract this event has probability no larger than the
+declared coverage miss probability. Combining the lower and upper statements
+gives the sandwich.

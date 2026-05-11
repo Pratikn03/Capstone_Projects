@@ -9,6 +9,14 @@ conformal:
   eps: 1e-6
 
 target_overrides:
+  # Solar has strong regime shift around dawn/dusk and under-covered in the
+  # predeployment CPU release with horizon-wise calibration. The calibration
+  # split is too sparse per horizon for this target, so pool CQR scores across
+  # horizons and keep the conservative multiplier explicit.
+  solar_mw:
+    conformal:
+      horizon_wise: false
+      q_multiplier: 1.35
   # Healthcare HR drift under-covers with plain CQR in QMAX smoke runs.
   # Keep this explicit in the artifact as a conservative monitoring multiplier.
   hr_bpm:
@@ -49,7 +57,7 @@ publication_splits:
   calibration: "data/processed/splits/calibration.parquet"
   test: "data/processed/splits/test.parquet"
 
-targets: ["load_mw", "wind_mw", "solar_mw"]
+targets: ["load_mw", "wind_mw", "solar_mw", "price_eur_mwh"]
 artifacts_dir: "artifacts/uncertainty"
 calibration_npz: "artifacts/backtests/{target}_calibration.npz"
 test_npz: "artifacts/backtests/{target}_test.npz"

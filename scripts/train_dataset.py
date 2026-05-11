@@ -833,7 +833,12 @@ def train_models(
     return run_command(cmd, f"Training models for {cfg.display_name}", timeout_seconds=timeout_seconds)
 
 
-def generate_reports(cfg: DatasetConfig, run_layout: RunLayout | None = None) -> bool:
+def generate_reports(
+    cfg: DatasetConfig,
+    run_layout: RunLayout | None = None,
+    *,
+    models: str | None = None,
+) -> bool:
     """
     Generate evaluation reports including conformal coverage.
 
@@ -855,6 +860,8 @@ def generate_reports(cfg: DatasetConfig, run_layout: RunLayout | None = None) ->
         "--reports-dir",
         cfg.reports_dir if run_layout is None else str(run_layout.reports_dir),
     ]
+    if models:
+        cmd.extend(["--models", models])
     if run_layout is not None:
         cmd.extend(
             [
@@ -1396,7 +1403,7 @@ def train_dataset(
         return False
 
     # Step 4: Generate reports (includes conformal coverage)
-    if reports and not generate_reports(cfg, run_layout=run_layout):
+    if reports and not generate_reports(cfg, run_layout=run_layout, models=models):
         print("⚠️  Reports generation failed, continuing...")
 
     if not verify_training_outputs(cfg, run_layout, models=models):

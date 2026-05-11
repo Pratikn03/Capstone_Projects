@@ -1,18 +1,30 @@
 {
-  "theorem_id": "T11Byz",
-  "title": "Byzantine-Robust Reliability Aggregation",
-  "status": "flagship_theorem",
-  "assumptions": [
-    "b<n/2 Byzantine channels",
-    "honest interval width 2rho"
-  ],
-  "proof_file": "appendices/proofs/T11Byz_robust_reliability.tex",
-  "code_anchor": "src/orius/dc3s/quality.py",
-  "tests": [
-    "tests/test_T11Byz_robust_oqe.py"
-  ],
+  "artifact_hashes": {
+    "reports/publication/T11Byz_corruption_sweep.csv": "645c8f57860b63ab5c86ec5f8d90a7dff820376fd646135158d487858f6b0cbd",
+    "reports/publication/T11Byz_robust_reliability_error.csv": "0b72037f4d026e5e4cc32d56f613503f7978c316fd28d927cac139d71bf8c37d",
+    "reports/publication/fig_T11Byz_corruption_vs_safety.png": "9e6aa6fa91fcdce221914a00efa0329d4a9d19e32de612aa74bf1d62eded0c10",
+    "reports/publication/fig_T11Byz_corruption_vs_safety.svg": "c51a31ab7b33c48ea839f95b04f4fa5859201b9021a69cc1563b1fdbb32d797b"
+  },
   "artifacts": [
-    "reports/publication/T11Byz_corruption_sweep.csv"
+    "reports/publication/T11Byz_corruption_sweep.csv",
+    "reports/publication/T11Byz_robust_reliability_error.csv",
+    "reports/publication/fig_T11Byz_corruption_vs_safety.svg",
+    "reports/publication/fig_T11Byz_corruption_vs_safety.png"
   ],
-  "claim_boundary": "robustness guarantee applies only below 50% corruption threshold"
+  "assumptions": [
+    "bounded_scores",
+    "byzantine_budget_b_less_than_n_over_2",
+    "honest_interval_radius_rho"
+  ],
+  "claim_boundary": "b-trimmed aggregator valid only for b<n/2",
+  "code_anchor": "src/orius/dc3s/quality.py",
+  "manuscript_anchor": "chapters/ch5_theory.tex",
+  "proof_file": "appendices/proofs/T11Byz_robust_reliability.tex",
+  "status": "flagship_theorem",
+  "tests": [
+    "tests/test_T11Byz_robust_oqe.py",
+    "tests/test_adversarial_reliability_channels.py"
+  ],
+  "theorem_id": "T11Byz",
+  "title": "Byzantine-Robust Reliability Aggregation"
 }

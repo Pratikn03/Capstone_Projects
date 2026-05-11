@@ -63,7 +63,7 @@ def _write_rows(path: Path, rows: list[dict[str, Any]]) -> None:
             if key not in fieldnames:
                 fieldnames.append(key)
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -180,6 +180,25 @@ def normalize_trace_rows(
     return rows, witnesses
 
 
+def _bounded_publication_witnesses(
+    witnesses: list[DomainRuntimeContractWitness],
+    *,
+    per_domain: int,
+) -> list[DomainRuntimeContractWitness]:
+    """Keep publication CSV bounded while preserving full-domain summaries."""
+    if per_domain <= 0:
+        return list(witnesses)
+    selected: list[DomainRuntimeContractWitness] = []
+    counts: dict[str, int] = {}
+    for witness in witnesses:
+        count = counts.get(witness.domain, 0)
+        if count >= per_domain:
+            continue
+        selected.append(witness)
+        counts[witness.domain] = count + 1
+    return selected
+
+
 def build_domain_runtime_contract_artifacts(
     *,
     battery_trace: Path = DEFAULT_BATTERY_TRACE,
@@ -190,6 +209,7 @@ def build_domain_runtime_contract_artifacts(
     out_dir: Path = DEFAULT_OUT_DIR,
     normalize_traces: bool = True,
     recover_t11_from_certificates: bool = True,
+    max_publication_witnesses_per_domain: int = 25,
 ) -> dict[str, Any]:
     witnesses: list[DomainRuntimeContractWitness] = []
     normalized_counts: dict[str, int] = {}
@@ -225,10 +245,19 @@ def build_domain_runtime_contract_artifacts(
             witnesses.extend(domain_witnesses)
             normalized_counts[domain] = len(domain_witnesses)
 
-    outputs = write_domain_runtime_contract_artifacts(witnesses, out_dir=out_dir)
+    publication_witnesses = _bounded_publication_witnesses(
+        witnesses,
+        per_domain=max_publication_witnesses_per_domain,
+    )
+    outputs = write_domain_runtime_contract_artifacts(
+        witnesses,
+        out_dir=out_dir,
+        publication_witnesses=publication_witnesses,
+    )
     return {
         **outputs,
         "n_witnesses": int(len(witnesses)),
+        "n_publication_witnesses": int(len(publication_witnesses)),
         "normalized_witness_counts": normalized_counts,
     }
 
@@ -243,6 +272,7 @@ def main() -> int:
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument("--no-normalize-traces", action="store_true")
     parser.add_argument("--no-certificate-recovery", action="store_true")
+    parser.add_argument("--max-publication-witnesses-per-domain", type=int, default=25)
     args = parser.parse_args()
 
     report = build_domain_runtime_contract_artifacts(
@@ -254,10 +284,12 @@ def main() -> int:
         out_dir=args.out_dir,
         normalize_traces=not args.no_normalize_traces,
         recover_t11_from_certificates=not args.no_certificate_recovery,
+        max_publication_witnesses_per_domain=args.max_publication_witnesses_per_domain,
     )
     print(
         "[domain-runtime-contracts] "
         f"witnesses={report['n_witnesses']} "
+        f"publication_witnesses={report['n_publication_witnesses']} "
         f"battery={report['normalized_witness_counts'].get('battery', 0)} "
         f"av={report['normalized_witness_counts'].get('av', 0)} "
         f"healthcare={report['normalized_witness_counts'].get('healthcare', 0)} "
