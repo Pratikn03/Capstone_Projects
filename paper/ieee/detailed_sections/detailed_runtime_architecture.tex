@@ -8,8 +8,9 @@ implements it.
 
 \subsection{Architecture Overview}
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
+\resizebox{0.92\textwidth}{!}{%
 \begin{tikzpicture}[
   node distance=0.7cm and 1.5cm,
   stage/.style={draw, rounded corners, minimum width=2.5cm, minimum height=0.8cm,
@@ -33,10 +34,10 @@ implements it.
 \node[below=0.3cm of Co, font=\scriptsize, text=gray] {ObsConsistentStateSet};
 \node[below=0.3cm of S, font=\scriptsize, text=gray] {SafeActionSet};
 \node[below=0.3cm of Ce, font=\scriptsize, text=gray] {SafetyCertificate};
-\end{tikzpicture}
+\end{tikzpicture}}
 \caption{The five stages of the \dcs{} kernel and their inter-stage typed contracts.}
 \label{fig:dc3s_pipeline}
-\end{figure}
+\end{figure*}
 
 \subsection{Stage 1: Detect}\label{sec:detect}
 
@@ -95,29 +96,47 @@ where:
 \end{itemize}
 
 \paragraph{Reliability-Adaptive Conformal (RAC) Inflation.}
-The key formula that connects telemetry reliability to the uncertainty set width is
-the \emph{RAC-Cert} inflation:
+Two inflation forms appear in ORIUS and serve distinct roles, which we make
+explicit here to avoid conflation.  The \emph{theoretical envelope} that the
+risk-bound proofs (\S\ref{sec:theory}) reference is the \emph{RAC-Cert} form:
 \begin{equation}\label{eq:rac_cert}
-  \boxed{\;
   C_t^{\mathrm{RAC}}(\alpha)
   \;=\;
-  C_t(\alpha) \cdot \bigl[1 + \kappa_r\,(1 - w_t) + \kappa_d \cdot d_t + \kappa_s \cdot s_t\bigr]
-  \;}
+  C_t(\alpha) \cdot \bigl[1 + \kappa_r\,(1 - w_t) + \kappa_d \cdot d_t + \kappa_s \cdot s_t\bigr],
 \end{equation}
 where $C_t(\alpha)$ is the base conformal interval at miscoverage level~$\alpha$,
-$\kappa_r = 0.5$ is the reliability penalty, $\kappa_d = 0.3$ is the drift penalty,
-$d_t$ is the drift indicator, and $\kappa_s = 0.05$ is the staleness scaling with
-$s_t$ the staleness count in seconds.
+$\kappa_r = 0.5$ is the reliability penalty, $\kappa_d = 0.3$ is the drift
+penalty, $d_t \in \{0,1\}$ is the Page--Hinkley drift indicator, and
+$\kappa_s = 0.05$ is the staleness scaling with $s_t$ the staleness count in
+seconds.  Equation~\eqref{eq:rac_cert} is a closed-form upper envelope: it
+exposes each degradation source as a separate, additively monotone term, which
+is the form used to discharge Assumption~A5 (Monotone Bounded Inflation) in the
+theorem chain.
 
-In the implementation, the simplified inflation factor used is
+The \emph{runtime} executes a simplified, clipped form that collapses the drift
+and staleness terms into a single shift-aware score and bounds the total
+inflation between $1\times$ and $3\times$:
 \begin{equation}\label{eq:runtime_inflation}
+  \boxed{\;
   \alpha = \mathrm{clip}\!\bigl(1.0 + 0.7\,(1 - w_t) + 0.5\,s_{\mathrm{shift}},
-  \; 1.0,\; 3.0\bigr),
+  \; 1.0,\; 3.0\bigr).
+  \;}
 \end{equation}
-which bounds the inflation between~1$\times$ (fully trusted) and~3$\times$ (maximally
-degraded).
+Equation~\eqref{eq:runtime_inflation} is the only inflation function actually
+evaluated at runtime.  Its implementation anchors are the AV runtime wrapper,
+the training feature builder, and the shift-aware uncertainty adapter; the exact
+file and line anchors are recorded in the theorem result cards and claim-evidence
+registers rather than repeated as long paths in the manuscript.
+The relationship between the two forms is that
+Eq.~\eqref{eq:runtime_inflation} is a pointwise lower bound of
+Eq.~\eqref{eq:rac_cert} once $s_{\mathrm{shift}}$ is identified with a
+conservative combination of $\kappa_d d_t + \kappa_s s_t$, so any safety
+guarantee proved under~\eqref{eq:rac_cert} continues to hold under the looser
+clipped form whenever Eq.~\eqref{eq:runtime_inflation} dominates the
+theoretical envelope, and the runtime is otherwise scoped by the explicit
+$\alpha \le 3$ ceiling.
 
-\paragraph{Output.}  An \texttt{ObservationConsistentStateSet} with:
+\paragraph{Output.}  An observation-consistent state set with:
 \begin{itemize}[nosep]
   \item \texttt{observed\_state}: the point estimate from the parsed telemetry.
   \item \texttt{lower\_bounds}, \texttt{upper\_bounds}: per-target dictionaries.
@@ -131,7 +150,7 @@ degraded).
 The constrain stage derives the safe action set $\Aset$ from $\Ut$ and the domain
 safety specification.
 
-\paragraph{Input.}  The \texttt{ObservationConsistentStateSet} from Stage~2 and a
+\paragraph{Input.}  The Stage~2 uncertainty set and a
 \texttt{SafetySpec} encoding domain-specific constraints and the fallback action.
 
 \paragraph{Algorithm.}  For each constraint in the safety specification:
@@ -238,9 +257,9 @@ domains.
 \Statex
 \State \textbf{[Stage 2: Calibrate]}
 \State $C_t(\alpha) \gets \texttt{conformal\_quantile}(q_\alpha, \mathrm{obs}_t)$
-\State $C_t^{\mathrm{RAC}} \gets C_t(\alpha) \cdot [1 + \kappa_r(1-w_t) + \kappa_d d_t + \kappa_s s_t]$
-  \Comment{\cref{eq:rac_cert}}
-\State $\Ut \gets [\mathrm{obs}_t.\hat{x} - C_t^{\mathrm{RAC}},\; \mathrm{obs}_t.\hat{x} + C_t^{\mathrm{RAC}}]$
+\State $\alpha_t \gets \mathrm{clip}(1 + 0.7(1-w_t) + 0.5\,s_{\mathrm{shift}},\, 1, 3)$
+  \Comment{\cref{eq:runtime_inflation}; runtime form, $\le$ envelope \eqref{eq:rac_cert}}
+\State $\Ut \gets [\mathrm{obs}_t.\hat{x} - \alpha_t\,C_t(\alpha),\; \mathrm{obs}_t.\hat{x} + \alpha_t\,C_t(\alpha)]$
 \Statex
 \State \textbf{[Stage 3: Constrain]}
 \State $\Aset \gets \mathcal{D}.\texttt{tighten\_action\_set}(\Ut, \mathcal{C})$
@@ -274,9 +293,12 @@ In the battery domain, Stage~3 enforces the \emph{Fault-Tolerant Invariant Tube}
 \end{align}
 The safe-action set for the battery is then:
 \begin{equation}
-  \Aset = \Bigl\{ (P^+, P^-) \;\Big|\;
-    E_{\min} + q_t^{\mathrm{RAC}} \;\le\; \hat{E}_{t+1}(P^+, P^-) \;\le\;
-    E_{\max} - q_t^{\mathrm{RAC}} \Bigr\},
+  \begin{aligned}
+  \Aset = \{(P^+,P^-)\mid\;&
+    E_{\min}+q_t^{\mathrm{RAC}}
+      \le \hat{E}_{t+1}(P^+,P^-) \\
+    &\le E_{\max}-q_t^{\mathrm{RAC}}\},
+  \end{aligned}
 \end{equation}
 where $q_t^{\mathrm{RAC}}$ is the RAC-inflated safety buffer derived from
 $C_t^{\mathrm{RAC}}$.
@@ -289,10 +311,10 @@ runtime steps (battery pipeline with 42 fault-injected scenarios).
 \begin{table}[h]
 \caption{DC3S per-stage latency profile (battery pipeline, 12{,}096 steps).}
 \label{tab:dc3s_latency}
-\centering\small
+\centering\scriptsize
 \begin{tabular}{lrrrr}
 \toprule
-\textbf{Stage} & \textbf{Mean (ms)} & \textbf{Median (ms)} & \textbf{P95 (ms)} & \textbf{Max (ms)} \\
+\textbf{Stage} & \textbf{Mean} & \textbf{Med.} & \textbf{P95} & \textbf{Max} \\
 \midrule
 OQE (Detect)      & 0.026 & 0.024 & 0.030 & 0.210 \\
 Drift detect      & 0.000 & 0.000 & 0.000 & 0.003 \\
@@ -399,18 +421,14 @@ set, which triggers an action repair.
 
 The ORIUS kernel codebase is organised as follows:
 
-\begin{verbatim}
-src/orius/
-  universal_theory/
-    kernel.py          # Five-stage orchestration (~350 lines)
-    contracts.py       # Typed dataclasses + Protocol
-    risk_bounds.py     # T10/T11 risk computations
-  dc3s/
-    drift.py           # Page-Hinkley drift detector
-    runtime.py         # DC3S runtime loop
-  battery_adapter.py   # Battery DomainInstantiation
-  av_adapter.py        # AV DomainInstantiation
-\end{verbatim}
+\begin{itemize}[nosep,leftmargin=*]
+  \item \texttt{kernel.py}: five-stage orchestration.
+  \item \texttt{contracts.py}: typed runtime objects and adapter protocol.
+  \item \texttt{risk\_bounds.py}: T10/T11 risk computations.
+  \item \texttt{dc3s/drift.py}: Page-Hinkley drift detector.
+  \item \texttt{dc3s/runtime.py}: DC3S runtime loop.
+  \item \texttt{battery\_adapter.py}, \texttt{av\_adapter.py}: domain adapters.
+\end{itemize}
 
 The total kernel (excluding adapters) is under 600~lines of Python.  The two adapters
 add approximately 150--200~lines each.  This compact implementation supports the claim

@@ -10,11 +10,11 @@ domain change while the evidence tier of each row is stated explicitly.
 
 \subsection{Domain Roles}
 
-\begin{table}[h]
+\begin{table*}[t]
 \caption{Active three-domain roles and evidence posture.}
 \label{tab:cross_domain_roles}
-\centering\small
-\begin{tabular}{llll}
+\centering\footnotesize
+\begin{tabularx}{\textwidth}{p{0.14\textwidth} p{0.17\textwidth} p{0.31\textwidth} X}
 \toprule
 \textbf{Domain} & \textbf{Role} & \textbf{Runtime denominator} & \textbf{Bounded claim} \\
 \midrule
@@ -22,21 +22,21 @@ Battery & witness row & locked battery witness runtime & deepest theorem-to-arti
 AV & defended bounded row & 1{,}531{,}104 all-zip grouped nuPlan replay steps & TTC + predictive-entry-barrier contract \\
 Healthcare & defended bounded row & 137{,}262 promoted MIMIC runtime steps & monitoring / alert-release semantics \\
 \bottomrule
-\end{tabular}
-\end{table}
+\end{tabularx}
+\end{table*}
 
 \subsection{Metric Comparison}
 
 \Cref{tab:cross_domain_metrics_three} summarises the promoted metrics that are
 shared across the three active rows.
 
-\begin{table}[h]
+\begin{table*}[t]
 \caption{Promoted three-domain metric comparison.}
 \label{tab:cross_domain_metrics_three}
-\centering\small
-\begin{tabular}{lccc}
+\centering\footnotesize
+\begin{tabularx}{\textwidth}{p{0.30\textwidth} p{0.20\textwidth} p{0.20\textwidth} X}
 \toprule
-\textbf{Metric} & \textbf{Battery} & \textbf{AV} & \textbf{Healthcare} \\
+\textbf{Metric} & \textbf{Battery} & \textbf{AV (replay)}$^\ddagger$ & \textbf{Healthcare (retrospective)}$^\dagger$ \\
 \midrule
 Baseline TSVR           & 0.008300 & 0.289250 & 0.194489 \\
 ORIUS TSVR              & 0.000000 & 0.000163 & 0.000000 \\
@@ -46,20 +46,24 @@ Certificate-valid release rate & 0.993056 & 0.999924 & 1.000000$^\dagger$ \\
 Grouped coverage / status & 0.938 / 1.000 / 0.906 & 0.998 / 0.988 / 0.980 & 0.692 / 0.863 / 0.946 \\
 P95 runtime latency (ms) & 0.812 & 0.744 & 0.701 \\
 \bottomrule
-\end{tabular}
-\end{table}
+\end{tabularx}
+\end{table*}
+
+{\footnotesize $^\ddagger$ All AV numbers in this column are measured on the
+all-zip grouped nuPlan \emph{replay} surface (1{,}531{,}104 steps over 37{,}344
+held-out scenarios).  They are not closed-loop road-deployment numbers.}
 
 {\footnotesize $^\dagger$ Healthcare reports certificate-valid release from
-runtime-emitted CVA on the promoted replay export.  This remains a bounded
-monitoring result and is not a claim of regulated clinical deployment.}
+runtime-emitted CVA on the promoted retrospective MIMIC export.  This remains a
+bounded monitoring result and is not a claim of regulated clinical deployment.}
 
 The canonical runtime release contract witnesses are reported in
 \Cref{tab:runtime-release-contract-witnesses}; each row follows the same
 observe--reliability--uncertainty--repair/fallback--certificate--append-only audit
 release grammar.
 
-\IfFileExists{../../reports/publication/runtime_release_contract_witnesses.tex}{%
-  \input{../../reports/publication/runtime_release_contract_witnesses}%
+\IfFileExists{reports/publication/runtime_release_contract_witnesses.tex}{%
+  \input{reports/publication/runtime_release_contract_witnesses.tex}%
 }{}
 
 \subsection{Analysis}

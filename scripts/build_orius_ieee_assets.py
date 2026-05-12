@@ -10,6 +10,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
 IEEE_GENERATED_DIR = REPO_ROOT / "paper" / "ieee" / "generated"
 EDITORIAL_DIR = REPO_ROOT / "reports" / "editorial"
+AV_NUPLAN_DIR = (
+    REPO_ROOT
+    / "reports"
+    / "orius_av"
+    / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+)
 
 
 def _ensure_parent(path: Path) -> None:
@@ -28,6 +34,58 @@ def _read_rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+def _build_av_fault_coverage_heatmap() -> None:
+    """Render a publication-readable complete fault-family coverage heatmap."""
+
+    source = AV_NUPLAN_DIR / "fault_family_coverage.csv"
+    target = AV_NUPLAN_DIR / "figures" / "fault_family_coverage_heatmap.png"
+    rows = _read_rows(source)
+    if not rows:
+        return
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    fault_order = sorted({row["fault_family"] for row in rows})
+    row_order = []
+    values: dict[tuple[str, str], float] = {}
+    for row in rows:
+        label = f"{row['controller']}:{row['target'].replace('_', ' ')}"
+        if label not in row_order:
+            row_order.append(label)
+        values[(label, row["fault_family"])] = float(row["coverage"])
+
+    matrix = np.array(
+        [[values.get((label, fault), np.nan) for fault in fault_order] for label in row_order],
+        dtype=float,
+    )
+
+    _ensure_parent(target)
+    fig_height = max(5.8, 0.34 * len(row_order) + 1.7)
+    fig, ax = plt.subplots(figsize=(10.5, fig_height), constrained_layout=True)
+    image = ax.imshow(matrix, aspect="auto", vmin=0.85, vmax=1.0, cmap="viridis")
+    ax.set_xticks(range(len(fault_order)), labels=[fault.replace("_", " ") for fault in fault_order])
+    ax.set_yticks(range(len(row_order)), labels=row_order)
+    ax.tick_params(axis="x", labelrotation=30, labelsize=8)
+    ax.tick_params(axis="y", labelsize=7)
+    ax.set_xlabel("Fault family")
+    ax.set_ylabel("Controller: target")
+    ax.set_title("nuPlan Fault-Family Coverage Heatmap")
+    for y in range(matrix.shape[0]):
+        for x in range(matrix.shape[1]):
+            value = matrix[y, x]
+            if not np.isfinite(value):
+                continue
+            ax.text(x, y, f"{value:.2f}", ha="center", va="center", fontsize=6, color="white")
+    cbar = fig.colorbar(image, ax=ax, pad=0.015)
+    cbar.set_label("Coverage")
+    fig.savefig(target, dpi=220)
+    plt.close(fig)
+
+
 def build() -> int:
     """Programmatic entry point for pipeline scripts and tests.
 
@@ -38,6 +96,8 @@ def build() -> int:
 
 
 def main() -> int:
+    _build_av_fault_coverage_heatmap()
+
     closure_rows = _read_rows(PUBLICATION_DIR / "orius_domain_closure_matrix.csv")
     scorecard_rows = _read_rows(PUBLICATION_DIR / "orius_submission_scorecard.csv")
     runtime_rows = _read_rows(PUBLICATION_DIR / "orius_runtime_budget_matrix.csv")

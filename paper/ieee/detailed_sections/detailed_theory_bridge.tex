@@ -23,14 +23,15 @@ theorems while preserving the full audit surface used by the repository.
 Observation-aware safety gap & T1 & Degraded observation can make observed-state safety disagree with true-state safety.\\
 Observation necessity & T4 & Observation-only or quality-ignorant mandatory release cannot guarantee safety on the defended ambiguity witness class.\\
 ORIUS covered release guarantee & T2, T3 & Covered uncertainty sets plus repaired release yield one-step safety and an explicit risk-envelope corollary.\\
-Typed transfer and covered optimality & T11; T10/T11 corollary & The typed ORIUS contract transfers to defended domains, with certificate/fallback discipline (T5--T8) and the covered Bayes lower/upper safety sandwich as supporting surfaces.\\
+Typed transfer and covered optimality & T11; T10/T11 corollary & The typed ORIUS contract transfers to defended domains, with certificate/fallback discipline (T5--T8) and the covered Bayes lower/upper safety sandwich as scoped flagship or flagship-derived surfaces.\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-T5--T10 remain visible but scoped supporting surfaces.  They are not promoted
-as additional headline theorem claims in this paper-facing draft; the generated
-theorem-promotion package remains the authority for any future promotion.
+T5--T10 remain visible as scoped theorem surfaces rather than equal-size
+headline claims.  The generated theorem-promotion matrix and result cards are
+the authority for promoted status, proof anchors, code anchors, tests,
+artifacts, and claim-boundary language.
 
 \subsection{Assumptions}\label{sec:assumptions}
 
@@ -78,7 +79,7 @@ The episode horizon is finite: $T < \infty$.
 \begin{assumption}[A8: Piecewise Battery Fallback Admissibility]\label{ass:A8}
 In the battery witness row, fallback admissibility is piecewise: zero dispatch is
 certified on the safe-set interior, a boundary-aware safe-landing recovery action
-is certified near the safe boundary whenever feasible, and the runtime fails closed
+is certified near the boundary when feasible, and the runtime fails closed
 otherwise.
 \end{assumption}
 
@@ -89,31 +90,47 @@ certificate survival probability satisfies the closed-form first-passage lower
 bound used by T6.
 \end{assumption}
 
+\begin{assumption}[A10: Boundary-Active Controller]\label{ass:A10}
+The quality-ignorant baseline controller~$\pi$ used in the T1 witness construction
+drives the true state within distance $\delta_{\mathrm{bnd}} = P_{\max}\Delta t$
+of the safe-set boundary~$\partial\mathcal{S}$ with positive frequency.  This
+captures the operational fact that economically-driven dispatch policies (e.g.\
+deterministic arbitrage LPs in the battery domain and longitudinal
+performance-tracking policies in the AV domain) operate near constraint
+boundaries by construction; it is discharged empirically by the LP arbitrage
+baseline used in~\S\ref{sec:battery} and the no-wrapper baseline in
+\S\ref{sec:av}, both of which produce non-zero baseline TSVR under degraded
+telemetry.  We state it as an assumption rather than a lemma because the
+boundary-seeking property depends on the choice of controller, not on the
+ORIUS framework itself.
+\end{assumption}
+
 \paragraph{Usage map.}  \Cref{tab:assumption_usage} shows which theorems depend on
 which assumptions.
 
-\begin{table}[h]
+\begin{table*}[t]
 \caption{Assumption usage map across the theorem programme.}
 \label{tab:assumption_usage}
-\centering\small
-\begin{tabular}{lccccccccc}
+\centering\scriptsize
+\resizebox{0.98\textwidth}{!}{%
+\begin{tabular}{lcccccccccc}
 \toprule
-\textbf{Result} & \textbf{A1} & \textbf{A2} & \textbf{A3} & \textbf{A4} & \textbf{A5} & \textbf{A6} & \textbf{A7} & \textbf{A8} & \textbf{A9} \\
+\textbf{Result} & \textbf{A1} & \textbf{A2} & \textbf{A3} & \textbf{A4} & \textbf{A5} & \textbf{A6} & \textbf{A7} & \textbf{A8} & \textbf{A9} & \textbf{A10} \\
 \midrule
-T1 OASG Existence         &\checkmark &\checkmark &  &\checkmark &  &  &  &  &  \\
-T2 Safety Preservation    &\checkmark &\checkmark &\checkmark &  &\checkmark &  &\checkmark &  &  \\
-T3 ORIUS Core Bound       &\checkmark &\checkmark &  &\checkmark &\checkmark &\checkmark &\checkmark &  &  \\
-T4 Observation Necessity  &  &\checkmark &  &\checkmark &  &  &  &  &  \\
-T5 Certificate Validity   &  &  &  &  &\checkmark &  &\checkmark &  &  \\
-T6 Certificate Expiration &  &  &  &\checkmark &  &  &\checkmark &  &\checkmark \\
-T7\_Battery Fallback      &\checkmark &  &  &\checkmark &  &  &  &\checkmark &  \\
-T8 Graceful Degradation   &\checkmark &\checkmark &\checkmark &\checkmark &\checkmark &  &  &\checkmark &  \\
-T9 Universal Impossibility&  &\checkmark &  &\checkmark &  &  &  &  &  \\
-T10 Lower Bound           &  &\checkmark &  &  &\checkmark &  &  &  &  \\
-T11 Typed Transfer        &  &  &\checkmark &\checkmark &\checkmark &  &\checkmark &\checkmark &  \\
+T1 OASG Existence         &\checkmark &\checkmark &  &\checkmark &  &  &  &  &  &\checkmark \\
+T2 Safety Preservation    &\checkmark &\checkmark &\checkmark &  &\checkmark &  &\checkmark &  &  &  \\
+T3 ORIUS Core Bound       &\checkmark &\checkmark &  &\checkmark &\checkmark &\checkmark &\checkmark &  &  &  \\
+T4 Observation Necessity  &  &\checkmark &  &\checkmark &  &  &  &  &  &  \\
+T5 Certificate Validity   &  &  &  &  &\checkmark &  &\checkmark &  &  &  \\
+T6 Certificate Expiration &  &  &  &\checkmark &  &  &\checkmark &  &\checkmark &  \\
+T7\_Battery Fallback      &\checkmark &  &  &\checkmark &  &  &  &\checkmark &  &  \\
+T8 Graceful Degradation   &\checkmark &\checkmark &\checkmark &\checkmark &\checkmark &  &  &\checkmark &  &  \\
+T9 Mandatory Release Impossibility&  &\checkmark &  &\checkmark &  &  &  &  &  &  \\
+T10 Lower Bound           &  &\checkmark &  &  &\checkmark &  &  &  &  &  \\
+T11 Typed Transfer        &  &  &\checkmark &\checkmark &\checkmark &  &\checkmark &\checkmark &  &  \\
 \bottomrule
-\end{tabular}
-\end{table}
+\end{tabular}}
+\end{table*}
 
 %% ----- Battery Ladder: T1--T4 -----
 \subsection{Battery Ladder (T1--T4): The Reference Witness}
@@ -124,10 +141,10 @@ instrumented.
 
 \begin{theorem}[T1: OASG Existence]\label{thm:T1}
 Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS satisfying
-A1, A2, and~A4.  Let $\pi$ be any quality-ignorant controller.  If $\pi$ drives
-the state within distance $\delta > 0$ of the safe-set boundary $\partial\mathcal{S}$
-with positive frequency, and the telemetry error satisfies
-$\Prob[\|\xi_t\| > \delta] > 0$, then there exists a time $t^*$ such that
+A1, A2, A4, and~\ref{ass:A10}.  Let $\pi$ be any quality-ignorant controller
+satisfying~\ref{ass:A10} (boundary-active).  If the telemetry error satisfies
+$\Prob[\|\xi_t\| > \delta_{\mathrm{bnd}}] > 0$, then there exists a time $t^*$
+such that
 \begin{equation}\label{eq:oasg_existence}
   \phi_{\mathrm{obs}}(\pi(\hat{x}_{t^*})) = 1
   \quad\text{and}\quad
@@ -137,19 +154,27 @@ $\Prob[\|\xi_t\| > \delta] > 0$, then there exists a time $t^*$ such that
 
 \begin{proof}[Proof sketch]
 \emph{Step~1 (Boundary proximity).}
-Under arbitrage-optimal dispatch, the controller drives the SoC within
+By~\ref{ass:A10}, the controller drives the true state within
 $\delta_{\mathrm{bnd}} = P_{\max}\Delta t$ of the constraint boundary with
-positive frequency (Lemma: optimal arbitrage is boundary-seeking).
+positive frequency.  Boundary-seeking is therefore a property of the controller
+class, not a derived lemma; the assumption is discharged empirically by the
+non-zero baseline TSVR observed for the LP arbitrage and no-wrapper policies in
+\S\ref{sec:battery} and~\S\ref{sec:av}.
 
 \emph{Step~2 (Observation gap).}
-Under dropout rate $d > 0$, the observation error satisfies
-$\E[|\xi_t|] \ge d \cdot \sigma_{\mathrm{drift}} \cdot \sqrt{\Delta t}$.
+Under dropout rate $d > 0$, A2 (Bounded Telemetry Error) gives a non-degenerate
+error distribution whose tail satisfies
+$\Prob[\|\xi_t\| > \delta_{\mathrm{bnd}}] > 0$ for any positive
+$\delta_{\mathrm{bnd}}$.
 
 \emph{Step~3 (Witness construction).}
-The intersection of the boundary-proximity event with the observation-error tail
-is non-empty with positive probability.  At any such step $t^*$, the observed
-safety predicate $\phi_{\mathrm{obs}}$ evaluates to safe but the true safety
-predicate $\phi_{\mathrm{true}}$ evaluates to unsafe.
+The boundary-proximity event of Step~1 and the tail event of Step~2 are
+non-trivially overlapping under A4 (Known Dynamics) because the boundary event
+has positive frequency and the tail event has positive probability per step.
+At any step $t^*$ in the intersection, the observed safety predicate
+$\phi_{\mathrm{obs}}$ evaluates to safe (the observed state is interior) but
+the true safety predicate $\phi_{\mathrm{true}}$ evaluates to unsafe (the true
+state has crossed the boundary).
 \end{proof}
 
 \paragraph{Battery instantiation.}
@@ -182,7 +207,9 @@ Since $x_t \in \Ut = [\hat{x}_t - m_t, \hat{x}_t + m_t]$, we have
 $|x_t - \hat{x}_t| \le m_t$.  The one-step dynamics give
 \begin{align}
   s_{t+1} &= s_t + \eta_c P_t^{\mathrm{chg}}\Delta t - \eta_d^{-1}P_t^{\mathrm{dis}}\Delta t + \epsilon_t \notag\\
-  &\ge \hat{s}_t - m_t + \eta_c P_t^{\mathrm{chg}}\Delta t - \eta_d^{-1}P_t^{\mathrm{dis}}\Delta t - \epsilon_{\mathrm{model}} \notag\\
+  &\ge \hat{s}_t - m_t + \eta_c P_t^{\mathrm{chg}}\Delta t
+      - \eta_d^{-1}P_t^{\mathrm{dis}}\Delta t
+      - \epsilon_{\mathrm{model}} \notag\\
   &\ge \SOC_{\min} + m_t - m_t - \epsilon_{\mathrm{model}} = \SOC_{\min} - \epsilon_{\mathrm{model}}.
 \end{align}
 Analogously for the upper bound.  Under A1, $\epsilon_{\mathrm{model}}$ is absorbed
@@ -204,18 +231,25 @@ By the calibration contract (A5), $\Prob[x_t \notin \Ut \mid \mathcal{H}_t] \le 
 Given the risk-envelope contract, the per-step risk budget is
 $r_t = \alpha(1 - w_t)$, whence
 $\Prob[Z_t = 1 \mid \mathcal{H}_t] \le \alpha(1 - w_t)$.  Summing:
-\[
+\begin{align*}
   \E[V_T] = \sum_{t=1}^{T}\E[Z_t]
-  \le \sum_{t=1}^{T}\alpha(1-w_t)
-  = \alpha\sum_{t=1}^{T}(1-w_t)
-  = \alpha(1-\bar{w})T. \qedhere
-\]
+  &\le \sum_{t=1}^{T}\alpha(1-w_t) \\
+  &= \alpha\sum_{t=1}^{T}(1-w_t)
+   = \alpha(1-\bar{w})T. \qedhere
+\end{align*}
 \end{proof}
 
 \paragraph{Numerical example.}
-With $\alpha = 0.10$, $T = 288$ (battery), and $\bar{w} = 0.83$ (moderate degradation):
-$\E[V_T] \le 0.10 \times 0.17 \times 288 = 4.9$ violations.  The \emph{observed}
-violation count is 0, well below the theoretical bound.
+The numbers below are illustrative for the hypothetical moderate-degradation
+row of \Cref{tab:core_bound_scenarios}, not the observed battery scenario.
+With $\alpha = 0.10$, $T = 288$ (battery horizon), and a hypothetical
+$\bar{w} = 0.83$ (moderate degradation):
+$\E[V_T] \le 0.10 \times 0.17 \times 288 = 4.9$ violations.  The actual
+battery runtime achieves $\bar{w} \in [0.905, 0.999]$ across all four
+controller configurations (see \S\ref{sec:battery}), which corresponds to the
+mild-to-perfect rows of the same table and predicts $\E[V_T] \le 2.74$
+violations under the worst observed $\bar{w}=0.905$.  The empirically observed
+violation count is 0, well below either bound.
 
 \Cref{tab:core_bound_scenarios} illustrates the bound under varying degradation.
 
@@ -223,10 +257,10 @@ violation count is 0, well below the theoretical bound.
 \caption{ORIUS core bound $\E[V_T] \le \alpha(1-\bar{w})T$ under varying
 degradation scenarios ($\alpha = 0.10$, $T = 288$).}
 \label{tab:core_bound_scenarios}
-\centering\small
+\centering\scriptsize
 \begin{tabular}{lrrl}
 \toprule
-\textbf{Scenario} & $\bar{w}$ & $\E[V_T]$ bound & \textbf{TSVR bound (\%)} \\
+\textbf{Scenario} & $\bar{w}$ & $\E[V_T]$ & \textbf{TSVR (\%)} \\
 \midrule
 Perfect telemetry      & 1.00 & 0.0  & 0.00 \\
 Mild degradation       & 0.95 & 1.4  & 0.50 \\
@@ -254,14 +288,17 @@ IR~$> 0$.
 
 \subsection{Certificate and Temporal Theorems (T5--T8)}
 
-\begin{definition}[T5: Certificate Validity Horizon]\label{thm:T5}
-Under A5 and A7, the safety certificate remains valid for the largest horizon
-$\tau_t$ whose forward tube stays inside the safe SoC bounds:
-\begin{equation}
-  \tau_t = \left\lfloor \frac{\Emax - E_t}{\sigma_d} \right\rfloor,
-\end{equation}
-where $\sigma_d$ is the drift scale.
-\end{definition}
+\begin{theorem}[T5: Finite-Horizon Certificate Validity]\label{thm:T5}
+Let $X_t$ be the observation-consistent state set at time~$t$, let
+$\tilde a_{t:t+h}$ be the certified release or fallback sequence, and let
+$S$ be the safe-state set.  If
+\[
+  \mathcal R_{t+j}(X_t,\tilde a_{t:t+j}) \subseteq S
+  \qquad j=0,\ldots,h,
+\]
+then the certificate issued at time~$t$ is valid for horizon~$h$ unless a
+certificate-invalidating event occurs.
+\end{theorem}
 
 \begin{proposition}[T6: Certificate Expiration Bound]\label{thm:T6}
 Under A4, A7, and~A9, for any confidence level $\delta \in (0,1)$ the battery
@@ -283,79 +320,81 @@ safe-landing recovery action is admissible near the lower or upper boundary when
 the actuator limits permit it, and the runtime fails closed otherwise.
 \end{proposition}
 
-\begin{proposition}[T8: Graceful Degradation Dominance]\label{thm:T8}
-Under A2 and A5, the inflation factor $\alpha$ is non-decreasing in degradation
-severity $(1 - w_t)$.  Consequently, as observation quality degrades, the safe
-action set shrinks monotonically, ensuring degradation-proportional conservatism.
-\end{proposition}
+\begin{theorem}[T8: Graceful Degradation Dominance with Useful Work]\label{thm:T8}
+Let $P_G$ be the ORIUS graceful-degradation policy and $P_U$ an uncontrolled
+persistence policy under the same admissible fault trace.  If
+$Z_t^G \le Z_t^U$ for all~$t$ and $W_G\ge\lambda W_U$ for some
+$\lambda\in(0,1]$, then $P_G$ weakly dominates $P_U$ in safety while preserving
+at least a $\lambda$-fraction of useful work.
+\end{theorem}
 
 %% ----- Universal Extension: T9--T11 -----
 \subsection{Universal Extension (T9--T11)}
 
 The universal theorem is T11: any compliant domain inherits the ORIUS
 runtime-assurance contract through the typed adapter obligations. T9 and T10
-remain supporting lower-bound extensions until their universal constants and
-assumptions are discharged across Battery, AV, and Healthcare. The authority for
-their status is \texttt{reports/publication/theorem\_promotion\_scorecard.json},
-not the raw theorem inventory or this prose.
+are promoted as scoped lower-bound surfaces: T9 covers mandatory
+observation-only release with empty common safe core, and T10 covers a two-state
+boundary-indistinguishability problem. Their status is governed by the
+promotion matrix and result-card artifacts, not prose alone.
 
-\begin{proposition}[T9: Scoped Universal Impossibility --- Reliability-Aware Repair is
-Necessary]\label{thm:T9}
-Consider a controller that does \emph{not} adapt its safety margin to telemetry
-reliability $w_t$.  Under persistent degradation with non-zero fault rate and
-boundary-reachability assumptions:
-\begin{equation}\label{eq:T9}
-  \E[V_T] \;\ge\; c \cdot d \cdot T,
-\end{equation}
-where $c > 0$ is a domain-dependent constant and $d$ is the mean degradation rate.
+\begin{proposition}[T9: Impossibility of Quality-Ignorant Mandatory Release]\label{thm:T9}
+For an observation $o$, define $B(o)=\{x:h(x)=o\}$ and
+$K(o)=\cap_{x\in B(o)}C(x)$.  If $K(o)=\varnothing$, then no
+observation-only mandatory-release controller $\pi(o)$ can guarantee
+true-state safety for all $x\in B(o)$.
 \end{proposition}
 
-\begin{proof}[Proof sketch ($\varphi$-mixing + Azuma--Hoeffding)]
-\emph{(i)} Partition the horizon into $k$ analysis windows separated by
-$\tau_{\mathrm{mix}}$ buffer gaps.
-\emph{(ii)} Within each window, the reference-domain no-free-safety witness
-(T4) yields per-window violation probability $p_{\mathrm{win}} \ge c\,d$.
-\emph{(iii)} Define martingale differences
-$D_j = Z_j^{\mathrm{win}} - \E[Z_j^{\mathrm{win}} \mid \mathcal{F}_{(j-1)(\ell+\tau_{\mathrm{mix}})}]$.
-\emph{(iv)} By Azuma--Hoeffding concentration,
-$\Prob\bigl[\sum_j D_j \le -t\bigr] \le \exp(-2t^2/k)$.
-\emph{(v)} Combining: $\E[V_T] \ge \Omega(d\,T)$.
+\begin{proof}
+A mandatory-release controller chooses a single action $a=\pi(o)$.  Since the
+common safe core is empty, no single action lies in every $C(x)$ for
+$x\in B(o)$, so there exists $x^\dagger\in B(o)$ with $a\notin C(x^\dagger)$;
+if the latent state realizes as $x^\dagger$, the released action is unsafe.
+The result is a structural impossibility for the mandatory-release policy
+class; abstention, fallback, uncertainty expansion, and denial are outside
+this class by definition and are precisely the moves ORIUS adds.  The empty
+safe-core hypothesis is discharged empirically by the non-zero baseline TSVR
+of the LP arbitrage and no-wrapper policies in \S\ref{sec:battery} and
+\S\ref{sec:av}: those policies operate as observation-only mandatory-release
+controllers on ambiguity classes where $K(o)=\varnothing$ on a positive
+fraction of steps.
 \end{proof}
-
-\paragraph{Interpretation.}  T9 is retained as a draft structural-necessity
-extension. It is not promoted until the generated package records a discharged
-positive witness constant and mixing bridge in Battery, AV, and Healthcare.
 
 \begin{proposition}[T10: Boundary-Indistinguishability Lower Bound]\label{thm:T10}
-Fix horizon $T$.  For each step $t$, consider a binary hypothesis test between
-safe ($H_{0,t}$) and unsafe ($H_{1,t}$) states with observation laws
-$P_{0,t}, P_{1,t}$ satisfying $\mathrm{TV}(P_{0,t}, P_{1,t}) \le w_t$ and unsafe
-prior $\Prob(H_{1,t}) \ge p_t$.  Then every controller $\pi$ satisfies
-\begin{equation}\label{eq:T10}
-  \E[V_T(\pi)] \;\ge\; \frac{1}{2}\sum_{t=1}^{T} p_t\,(1 - w_t).
-\end{equation}
-In particular, if $p_t \ge \alpha/2$ for all $t$:
-\begin{equation}\label{eq:T10_special}
-  \boxed{\;\E[V_T(\pi)] \;\ge\; \tfrac{1}{4}\,\alpha\,(1-\bar{w})\,T.\;}
-\end{equation}
+Let $x_0,x_1$ be latent boundary states with induced observation
+distributions $P_0,P_1$.  If $d_{\mathrm{TV}}(P_0,P_1)\le\epsilon$ and
+$C(x_0)\cap C(x_1)=\varnothing$, then every observation-only mandatory-release
+controller satisfies
+\[
+  \sup_{i\in\{0,1\}}\Pr_{O\sim P_i}\!\left[\pi(O)\notin C(x_i)\right]
+  \ge \frac{1-\epsilon}{2}.
+\]
 \end{proposition}
 
-\begin{proof}[Proof (Le Cam's method)]
-At each step $t$, the controller faces a binary classification problem:
-distinguish $H_{0,t}$ (safe) from $H_{1,t}$ (unsafe) based on a single observation.
-By Le~Cam's lemma, the maximum error rate of any test $\psi_t$ is at least
-$(1 - w_t)/2$.  The probability of a violation is
-$\Prob[Z_t = 1] \ge p_t \cdot (1 - w_t)/2$.
-Summing over $T$ steps yields \cref{eq:T10}.
+\begin{proof}
+Because the safe-action sets are disjoint, a single released action $\pi(O)$
+must fail to lie in $C(x_i)$ for at least one $i\in\{0,1\}$ on any observation
+realization.  Le~Cam's two-point inequality bounds the minimum sum of error
+probabilities for any test between $P_0$ and $P_1$ from below by
+$1 - d_{\mathrm{TV}}(P_0,P_1) \ge 1 - \epsilon$; taking the supremum over the
+two latent labels yields the half of that lower bound stated above.
 \end{proof}
 
+\paragraph{Scope: TV distance is not the reliability weight.}
+The bound is stated in terms of an exogenous TV distance $\epsilon$ between
+two latent-state-induced observation laws.  $\epsilon$ is \emph{not} the ORIUS
+reliability weight $w_t$.  The connection to the rest of the framework is
+indirect: A2 (Bounded Telemetry Error) supplies a function $g(w_t)$ that
+controls the observation error envelope, and a TV bound of the form
+$\epsilon \le \epsilon(g(w_t))$ can be derived only for specific noise models
+(Gaussian, bounded-support).  T10 therefore applies only to ambiguity classes
+admitting such a TV bound; we do not claim that $w_t$ itself behaves as a TV
+distance.
+
 \paragraph{Reliability--risk frontier.}
-Under the explicit boundary-mass model above, T10 gives the draft frontier that the
-minimum mean reliability needed to achieve an episode
-violation budget $r^*$ is
-\begin{equation}
-  \bar{w}^* = 1 - \frac{r^*}{\alpha\,T}.
-\end{equation}
+T10 is a two-state lower bound, not a global minimax frontier.  The scoped
+minimax row \texttt{T\_minimax} uses the same TV argument only over finite
+two-state ambiguity classes and does not claim a matching universal upper bound.
 
 \begin{theorem}[T11: Typed Structural Transfer]\label{thm:T11}
 Let $\mathcal{D}$ be a domain instantiation satisfying the adapter contract
@@ -376,7 +415,7 @@ Then:
 \end{equation}
 \end{theorem}
 
-\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality]
+\begin{corollary}[Covered Observation-Ambiguity Optimality]
 \label{cor:T10_T11_observation_ambiguity_sandwich}
 For an observation $o$, let
 $B(o)=\{x:h(x)=o\}$ be its ambiguity class and
@@ -446,7 +485,7 @@ corollaries.  The T-identifiers serve as traceability anchors:
   \item \textbf{Construction} (T2, with T3 as a corollary): covered uncertainty
         sets, repair, and the risk-envelope contract supply the ORIUS upper
         guarantee.
-  \item \textbf{Operationalization} (supporting T5--T8): certificate horizon, expiration,
+  \item \textbf{Operationalization} (scoped T5--T8): certificate horizon, expiration,
         fallback, and graceful degradation make release time-bounded and
         fail-closed.
   \item \textbf{Transfer and optimality} (T11 plus the T10/T11 ambiguity
@@ -455,7 +494,7 @@ corollaries.  The T-identifiers serve as traceability anchors:
         ambiguity optimality claim.
 \end{itemize}
 
-The generated theorem-promotion package confirms that T9 and T10 are explicitly
-non-promoted until the three-domain discharge, mechanized proof, proof-rigor, and
-artifact-evidence gates all pass. The theorem audit register remains a metadata
-inventory; it is not the authority for promoting T9/T10.
+The generated theorem-promotion matrix confirms that T9 and T10 are promoted
+only in their scoped forms: mandatory-release empty-safe-core impossibility and
+two-state boundary indistinguishability.  It is also the authority for proof,
+code, test, artifact, hash, and claim-boundary status.

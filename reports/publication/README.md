@@ -47,6 +47,8 @@ The promoted ML center is grouped calibration and runtime safety under degraded 
 - `reports/publication/three_domain_utility_safety_dominance.csv`
 - `reports/publication/utility_preserving_safety_scorecard.csv`
 - `reports/publication/utility_preserving_safety_scorecard.md`
+- `reports/publication/security_governance_ablation_matrix.csv`
+- `reports/publication/orius_failure_modes_falsification_table.csv`
 - `reports/publication/novelty_separation_matrix.csv`
 - `reports/publication/what_orius_is_not_matrix.csv`
 
@@ -56,6 +58,11 @@ The utility-preserving safety scorecard is the claim-facing surface for the
 shutdown, AV against always-brake, and Healthcare against always-alert. The
 baseline and ablation tables are explicitly diagnostic cross-domain proxy
 surfaces and must not be read as battery-witness replacements.
+The security-governance ablation and falsification-boundary tables make the
+non-performance failure modes visible in the submission-facing paper: missing
+hashes, invalid signatures, stale device identity, invalid fallback, corrupted
+release evidence, unsafe adapters, and utility collapse must fail closed or demote
+the claim.
 
 ## Utility-preserving safety gate
 

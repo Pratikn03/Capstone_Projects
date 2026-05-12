@@ -54,12 +54,15 @@ A5 & \textbf{Conformal Coverage}: The base conformal predictor achieves coverage
 A6 & \textbf{Bounded Drift Rate}: Distribution shift rate is bounded within the adaptation window. \\
 A7 & \textbf{Finite Horizon}: Each episode has $T < \infty$. \\
 A8 & \textbf{Constraint Continuity}: Safety constraints are continuous in the state space. \\
+A9 & \textbf{Sub-Gaussian Drift Proxy}: The battery certificate drift process admits a sub-Gaussian scale and a boundary gap supporting the T6 first-passage bound. \\
+A10 & \textbf{Boundary-Active Controller}: The quality-ignorant baseline controller used in the T1 witness construction drives the true state within actuator-bounded distance of $\partial\mathcal{S}$ with positive frequency.  Discharged empirically by the non-zero baseline TSVR of the LP arbitrage and no-wrapper policies. \\
 \bottomrule
 \end{longtable}
 
 \section{Theorem Summary}\label{app:theorems}
 
-\begin{longtable}{llll}
+\small
+\begin{longtable}{p{0.10\linewidth}p{0.35\linewidth}p{0.22\linewidth}p{0.24\linewidth}}
 \toprule
 \textbf{ID} & \textbf{Name} & \textbf{Assumptions} & \textbf{Verification} \\
 \midrule
@@ -68,22 +71,23 @@ A8 & \textbf{Constraint Continuity}: Safety constraints are continuous in the st
 \textbf{ID} & \textbf{Name} & \textbf{Assumptions} & \textbf{Verification} \\
 \midrule
 \endhead
-T1  & OASG Existence                    & A1, A2, A4   & Proof + Empirical + Code \\
+T1  & OASG Existence                    & A1, A2, A4, A10 & Proof + Empirical + Code \\
 T2  & One-Step Safety Preservation      & A1--A3, A5, A7 & Proof + Empirical + Code \\
 T3  & ORIUS Core Bound                  & A1, A2, A4--A7 & Proof + Empirical + Code \\
 T4  & No Free Safety                    & A2, A4       & Proof + Empirical \\
-T5  & Certificate Validity Horizon      & A5, A7       & Proof + Empirical \\
+T5  & Finite-Horizon Certificate Validity & A1--A5     & Proof + Empirical + Code \\
 T6  & Certificate Expiration Bound      & A4, A7, A9   & Proof + Empirical + Code \\
 T7\_Battery  & Feasible Fallback Existence       & A1, A4, A8   & Proof + Code \\
-T8  & Graceful Degradation Dominance    & A2, A5       & Proof + Empirical + Code \\
-T9  & Universal Impossibility           & A2, A4       & Proof (formal only) \\
-T10 & Boundary-Indistinguishability LB  & A2, A5       & Proof + Empirical \\
+T8  & Graceful Degradation Dominance with Useful Work & A1--A5, A8 & Proof + Empirical + Code \\
+T9  & Mandatory Release Impossibility   & Empty safe core & Proof + Empirical + Code \\
+T10 & Boundary-Indistinguishability LB  & Two-state TV & Proof + Empirical + Code \\
 T11 & Typed Structural Transfer         & A3--A5, A7, A8 & Proof + Code \\
 \bottomrule
 \end{longtable}
+\normalsize
 
-The defended theorem surfaces have complete formal proofs, while the visible draft
-extensions remain explicitly scoped in the integrated audit.  The ``Empirical'' tag
+The defended theorem surfaces have complete formal proofs, while scoped theorem
+rows remain claim-boundary constrained in the integrated audit.  The ``Empirical'' tag
 indicates that the theorem's predictions match the observed pipeline metrics.  The ``Code'' tag
 indicates a direct code-level anchor in the kernel or test suite.
 
@@ -125,8 +129,8 @@ Each row reports:
 
 \section{Complete AV Fault Coverage Matrix}\label{app:av_fault_full}
 
-The all-zip grouped nuPlan fault-family coverage matrix is recorded in
-\texttt{reports/orius\_av/nuplan\_allzip\_grouped\_runtime\_dropout\_aligned\_m15\_fulltest/fault\_family\_coverage.csv}.
+The all-zip grouped nuPlan fault-family coverage matrix is recorded in the AV
+fault-family coverage CSV listed by the compact publication manifest.
 The ORIUS controller reaches high ego-speed coverage on the promoted row, while
 relative gap remains weaker and is retained as a limitation.
 
@@ -204,7 +208,8 @@ interaction.
 
 The combined manifest for both domains contains the following artifact checksums:
 
-\begin{longtable}{lp{4cm}l}
+\small
+\begin{longtable}{lp{4.2cm}l}
 \toprule
 \textbf{Domain} & \textbf{Artifact} & \textbf{SHA-256 prefix (8 chars)} \\
 \midrule
@@ -213,18 +218,19 @@ The combined manifest for both domains contains the following artifact checksums
 \textbf{Domain} & \textbf{Artifact} & \textbf{SHA-256 prefix (8 chars)} \\
 \midrule
 \endhead
-Battery & \texttt{runtime\_governance\_summary.csv} & \texttt{a3b7e1f2} \\
-Battery & \texttt{battery\_deep\_oqe\_safety\_metrics.csv} & \texttt{8d4c2a91} \\
-Battery & \texttt{contract\_verifier\_report.json} & \texttt{f1e09b3c} \\
-Battery & \texttt{combined\_manifest.json} & \texttt{c7d4a8e5} \\
+Battery & Runtime governance summary & \texttt{a3b7e1f2} \\
+Battery & Battery OQE safety metrics & \texttt{8d4c2a91} \\
+Battery & Contract verifier report & \texttt{f1e09b3c} \\
+Battery & Combined manifest & \texttt{c7d4a8e5} \\
 \midrule
-AV & \texttt{runtime\_governance\_summary.csv} & \texttt{2e8f5b71} \\
-AV & \texttt{fault\_family\_coverage\_table.csv} & \texttt{9a3d7c42} \\
-AV & \texttt{conformal\_training\_summary.csv} & \texttt{b5e12f8d} \\
-AV & \texttt{shift\_aware\_\{target\}\_summary.csv} & \texttt{d4a6c913} \\
-AV & \texttt{combined\_manifest.json} & \texttt{71f3e8b2} \\
+AV & Runtime governance summary & \texttt{2e8f5b71} \\
+AV & Fault-family coverage table & \texttt{9a3d7c42} \\
+AV & Conformal training summary & \texttt{b5e12f8d} \\
+AV & Shift-aware target summary & \texttt{d4a6c913} \\
+AV & Combined manifest & \texttt{71f3e8b2} \\
 \bottomrule
 \end{longtable}
+\normalsize
 
 Full SHA-256 checksums and file sizes are recorded in the respective
 \texttt{combined\_manifest.json} files.  The \texttt{Makefile} target

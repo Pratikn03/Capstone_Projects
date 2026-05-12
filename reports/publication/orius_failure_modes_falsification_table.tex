@@ -1,0 +1,21 @@
+\begin{table*}[t]
+\centering
+\caption{Falsification boundaries for the ORIUS claim. These rows define what would break the present bounded-predeployment claim and how the repo currently guards or scopes that risk.}
+\label{tab:orius-failure-falsification}
+\footnotesize
+\renewcommand{\arraystretch}{1.10}
+\begin{tabularx}{\textwidth}{p{0.18\textwidth} p{0.29\textwidth} p{0.24\textwidth} X}
+\toprule
+\textbf{Failure mode} & \textbf{What would falsify the current claim} & \textbf{Current guardrail} & \textbf{Boundary or next step} \\
+\midrule
+Coverage miss exceeds $\alpha$ & Empirical or certified coverage miss rate exceeds the theorem/reporting budget on a promoted row & Coverage/calibration artifacts plus the T11 coverage obligation & Recalibrate uncertainty sets or demote the affected row until coverage is restored. \\
+Safe-set adapter is wrong & Domain audit shows $C(x)$ excludes a truly safe action or includes an unsafe action & Adapter-validity assumption and domain runtime-contract witness & Correct the adapter and rerun domain-specific runtime evidence. \\
+Fallback is not admissible & Fallback violates true-state safety or operational admissibility under a promoted scenario & Release-contract postcondition tests and fallback-validity theorem rows & Replace fallback, deny release, or narrow the claim boundary. \\
+Repair leaves the safe core & Repaired action fails membership in the uncertainty-set safe-action intersection & Canonical release evidence and T11 repair-membership obligation & Fail closed and rerun repair validation before promotion. \\
+Audit chain is broken & Certificate hash, signature, or append-only chain cannot be verified for a promoted release row & Certificate schema and deployment-security validators & Do not use the row as claim-governing evidence until provenance is repaired. \\
+Utility collapses to shutdown & ORIUS matches a fail-safe reference only by always braking, alerting, or shutting down & Utility-preserving safety scorecard & Report the row as safe but vacuous; improve controller/fallback policy before claiming non-vacuity. \\
+Closed-loop dynamics diverge & nuPlan, CARLA, or physical loop reveals behavior not represented by bounded replay/surrogate dynamics & Validation-boundary table and external-validation manifest & Promote only after closed-loop evidence exists; otherwise keep the replay boundary explicit. \\
+Clinical context differs & Prospective/site clinical use has different workflow, population, or utility costs than retrospective monitoring & Clinical boundary table and source/time-holdout evidence & Require prospective/site validation before clinical-use claims. \\
+\bottomrule
+\end{tabularx}
+\end{table*}

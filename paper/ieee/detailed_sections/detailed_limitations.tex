@@ -57,8 +57,29 @@ schedules are optimal) has not been demonstrated beyond the active Battery, AV,
 and Healthcare rows.  Adapting to a new domain still requires implementing the six
 typed adapter methods and conducting a domain-specific calibration run.
 
-\IfFileExists{../../reports/publication/validation_boundary_table.tex}{%
-  \input{../../reports/publication/validation_boundary_table}%
+\IfFileExists{reports/publication/validation_boundary_table.tex}{%
+  \input{reports/publication/validation_boundary_table.tex}%
+}{}
+
+\paragraph{Governance and security ablations.}
+The runtime contract can also fail through provenance and governance channels rather
+than through prediction error.  \Cref{tab:security-governance-ablations} records the
+fail-closed ablations used to keep these channels visible: missing model hashes,
+bad certificate signatures, stale or replayed device identity, invalid fallback
+actions, and corrupted compact release witnesses.
+
+\IfFileExists{reports/publication/security_governance_ablation_matrix.tex}{%
+  \input{reports/publication/security_governance_ablation_matrix.tex}%
+}{}
+
+\paragraph{Falsification boundaries.}
+ORIUS is strongest when it states not only what passes, but also what would falsify
+the current bounded claim.  \Cref{tab:orius-failure-falsification} lists the main
+ways the present evidence package could fail and the corresponding demotion or
+rerun obligation.
+
+\IfFileExists{reports/publication/orius_failure_modes_falsification_table.tex}{%
+  \input{reports/publication/orius_failure_modes_falsification_table.tex}%
 }{}
 
 \subsection{Future Work}

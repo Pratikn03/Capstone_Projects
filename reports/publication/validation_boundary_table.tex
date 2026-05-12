@@ -1,19 +1,19 @@
-\begin{table}[htbp]
+\begin{table*}[t]
 \centering
-\scriptsize
 \caption{Validation boundary for the current ORIUS evidence package.}
 \label{tab:validation-boundary}
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{llll}
+\footnotesize
+\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\textwidth}{p{0.17\textwidth} p{0.48\textwidth} X}
 \toprule
-Evidence tier & Current status & Claim allowed & Claim not allowed\\
+\textbf{Evidence tier} & \textbf{Status and allowed claim} & \textbf{Not allowed}\\
 \midrule
-Battery runtime & completed locked witness runtime & theorem-grade witness plus bounded software/HIL-style evidence & physical field deployment or certified grid operation\\
-nuPlan AV replay & completed all-zip grouped runtime replay/surrogate & bounded AV runtime-denominator evidence & road deployment or full autonomous-driving closure\\
-CARLA closed loop & not completed in this PDF & future controllable stress-test tier & completed simulator closure\\
-Healthcare MIMIC runtime & completed retrospective monitoring row & bounded alert-release monitoring evidence & live clinical deployment or clinical decision-support approval\\
-eICU/source holdout & not staged/completed in this PDF & future external source-holdout tier & completed multi-site clinical validation\\
-Physical battery HIL/bench & not completed in this PDF & future physical validation tier & physical HIL, bench, or field validation\\
+Battery runtime & Completed locked witness runtime; theorem-grade witness plus bounded software/HIL-style evidence & Physical field deployment or certified grid operation\\
+nuPlan AV replay & Completed all-zip grouped runtime replay/surrogate; bounded AV runtime-denominator evidence & Road deployment or full autonomous-driving closure\\
+CARLA closed loop & Not completed in this PDF; future controllable stress-test tier & Completed simulator closure\\
+Healthcare MIMIC runtime & Completed retrospective monitoring row; bounded alert-release monitoring evidence & Live clinical deployment or clinical decision-support approval\\
+eICU/source holdout & Not staged/completed in this PDF; future external source-holdout tier & Completed multi-site clinical validation\\
+Physical battery HIL/bench & Not completed in this PDF; future physical validation tier & Physical HIL, bench, or field validation\\
 \bottomrule
-\end{tabular}}
-\end{table}
+\end{tabularx}
+\end{table*}

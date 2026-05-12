@@ -28,8 +28,11 @@ $\epsilon_t$.  We model degraded observation as a map
 where $\delta_t$ is an \emph{infrastructure fault vector} drawn from a fault family
 $\mathcal{F}$.  In our implementation, the fault family includes:
 
-\begin{center}
-\begin{tabular}{ll}
+\begin{table}[t]
+\caption{Fault families used to instantiate degraded observation.}
+\label{tab:oasg_fault_families}
+\centering\footnotesize
+\begin{tabularx}{\linewidth}{lX}
 \toprule
 \textbf{Fault family} & \textbf{Description} \\
 \midrule
@@ -40,8 +43,8 @@ $\mathcal{F}$.  In our implementation, the fault family includes:
 \texttt{spikes}         & Transient high-magnitude outlier readings \\
 \texttt{out\_of\_order} & Packet reordering violating causal ordering \\
 \bottomrule
-\end{tabular}
-\end{center}
+\end{tabularx}
+\end{table}
 
 The degraded observation $\ztt$ may differ from $\zt$ by an arbitrarily large amount
 that depends on the fault severity and duration.
@@ -72,9 +75,13 @@ where $s_{\mathrm{shift}}$ is a shift score computed by the adaptive mechanism
 Let $S \subset \mathcal{X}$ be the safe region and let $\pi$ be a controller policy.
 The \emph{OASG} at time $t$ is the event
 \begin{equation}\label{eq:oasg}
-  \OASG_t \;=\; \bigl\{\pi(\ztt) \text{ is safe w.r.t.\ } \ztt\bigr\}
-  \;\wedge\;
-  \bigl\{\exists\, x \in \Ut : f(x, \pi(\ztt), \omega_t) \notin S\bigr\}.
+  \begin{aligned}
+  \OASG_t
+    &= \bigl\{\pi(\ztt) \in C(\ztt)\bigr\} \\
+    &\quad{}\wedge
+       \bigl\{\exists\, x \in \Ut :
+       f(x,\pi(\ztt),\omega_t) \notin S\bigr\}.
+  \end{aligned}
 \end{equation}
 The OASG is non-empty whenever there exists a true state consistent with the
 degraded observation for which the controller's action leads to a safety violation.
@@ -138,9 +145,9 @@ constraint.  The Battery domain exhibits 20 such counterexamples; the all-zip
 grouped nuPlan AV baseline exhibits an OASG rate of 0.0230 over 1{,}531{,}104
 steps.
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.85\textwidth]{fig_observed_vs_true_counterexamples}
+\includegraphics[width=0.86\textwidth]{fig_observed_vs_true_counterexamples}
 \caption{Observed vs.\ true state counterexamples under a quality-ignorant
 baseline.  Each point is a time step where the observed state satisfies
 the safety constraint but the true state does not---the defining signature
@@ -148,4 +155,4 @@ of the OASG (Definition~\ref{def:oasg}).  Battery domain shown; the bounded AV
 counterpart is reported in \cref{sec:av}.  Artifact:
 \texttt{reports/battery\_av/battery/fig\_observed\_vs\_true\_counterexamples.png}.}
 \label{fig:oasg_witness}
-\end{figure}
+\end{figure*}

@@ -11,23 +11,25 @@ campaign-level summaries that auditors can inspect.
 \Cref{tab:contract_objects} lists the principal contract objects, their
 associated assumptions, and their role in the kernel.
 
-\begin{table}[h]
+\begin{table}[t]
 \caption{Typed contract objects produced by the \dcs{} kernel.}
 \label{tab:contract_objects}
-\centering\small
-\begin{tabular}{lll}
+\centering\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{\linewidth}{p{2.7cm}p{1.25cm}X}
 \toprule
-\textbf{Contract object} & \textbf{Assumptions} & \textbf{Role} \\
+\textbf{Contract object} & \textbf{A} & \textbf{Role} \\
 \midrule
 \texttt{ObservationPacket}            & A1       & Raw telemetry + parsed state \\
 \texttt{ReliabilityAssessment}        & A2, A5, A6 & Detection output: $\wt$, flags \\
-\texttt{ObservationConsistentStateSet} & A2, A5   & Uncertainty envelope $\Ut$ \\
+\texttt{ObsConsistentStateSet} & A2, A5   & Uncertainty envelope $\Ut$ \\
 \texttt{SafetySpec}                   & A3, A4, A8 & Domain constraints + fallback \\
-\texttt{SafeActionSet}               & A3, A4   & Tightened admissible actions \\
+\texttt{SafeActionSet}                & A3, A4   & Tightened admissible actions \\
 \texttt{RepairDecision}              & A4       & Shield output \\
-\texttt{SafetyCertificate}           & ---      & Auditable record binding all stages \\
+\texttt{SafetyCertificate}           & CP1--CP6 & Auditable record binding all stages \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \subsection{ContractVerifier}
@@ -37,11 +39,11 @@ The \texttt{ContractVerifier} is a second-pass checker that validates a
 predicate is a boolean function of the certificate's payload.  The verifier evaluates
 all predicates and returns a \texttt{VerificationResult} with:
 \begin{itemize}[nosep]
-  \item \texttt{chain\_valid}: conjunction of all predicate outcomes.
-  \item \texttt{failure\_rows}: count of certificates that failed at least one predicate.
-  \item \texttt{required\_payload\_pass\_rate}: fraction of certificates with all
+  \item \textbf{Chain validity}: conjunction of all predicate outcomes.
+  \item \textbf{Failure rows}: count of certificates that failed at least one predicate.
+  \item \textbf{Required-payload rate}: fraction of certificates with all
         required fields present.
-  \item \texttt{audit\_completeness\_rate}: fraction of steps with a valid certificate.
+  \item \textbf{Audit completeness}: fraction of steps with a valid certificate.
 \end{itemize}
 
 \subsection{Contract Predicates}
@@ -62,33 +64,35 @@ every certificate:
         within an episode.
 \end{enumerate}
 
-The contract predicate CP1 (monotone inflation) is the subject of Theorem~T4 and
-was the focus of a bug fix validated with 200/200 trial runs at zero failures.
+The contract predicate CP1 (monotone inflation) is a runtime-law check: lower
+reliability may widen the uncertainty set, but it must never shrink it.  The
+observation-ambiguity result in Theorem~T4 then explains why this check matters:
+when degraded observations collapse distinct hidden states into the same
+observation class, quality-ignorant release can become unsafe.
 
 \subsection{Domain Instantiation Protocol}
 
-A \texttt{DomainInstantiation} protocol class specifies the typed methods that an
-adapter must implement.  The protocol is defined as a Python
-\texttt{typing.Protocol} in \texttt{contracts.py}:
+A \texttt{DomainInstantiation} adapter implements the small typed surface in
+\cref{tab:domain_protocol_methods}.  This keeps the kernel stable: adding a
+domain means implementing these methods, not changing the release contract.
 
-\begin{verbatim}
-class DomainInstantiation(Protocol):
-    @property
-    def domain_id(self) -> str: ...
-    def assess(self, obs: ObservationPacket,
-               history: Sequence[...]) -> ReliabilityAssessment: ...
-    def calibrate(self, state: Mapping, uncertainty: Mapping,
-                  quantile: float,
-                  reliability: ReliabilityAssessment)
-                  -> ObservationConsistentStateSet: ...
-    def constrain(self, ocss: ObservationConsistentStateSet,
-                  spec: SafetySpec) -> SafeActionSet: ...
-    def shield(self, candidate: Mapping, safe_set: SafeActionSet,
-               spec: SafetySpec) -> RepairDecision: ...
-    def certify(self, ...) -> SafetyCertificate: ...
-\end{verbatim}
-
-Any adapter that satisfies this \texttt{Protocol} can be plugged into the kernel.
+\begin{table}[t]
+\caption{\texttt{DomainInstantiation} adapter surface.}
+\label{tab:domain_protocol_methods}
+\centering\footnotesize
+\begin{tabularx}{\linewidth}{lX}
+\toprule
+\textbf{Method} & \textbf{Contract output} \\
+\midrule
+\texttt{domain\_id} & Stable domain identifier for evidence rows and certificates. \\
+\texttt{assess} & \texttt{ReliabilityAssessment} from current observation and history. \\
+\texttt{calibrate} & \texttt{ObservationConsistentStateSet} with reliability-aware uncertainty. \\
+\texttt{constrain} & \texttt{SafeActionSet} induced by the uncertainty set and safety spec. \\
+\texttt{shield} & \texttt{RepairDecision}: release, repair, fallback, or deny. \\
+\texttt{certify} & \texttt{SafetyCertificate} binding the released action to evidence. \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \subsection{Governance Surface}\label{sec:governance_surface}
 
@@ -96,35 +100,37 @@ At the episode level, the governance surface aggregates certificates into a summ
 \texttt{runtime\_governance\_summary.csv} with the metrics in
 \cref{tab:governance_metrics}.
 
-\begin{table}[h]
-\caption{Governance summary metrics.}
+\begin{table*}[t]
+\caption{Claim-governing governance summary metrics regenerated from the active
+certificate artifacts.}
 \label{tab:governance_metrics}
 \centering\small
-\begin{tabular}{ll}
+\begin{tabular}{lccc}
 \toprule
-\textbf{Metric} & \textbf{Value (Battery)} \\
+\textbf{Metric} & \textbf{Battery} & \textbf{nuPlan AV} & \textbf{Healthcare} \\
 \midrule
-\texttt{certificate\_rows}            & 288 \\
-\texttt{chain\_valid}                 & 1.0 (true) \\
-\texttt{failure\_rows}                & 0 \\
-\texttt{required\_payload\_pass\_rate} & 1.0 \\
-\texttt{expiry\_metadata\_presence\_rate} & 0.0 \\
-\texttt{expiry\_consistency\_rate}     & 1.0 \\
-\texttt{audit\_completeness\_rate}     & 1.0 \\
+\texttt{certificate\_rows} & 1{,}152 & 1{,}531{,}104 & 137{,}262 \\
+\texttt{chain\_valid} & 1.0 & 1.0 & 1.0 \\
+\texttt{failure\_rows} & 0 & 0 & 0 \\
+\texttt{required\_payload\_pass\_rate} & 1.0 & 1.0 & 1.0 \\
+\texttt{expiry\_metadata\_presence\_rate} & 1.0 & 1.0 & 1.0 \\
+\texttt{expiry\_consistency\_rate} & 1.0 & 1.0 & 1.0 \\
+\texttt{audit\_completeness\_rate} & 1.0 & 1.0 & 1.0 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
-The battery witness row achieves 100\% chain validity on its active runtime surface.
-The all-zip grouped nuPlan AV row reports a 99.992\% certificate-valid release rate
-and 100\% audit completeness on 1{,}531{,}104 runtime steps.
+The battery governance row covers all four promoted battery runtime variants
+(1{,}152 certificates).  The all-zip grouped nuPlan AV row reports a 99.992\%
+certificate-valid release rate and 100\% audit completeness on 1{,}531{,}104
+runtime steps.
 
 \subsection{CertOS Verification}
 
 The CertOS module performs an offline re-verification of the entire certificate chain.
 For each active runtime certificate surface:
 \begin{itemize}[nosep]
-  \item \textbf{Battery}: 288 certificates verified, \texttt{chain\_valid = true},
+  \item \textbf{Battery}: 1{,}152 certificates verified, \texttt{chain\_valid = true},
         0 failures.
   \item \textbf{AV}: 1{,}531{,}104 all-zip grouped nuPlan certificates emitted,
         certificate-valid release rate $0.999924$,
@@ -137,29 +143,33 @@ For each active runtime certificate surface:
 safety-layer paradigms.  The comparison focuses on structural capabilities rather
 than domain-specific numbers.
 
-\begin{table}[h]
-\caption{Safety architecture comparison.  \checkmark = supported natively,
-$\circ$ = partially supported, --- = not supported.}
+\begin{table*}[t]
+\caption{Safety architecture comparison. Entries are structural support levels,
+not trainable metrics: \emph{Yes} means native support, \emph{Partial} means
+support under additional modeling assumptions, and \emph{No} means the baseline
+does not natively expose that ORIUS release-contract obligation.}
 \label{tab:safety_comparison}
 \centering\scriptsize
-\begin{tabular}{p{2.4cm}ccccccc}
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{0.98\textwidth}{p{3.1cm}XXXXXX}
 \toprule
 \textbf{Capability} & \textbf{DC3S} & \textbf{Simplex} & \textbf{GP-MPC}
   & \textbf{DRO} & \textbf{Safe RL} & \textbf{Vanilla CQR} \\
 \midrule
-Obs-quality aware           & \checkmark & ---  & ---  & ---  & ---  & --- \\
-Reliability-adaptive margin & \checkmark & ---  & $\circ$ & ---  & ---  & --- \\
-Conformal coverage guarantee& \checkmark & ---  & ---  & ---  & ---  & \checkmark \\
-Domain-agnostic kernel      & \checkmark & $\circ$ & ---  & ---  & ---  & \checkmark \\
-Typed adapter protocol      & \checkmark & ---  & ---  & ---  & ---  & --- \\
-Certificate governance      & \checkmark & ---  & ---  & ---  & ---  & --- \\
-Graceful degradation (T8)   & \checkmark & \checkmark & $\circ$ & ---  & ---  & --- \\
-Formal proof programme      & \checkmark & \checkmark & $\circ$ & \checkmark & $\circ$ & $\circ$ \\
-Runtime overhead $<$ 1\,ms  & \checkmark & \checkmark & ---  & ---  & ---  & \checkmark \\
-Three-row validated\textsuperscript{$\dagger$} & \checkmark & ---  & ---  & ---  & ---  & --- \\
+Obs-quality aware & Yes & No & No & No & No & No \\
+Reliability-adaptive margin & Yes & No & Partial & No & No & No \\
+Conformal coverage guarantee & Yes & No & No & No & No & Yes \\
+Domain-agnostic kernel & Yes & Partial & No & No & No & Yes \\
+Typed adapter protocol & Yes & No & No & No & No & No \\
+Certificate governance & Yes & No & No & No & No & No \\
+Graceful degradation (T8) & Yes & Yes & Partial & No & No & No \\
+Formal proof programme & Yes & Yes & Partial & Yes & Partial & Partial \\
+Runtime overhead $<$ 1\,ms & Yes & Yes & No & No & No & Yes \\
+Three-row validated\textsuperscript{$\dagger$} & Yes & No & No & No & No & No \\
 \bottomrule
-\end{tabular}
-\end{table}
+\end{tabularx}
+\end{table*}
 
 {\footnotesize $\dagger$ Active defended lane: Battery witness row plus bounded AV and Healthcare rows with locked artifacts.}
 

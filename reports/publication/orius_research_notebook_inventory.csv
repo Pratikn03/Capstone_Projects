@@ -21,4 +21,4 @@ notebooks/20_final_release_results_analysis.ipynb,Final Release Results Analysis
 notebooks/21_utility_preserving_safety_analysis.ipynb,Utility-Preserving Safety Analysis,reports/publication/utility_preserving_safety_scorecard.csv,active
 notebooks/22_theorem_audit_traceability.ipynb,Theorem Audit and Traceability,reports/publication/active_theorem_audit.csv | reports/publication/theorem_result_cards/*.json,active
 notebooks/23_freeze_release_reproducibility_audit.ipynb,Freeze and Release Reproducibility Audit,reports/split_training/latest_release_id.txt | reports/predeployment_freeze/<release>/*.json,active
-notebooks/24_publication_package_quality_audit.ipynb,Publication Package Quality Audit,reports/publication/tbl_final_*.tex | reports/publication/fig_final_*.png | reports/publication/orius_book_final_results.pdf,active
+notebooks/24_publication_package_quality_audit.ipynb,Publication Package Quality Audit,reports/publication/tbl_final_*.tex | reports/publication/fig_final_*.png | paper/paper.pdf,active

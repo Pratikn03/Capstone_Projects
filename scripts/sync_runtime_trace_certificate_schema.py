@@ -29,6 +29,7 @@ from orius.dc3s.certificate import (
     normalize_certificate_schema,
     recompute_certificate_hash,
 )
+from orius.certos.verification import verify_certificates
 
 SCHEMA_COLUMNS = [
     "certificate_schema_version",
@@ -37,6 +38,10 @@ SCHEMA_COLUMNS = [
     "issuer",
     "domain",
     "action",
+    "validity_horizon_H_t",
+    "half_life_steps",
+    "expires_at_step",
+    "validity_status",
     "theorem_contracts",
 ]
 
@@ -89,6 +94,10 @@ def _cert_columns(cert: dict[str, Any] | None) -> dict[str, str]:
         "issuer": str(normalized.get("issuer", "")),
         "domain": str(normalized.get("domain", "")),
         "action": json.dumps(normalized.get("action", {}), sort_keys=True),
+        "validity_horizon_H_t": str(normalized.get("validity_horizon_H_t", "") or ""),
+        "half_life_steps": str(normalized.get("half_life_steps", "") or ""),
+        "expires_at_step": str(normalized.get("expires_at_step", "") or ""),
+        "validity_status": str(normalized.get("validity_status", "") or ""),
         "theorem_contracts": json.dumps(normalized.get("theorem_contracts", {}), sort_keys=True),
     }
 
@@ -102,7 +111,7 @@ def _battery_witness_cert(row: pd.Series, previous_hash: str | None) -> dict[str
         {
             "command_id": str(row.get("trace_id", "")),
             "controller": str(row.get("controller", "")),
-            "created_at": "",
+            "created_at": f"battery_trace_step_{int(row.get('step_index', 0) or 0)}",
             "prev_hash": previous_hash,
             "proposed_action": {
                 "charge_mw": float(row.get("candidate_charge_mw", 0.0) or 0.0),
@@ -115,6 +124,9 @@ def _battery_witness_cert(row: pd.Series, previous_hash: str | None) -> dict[str
             },
             "reliability": {"w_t": float(row.get("reliability_w", 1.0) or 1.0)},
             "validity_horizon_H_t": 1,
+            "half_life_steps": 1,
+            "expires_at_step": int(row.get("step_index", 0) or 0) + 1,
+            "validity_status": "active",
             "theorem_contracts": {"T11": "battery_witness_runtime_certificate"},
         },
         issuer="orius.battery.runtime_trace",
@@ -124,15 +136,22 @@ def _battery_witness_cert(row: pd.Series, previous_hash: str | None) -> dict[str
     return cert
 
 
-def _sync_trace(trace_path: Path, *, domain: str, certificates: list[dict[str, Any]]) -> tuple[int, int]:
+def _sync_trace(
+    trace_path: Path,
+    *,
+    domain: str,
+    certificates: list[dict[str, Any]],
+) -> tuple[int, int, list[dict[str, Any]]]:
     if not trace_path.exists():
-        return 0, 0
+        return 0, 0, []
     df = pd.read_csv(trace_path)
     for column in SCHEMA_COLUMNS:
         if column not in df.columns:
             df[column] = ""
+        df[column] = df[column].astype("string").fillna("")
 
     assigned = 0
+    assigned_certificates: list[dict[str, Any]] = []
     if domain in {"av", "healthcare"}:
         cert_iter = iter(certificates)
         mask = (
@@ -147,6 +166,7 @@ def _sync_trace(trace_path: Path, *, domain: str, certificates: list[dict[str, A
             for column, value in _cert_columns(cert).items():
                 df.at[idx, column] = value
             assigned += 1
+            assigned_certificates.append(cert)
     elif domain == "battery":
         previous_hash: str | None = None
         valid_mask = (
@@ -161,9 +181,27 @@ def _sync_trace(trace_path: Path, *, domain: str, certificates: list[dict[str, A
             for column, value in _cert_columns(cert).items():
                 df.at[idx, column] = value
             assigned += 1
+            assigned_certificates.append(cert)
 
     df.to_csv(trace_path, index=False, quoting=csv.QUOTE_MINIMAL)
-    return int(len(df)), int(assigned)
+    return int(len(df)), int(assigned), assigned_certificates
+
+
+def _write_trace_level_certos_outputs(
+    *,
+    out_dir: Path,
+    certificates: list[dict[str, Any]],
+) -> None:
+    if not certificates:
+        return
+    summary, failure_df, expiry_df, governance_df = verify_certificates(certificates)
+    (out_dir / "certos_verification_summary.json").write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    failure_df.to_csv(out_dir / "certos_verification_failures.csv", index=False)
+    expiry_df.to_csv(out_dir / "certificate_expiry_trace.csv", index=False)
+    governance_df.to_csv(out_dir / "runtime_governance_summary.csv", index=False)
 
 
 def main() -> int:
@@ -190,7 +228,16 @@ def main() -> int:
         ),
     ]
     for domain, trace_path, certificates in jobs:
-        rows, assigned = _sync_trace(trace_path, domain=domain, certificates=certificates)
+        rows, assigned, assigned_certificates = _sync_trace(
+            trace_path,
+            domain=domain,
+            certificates=certificates,
+        )
+        if domain == "battery":
+            _write_trace_level_certos_outputs(
+                out_dir=trace_path.parent,
+                certificates=assigned_certificates,
+            )
         print(f"{domain}: rows={rows} certificate_schema_rows={assigned}")
     return 0
 

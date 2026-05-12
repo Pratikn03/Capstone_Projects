@@ -1,22 +1,68 @@
-\begin{table}[htbp]
+\begin{table*}[t]
 \centering
-\scriptsize
-\caption{Canonical runtime release contract witnesses.  Each promoted domain is
-normalized to the same release evidence schema:
-\texttt{observe>reliability>uncertainty>repair\_or\_fallback>sign\_certificate>append\_only\_audit}.}
+\caption{Canonical runtime release contract witnesses: observation, reliability,
+uncertainty, action, repair, and fallback fields.  Each promoted domain follows
+the same release grammar: observe $\rightarrow$ reliability $\rightarrow$ uncertainty
+$\rightarrow$ repair/fallback $\rightarrow$ certificate $\rightarrow$ audit.}
 \label{tab:runtime-release-contract-witnesses}
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{lllllll}
+\scriptsize
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.08\textwidth} p{0.17\textwidth} p{0.07\textwidth} p{0.16\textwidth} p{0.16\textwidth} p{0.12\textwidth} p{0.07\textwidth} p{0.08\textwidth}@{}}
 \toprule
-Domain & Reliability & Safe action & Repair status & Fallback status &
-Certificate status & Postcondition\\
+\textbf{Domain} & \textbf{Trace / command witness} & \textbf{Rel.} &
+\textbf{Coverage L/M/H} & \textbf{Width L/M/H} & \textbf{Safe} &
+\textbf{IR} & \textbf{FB}\\
 \midrule
-Battery & 0.993056 & \texttt{\{charge\_mw: 0.0\}} & intervention\_rate=0.020833 & fallback\_rate=0.020833 & unsigned\_allowed; append\_only\_supported & passed\\
-AV & 0.999924 & \texttt{\{acceleration\_mps2: 0.0\}} & intervention\_rate=0.500301 & fallback\_rate=0.173716 & unsigned\_allowed; append\_only\_supported & passed\\
-Healthcare & 1.000000 & \texttt{\{alert\_level: max\_alert\}} & intervention\_rate=0.910099 & fallback\_rate=0.479907 & unsigned\_allowed; append\_only\_supported & passed\\
+Battery & heuristic nominal step 55 & 0.993056 &
+0.938 / 1.000 / 0.906 & 4937.8 / 4277.8 / 934.6 &
+\texttt{charge\_mw=0.0} &
+0.020833 & 0.020833\\
+AV & nuPlan Boston scene 0005 & 0.999924 &
+0.998 / 0.988 / 0.980 & 1.221 / 0.813 / 0.525 &
+\texttt{accel=0.0} &
+0.500301 & 0.173716\\
+Healthcare & patient p001453 step 0 & 1.000000 &
+0.692 / 0.863 / 0.946 & 0.292 / 1.406 / 2.216 &
+\texttt{alert=max} &
+0.910099 & 0.479907\\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \par\smallskip
-\footnotesize Source: \texttt{reports/publication/runtime\_release\_contract\_witnesses.csv}.  The compact table records
-publication witnesses; raw runtime traces and append-only event stores remain regenerated/local artifacts.
-\end{table}
+\scriptsize Source: \texttt{runtime\_release\_contract\_witnesses.csv}.  The compact
+publication witnesses do not expose the candidate pre-repair action; full trace IDs
+remain in the CSV/JSON artifacts.
+\end{table*}
+
+\begin{table*}[t]
+\centering
+\caption{Canonical runtime release contract witnesses: certificate, audit, theorem,
+and postcondition fields.  Full SHA-256 certificate hashes and source artifacts are
+preserved in the machine-readable CSV/JSON witness files.}
+\label{tab:runtime-release-contract-governance}
+\scriptsize
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.08\textwidth} p{0.09\textwidth} p{0.12\textwidth} p{0.08\textwidth} p{0.18\textwidth} p{0.12\textwidth} p{0.10\textwidth} p{0.08\textwidth}@{}}
+\toprule
+\textbf{Domain} & \textbf{Release decision} & \textbf{Cert. hash prefix} &
+\textbf{Prev. hash} & \textbf{Signature status} & \textbf{Audit status} &
+\textbf{T11} & \textbf{Post.}\\
+\midrule
+Battery & released & \texttt{bca5564219e3} & GENESIS &
+unsigned allowed in evidence row & append-only supported &
+runtime-linked & passed\\
+AV & released & \texttt{869efefb7001} & GENESIS &
+unsigned allowed in evidence row & append-only supported &
+runtime-linked & passed\\
+Healthcare & released & \texttt{8f74dbbc70b4} & GENESIS &
+unsigned allowed in evidence row & append-only supported &
+runtime-linked & passed\\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\scriptsize Strict runtime gates require signed and append-only evidence when the
+deployment-security profile enables certificate-signature enforcement.  These rows
+are compact publication witnesses, not raw append-only event stores; full source
+paths are recorded in the CSV/JSON witness files.
+\end{table*}

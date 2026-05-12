@@ -58,6 +58,7 @@ telemetry:
 \caption{Battery domain runtime summary (288 steps per controller).}
 \label{tab:battery_runtime}
 \centering\small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lccccccr}
 \toprule
 \textbf{Controller} & \textbf{TSVR} & \textbf{OASG} & \textbf{CVA} & \textbf{GDQ} &
@@ -68,7 +69,7 @@ deep:dc3s\_wrapped  & 0.000 & 0.000 & 0.979 & 1.000 & 0.000 & 1.000 & 288 \\
 heur:dc3s\_ftit     & 0.000 & 0.000 & 0.993 & 0.829 & 0.021 & 1.000 & 288 \\
 heur:dc3s\_wrapped  & 0.000 & 0.000 & 0.979 & 1.000 & 0.000 & 1.000 & 288 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \paragraph{Key findings.}
@@ -93,10 +94,11 @@ heur:dc3s\_wrapped  & 0.000 & 0.000 & 0.979 & 1.000 & 0.000 & 1.000 & 288 \\
 
 \Cref{tab:battery_safety} provides a per-lane, per-scenario breakdown.
 
-\begin{table}[h]
+\begin{table*}[t]
 \caption{Battery safety metrics: per-lane, per-scenario, per-controller breakdown.}
 \label{tab:battery_safety}
 \centering\scriptsize
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{llllccccccc}
 \toprule
 \textbf{Lane} & \textbf{Scenario} & \textbf{Controller} & \textbf{TSVR} & \textbf{IR} &
@@ -116,8 +118,8 @@ deep      & dropout      & dc3s\_ftit    & 0.000 & 0.031 & 1.000 & 0.495 & 0.905
 deep      & stale\_sensor & dc3s\_wrapped & 0.000 & 0.000 & 0.979 & 1.000 & 0.905 & 1.0 \\
 deep      & stale\_sensor & dc3s\_ftit    & 0.000 & 0.031 & 1.000 & 0.992 & 0.905 & 1.0 \\
 \bottomrule
-\end{tabular}
-\end{table}
+\end{tabular}}
+\end{table*}
 
 \paragraph{Observations.}
 \begin{itemize}[nosep]
@@ -139,12 +141,16 @@ deep      & stale\_sensor & dc3s\_ftit    & 0.000 & 0.031 & 1.000 & 0.992 & 0.90
 The target is $\SOC$ (state of charge in MWh).
 
 \begin{table}[h]
-\caption{Battery fault-family conformal coverage and mean interval width.}
+\caption{Battery fault-family conformal miscoverage and mean interval width.
+``Miscoverage'' is the fraction of steps on which the true SoC fell
+\emph{outside} the conformal interval; lower is better and zero indicates
+100\% containment.}
 \label{tab:battery_fault}
 \centering\small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrr}
 \toprule
-\textbf{Controller} & \textbf{Fault family} & \textbf{Coverage} & \textbf{Mean width (MWh)} \\
+\textbf{Controller} & \textbf{Fault family} & \textbf{Miscoverage} & \textbf{Mean width (MWh)} \\
 \midrule
 deep:dc3s\_ftit     & dropout       & 0.000 & 1{,}076.4 \\
 deep:dc3s\_ftit     & nominal       & 0.000 & 375.5 \\
@@ -159,7 +165,7 @@ heur:dc3s\_wrapped  & dropout       & 0.000 & 519.6 \\
 heur:dc3s\_wrapped  & nominal       & 0.000 & 516.5 \\
 heur:dc3s\_wrapped  & stale\_sensor & 0.000 & 520.1 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \paragraph{Interpretation.}
@@ -178,7 +184,7 @@ indicating 100\% containment.  The interval widths reveal the cost of safety:
 
 The governance surface for the battery domain reports (\cref{tab:governance_metrics}):
 \begin{itemize}[nosep]
-  \item 288 total certificates (one per runtime step).
+  \item 1{,}152 total certificates across the four promoted battery runtime variants.
   \item \texttt{chain\_valid = 1.0}: all certificates pass all contract predicates.
   \item 0 failure rows.
   \item 100\% audit completeness.
@@ -189,8 +195,8 @@ The governance surface for the battery domain reports (\cref{tab:governance_metr
 
 The battery domain validates that ORIUS \dcs{} achieves zero true-state violations
 across all four controller variants, three fault scenarios, and both dispatch lanes.
-The governance pipeline issues 288 certificates with full chain validity.  The FTIT
-variant correctly responds to degraded telemetry by tightening intervals and
+The governance pipeline issues 1{,}152 certificates with full chain validity.  The
+FTIT variant correctly responds to degraded telemetry by tightening intervals and
 intervening at 2--3\% of steps.
 
 \subsection{Baseline Comparison: LP vs.\ CQR vs.\ DC3S}
@@ -200,7 +206,7 @@ true-state violations under degraded telemetry, whereas the \dcs{} runtime
 eliminates them.  \Cref{tab:battery_baseline} presents the primary comparison
 from the two reference markets.
 
-\begin{table}[h]
+\begin{table*}[t]
 \caption{Battery baseline comparison across controller paradigms and markets.
 LP~= deterministic linear programme (quality-ignorant); CQR~= conformal
 quantile regression without reliability adaptation; DC3S~= full ORIUS runtime
@@ -208,6 +214,7 @@ with reliability-adaptive conformal inflation.  Fault scenario: \texttt{drift\_c
 (20\% dropout $+$ stale sensor $+$ spike).}
 \label{tab:battery_baseline}
 \centering\small
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{llrrrr}
 \toprule
 \textbf{Market} & \textbf{Controller} & \textbf{TSVR (\%)} & \textbf{Severity $P_{95}$ (MWh)}
@@ -221,8 +228,8 @@ US (CAISO)& LP (baseline)  & 4.2 & 401.1 &  --- & ref.  \\
 US (CAISO)& CQR            & 1.7 & 175.2 &  1.8 & $-$1.8 \\
 US (CAISO)& \textbf{DC3S}  & \textbf{0.0} & \textbf{0.0} & \textbf{3.1} & $-$0.11 \\
 \bottomrule
-\end{tabular}
-\end{table}
+\end{tabular}}
+\end{table*}
 
 \paragraph{Result highlights.}
 \begin{itemize}[nosep]
@@ -231,7 +238,8 @@ US (CAISO)& \textbf{DC3S}  & \textbf{0.0} & \textbf{0.0} & \textbf{3.1} & $-$0.1
   \item CQR reduces violations but does not eliminate them (1.2--1.7\%), because it
         does not adapt the conformal width to the observed reliability.
   \item DC3S achieves \textbf{TSVR = 0.0\%} in both markets, confirming T2 (Safety
-        Preservation) and T3 (Core Bound with $\bar{w} \approx 0.83$).
+        Preservation) and T3 (Core Bound under the observed $\bar{w} \in [0.905, 0.999]$
+        range; see Tables~\ref{tab:battery_runtime} and~\ref{tab:battery_fault}).
   \item The intervention rate of 2.8--3.1\% confirms T4 (No Free Safety): zero
         violations require non-zero repair.
   \item The cost penalty is modest: $-$7.11\% (DE) and $-$0.11\% (US), demonstrating
@@ -249,6 +257,7 @@ OQE reliability bins.
 weight bin.  Higher $w_t$ bins show narrower intervals and less intervention.}
 \label{tab:battery_conservatism}
 \centering\small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lrrrr}
 \toprule
 \textbf{Reliability bin} & \textbf{Mean width (MWh)} & \textbf{Coverage (\%)} &
@@ -260,7 +269,7 @@ $w_t \in [0.50, 0.80)$ &   643.8   & 100.0 & 3.1  &  45 \\
 $w_t \in [0.80, 0.95)$ &   421.2   &  99.3 & 1.4  &  72 \\
 $w_t \in [0.95, 1.00]$ &   375.5   &  97.9 & 0.0  & 138 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 The table confirms the desired property: the interval width and intervention rate
@@ -373,11 +382,12 @@ the appropriate choice.
 \Cref{tab:battery_ablation} isolates the effect of fault-tolerant interval
 tightening by holding the dispatch lane and fault scenario constant.
 
-\begin{table}[h]
+\begin{table*}[t]
 \caption{Ablation: DC3S Wrapped vs.\ FTIT under degraded telemetry (dropout +
 stale\_sensor scenarios, averaged across heuristic and deep lanes).}
 \label{tab:battery_ablation}
 \centering\small
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{Variant} & \textbf{TSVR} & \textbf{CVA} & \textbf{IR (\%)} &
@@ -388,8 +398,8 @@ dc3s\_ftit    & 0.000 & 0.993 & 3.1 & 1{,}091.5 & 0.827 & 1.0 \\
 \midrule
 \textbf{$\Delta$}  & 0 & +0.014 & +3.1 & +542.5 & $-$0.173 & 0 \\
 \bottomrule
-\end{tabular}
-\end{table}
+\end{tabular}}
+\end{table*}
 
 \paragraph{Ablation findings.}
 Both variants achieve $\TSVR = 0$, so the safety property is not at risk.  The
@@ -407,40 +417,42 @@ difference lies in \emph{how aggressively} safety is enforced:
 
 \subsection{Visual Evidence}
 
-\Cref{fig:battery_safety_metrics} presents the primary safety dashboard for the
-battery domain, showing the SoC trajectory, the conformal interval bounds, the
-reliability weight trace, and the intervention markers across all fault scenarios.
+\Cref{fig:battery_safety_metrics} presents the primary battery safety--utility
+diagnostic exported with the current artifact bundle: intervention rate and
+graceful-degradation quality (GDQ) for the promoted FTIT wrapper relative to the
+wrapped controller.
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.95\textwidth]{fig_battery_deep_oqe_safety_metrics}
-\caption{Battery domain safety dashboard: SoC trajectory with conformal bounds,
-reliability weight $w_t$ trace, and intervention markers.  The \dcs{} runtime
-maintains zero true-state violations (green region) even when faults degrade
-the telemetry (red shaded regions).}
+\includegraphics[width=0.92\textwidth]{fig_battery_deep_oqe_safety_metrics}
+\caption{Battery domain safety--utility diagnostics: intervention rate and GDQ for
+the promoted FTIT wrapper and the non-FTIT wrapped controller.  The plot is paired
+with the tabular TSVR/CVA evidence above rather than used as a standalone
+trajectory witness.}
 \label{fig:battery_safety_metrics}
-\end{figure}
+\end{figure*}
 
 \Cref{fig:battery_counterexamples} visualises the OASG phenomenon: under the
 deterministic LP baseline without \dcs{} shielding, observed-safe dispatches cross
 the true SoC boundary.
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.85\textwidth]{fig_observed_vs_true_counterexamples}
+\includegraphics[width=0.86\textwidth]{fig_observed_vs_true_counterexamples}
 \caption{Observed vs.\ true SoC counterexamples under the deterministic LP baseline.
 Each dot represents a time step where the observed SoC (x-axis) indicates safety but
 the true SoC (y-axis) violates the constraint boundary.  The existence of such points
 is the empirical witness for T1 (OASG Existence).}
 \label{fig:battery_counterexamples}
-\end{figure}
+\end{figure*}
 
 \subsection{Core Bound Empirical Verification}
 
 The theoretical core bound (\cref{thm:T3}) predicts $\E[V_T] \le \alpha(1-\bar{w})T$.
-For the battery domain with $\alpha = 0.10$, $T = 288$, and $\bar{w} = 0.83$:
+For the battery domain with $\alpha = 0.10$, $T = 288$, and the worst observed
+episode-average reliability $\bar{w} = 0.905$ (deep lane under dropout):
 \[
-  \E[V_T] \le 0.10 \times 0.17 \times 288 = 4.9 \text{ violations.}
+  \E[V_T] \le 0.10 \times 0.095 \times 288 \approx 2.74 \text{ violations.}
 \]
 The \emph{observed} violation count is 0 across all scenarios, confirming that the
 bound is not tight but is empirically validated.  The tightness gap arises because

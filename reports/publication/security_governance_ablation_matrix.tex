@@ -1,0 +1,19 @@
+\begin{table*}[t]
+\centering
+\caption{Governance and security ablations for the ORIUS runtime-release contract. These are fail-closed ablations, not performance benchmarks: each row removes or corrupts a release-governance precondition and records the expected denial path.}
+\label{tab:security-governance-ablations}
+\footnotesize
+\renewcommand{\arraystretch}{1.10}
+\begin{tabularx}{\textwidth}{p{0.14\textwidth} p{0.20\textwidth} p{0.18\textwidth} p{0.18\textwidth} X}
+\toprule
+\textbf{Ablation} & \textbf{Removed or corrupted component} & \textbf{Expected runtime response} & \textbf{Evidence surface} & \textbf{Interpretation} \\
+\midrule
+Missing model hash & Artifact hash manifest absent in strict mode & Refuse load before deserialization & model-hash test; deployment-security validator & Strict release evidence cannot depend on unverifiable model binaries. \\
+Bad certificate signature & Certificate payload or signature tampered & Verification fails closed & certificate-full test; schema validator & Certificate-backed release is meaningful only when invalid signatures deny release. \\
+Stale device timestamp & Device request timestamp outside allowed skew & Reject telemetry or acknowledgement & IoT HMAC test; deployment-security validator & Device identity is enforced as a runtime precondition. \\
+Replayed device nonce & Previously accepted device nonce reused & Reject replayed device request & IoT HMAC test; deployment-security validator & Strict IoT mode includes replay protection. \\
+Invalid fallback action & Fallback fails the domain postcondition & Release-contract validation fails & release-contract test and validator & Fallback remains a typed safety obligation, not an unconditional escape. \\
+Corrupted release witness & Compact evidence omits canonical fields & Release-contract validator fails & release-witness corruption test and validator & Claim-facing evidence must expose common release fields across promoted domains. \\
+\bottomrule
+\end{tabularx}
+\end{table*}

@@ -56,6 +56,7 @@ grouped nuPlan AV replay surface (1{,}531{,}104~runtime steps).
 \caption{Shift-aware runtime statistics for the all-zip grouped nuPlan AV row.}
 \label{tab:shift_aware_av}
 \centering\small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lrrrrl}
 \toprule
 \textbf{Target} & \textbf{Steps} & \textbf{Groups} & \textbf{Max gap} & \textbf{Validity} & \textbf{Status} \\
@@ -63,7 +64,7 @@ grouped nuPlan AV replay surface (1{,}531{,}104~runtime steps).
 \texttt{ego\_speed\_mps} & 1{,}531{,}104 & 2355 & 0.900 & 0.844 & nominal \\
 \texttt{relative\_gap\_m} & 1{,}531{,}104 & 2480 & 0.900 & 0.704 & watch \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 The ego-speed target achieves \texttt{nominal} validity status even though sparse
@@ -117,21 +118,19 @@ shift to detect, adding zero overhead to the battery pipeline.
 present the subgroup coverage heatmaps before and after the shift-aware inflation
 adjustment for both domains.
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.90\textwidth]{fig_shift_aware_before_after}
+\includegraphics[width=0.92\textwidth]{fig_shift_aware_before_after}
 \caption{Bounded nuPlan AV shift-aware coverage: baseline (left) vs.\ adapted
 (right) subgroup coverage across source, speed, and neighbour bins.  The artifact
-keeps the relative-gap watch state visible instead of promoting a full closure claim.
-Artifact: \texttt{reports/orius\_av/nuplan\_bounded/fig\_shift\_aware\_before\_after.png}.}
+keeps the relative-gap watch state visible instead of promoting a full closure claim.}
 \label{fig:shift_aware_before_after_av}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.90\textwidth]{fig_shift_aware_before_after_battery}
+\includegraphics[width=0.92\textwidth]{fig_shift_aware_before_after_battery}
 \caption{Battery domain shift-aware coverage: baseline and adapted coverage
-are identical, confirming zero shift under stationary CPSBench replay.  Artifact:
-\texttt{reports/battery\_av/battery/fig\_shift\_aware\_before\_after.png}.}
+are identical, confirming zero shift under stationary CPSBench replay.}
 \label{fig:shift_aware_before_after_battery}
-\end{figure}
+\end{figure*}

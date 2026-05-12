@@ -106,16 +106,21 @@ def test_defended_theorem_core_is_strict_and_bounded() -> None:
         "T2",
         "T3a",
         "T4",
+        "T5",
         "T6",
         "T7",
+        "T8",
+        "T9",
+        "T10",
         "T11",
+        "T11_Byzantine",
+        "T_stale_decay",
+        "T_minimax",
+        "T_sensor_converse",
         "T_trajectory_PAC",
     ]
     assert summary["supporting_defended_ids"] == [
         "T3b",
-        "T8",
-        "T9",
-        "T10",
         "T10_T11_ObservationAmbiguitySandwich",
         "T11_AV_BrakeHold",
         "T11_HC_FailSafeRelease",
@@ -124,9 +129,12 @@ def test_defended_theorem_core_is_strict_and_bounded() -> None:
         "T_EQ_Battery_RuntimeArtifactPackage",
         "T_EQ_AV_RuntimeArtifactPackage",
         "T_EQ_HC_RuntimeArtifactPackage",
-        "T11_Byzantine",
-        "T_stale_decay",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
     ]
+    assert summary["draft_non_defended_ids"] == []
     assert summary["flagship_gate_ready"] is True
     assert all(row["scope_note"] for row in rows)
     assert all(

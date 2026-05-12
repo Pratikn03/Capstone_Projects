@@ -27,10 +27,10 @@ planning, or complete autonomy validation.
 
 \paragraph{Source.}
 The source surface is the all-zip grouped nuPlan replay build recorded under
-\texttt{reports/orius\_av/nuplan\_allzip\_grouped\_runtime\_dropout\_aligned\_m15\_fulltest/}.
-The processed source manifest records completed nuPlan archives and excludes partial
-downloads and map-only archives before feature construction.  The runtime report
-contains 1{,}531{,}104 canonical ORIUS replay rows over 37{,}344 held-out test scenarios.
+the promoted AV runtime manifest.  The processed source manifest records completed
+nuPlan archives and excludes partial downloads and map-only archives before feature
+construction.  The runtime report contains 1{,}531{,}104 canonical ORIUS replay
+rows over 37{,}344 held-out test scenarios.
 
 \paragraph{Data splits.}
 \Cref{tab:av_splits} reports the scenario counts produced by the all-zip grouped
@@ -62,6 +62,7 @@ claim of unrestricted population-level AV calibration.
 \caption{All-zip grouped nuPlan conformal training summary.}
 \label{tab:av_training}
 \centering\scriptsize
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llcccc}
 \toprule
 \textbf{Target} & \textbf{Horizon} & \textbf{Split} &
@@ -81,7 +82,7 @@ rel.\ gap & 2\,s & test & 0.902 & 0.953 & 81.50 \\
 rel.\ gap & 4\,s & val  & 0.899 & 0.951 & 89.41 \\
 rel.\ gap & 4\,s & test & 0.900 & 0.952 & 90.09 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 The main training signal is directional: widening improves both ego-speed and
@@ -98,6 +99,7 @@ the trivial always-brake control, and ORIUS on the same 1{,}531{,}104 runtime st
 \caption{All-zip grouped nuPlan runtime summary.}
 \label{tab:av_runtime}
 \centering\scriptsize
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lrrrrrr}
 \toprule
 \textbf{Controller} & \textbf{TSVR} & \textbf{OASG} & \textbf{CVA} &
@@ -108,7 +110,7 @@ rss-cbf filter & 0.078 & 0.016 & 1.000 & 0.387 & 0.000 & 0.000 \\
 always brake & 0.000 & 0.000 & 1.000 & 1.000 & 1.000 & 0.000 \\
 orius & 0.000163 & 0.000157 & 1.000 & 0.500 & 0.174 & 1.000 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 ORIUS reduces replay-level true-state violations by 99.94\% relative to the baseline
@@ -124,9 +126,15 @@ deliberately not summarized as uniformly perfect coverage: relative gap remains 
 harder target and is kept inside the bounded AV claim.
 
 \begin{table}[h]
-\caption{ORIUS fault-family coverage on the all-zip grouped nuPlan replay row.}
+\caption{ORIUS fault-family coverage on the all-zip grouped nuPlan replay
+row.  Target coverage is $1-\alpha = 0.90$; values $\ge 0.90$ meet target
+(all ego-speed rows; six of six dropout/spikes/delay\_jitter rel.\ gap rows
+miss by $\le 0.07$), values $< 0.90$ miss it (the stale rel.\ gap row at
+0.914 is borderline and the drift\_combo rel.\ gap row at 0.919 just meets;
+the table is reported without averaging so the harder cells stay visible).}
 \label{tab:av_fault}
 \centering\scriptsize
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrr}
 \toprule
 \textbf{Fault family} & \textbf{Target} & \textbf{Coverage} & \textbf{Mean width} \\
@@ -144,18 +152,19 @@ spikes         & rel.\ gap  & 0.939 & 191.47 \\
 stale          & ego speed & 0.982 & 0.62 \\
 stale          & rel.\ gap  & 0.914 & 93.81 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \subsection{Shift-Aware Runtime}
 
-\Cref{tab:shift_aware_av} reports the shift-aware runtime table emitted by the
+\Cref{tab:av_shift_aware_runtime} reports the shift-aware runtime table emitted by the
 all-zip grouped nuPlan run.
 
 \begin{table}[h]
 \caption{Shift-aware statistics for the all-zip grouped nuPlan AV row.}
-\label{tab:shift_aware_av}
+\label{tab:av_shift_aware_runtime}
 \centering\small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lrrrrl}
 \toprule
 \textbf{Target} & \textbf{Steps} & \textbf{Groups} & \textbf{Max gap} &
@@ -164,7 +173,7 @@ all-zip grouped nuPlan run.
 \texttt{ego\_speed\_mps} & 1{,}531{,}104 & 2355 & 0.900 & 0.844 & nominal \\
 \texttt{relative\_gap\_m} & 1{,}531{,}104 & 2480 & 0.900 & 0.704 & watch \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 The ego-speed target remains nominal.  Relative gap enters watch status, which is
@@ -190,8 +199,8 @@ identity so multiple nuPlan archives cannot collide.
 \begin{table}[h]
 \caption{AV feature surface used by the all-zip grouped nuPlan row.}
 \label{tab:av_features}
-\centering\small
-\begin{tabular}{llr}
+\centering\footnotesize
+\begin{tabularx}{\linewidth}{p{0.25\linewidth}Xr}
 \toprule
 \textbf{Category} & \textbf{Features} & \textbf{Count} \\
 \midrule
@@ -205,39 +214,46 @@ Conformal/runtime & interval, reliability, certificate fields & 13 \\
 \midrule
 \textbf{Total} & source-neutral runtime feature surface & \textbf{38} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \subsection{Visual Evidence}
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.90\textwidth]{training_interval_widths}
-\caption{All-zip grouped nuPlan conformal interval widths by target and horizon.}
+\includegraphics[width=0.92\textwidth]{training_interval_widths}
+\caption{All-zip grouped nuPlan conformal interval widths.  This full-width
+render is used in place of a compressed panel so that target/horizon labels and
+relative-gap widening remain legible.}
 \label{fig:av_training_widths}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.90\textwidth]{shift_aware_runtime}
-\caption{All-zip grouped nuPlan shift-aware runtime dashboard.  Relative gap remains in
-watch status and is treated as a limitation of the AV row.}
+\includegraphics[width=0.78\textwidth]{shift_aware_runtime}
+\caption{All-zip grouped nuPlan shift-aware runtime status.  Ego speed remains
+nominal while relative gap is retained as a watch-status limitation.}
 \label{fig:av_shift_aware}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.85\textwidth]{fault_family_coverage}
-\caption{All-zip grouped nuPlan fault-family coverage heatmap for the ORIUS controller.}
+\includegraphics[width=0.92\textwidth]{fault_family_coverage_heatmap}
+\caption{All-zip grouped nuPlan fault-family coverage heatmap.  Every
+controller--target row and every degradation family is retained, but the plot is
+rendered as a heatmap rather than a crowded legend-over-bar chart.}
 \label{fig:av_fault_coverage}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.90\textwidth]{runtime_metrics}
-\caption{All-zip grouped nuPlan runtime metrics for baseline comparators and ORIUS.}
+\includegraphics[width=0.94\textwidth]{runtime_metrics}
+\caption{All-zip grouped nuPlan runtime comparator metrics.  ORIUS is shown
+against the no-wrapper baseline, RSS/CBF-style filter, and always-brake control
+while the claim remains bounded to replay evidence rather than closed-loop
+autonomy.}
 \label{fig:av_runtime_metrics}
-\end{figure}
+\end{figure*}
 
 \subsection{Summary}
 

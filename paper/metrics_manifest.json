@@ -4,15 +4,15 @@
   "claim_family": {
     "name": "universal_safety",
     "schema_version": "2.0.0",
-    "description": "Canonical release claims are domain-agnostic safety, governance, and provenance claims backed by tracked publication artifacts."
+    "description": "Canonical release claims are bounded runtime-safety, governance, and provenance claims backed by tracked publication artifacts."
   },
   "metric_policy": {
     "name": "tracked_publication_universal",
-    "description": "Canonical manuscript values are locked to tracked publication artifacts and universal safety releases rather than local dashboard caches.",
+    "description": "Canonical manuscript values are locked to tracked publication artifacts and ORIUS runtime-safety release artifacts rather than local dashboard caches.",
     "master_manuscript": "orius_book.tex",
     "narrative_companion": "paper/PAPER_DRAFT.md",
     "release_family": {
-      "name": "universal_safety_release",
+      "name": "orius_runtime_safety_release",
       "status": "tracked_publication",
       "notes": "Canonical governance resolves against tracked publication artifacts and the release manifest."
     }
