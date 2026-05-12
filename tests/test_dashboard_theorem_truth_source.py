@@ -27,8 +27,8 @@ def test_theorem_dashboard_reads_generated_publication_audit_not_static_rows() -
     assert "const THEOREMS: Theorem[]" not in page_sources
     assert "active_theorem_audit.json" in loader_source
     assert "theorem_surface_register.csv" in loader_source
-    assert "theorem_promotion_gates.csv" in loader_source
-    assert "theorem_promotion_scorecard.json" in loader_source
+    assert "theorem_promotion_matrix.csv" in loader_source
+    assert "theorem_result_cards" in loader_source
     assert "promotion_package_missing" in loader_source
     assert "PROMOTION_PACKAGE_REQUIRED_IDS" in loader_source
     assert "readFile" in loader_source
@@ -37,10 +37,10 @@ def test_theorem_dashboard_reads_generated_publication_audit_not_static_rows() -
 def test_dashboard_t9_t10_status_comes_from_generated_promotion_package() -> None:
     loader_source = SERVER_LOADER.read_text(encoding="utf-8")
 
-    assert "PromotionScorecardCandidate" in loader_source
-    assert "promotionCandidate" in loader_source
-    assert "promotion_ready=false" in loader_source
-    assert "T9/T10 status source: reports/publication/theorem_promotion_scorecard.json" in loader_source
+    assert "PromotionMatrixCsvRow" in loader_source
+    assert "matrixRowToGates" in loader_source
+    assert "theorem_promotion_matrix.csv + theorem_result_cards/*.json" in loader_source
+    assert "hand-demote scoped flagship rows" in loader_source
 
 
 def test_dashboard_theorem_labels_follow_authoritative_audit_tiers() -> None:
@@ -49,19 +49,19 @@ def test_dashboard_theorem_labels_follow_authoritative_audit_tiers() -> None:
     page_sources = _read_all_theorem_sources()
     loader_source = SERVER_LOADER.read_text(encoding="utf-8")
 
-    assert rows["T5"]["surface_kind"] == "definition"
-    assert rows["T5"]["defense_tier"] == "draft_non_defended"
-    assert rows["T9"]["defense_tier"] == "supporting_defended"
-    assert rows["T10"]["defense_tier"] == "supporting_defended"
+    assert rows["T5"]["surface_kind"] == "theorem"
+    assert rows["T5"]["defense_tier"] == "flagship_defended"
+    assert rows["T9"]["defense_tier"] == "flagship_defended"
+    assert rows["T10"]["defense_tier"] == "flagship_defended"
     assert "battery-specific" in rows["T7"]["scope_note"]
     assert rows["T11"]["defense_tier"] == "flagship_defended"
     assert rows["T11"]["typed_obligations"]
 
-    assert "Definition" in page_sources
-    assert "Draft / Non-Defended" in page_sources
+    assert "finite-horizon flagship theorem" in page_sources
+    assert "scoped flagship lower-bound rows" in page_sources
     assert "T7_Battery" in page_sources
     assert "Promotion Gates" in page_sources
-    assert "constants and assumptions" in loader_source
+    assert "claim-boundary note" in loader_source
 
 
 def test_domain_dashboard_uses_universal_contract_language_and_battery_alias() -> None:
@@ -74,5 +74,5 @@ def test_domain_dashboard_uses_universal_contract_language_and_battery_alias() -
     assert f"3 promoted domains {MULTIPLICATION_SIGN} 11 theorems" not in domain_source
     assert "T7_Battery" in domain_source
     assert "C7_BatteryFallback" in domain_source
-    assert "T9/T10 are supporting rows" in domain_source
+    assert "T9, and T10 are now scoped flagship theorem rows" in domain_source
     assert "any compliant domain inherits the ORIUS runtime-assurance contract" in domain_source

@@ -1,4 +1,11 @@
-"""Navigation domain adapter for the ORIUS universal runtime."""
+"""Navigation domain adapter for ORIUS -- EXTENSIBILITY DEMO ONLY.
+
+NOT PART OF THE DEFENDED EVIDENCE PACKAGE.  The IEEE manuscript defends three
+rows (Battery, AV, Healthcare).  This adapter exists to demonstrate that the
+typed DomainInstantiation protocol can be implemented for a navigation domain;
+it is not exercised by ``make paper-verify`` and is not represented in the
+runtime governance manifests under ``reports/``.
+"""
 
 from __future__ import annotations
 

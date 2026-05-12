@@ -27,7 +27,7 @@ def test_integrated_theorem_surface_gate_passes() -> None:
     assert summary["failed"] == 0
     assert summary["passed"] == 18
     rows = {row["theorem_key"]: row for row in summary["rows"]}
-    assert rows["T5"]["surface_kind"] == "definition"
-    assert rows["T5"]["defense_tier"] == "draft_non_defended"
-    assert "excluded from defended headline counts" in rows["T5"]["notes"]
-    assert rows["T8"]["defense_tier"] == "supporting_defended"
+    assert rows["T5"]["surface_kind"] == "theorem"
+    assert rows["T5"]["defense_tier"] == "flagship_defended"
+    assert rows["T5"]["notes"] == "locked"
+    assert rows["T8"]["defense_tier"] == "flagship_defended"

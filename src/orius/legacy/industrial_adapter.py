@@ -1,6 +1,13 @@
-"""Industrial domain adapter for ORIUS Universal Framework.
+"""Industrial domain adapter for ORIUS -- EXTENSIBILITY DEMO ONLY.
 
-Process control: temperature, pressure, power. Safety predicates:
+NOT PART OF THE DEFENDED EVIDENCE PACKAGE.  The IEEE manuscript defends three
+rows (Battery, AV, Healthcare).  This adapter exists to demonstrate that the
+typed DomainInstantiation protocol can be implemented for a process-control
+domain; it is not exercised by ``make paper-verify`` and is not represented in
+the runtime governance manifests under ``reports/``.
+
+Process control: temperature, pressure, power.  Safety predicates
+(illustrative):
 - temp_c in [temp_min, temp_max]
 - pressure_mbar in [p_min, p_max]
 - power_mw in [0, power_max]

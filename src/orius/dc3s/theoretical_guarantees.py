@@ -5,8 +5,8 @@ This module serves two roles:
    constructive separations, and adaptive tracking.
 2. It exposes the current theorem-register witnesses for the monograph's
    T9--T11 surface:
-   - T9: universal impossibility under persistent degraded observation
-   - T10: stylized reliability-risk lower frontier
+   - T9: impossibility of quality-ignorant mandatory release
+   - T10: two-state boundary-indistinguishability lower bound
    - T11: typed structural transfer
 
 The key integrity rule is that the register now follows the manuscript, not
@@ -1038,9 +1038,9 @@ THEOREM_REGISTER = {
             "!= true-safe(a|x_true)."
         ),
         "type": "existence",
-        "code_witness": "BatteryPlant.step",
-        "module": "orius.cpsbench_iot.plant",
-        "dependencies": ["fault_injection", "observed_vs_true_split"],
+        "code_witness": "verify_oasg_existence_witness",
+        "module": "orius.dc3s.supporting_results",
+        "dependencies": ["observed_safe_margin", "true_unsafe_margin", "degraded_observation"],
         "parent_law": None,
     },
     "T2": {
@@ -1101,23 +1101,23 @@ THEOREM_REGISTER = {
             "produces an OASG and hence a true-state violation."
         ),
         "type": "constructive_witness",
-        "code_witness": "verify_no_margin_compensation",
+        "code_witness": "verify_quality_ignorant_release_counterexample",
         "module": "orius.dc3s.supporting_results",
-        "dependencies": ["quality_ignorant_baseline", "fault_sequence"],
+        "dependencies": ["fixed_margin_release_rule", "quality_ignored", "T1_witness"],
         "parent_law": None,
     },
     "T5": {
-        "name": "Certificate Validity Horizon Definition",
+        "name": "Finite-Horizon Certificate Validity",
         "statement": (
-            "Given an uncertainty tube [L_t, U_t] and a safe action a_t, "
-            "the largest horizon tau_t such that the forward SoC tube "
-            "remains within [soc_min, soc_max] satisfies tau_t >= 0 and "
-            "is computable in O(max_steps) time."
+            "If the forward reachable tube from the observation-consistent "
+            "state set remains inside the safe set through horizon h, then "
+            "the runtime certificate is valid through that finite horizon "
+            "unless an invalidating event occurs."
         ),
-        "type": "definition",
+        "type": "certificate_horizon",
         "code_witness": "certificate_validity_horizon",
-        "module": "orius.universal_theory.battery_instantiation",
-        "dependencies": ["forward_tube", "soc_bounds", "uncertainty_interval"],
+        "module": "orius.dc3s.temporal_theorems",
+        "dependencies": ["forward_reachable_tube", "safe_set_containment", "certificate_invalidating_event"],
         "parent_law": None,
     },
     "T6": {

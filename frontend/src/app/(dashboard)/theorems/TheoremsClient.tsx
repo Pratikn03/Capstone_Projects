@@ -221,7 +221,7 @@ export function TheoremsClient({ data }: { data: TheoremDashboardData }) {
           Theorem Ledger
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Theorem metadata from {data.summary.sourcePath}; T5 is a Definition, T7_Battery is a Battery Instantiation, and T9/T10 are assumption-qualified Supporting Defended rows.
+          Theorem metadata from {data.summary.sourcePath}; T5 is a finite-horizon flagship theorem, T7_Battery is a battery instantiation, and T9/T10 are scoped flagship lower-bound rows.
         </p>
       </div>
 
@@ -283,7 +283,7 @@ export function TheoremsClient({ data }: { data: TheoremDashboardData }) {
         </div>
       </Panel>
 
-      <Panel title="Promotion Gates" subtitle="Required before any theorem becomes flagship" badge="12 gates" accentColor="warn">
+      <Panel title="Promotion Gates" subtitle="Required before any theorem becomes flagship" badge="matrix + cards" accentColor="warn">
         <p className="text-xs text-slate-400 leading-relaxed">{data.promotionPolicy}</p>
         <p className="text-xs text-slate-500 leading-relaxed mt-2">
           T11 remains the main universal theorem: any compliant domain inherits the ORIUS runtime-assurance contract. T7_Battery stays a battery instantiation unless a separate cross-domain fallback theorem is proved.

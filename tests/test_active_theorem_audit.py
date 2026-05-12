@@ -79,7 +79,8 @@ def test_t1_to_t10_theorem_statements_are_strong_but_scoped() -> None:
     assert "Mathematical contract vs. domain discharge" in ch37
     assert "domain discharge artifacts are evidence, not an extra hidden assumption" in ch37
     assert "contract-universal, not unrestricted-global" in ch37
-    assert r"\mathbb{E}[\mathrm{OASG}_T(\pi)]" in app_c
+    assert "Impossibility of Quality-Ignorant Mandatory Release" in app_c
+    assert "Boundary-Indistinguishability Lower Bound" in app_c
     assert "Mathematical contract vs. domain discharge" in app_c
     assert "Domain discharge is evidence, not an extra hidden assumption" in app_c
 
@@ -183,8 +184,14 @@ def test_t9_t10_separate_contract_from_domain_discharge() -> None:
     for theorem_id in ("T9", "T10"):
         row = next(item for item in payload["theorems"] if item["theorem_id"] == theorem_id)
         contract_text = f"{row['scope_note']} {row['weakest_step']} {row['remediation_detail']}"
-        assert "domain discharge is evidence, not an extra hidden assumption" in contract_text
-        assert row["rigor_rating"] == "mechanized_kernel_empirical_discharge"
+        assert row["defense_tier"] == "flagship_defended"
+        assert row["rigor_rating"] == "paper_rigorous"
+        if theorem_id == "T9":
+            assert "mandatory" in contract_text.lower()
+            assert "empty" in " ".join(row["typed_obligations"]).lower()
+        else:
+            assert "two-state" in contract_text.lower()
+            assert "disjoint" in " ".join(row["typed_obligations"]).lower()
 
 
 def test_equal_domain_artifact_package_rows_are_supporting_not_flagship() -> None:
@@ -219,14 +226,16 @@ def test_equal_domain_artifact_package_rows_are_supporting_not_flagship() -> Non
             assert "does not assert regulated clinical deployment readiness" in row["scope_note"].lower()
 
 
-def test_l1_and_l2_rows_are_explicitly_scoped_as_open_extension_laws() -> None:
+def test_l1_to_l4_rows_are_promoted_runtime_law_lemmas() -> None:
     payload = _load_payload()
-    l1 = next(item for item in payload["theorems"] if item["theorem_id"] == "L1")
-    l2 = next(item for item in payload["theorems"] if item["theorem_id"] == "L2")
-    assert l1["rigor_rating"] == "stylized_surrogate"
-    assert l2["rigor_rating"] == "proxy_bridge"
-    assert l1["remediation_class"] == "future work"
-    assert l2["remediation_class"] == "future work"
+    laws = [item for item in payload["theorems"] if item["theorem_id"] in {"L1", "L2", "L3", "L4"}]
+    assert {row["theorem_id"] for row in laws} == {"L1", "L2", "L3", "L4"}
+    for row in laws:
+        assert row["surface_kind"] == "lemma"
+        assert row["defense_tier"] == "supporting_defended"
+        assert row["rigor_rating"] == "paper_rigorous"
+        assert row["code_correspondence"] == "matches"
+        assert row["remediation_class"] != "future work"
 
 
 def test_namespace_drift_entries_cover_legacy_numbering_and_mini_harness() -> None:
@@ -252,12 +261,26 @@ def test_defense_tiers_match_the_rebuilt_core() -> None:
         row["theorem_id"] for row in payload["theorems"] if row["defense_tier"] == "draft_non_defended"
     ]
 
-    assert flagship_ids == ["T1", "T2", "T3a", "T4", "T6", "T7", "T11", "T_trajectory_PAC"]
-    assert supporting_ids == [
-        "T3b",
+    assert flagship_ids == [
+        "T1",
+        "T2",
+        "T3a",
+        "T4",
+        "T5",
+        "T6",
+        "T7",
         "T8",
         "T9",
         "T10",
+        "T11",
+        "T11_Byzantine",
+        "T_stale_decay",
+        "T_minimax",
+        "T_sensor_converse",
+        "T_trajectory_PAC",
+    ]
+    assert supporting_ids == [
+        "T3b",
         "T10_T11_ObservationAmbiguitySandwich",
         "T11_AV_BrakeHold",
         "T11_HC_FailSafeRelease",
@@ -266,11 +289,12 @@ def test_defense_tiers_match_the_rebuilt_core() -> None:
         "T_EQ_Battery_RuntimeArtifactPackage",
         "T_EQ_AV_RuntimeArtifactPackage",
         "T_EQ_HC_RuntimeArtifactPackage",
-        "T11_Byzantine",
-        "T_stale_decay",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
     ]
-    assert "T5" in draft_ids
-    assert "T_minimax" in draft_ids
+    assert draft_ids == []
 
 
 def test_flagship_rows_are_bounded_and_not_marked_broken() -> None:
@@ -285,9 +309,9 @@ def test_summary_exposes_defended_core_counts_and_readiness() -> None:
     payload = _load_payload()
     summary = payload["summary"]
     assert summary["defense_tier_counts"] == {
-        "flagship_defended": 8,
-        "supporting_defended": 14,
-        "draft_non_defended": 7,
+        "flagship_defended": 16,
+        "supporting_defended": 13,
+        "draft_non_defended": 0,
     }
     assert summary["flagship_gate_ready"] is True
 
@@ -301,6 +325,7 @@ def test_defended_core_is_generated_from_active_defended_registry_rows() -> None
         "T3a",
         "T3b",
         "T4",
+        "T5",
         "T6",
         "T7",
         "T8",
@@ -315,8 +340,14 @@ def test_defended_core_is_generated_from_active_defended_registry_rows() -> None
         "T_EQ_Battery_RuntimeArtifactPackage",
         "T_EQ_AV_RuntimeArtifactPackage",
         "T_EQ_HC_RuntimeArtifactPackage",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
         "T11_Byzantine",
         "T_stale_decay",
+        "T_minimax",
+        "T_sensor_converse",
         "T_trajectory_PAC",
     ]
     assert core["summary"]["flagship_defended_ids"] == [
@@ -324,9 +355,17 @@ def test_defended_core_is_generated_from_active_defended_registry_rows() -> None
         "T2",
         "T3a",
         "T4",
+        "T5",
         "T6",
         "T7",
+        "T8",
+        "T9",
+        "T10",
         "T11",
+        "T11_Byzantine",
+        "T_stale_decay",
+        "T_minimax",
+        "T_sensor_converse",
         "T_trajectory_PAC",
     ]
     assert "T10_T11_ObservationAmbiguitySandwich" in core["summary"]["supporting_defended_ids"]

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from orius.dc3s.supporting_results import verify_oasg_existence_witness
 from orius.orius_bench.oasg_metrics import build_submission_domain_surfaces, compute_oasg_signature
 
 
@@ -60,3 +61,18 @@ def test_severity_excludes_non_degraded_rows() -> None:
 def test_submission_domain_surfaces_are_battery_and_av_only() -> None:
     surfaces = build_submission_domain_surfaces()
     assert set(surfaces) == {"Battery", "Autonomous Vehicles"}
+
+
+def test_t1_executable_oasg_witness_has_observed_safe_true_unsafe_release() -> None:
+    witness = verify_oasg_existence_witness(
+        true_margin=-0.02,
+        observation_gap=0.08,
+        reliability=0.4,
+        acceptance_margin=0.05,
+    )
+
+    assert witness["holds"] is True
+    assert witness["observed_accepts"] is True
+    assert witness["true_violates"] is True
+    assert witness["degraded_observation"] is True
+    assert witness["observed_margin"] >= witness["acceptance_margin"]

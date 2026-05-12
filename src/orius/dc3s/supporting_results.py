@@ -206,6 +206,84 @@ def verify_no_margin_compensation(
     }
 
 
+def verify_oasg_existence_witness(
+    *,
+    true_margin: float = -0.02,
+    observation_gap: float = 0.08,
+    reliability: float = 0.40,
+    acceptance_margin: float = 0.05,
+) -> dict:
+    """Theorem T1 — executable OASG existence witness.
+
+    The witness is intentionally narrow and battery-row compatible.  A
+    positive safety margin means the release appears safe relative to the
+    observed state; a negative margin means the true state is already outside
+    the safety surface.  Degraded observation can add enough positive
+    observation gap that an observed-state controller accepts a release while
+    the true-state constraint is violated.
+    """
+    observed_margin = float(true_margin) + float(observation_gap)
+    observed_accepts = observed_margin >= float(acceptance_margin)
+    true_violates = float(true_margin) < 0.0
+    degraded_observation = float(reliability) < 1.0 and float(observation_gap) > 0.0
+    oasg_exists = observed_accepts and true_violates and degraded_observation
+    return {
+        "true_margin": float(true_margin),
+        "observation_gap": float(observation_gap),
+        "observed_margin": observed_margin,
+        "acceptance_margin": float(acceptance_margin),
+        "reliability": float(reliability),
+        "observed_accepts": observed_accepts,
+        "true_violates": true_violates,
+        "degraded_observation": degraded_observation,
+        "oasg_exists": oasg_exists,
+        "holds": oasg_exists,
+        "statement": (
+            "There exists a degraded-observation witness with observed_margin "
+            ">= acceptance_margin while true_margin < 0, so observed-state "
+            "release and true-state safety disagree."
+        ),
+    }
+
+
+def verify_quality_ignorant_release_counterexample(
+    *,
+    fixed_margin: float = 0.05,
+    true_margin: float = -0.02,
+    observation_gap: float = 0.08,
+    reliability: float = 0.40,
+) -> dict:
+    """Theorem T4 — fixed-margin quality-ignorant release counterexample.
+
+    This is the executable version of the constructive T4 proof.  The
+    controller class is fixed-margin and quality-ignorant: it releases whenever
+    the observed margin clears the fixed margin, regardless of the reliability
+    score.  The same degraded observation used in T1 then produces a mandatory
+    release even though the true-state margin is negative.
+    """
+    witness = verify_oasg_existence_witness(
+        true_margin=true_margin,
+        observation_gap=observation_gap,
+        reliability=reliability,
+        acceptance_margin=fixed_margin,
+    )
+    quality_ignored = True
+    counterexample = bool(witness["oasg_exists"] and quality_ignored)
+    return {
+        **witness,
+        "fixed_margin": float(fixed_margin),
+        "quality_ignored": quality_ignored,
+        "mandatory_release": bool(witness["observed_accepts"]),
+        "counterexample_exists": counterexample,
+        "holds": counterexample,
+        "statement": (
+            "A fixed-margin observation-only release rule accepts the observed "
+            "state, ignores degraded reliability, and therefore admits a "
+            "true-state violation on this admissible witness."
+        ),
+    }
+
+
 def verify_aggregation_under_predictable_budget(
     per_step_risks: Sequence[float],
 ) -> dict:
@@ -769,6 +847,16 @@ SUPPORTING_RESULTS_REGISTER = {
         "kind": "theorem",
         "code_witness": "verify_dc3s_feasibility_guarantee",
     },
+    "T1": {
+        "name": "OASG Existence Witness",
+        "kind": "theorem_witness",
+        "code_witness": "verify_oasg_existence_witness",
+    },
+    "T4": {
+        "name": "Quality-Ignorant Release Counterexample",
+        "kind": "theorem_witness",
+        "code_witness": "verify_quality_ignorant_release_counterexample",
+    },
     # ── Lemmas ──
     "lem_obs_gap_dropout": {
         "name": "Observation Gap Under Dropout",
@@ -910,12 +998,14 @@ __all__ = [
     "verify_intervention_safety_tradeoff",
     "verify_intervention_sufficiency",
     "verify_no_margin_compensation",
+    "verify_oasg_existence_witness",
     # Corollaries
     "verify_oasg_rate_lower_bound",
     "verify_oasg_severity",
     # Lemmas
     "verify_observation_gap_under_dropout",
     "verify_perfect_telemetry_collapse",
+    "verify_quality_ignorant_release_counterexample",
     "verify_reliability_awareness_necessary",
     "verify_reliability_proportional_safety",
     "verify_safe_budget_monotonicity",

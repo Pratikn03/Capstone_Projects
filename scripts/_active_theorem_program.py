@@ -836,9 +836,24 @@ def render_linear_ready_json(payload: dict[str, Any]) -> str:
         },
         {
             "title": "Surface retiering",
-            "description": "Keep T5 as a definition, T11 forward-only, and T8 supporting while T6/T7 move into the flagship ladder.",
+            "description": "Close former theorem debt by promoting T5, T8, T9, T10, robust/stale observation, runtime-law, minimax, and sensor rows only in their scoped forms.",
             "blocked_by": ["Canonical theorem registry", "Assumption register A1-A13"],
-            "theorems": ["T5", "T8", "T11", "T10_T11_ObservationAmbiguitySandwich"],
+            "theorems": [
+                "T5",
+                "T8",
+                "T9",
+                "T10",
+                "T11",
+                "T11_Byzantine",
+                "T_stale_decay",
+                "L1",
+                "L2",
+                "L3",
+                "L4",
+                "T_minimax",
+                "T_sensor_converse",
+                "T10_T11_ObservationAmbiguitySandwich",
+            ],
         },
         {
             "title": "Headline core rewrite",
@@ -857,26 +872,50 @@ def render_linear_ready_json(payload: dict[str, Any]) -> str:
                 "T3a",
                 "T3b",
                 "T4",
+                "T5",
                 "T6",
                 "T7",
                 "T8",
+                "T9",
+                "T10",
                 "T11",
+                "T11_Byzantine",
+                "T_stale_decay",
+                "T_minimax",
+                "T_sensor_converse",
                 "T10_T11_ObservationAmbiguitySandwich",
                 "T_trajectory_PAC",
             ],
         },
         {
             "title": "External proof audit",
-            "description": "Reviewer packet, structured findings register, and closure loop for flagship defended rows plus supporting T8 review.",
+            "description": "Reviewer packet, structured findings register, and closure loop for all flagship defended rows.",
             "blocked_by": ["Headline core rewrite"],
-            "theorems": ["T1", "T2", "T3a", "T4", "T6", "T7", "T8", "T11", "T_trajectory_PAC"],
+            "theorems": [
+                "T1",
+                "T2",
+                "T3a",
+                "T4",
+                "T5",
+                "T6",
+                "T7",
+                "T8",
+                "T9",
+                "T10",
+                "T11",
+                "T11_Byzantine",
+                "T_stale_decay",
+                "T_minimax",
+                "T_sensor_converse",
+                "T_trajectory_PAC",
+            ],
         },
     ]
     return json.dumps({"epics": epics, "summary": payload["summary"]}, indent=2, sort_keys=False) + "\n"
 
 
 def _external_audit_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    included_ids = set(payload["summary"]["flagship_defended_ids"]) | {"T8"}
+    included_ids = set(payload["summary"]["flagship_defended_ids"])
     return [row for row in payload["theorems"] if row["theorem_id"] in included_ids]
 
 

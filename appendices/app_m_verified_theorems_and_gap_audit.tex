@@ -114,25 +114,27 @@ surface, plus empirical ablation support.
 \textbf{Code anchor.} Supporting evidence in \texttt{baselines.py},
 \texttt{scenarios.py}, and \texttt{runner.py}.
 
-\subsection{Definition 5: Certificate Validity Horizon}
+\subsection{Theorem 5: Finite-Horizon Certificate Validity}
 \label{sec:thm-cert-horizon}
 
-\textbf{Statement.} T5 is kept as the constructive maximal forward-tube
-containment definition: the validity horizon is the largest integer horizon
-whose forward tube remains inside the battery SOC bounds.
+\textbf{Statement.} If the reachable tube from the observation-consistent
+state set remains inside the domain safe-state set through horizon~$h$, then
+the runtime certificate issued at time~$t$ is valid for that finite horizon
+unless an invalidating event occurs.
 
-\textbf{Assumptions.} A1, A2, A4--A7.
+\textbf{Assumptions.} A1, A2, A3, A4, and A5.
 
-\textbf{Proof status.} Explicit definition, not part of the defended theorem
-count.  The helper computes the maximal containment horizon directly and no
-probabilistic future-step theorem is claimed at this surface.
+\textbf{Proof status.} Flagship finite-horizon theorem.  The proof is an
+induction over the reachable tube containment condition; no unconditional
+future-step probability law is claimed beyond the certified horizon or after
+contradictory evidence.
 
 \textbf{Code anchor.} \texttt{src/orius/dc3s/temporal\_theorems.py}
-(\texttt{forward\_tube()}, \texttt{certificate\_validity\_horizon()});
-registered as T5 in \texttt{THEOREM\_REGISTER}
-(\texttt{src/orius/dc3s/theoretical\_guarantees.py}).
-Runtime expiry logic consumes this quantity, but the active theorem audit does
-not count T5 as a defended theorem.
+(\texttt{forward\_reachable\_tube()},
+\texttt{certificate\_validity\_horizon()},
+\texttt{certificate\_invalidating\_event()}); registered as T5 in
+\texttt{THEOREM\_REGISTER}.  Runtime expiry logic consumes this quantity and
+fails closed when the horizon is exhausted.
 
 \subsection{Theorem 6: Certificate Expiration Bound}
 \label{sec:thm-cert-expiration}
@@ -191,32 +193,33 @@ smaller on at least one step.
 
 \textbf{Assumptions.} A1--A5, A8.
 
-\textbf{Proof status.} Supporting defended comparison theorem at the
-sequence-comparison level only.  The stronger absorbing-landing interpretation
-remains supporting evidence rather than a promoted theorem.
+\textbf{Proof status.} Flagship paired-trace dominance theorem.  The useful-work
+threshold prevents the theorem from being satisfied by immediate shutdown alone,
+and the broader absorbing-landing interpretation remains outside this claim.
 
-\textbf{Code anchor.} \texttt{src/orius/universal\_theory/battery\_instantiation.py}
-(\texttt{evaluate\_graceful\_degradation\_dominance()}), with
-\texttt{safe\_landing} kept as supporting implementation evidence only.
+\textbf{Code anchor.} \texttt{src/orius/benchmarks/graceful\_degradation.py}
+(\texttt{graceful\_dominance\_with\_useful\_work()},
+\texttt{evaluate\_policy\_frontier()}).
 
-\subsection{Theorem 9: Universal Impossibility}
+\subsection{Theorem 9: Impossibility of Quality-Ignorant Mandatory Release}
 \label{sec:thm-universal-impossibility}
 
-\textbf{Statement.} For any quality-ignorant controller~$\pi$ and any
-$\varphi$-mixing fault process with mean degradation rate~$d > 0$,
-$\mathbb{E}[V_T(\pi)] \ge c\,d\,T$ for some constant $c > 0$.
+\textbf{Statement.} For an observation~$o$ with ambiguity class
+$B(o)=\{x:h(x)=o\}$ and common safe core
+$K(o)=\cap_{x\in B(o)}C(x)$, if $K(o)=\varnothing$, then no
+observation-only mandatory-release controller can guarantee true-state safety
+for every latent state in $B(o)$.
 
-\textbf{Assumptions.} A4 (boundary reachability), A6$'$ ($\varphi$-mixing
-fault process).
+\textbf{Assumptions.} Mandatory observation-only release and an empty common
+safe-core witness for the ambiguity class.
 
-\textbf{Proof status.} Structural impossibility theorem under explicit
-$\varphi$-mixing and boundary-reachability assumptions; battery T4 is the
-reference witness for the per-window violation probability and the witness
-constant remains theorem-local.
+\textbf{Proof status.} Flagship scoped impossibility theorem.  The result is
+not a statement about controllers allowed to abstain, expand uncertainty,
+fallback, or deny release.
 
-\textbf{Code anchor.} No dedicated module; the battery
-\texttt{cpsbench\_iot/runner.py} provides the reference witness;
-the proof is summarized in Section~\ref{sec:thm-universal-impossibility}.
+\textbf{Code anchor.} \texttt{src/orius/universal\_theory/ambiguity.py}
+(\texttt{compute\_common\_safe\_core()},
+\texttt{find\_mandatory\_release\_counterexample()}).
 
 \subsection{Theorem 10: Boundary-Indistinguishability Lower Bound}
 \label{sec:thm-info-lower-bound}
@@ -290,7 +293,7 @@ T6 Certificate Expiration Bound & V2-linked flagship theorem & Yes & Yes & Canon
 T7 Feasible Fallback Existence & Piecewise hold-or-safe-landing theorem & Yes & Yes & Runtime certifies interior safe hold, boundary recovery by safe landing, and fail-closed infeasibility \\
 T8 Graceful Degradation Dominance with Useful Work & Flagship theorem & Yes & Yes & Paired-trace safety dominance plus useful-work retention is backed by policy comparison artifacts \\
 \midrule
-T9 Universal Impossibility & Structural / scoped witness constant & Yes & Partial & $\varphi$-mixing + Azuma windowing remain explicit assumptions; battery T4 is the reference witness; Section~\ref{sec:thm-universal-impossibility} \\
+T9 Impossibility of Quality-Ignorant Mandatory Release & Flagship theorem & Yes & Yes & Empty-safe-core theorem scoped to mandatory observation-only release; abstention, fallback, uncertainty expansion, and denial are outside the lower-bound class \\
 T10 Boundary-Indistinguishability Lower Bound & Flagship theorem & Yes & Yes & Two-state TV lower bound is scoped to disjoint safe sets and finite boundary pairs; no global frontier claim \\
 T11 Typed Structural Transfer & Forward-only one-step transfer & Yes & Yes & Typed runtime artifacts now carry four-obligation summaries; the converse and mini-harness remain separate supporting surfaces \\
 \bottomrule

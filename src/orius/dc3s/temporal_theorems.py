@@ -8,7 +8,7 @@ from typing import Any
 from orius.universal_theory.battery_instantiation import (
     certificate_expiration_bound,
     certificate_half_life,
-    certificate_validity_horizon,
+    certificate_validity_horizon as _battery_certificate_validity_horizon,
     evaluate_graceful_degradation_dominance,
     forward_tube,
     should_expire_certificate,
@@ -18,6 +18,27 @@ from orius.universal_theory.battery_instantiation import (
 from orius.universal_theory.battery_instantiation import (
     validate_battery_fallback as certify_fallback_existence,
 )
+
+
+def certificate_validity_horizon(
+    *,
+    interval_lower_mwh: float,
+    interval_upper_mwh: float,
+    safe_action: Mapping[str, Any],
+    constraints: Mapping[str, Any],
+    sigma_d: float,
+    max_steps: int = 4096,
+) -> dict[str, float | int]:
+    """Battery-compatible T5 finite-horizon certificate helper."""
+
+    return _battery_certificate_validity_horizon(
+        interval_lower_mwh=interval_lower_mwh,
+        interval_upper_mwh=interval_upper_mwh,
+        safe_action=safe_action,
+        constraints=constraints,
+        sigma_d=sigma_d,
+        max_steps=max_steps,
+    )
 
 
 def forward_reachable_tube(

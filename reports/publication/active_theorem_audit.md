@@ -8,13 +8,13 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Authority role: historical_traceability
 - Current promotion authority: {'matrix': 'reports/publication/theorem_promotion_matrix.json', 'result_cards': 'reports/publication/theorem_result_cards/', 'validator': 'scripts/validate_theorem_promotion.py'}
 - Active theorem rows: 29
-- Rigor counts: {'paper_rigorous': 6, 'proof_runtime_linked': 7, 'explicit_definition': 1, 'machine_checked_ready': 1, 'narrowed_supporting_surface': 3, 'mechanized_kernel_empirical_discharge': 2, 'artifact_runtime_linked': 3, 'stylized_surrogate': 1, 'proxy_bridge': 1, 'scoped_extension': 4}
-- Code correspondence counts: {'partial': 8, 'matches': 21}
-- Defense-tier counts: {'flagship_defended': 8, 'supporting_defended': 14, 'draft_non_defended': 7}
+- Rigor counts: {'paper_rigorous': 18, 'proof_runtime_linked': 7, 'machine_checked_ready': 1, 'artifact_runtime_linked': 3}
+- Code correspondence counts: {'matches': 29}
+- Defense-tier counts: {'flagship_defended': 16, 'supporting_defended': 13, 'draft_non_defended': 0}
 - Flagship gate ready: True
-- Flagship defended IDs: ['T1', 'T2', 'T3a', 'T4', 'T6', 'T7', 'T11', 'T_trajectory_PAC']
-- Supporting defended IDs: ['T3b', 'T8', 'T9', 'T10', 'T10_T11_ObservationAmbiguitySandwich', 'T11_AV_BrakeHold', 'T11_HC_FailSafeRelease', 'T6_AV_FallbackValidity', 'T6_HC_FallbackValidity', 'T_EQ_Battery_RuntimeArtifactPackage', 'T_EQ_AV_RuntimeArtifactPackage', 'T_EQ_HC_RuntimeArtifactPackage', 'T11_Byzantine', 'T_stale_decay']
-- Draft / non-defended IDs: ['T5', 'L1', 'L2', 'L3', 'L4', 'T_minimax', 'T_sensor_converse']
+- Flagship defended IDs: ['T1', 'T2', 'T3a', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T11_Byzantine', 'T_stale_decay', 'T_minimax', 'T_sensor_converse', 'T_trajectory_PAC']
+- Supporting defended IDs: ['T3b', 'T10_T11_ObservationAmbiguitySandwich', 'T11_AV_BrakeHold', 'T11_HC_FailSafeRelease', 'T6_AV_FallbackValidity', 'T6_HC_FallbackValidity', 'T_EQ_Battery_RuntimeArtifactPackage', 'T_EQ_AV_RuntimeArtifactPackage', 'T_EQ_HC_RuntimeArtifactPackage', 'L1', 'L2', 'L3', 'L4']
+- Draft / non-defended IDs: []
 
 ## Namespace Drift
 
@@ -54,17 +54,19 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Typed obligations: []
 - Unresolved assumptions: []
 - Dependencies: ["{'Lemma': 'Observation gap under dropout'}", "{'Lemma': 'Boundary proximity under arbitrage'}"]
-- Weakest step: Boundary reachability remains domain-specific and is discharged here by explicit arbitrage reachability rather than by a generic dispatch argument.
+- Weakest step: Boundary reachability remains domain-specific; the active code witness now encodes the battery-row observed-safe/true-unsafe margin construction rather than treating it as an unanchored prose step.
 - Rigor rating: paper_rigorous
-- Code correspondence: partial - Runtime and benchmark code expose observed-vs-true disagreement directly, but the arbitrage reachability step remains a theorem-level assumption rather than a runtime proof object.
+- Code correspondence: matches - Runtime metrics count OASG events and the supporting-results witness constructs the observed-safe/true-unsafe degraded-observation margin used by the proof.
 - Severity if broken: high
 - Remediation class: add assumption - Keep A11 explicit and battery-scoped unless a stronger dispatch-model derivation is written.
 - Legacy aliases: []
 - Code anchors:
   - src/orius/orius_bench/metrics_engine.py:93 (`compute_oasg`) - Counts observation-action safety gaps.
+  - src/orius/dc3s/supporting_results.py:209 (`verify_oasg_existence_witness`) - Executable observed-safe/true-unsafe margin witness for T1.
   - src/orius/cpsbench_iot/runner.py:1071 (`run_single`) - Exposes true and observed trajectories on the battery witness row.
 - Test anchors:
-  - tests/test_oasg_metrics.py:26 (`test_signature_equals_exposure_times_severity`) - Metric-level witness for OASG exposure.
+  - tests/test_oasg_metrics.py:27 (`test_signature_equals_exposure_times_severity`) - Metric-level witness for OASG exposure.
+  - tests/test_oasg_metrics.py:66 (`test_t1_executable_oasg_witness_has_observed_safe_true_unsafe_release`) - Constructive T1 witness regression.
 
 ### T2: Safety Preservation
 
@@ -142,7 +144,7 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Code anchors:
   - src/orius/universal_theory/risk_bounds.py:110 (`compute_episode_risk_bound`) - Computes the corollary bound directly.
 - Test anchors:
-  - tests/test_active_theorem_audit.py:243 (`test_defense_tiers_match_the_rebuilt_core`) - Audit regression for the T3 split.
+  - tests/test_active_theorem_audit.py:252 (`test_defense_tiers_match_the_rebuilt_core`) - Audit regression for the T3 split.
 
 ### T4: Observation Necessity / No Free Safety
 
@@ -159,39 +161,45 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Dependencies: ["{'Definition': 'Quality-ignorant controller'}", "{'Lemma': 'Admissible fault sequence existence'}", "{'Lemma': 'No margin compensation for quality-ignorant controllers'}"]
 - Weakest step: The constructive witness is intentionally class-scoped; widening the controller class would require a new proof.
 - Rigor rating: paper_rigorous
-- Code correspondence: partial - The repo contains the necessary baseline and witness pieces, but the theorem remains constructive rather than fully executable.
+- Code correspondence: matches - The fixed-margin, quality-ignorant counterexample is now executable as a release witness and remains class-scoped.
 - Severity if broken: high
 - Remediation class: keep scope explicit - Preserve the fixed-margin quality-ignorant controller definition and avoid broadening the theorem into a claim that every ambiguity class is unsafe.
 - Legacy aliases: []
 - Code anchors:
   - src/orius/dc3s/supporting_results.py:182 (`verify_no_margin_compensation`) - Executable witness for fixed-margin insufficiency.
+  - src/orius/dc3s/supporting_results.py:249 (`verify_quality_ignorant_release_counterexample`) - Constructive fixed-margin mandatory-release counterexample.
   - src/orius/cpsbench_iot/scenarios.py:179 (`generate_episode`) - Admissible degraded-observation episode generator.
 - Test anchors:
-  - tests/test_unification.py:66 (`test_unification_argument_w_t_never_drops_below_one`) - Supporting quality-ignorant limitation check.
+  - tests/test_unification.py:67 (`test_unification_argument_w_t_never_drops_below_one`) - Supporting quality-ignorant limitation check.
+  - tests/test_unification.py:80 (`test_t4_executable_quality_ignorant_counterexample`) - Executable T4 fixed-margin counterexample regression.
 
-### T5: Certificate Validity Horizon Definition
+### T5: Finite-Horizon Certificate Validity
 
-- Surface kind: definition
-- Defense tier: draft_non_defended
+- Surface kind: theorem
+- Defense tier: flagship_defended
 - Proof tier: V1
-- Program role: temporal_validity_definition
-- Scope note: Kept as the constructive maximal forward-tube containment definition and excluded from defended theorem counts.
-- Statement location: chapters_merged/ch04_theoretical_foundations.tex:1852
-- Proof location: appendices/app_c_full_proofs.tex:294
-- Assumptions used: ['A1', 'A2', 'A4', 'A5', 'A6', 'A7', 'A9']
+- Program role: finite_horizon_certificate_validity
+- Scope note: Defended as a finite-horizon runtime certificate theorem; if the reachable tube remains inside the safe set, releases governed by the certificate remain safe until expiry or an invalidating event.
+- Statement location: appendices/proofs/T5_certificate_validity.tex:1
+- Proof location: appendices/proofs/T5_certificate_validity.tex:12
+- Assumptions used: ['A1', 'A2', 'A3', 'A4', 'A5']
 - Typed obligations: []
 - Unresolved assumptions: []
-- Dependencies: ["{'Definition': 'Safety certificate'}", "{'Definition': 'Forward tube'}"]
-- Weakest step: This row is intentionally definitional; future-step probability language is kept out of the defended theorem count.
-- Rigor rating: explicit_definition
-- Code correspondence: matches - The helper computes the maximal deterministic containment horizon directly.
+- Dependencies: ['Forward reachable tube containment', 'Certificate invalidation semantics']
+- Weakest step: The theorem is finite-horizon and runtime-object scoped; it does not claim universal plant-time safety beyond the certified tube or after invalidating evidence.
+- Rigor rating: paper_rigorous
+- Code correspondence: matches - The temporal-theorem helpers compute forward tubes, maximal contained horizons, fail-closed expiry, and invalidating events.
 - Severity if broken: medium
-- Remediation class: keep retiered - Do not promote T5 back into defended headline theorem counts without a separate temporal concentration proof.
+- Remediation class: keep finite-horizon scope - Preserve the reachable-tube containment hypothesis and do not convert T5 into an unconditional future-step probability law.
 - Legacy aliases: ['T5']
 - Code anchors:
-  - src/orius/universal_theory/battery_instantiation.py:74 (`certificate_validity_horizon`) - Deterministic maximal-horizon helper.
+  - src/orius/dc3s/temporal_theorems.py:23 (`certificate_validity_horizon`) - Finite-horizon certificate helper.
+  - src/orius/dc3s/temporal_theorems.py:44 (`forward_reachable_tube`) - Generic reachable-tube helper.
+  - src/orius/dc3s/temporal_theorems.py:92 (`certificate_invalidating_event`) - Runtime invalidation event helper.
 - Test anchors:
-  - tests/test_dc3s_temporal_theorems.py:63 (`test_certificate_validity_horizon_matches_expiration_bound_for_zero_action`) - Deterministic containment regression.
+  - tests/test_T5_certificate_validity.py:17 (`test_certificate_horizon_positive_under_clean_telemetry`) - Positive clean-telemetry horizon regression.
+  - tests/test_certos_horizon_expiry.py:21 (`test_release_fails_closed_when_horizon_less_than_one`) - Fail-closed horizon regression.
+  - tests/test_certificate_invalidating_events.py:4 (`test_fresh_contradictory_evidence_invalidates_certificate`) - Contradictory evidence invalidation regression.
 
 ### T6: Certificate Expiration Bound
 
@@ -201,7 +209,7 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Program role: temporal_expiration_bound
 - Scope note: Defended as the confidence-aware closed-form battery expiration theorem with explicit delta dependence and first-passage side conditions.
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:1884
-- Proof location: appendices/app_c_full_proofs.tex:314
+- Proof location: appendices/app_c_full_proofs.tex:299
 - Assumptions used: ['A4', 'A7', 'A9']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -227,7 +235,7 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Program role: piecewise_fallback_existence
 - Scope note: Defended as a battery-specific piecewise fallback theorem: safe hold on the interior, safe landing near the boundary, and fail-closed infeasibility otherwise.
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:1981
-- Proof location: appendices/app_c_full_proofs.tex:361
+- Proof location: appendices/app_c_full_proofs.tex:346
 - Assumptions used: ['A1', 'A4', 'A8']
 - Typed obligations: []
 - Unresolved assumptions: []
@@ -246,81 +254,81 @@ The current proof-strength and promotion authority is `reports/publication/theor
   - tests/test_dc3s_temporal_theorems.py:102 (`test_certify_fallback_existence_recovers_near_upper_boundary`) - Upper-boundary recovery witness.
   - tests/test_dc3s_temporal_theorems.py:124 (`test_certify_fallback_existence_fails_closed_when_boundary_recovery_is_infeasible`) - Fail-closed infeasibility witness.
 
-### T8: Graceful Degradation Dominance
+### T8: Graceful Degradation Dominance with Useful Work
 
 - Surface kind: theorem
-- Defense tier: supporting_defended
+- Defense tier: flagship_defended
 - Proof tier: V1
-- Program role: graceful_degradation_extension
-- Scope note: Supporting comparison theorem at the sequence level; the strict absorbing-landing claim is not part of the defended headline core.
-- Statement location: chapters_merged/ch04_theoretical_foundations.tex:2011
-- Proof location: appendices/app_c_full_proofs.tex:380
+- Program role: graceful_degradation_useful_work
+- Scope note: Defended as paired-trace dominance; ORIUS weakly reduces true-state violations versus blind persistence while preserving a declared fraction of useful work.
+- Statement location: appendices/proofs/T8_graceful_dominance.tex:1
+- Proof location: appendices/proofs/T8_graceful_dominance.tex:9
 - Assumptions used: ['A1', 'A2', 'A3', 'A4', 'A5', 'A8']
-- Typed obligations: []
+- Typed obligations: ['Paired graceful and uncontrolled policies are evaluated on the same admissible fault trace.', 'The useful-work threshold lambda is declared before evaluating dominance.']
 - Unresolved assumptions: []
-- Dependencies: ['Sequence comparison helper']
-- Weakest step: The helper proves comparison for supplied paired sequences under a shared fault trace, not a full absorbing-landing dynamics theorem.
-- Rigor rating: narrowed_supporting_surface
-- Code correspondence: matches - The executable helper matches the narrowed statement exactly.
+- Dependencies: ['Sequence comparison helper', 'Useful-work lower-bound check']
+- Weakest step: The theorem proves a two-objective partial order on paired traces; it does not claim that shutdown is operationally equivalent to graceful degradation.
+- Rigor rating: paper_rigorous
+- Code correspondence: matches - The policy frontier helper compares Blind, Shutdown, Ramp, and ORIUS policies with safety and useful-work gates.
 - Severity if broken: medium
-- Remediation class: keep helper-scoped - Keep strict improvement phrasing tied to supplied paired sequences under the same admissible fault trace.
+- Remediation class: keep useful-work gate - Preserve the useful-work threshold so immediate shutdown cannot satisfy T8 merely by being safe.
 - Legacy aliases: []
 - Code anchors:
-  - src/orius/universal_theory/battery_instantiation.py:425 (`evaluate_graceful_degradation_dominance`) - Sequence-level dominance checker.
+  - src/orius/benchmarks/graceful_degradation.py:99 (`graceful_dominance_with_useful_work`) - T8 safety and useful-work dominance checker.
+  - src/orius/benchmarks/graceful_degradation.py:125 (`evaluate_policy_frontier`) - Multi-policy safety-work frontier evaluator.
 - Test anchors:
-  - tests/test_dc3s_temporal_theorems.py:145 (`test_graceful_degradation_dominance_detects_strict_domination`) - Comparison helper regression.
+  - tests/test_T8_graceful_dominance.py:11 (`test_orius_weakly_dominates_blind_persistence_with_useful_work`) - Useful-work dominance regression.
+  - tests/test_graceful_policy_useful_work.py:15 (`test_shutdown_has_zero_work_and_orius_preserves_nontrivial_work`) - Degenerate shutdown guard.
 
-### T9: Universal Impossibility, T9
+### T9: Impossibility of Quality-Ignorant Mandatory Release
 
 - Surface kind: theorem
-- Defense tier: supporting_defended
-- Proof tier: V1_linked
+- Defense tier: flagship_defended
+- Proof tier: V1
 - Program role: impossibility_extension
-- Scope note: Defended as an assumption-qualified impossibility extension with Lean kernel coverage and three-domain empirical discharge of the A10b/A11 mixing and witness constants. The mathematical contract is A10b/A11 plus the no-free-safety witness; domain discharge is evidence, not an extra hidden assumption.
-- Statement location: chapters/ch37_universality_completeness.tex:137
-- Proof location: appendices/app_c_full_proofs.tex:422
-- Assumptions used: ['A10b', 'A11']
-- Typed obligations: []
+- Scope note: Defended as a mandatory-release impossibility theorem; when an observation ambiguity class has empty common safe core, no observation-only controller can guarantee true-state safety for every latent state in that class; domain discharge is evidence, not an extra hidden assumption.
+- Statement location: appendices/proofs/T9_no_free_safety.tex:1
+- Proof location: appendices/proofs/T9_no_free_safety.tex:11
+- Assumptions used: []
+- Typed obligations: ['Mandatory release policy depends only on the observation.', 'The observation ambiguity class has empty common safe core.']
 - Unresolved assumptions: []
-- Dependencies: ['T4', 'Azuma-Hoeffding concentration for separated windows']
-- Weakest step: The finite-mixing witness is empirical and domain-discharge based, so new domains must rerun the T9 evidence builder rather than inheriting the constants automatically.
-- Rigor rating: mechanized_kernel_empirical_discharge
-- Code correspondence: matches - The theorem kernel is mechanized and the executable discharge builder computes the domain witness constant, degradation rate, boundary reachability rate, and bounded-lag mixing proxy from locked traces.
+- Dependencies: ['T4', 'Common safe-core witness']
+- Weakest step: The impossibility applies only to mandatory observation-only release; optional abstention, fallback, uncertainty expansion, or denial of release are outside the lower-bound class.
+- Rigor rating: paper_rigorous
+- Code correspondence: matches - The ambiguity helpers build ambiguity classes, compute common safe cores, and find mandatory-release counterexamples.
 - Severity if broken: high
-- Remediation class: external review - Keep T9 tied to reports/publication/theorem_promotion_evidence/T9_*.json and rerun the promotion validator whenever a domain trace or threshold changes; domain discharge is evidence, not an extra hidden assumption.
+- Remediation class: keep mandatory-release scope - Keep T9 tied to empty-safe-core witnesses and do not restate it as a universal impossibility for policies allowed to abstain or fail closed; domain discharge is evidence, not an extra hidden assumption.
 - Legacy aliases: []
 - Code anchors:
-  - src/orius/dc3s/theoretical_guarantees.py:604 (`compute_universal_impossibility_bound`) - Scaling witness helper.
-  - src/orius/universal_theory/theorem_discharge.py:282 (`compute_t9_discharge_from_rows`) - Empirically discharges T9 witness and mixing constants from locked domain traces.
+  - src/orius/universal_theory/ambiguity.py:18 (`compute_common_safe_core`) - Common safe-core helper.
+  - src/orius/universal_theory/ambiguity.py:36 (`find_mandatory_release_counterexample`) - Mandatory-release counterexample helper.
 - Test anchors:
-  - tests/test_theoretical_guarantees_hypothesis.py:23 (`test_t9_impossibility_bound_matches_linear_scaling`) - Formula-only regression.
-  - tests/test_t9_t10_promotion_pipeline.py:229 (`test_t9_discharge_accepts_multi_lag_mixing_witness`) - Regression for bounded multi-lag mixing discharge.
+  - tests/test_T9_mandatory_release_impossibility.py:9 (`test_empty_safe_core_counterexample_exists`) - Empty-safe-core counterexample regression.
 
-### T10: Boundary-indistinguishability lower bound, T10
+### T10: Boundary-Indistinguishability Lower Bound
 
 - Surface kind: theorem
-- Defense tier: supporting_defended
-- Proof tier: V1_linked
+- Defense tier: flagship_defended
+- Proof tier: V1
 - Program role: information_lower_bound_extension
-- Scope note: Defended as an assumption-qualified boundary-testing lower bound with Lean kernel coverage and three-domain empirical discharge of boundary mass, TV bridge, and paired safe/unsafe observation laws. The mathematical contract is A13 plus the displayed boundary-testing hypotheses; domain discharge is evidence, not an extra hidden assumption.
-- Statement location: chapters/ch37_universality_completeness.tex:238
-- Proof location: appendices/app_c_full_proofs.tex:464
-- Assumptions used: ['A13']
-- Typed obligations: []
+- Scope note: Defended as a two-state boundary lower bound; observation-only mandatory release has worst-case risk at least (1-epsilon)/2 when two boundary states have disjoint safe-action sets and observation laws within TV epsilon; domain discharge is evidence, not an extra hidden assumption.
+- Statement location: appendices/proofs/T10_boundary_lower_bound.tex:1
+- Proof location: appendices/proofs/T10_boundary_lower_bound.tex:11
+- Assumptions used: []
+- Typed obligations: ['Two latent boundary states induce observation distributions within the stated TV radius.', 'The two state-conditioned safe-action sets are disjoint.']
 - Unresolved assumptions: []
 - Dependencies: ['Le Cam two-point lemma']
-- Weakest step: The lower bound is boundary-testing scoped; the p_t and TV constants are empirical artifacts for the locked domains, not universal constants for arbitrary future domains.
-- Rigor rating: mechanized_kernel_empirical_discharge
-- Code correspondence: matches - The lower-bound algebra is matched by the executable helper, and the T10 discharge builder computes unsafe-side mass, boundary mass, TV bridge, and Le Cam inputs from locked domain traces plus explicit Battery unsafe boundary-law evidence.
+- Weakest step: The result is a two-hypothesis lower bound, not a sharp global frontier for arbitrary policies or observation models.
+- Rigor rating: paper_rigorous
+- Code correspondence: matches - The boundary-indistinguishability helper estimates total variation and evaluates the exact two-state lower-bound curve.
 - Severity if broken: high
-- Remediation class: external review - Keep T10 tied to reports/publication/theorem_promotion_evidence/T10_*.json and preserve the explicit A13 boundary-testing scope in all theorem-facing surfaces; domain discharge is evidence, not an extra hidden assumption.
+- Remediation class: keep two-state scope - Do not describe T10 as a full minimax frontier; the scoped minimax row is T_minimax and still lacks a global optimality claim; domain discharge is evidence, not an extra hidden assumption.
 - Legacy aliases: []
 - Code anchors:
-  - src/orius/dc3s/theoretical_guarantees.py:643 (`compute_stylized_frontier_lower_bound`) - Scoped lower-bound helper.
-  - src/orius/universal_theory/theorem_discharge.py:390 (`compute_t10_discharge_from_rows`) - Empirically discharges T10 boundary mass, TV bridge, and paired observation laws.
+  - src/orius/universal_theory/boundary_indistinguishability.py:14 (`two_state_lower_bound`) - Two-state lower-bound helper.
+  - src/orius/universal_theory/boundary_indistinguishability.py:8 (`estimate_total_variation`) - Total-variation estimator.
 - Test anchors:
-  - tests/test_theoretical_guarantees_hypothesis.py:50 (`test_t10_frontier_lower_bound_matches_sum_formula`) - Formula-only regression.
-  - tests/test_t9_t10_promotion_pipeline.py:372 (`test_t10_discharge_uses_auxiliary_unsafe_observation_law`) - Regression for explicit auxiliary unsafe observation-law discharge.
+  - tests/test_T10_boundary_lower_bound.py:7 (`test_tv_extremes`) - TV endpoint lower-bound regression.
 
 ### T11: Typed structural transfer theorem, T11
 
@@ -330,7 +338,7 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Program role: typed_transfer_theorem
 - Scope note: Defended as the forward four-obligation one-step transfer theorem; the converse remains a separate structural failure proposition.
 - Statement location: chapters/ch37_universality_completeness.tex:386
-- Proof location: appendices/app_c_full_proofs.tex:521
+- Proof location: appendices/app_c_full_proofs.tex:388
 - Assumptions used: []
 - Typed obligations: ['Coverage obligation for the observation-consistent state set.', 'Soundness of the tightened safe-action set.', 'Repair membership in the tightened safe-action set.', 'Fallback admissibility when the tightened set is empty.']
 - Unresolved assumptions: []
@@ -358,7 +366,7 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Program role: supporting_observation_ambiguity_optimality
 - Scope note: Supporting optimality corollary under covered observation ambiguity; contract-universal, not unrestricted-global; it does not assert unrestricted global optimality for all physical AI systems.
 - Statement location: chapters/ch37_universality_completeness.tex:434
-- Proof location: appendices/app_c_full_proofs.tex:556
+- Proof location: appendices/app_c_full_proofs.tex:423
 - Assumptions used: []
 - Typed obligations: ['Observation ambiguity classes are explicit.', 'The common safe core is computed as the intersection of state-conditioned safe action sets.', 'ORIUS releases only actions safe for every state in its covered uncertainty set.', 'Probabilistic coverage is reported as an alpha-bound rather than unconditional zero violation.', 'Coverage, safe-set correctness, repair membership, fallback admissibility, and adapter validity are typed proof obligations rather than empirical metrics.']
 - Unresolved assumptions: []
@@ -385,8 +393,8 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Proof tier: V1_runtime_linked
 - Program role: bounded_domain_transfer_lemma
 - Scope note: Supporting AV runtime lemma under forward-only T11; bounded to promoted ORIUS replay rows and the longitudinal brake-hold postcondition.
-- Statement location: appendices/app_c_full_proofs.tex:590
-- Proof location: appendices/app_c_full_proofs.tex:590
+- Statement location: appendices/app_c_full_proofs.tex:457
+- Proof location: appendices/app_c_full_proofs.tex:457
 - Assumptions used: []
 - Typed obligations: ['T11 coverage obligation is runtime-linked.', 'T11 sound safe-action set obligation is runtime-linked.', 'T11 repair-membership obligation is runtime-linked.', 'T11 fallback-admissibility obligation is runtime-linked.', 'True brake-hold runtime postcondition passes for the AV replay row.']
 - Unresolved assumptions: []
@@ -412,8 +420,8 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Proof tier: V1_runtime_linked
 - Program role: bounded_domain_transfer_lemma
 - Scope note: Supporting healthcare runtime lemma under forward-only T11; bounded to promoted MIMIC monitoring rows and the fail-safe alert-release postcondition.
-- Statement location: appendices/app_c_full_proofs.tex:610
-- Proof location: appendices/app_c_full_proofs.tex:610
+- Statement location: appendices/app_c_full_proofs.tex:477
+- Proof location: appendices/app_c_full_proofs.tex:477
 - Assumptions used: []
 - Typed obligations: ['T11 coverage obligation is runtime-linked.', 'T11 sound safe-action set obligation is runtime-linked.', 'T11 repair-membership obligation is runtime-linked.', 'T11 fallback-admissibility obligation is runtime-linked.', 'Healthcare true fail-safe alert-release runtime postcondition passes.']
 - Unresolved assumptions: []
@@ -439,8 +447,8 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Proof tier: V1_runtime_linked
 - Program role: bounded_domain_certificate_validity
 - Scope note: Supporting AV certificate-validity lemma under T6/T11; degraded full-brake fallback releases are one-step valid only.
-- Statement location: appendices/app_c_full_proofs.tex:629
-- Proof location: appendices/app_c_full_proofs.tex:629
+- Statement location: appendices/app_c_full_proofs.tex:496
+- Proof location: appendices/app_c_full_proofs.tex:496
 - Assumptions used: []
 - Typed obligations: ['T6 first-passage validity semantics for positive-margin hold certificates.', 'T11 runtime witness is linked.', 'Runtime witness: AV full-brake fallback action is emitted for degraded fallback rows.', 'Runtime witness: AV true brake-hold postcondition passes.']
 - Unresolved assumptions: []
@@ -464,8 +472,8 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Proof tier: V1_runtime_linked
 - Program role: bounded_domain_certificate_validity
 - Scope note: Supporting healthcare certificate-validity lemma under T6/T11; degraded max-alert fallback releases are one-step valid only.
-- Statement location: appendices/app_c_full_proofs.tex:646
-- Proof location: appendices/app_c_full_proofs.tex:646
+- Statement location: appendices/app_c_full_proofs.tex:513
+- Proof location: appendices/app_c_full_proofs.tex:513
 - Assumptions used: []
 - Typed obligations: ['T6 first-passage validity semantics for positive-margin hold certificates.', 'T11 runtime witness is linked.', 'Healthcare max-alert fallback action is emitted for degraded fallback rows.', 'Healthcare true fail-safe alert-release postcondition passes.']
 - Unresolved assumptions: []
@@ -489,8 +497,8 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Proof tier: V1_artifact_runtime_linked
 - Program role: equal_domain_artifact_discipline
 - Scope note: Supporting artifact-discipline row; it checks battery theorem, runtime, comparator, ablation, negative-control, utility, and reproducibility evidence without changing the flagship theorem tier.
-- Statement location: appendices/app_c_full_proofs.tex:662
-- Proof location: appendices/app_c_full_proofs.tex:662
+- Statement location: appendices/app_c_full_proofs.tex:529
+- Proof location: appendices/app_c_full_proofs.tex:529
 - Assumptions used: []
 - Typed obligations: ['Battery locked witness runtime trace exists.', 'Battery comparator, ablation, and negative-control rows are runtime-denominator rows.', 'Battery ORIUS useful work exceeds the degenerate safe-fallback comparator.']
 - Unresolved assumptions: []
@@ -514,8 +522,8 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Proof tier: V1_artifact_runtime_linked
 - Program role: equal_domain_artifact_discipline
 - Scope note: Supporting artifact-discipline row for the bounded AV replay contract; it does not assert full autonomous-driving field closure.
-- Statement location: appendices/app_c_full_proofs.tex:681
-- Proof location: appendices/app_c_full_proofs.tex:681
+- Statement location: appendices/app_c_full_proofs.tex:548
+- Proof location: appendices/app_c_full_proofs.tex:548
 - Assumptions used: []
 - Typed obligations: ['Vehicle T11 and T6 runtime lemmas are linked.', 'Vehicle comparator, ablation, and negative-control rows are runtime-denominator rows.', 'Vehicle ORIUS useful work exceeds always-brake useful work.']
 - Unresolved assumptions: []
@@ -540,8 +548,8 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Proof tier: V1_artifact_runtime_linked
 - Program role: equal_domain_artifact_discipline
 - Scope note: Supporting artifact-discipline row for the bounded healthcare monitoring contract; it does not assert regulated clinical deployment readiness.
-- Statement location: appendices/app_c_full_proofs.tex:699
-- Proof location: appendices/app_c_full_proofs.tex:699
+- Statement location: appendices/app_c_full_proofs.tex:566
+- Proof location: appendices/app_c_full_proofs.tex:566
 - Assumptions used: []
 - Typed obligations: ['Healthcare T11 and T6 runtime lemmas are linked.', 'Healthcare comparator, ablation, and negative-control rows are runtime-denominator rows.', 'Healthcare ORIUS useful work exceeds always-alert useful work.']
 - Unresolved assumptions: []
@@ -559,207 +567,211 @@ The current proof-strength and promotion authority is `reports/publication/theor
   - tests/test_equal_domain_artifact_discipline.py:70 (`test_equal_domain_artifact_discipline_gates_pass_for_all_domains`) - Healthcare equal-discipline regression.
   - tests/test_healthcare_runtime_artifacts.py:59 (`test_build_healthcare_runtime_artifacts_emits_domain_native_runtime_surfaces`) - Healthcare runtime comparator smoke regression.
 
-### L1: L1: Rate-Distortion Safety Law
+### L1: L1: Reliability-Monotone Inflation
 
-- Surface kind: scoped_proxy_law
-- Defense tier: draft_non_defended
-- Proof tier: V0
-- Program role: stylized_law_extension
-- Scope note: Scoped surrogate law only.
-- Statement location: appendices/app_c_full_proofs.tex:723
-- Proof location: appendices/app_c_full_proofs.tex:723
+- Surface kind: lemma
+- Defense tier: supporting_defended
+- Proof tier: V1
+- Program role: runtime_monotonicity_law
+- Scope note: Flagship lemma in the runtime monotonicity law suite: reliability-inflated margin q_t/(w_t+epsilon) is nonincreasing in reliability.
+- Statement location: appendices/proofs/L1_reliability_inflation.tex:1
+- Proof location: appendices/proofs/L1_reliability_inflation.tex:5
 - Assumptions used: []
-- Typed obligations: []
-- Unresolved assumptions: ['Stylized binary-source surrogate lower envelope.']
-- Dependencies: ['Scoped law-helper surrogate definition']
-- Weakest step: Surrogate rather than converse.
-- Rigor rating: stylized_surrogate
-- Code correspondence: partial - Arithmetic helper only.
+- Typed obligations: ['q_t is positive.', 'epsilon is positive.', 'w_t lies in [0,1].']
+- Unresolved assumptions: []
+- Dependencies: ['Reliability-inflated runtime margin definition']
+- Weakest step: The lemma is a runtime proxy monotonicity statement, not a physical law for all sensors.
+- Rigor rating: paper_rigorous
+- Code correspondence: matches - The runtime law helper directly evaluates the monotonicity relation.
 - Severity if broken: medium
-- Remediation class: future work - Keep scoped.
+- Remediation class: keep lemma scope - Keep L1 as a monotonicity lemma and do not revive the old rate-distortion converse wording.
 - Legacy aliases: []
 - Code anchors:
-  - src/orius/universal_theory/orius_law.py:28 (`rate_distortion_safety_law`) - Stylized helper.
+  - src/orius/universal_theory/runtime_laws.py:6 (`verify_inflation_monotonicity`) - Runtime monotonicity helper.
 - Test anchors:
-  - tests/test_orius_law.py:23 (`test_positive_loss_below_capacity`) - Arithmetic regression.
+  - tests/test_runtime_law_suite.py:9 (`test_runtime_laws_smoke`) - Runtime law suite regression.
 
-### L2: L2: Capacity Bridge
+### L2: L2: Safe-Set Antitonicity
 
-- Surface kind: scoped_proxy_law
-- Defense tier: draft_non_defended
-- Proof tier: V0
-- Program role: stylized_bridge_extension
-- Scope note: Proxy bridge only.
-- Statement location: appendices/app_c_full_proofs.tex:762
-- Proof location: appendices/app_c_full_proofs.tex:762
+- Surface kind: lemma
+- Defense tier: supporting_defended
+- Proof tier: V1
+- Program role: runtime_safe_set_law
+- Scope note: Flagship lemma in the runtime monotonicity law suite: enlarging the uncertainty set can only shrink the common safe-action set.
+- Statement location: appendices/proofs/L2_safe_set_antitonicity.tex:1
+- Proof location: appendices/proofs/L2_safe_set_antitonicity.tex:7
 - Assumptions used: []
-- Typed obligations: []
-- Unresolved assumptions: ['Domain-scoped proxy constant kappa_d is externally calibrated.']
-- Dependencies: ['Scoped kappa_d calibration']
-- Weakest step: Proxy bridge rather than derived theorem.
-- Rigor rating: proxy_bridge
-- Code correspondence: partial - Proxy helper only.
+- Typed obligations: ['The compared uncertainty sets satisfy X_1 subset X_2.', 'Safe-action sets are evaluated by the same domain safe-action correspondence C.']
+- Unresolved assumptions: []
+- Dependencies: ['Common safe-core definition']
+- Weakest step: The lemma is pure set antitonicity; it does not characterize safe-set geometry beyond set inclusion.
+- Rigor rating: paper_rigorous
+- Code correspondence: matches - The runtime law helper checks the safe-core subset relation.
 - Severity if broken: medium
-- Remediation class: future work - Keep scoped.
+- Remediation class: keep lemma scope - Keep L2 as set antitonicity and do not restore the old capacity-proxy bridge as a defended theorem.
 - Legacy aliases: []
 - Code anchors:
-  - src/orius/universal_theory/orius_law.py:96 (`capacity_bridge`) - Proxy bridge helper.
+  - src/orius/universal_theory/runtime_laws.py:12 (`verify_safe_set_antitonicity`) - Runtime safe-set antitonicity helper.
 - Test anchors:
-  - tests/test_orius_law.py:57 (`test_inconsistency_detected`) - Proxy consistency regression.
+  - tests/test_runtime_law_suite.py:9 (`test_runtime_laws_smoke`) - Runtime law suite regression.
 
-### L3: L3: Critical Capacity
+### L3: L3: Intervention Threshold
 
-- Surface kind: scoped_proxy_law
-- Defense tier: draft_non_defended
-- Proof tier: V0
-- Program role: stylized_threshold_extension
-- Scope note: Threshold calculator only.
-- Statement location: appendices/app_c_full_proofs.tex:796
-- Proof location: appendices/app_c_full_proofs.tex:796
+- Surface kind: lemma
+- Defense tier: supporting_defended
+- Proof tier: V1
+- Program role: runtime_intervention_law
+- Scope note: Flagship lemma in the runtime monotonicity law suite: a candidate action outside the common safe core must be repaired, replaced by fallback, or denied.
+- Statement location: appendices/proofs/L3_intervention_threshold.tex:1
+- Proof location: appendices/proofs/L3_intervention_threshold.tex:6
 - Assumptions used: []
-- Typed obligations: []
-- Unresolved assumptions: ['Stylized L2 capacity-proxy bridge.']
+- Typed obligations: ['Candidate action membership is checked against the common safe core.', 'Certified release can repair, fallback, or deny release.']
+- Unresolved assumptions: []
 - Dependencies: ['L2', 'T3a']
-- Weakest step: Derived threshold, not independent converse.
-- Rigor rating: scoped_extension
-- Code correspondence: partial - Threshold helper only.
+- Weakest step: The lemma specifies a runtime intervention obligation, not an independent converse theorem.
+- Rigor rating: paper_rigorous
+- Code correspondence: matches - The runtime law helper checks when a candidate lies outside the common safe core.
 - Severity if broken: medium
-- Remediation class: future work - Keep scoped.
+- Remediation class: keep lemma scope - Keep L3 as the runtime intervention threshold and do not revive the old critical-capacity theorem wording.
 - Legacy aliases: []
 - Code anchors:
-  - src/orius/universal_theory/orius_law.py:164 (`critical_capacity`) - Threshold helper.
+  - src/orius/universal_theory/runtime_laws.py:18 (`verify_intervention_threshold`) - Runtime intervention threshold helper.
 - Test anchors:
-  - tests/test_orius_law.py:67 (`test_critical_capacity_exists`) - Arithmetic regression.
+  - tests/test_runtime_law_suite.py:9 (`test_runtime_laws_smoke`) - Runtime law suite regression.
 
-### L4: L4: Achievability-Converse Sandwich
+### L4: L4: Observation-Ambiguity Safety Sandwich
 
-- Surface kind: scoped_proxy_law
-- Defense tier: draft_non_defended
-- Proof tier: V0
-- Program role: stylized_sandwich_extension
-- Scope note: Stylized sandwich only.
-- Statement location: appendices/app_c_full_proofs.tex:835
-- Proof location: appendices/app_c_full_proofs.tex:835
+- Surface kind: lemma
+- Defense tier: supporting_defended
+- Proof tier: V1
+- Program role: runtime_ambiguity_sandwich
+- Scope note: Flagship lemma tying the lower side from T9/T10 to the upper side from covered ORIUS release under T2/T3.
+- Statement location: appendices/proofs/L4_ambiguity_sandwich.tex:1
+- Proof location: appendices/proofs/L4_ambiguity_sandwich.tex:6
 - Assumptions used: []
-- Typed obligations: []
-- Unresolved assumptions: ['Executable T3-style upper envelope.']
-- Dependencies: ['T3a', 'L1', 'L2']
-- Weakest step: Lower side remains proxy-based.
-- Rigor rating: scoped_extension
-- Code correspondence: partial - Stylized sandwich helper only.
+- Typed obligations: ['Lower-side ambiguity risk is supplied by T9 or T10.', 'Upper-side covered-release risk is supplied by T2 or T3.']
+- Unresolved assumptions: []
+- Dependencies: ['T9', 'T10', 'T2', 'T3a']
+- Weakest step: The sandwich depends on the scoped lower-bound class and covered-release upper-bound assumptions; it is not unrestricted global optimality.
+- Rigor rating: paper_rigorous
+- Code correspondence: matches - The runtime law helper checks compatible lower and upper risk surfaces.
 - Severity if broken: medium
-- Remediation class: future work - Keep scoped.
+- Remediation class: keep lemma scope - Keep L4 as a runtime-law sandwich and preserve the lower-class and coverage-miss claim boundaries.
 - Legacy aliases: []
 - Code anchors:
-  - src/orius/universal_theory/orius_law.py:229 (`achievability_converse_sandwich`) - Stylized sandwich helper.
+  - src/orius/universal_theory/runtime_laws.py:22 (`verify_ambiguity_sandwich`) - Runtime ambiguity-sandwich helper.
 - Test anchors:
-  - tests/test_orius_law.py:86 (`test_bounds_consistent`) - Arithmetic regression.
+  - tests/test_runtime_law_suite.py:9 (`test_runtime_laws_smoke`) - Runtime law suite regression.
 
-### T11_Byzantine: T11_Byzantine: Byzantine Trimmed-Mean Bound
+### T11_Byzantine: T11_Byzantine: Byzantine-Robust Reliability Aggregation
 
 - Surface kind: theorem
-- Defense tier: supporting_defended
+- Defense tier: flagship_defended
 - Proof tier: V1
 - Program role: robustness_extension
-- Scope note: Supporting bounded Byzantine robustness theorem under the stated trimmed-mean assumptions.
-- Statement location: appendices/app_c_full_proofs.tex:883
-- Proof location: appendices/app_c_full_proofs.tex:883
-- Assumptions used: ['A9']
-- Typed obligations: ['Byzantine fraction f is strictly below 1/3.', 'Trim fraction beta is at least f.', 'Tail-contamination model places adversarial readings in the trimmed tails.']
+- Scope note: Defended robust reliability aggregation theorem for bounded scores with at most b<n/2 Byzantine channels and honest scores in a radius-rho interval.
+- Statement location: appendices/proofs/T11Byz_robust_reliability.tex:1
+- Proof location: appendices/proofs/T11Byz_robust_reliability.tex:9
+- Assumptions used: []
+- Typed obligations: ['Reliability sub-scores lie in [0,1].', 'Byzantine budget b is strictly less than n/2.', 'Honest scores lie in an interval of width 2rho centered at the honest score.']
 - Unresolved assumptions: []
 - Dependencies: ['Trimmed-mean robustness argument']
-- Weakest step: Simplified bounded-fraction model.
-- Rigor rating: narrowed_supporting_surface
-- Code correspondence: matches - Helper matches appendix scope.
+- Weakest step: The theorem makes no guarantee when b>=n/2 or when honest-channel concentration fails.
+- Rigor rating: paper_rigorous
+- Code correspondence: matches - The robust OQE helpers implement trimmed mean, median-of-means, adversarial channel injection, and honest-interval error checks.
 - Severity if broken: medium
-- Remediation class: strengthen proof - Keep bounded-fraction scope explicit.
+- Remediation class: keep Byzantine budget scope - Preserve the b<n/2 condition and honest-interval hypothesis in all manuscript-facing statements.
 - Legacy aliases: []
 - Code anchors:
-  - src/orius/dc3s/theoretical_guarantees.py:1319 (`prove_byzantine_bound`) - Executable witness.
+  - src/orius/dc3s/quality.py:561 (`trimmed_mean_reliability`) - Byzantine-budget trimmed reliability helper.
+  - src/orius/dc3s/quality.py:610 (`byzantine_reliability_error_bound`) - Honest-interval error-bound checker.
 - Test anchors:
-  - tests/test_theoretical_guarantees.py:257 (`test_bound_holds_for_small_f`) - Witness regression.
+  - tests/test_T11Byz_robust_oqe.py:25 (`test_byzantine_error_bound_holds_for_honest_interval`) - Honest-interval bound regression.
+  - tests/test_adversarial_reliability_channels.py:14 (`test_robust_aggregators_reduce_extreme_channel_effect`) - Adversarial channel regression.
 
-### T_stale_decay: T_stale_decay: Stale-Decay Schedule
+### T_stale_decay: T_stale_decay: Stale-Hold Uncertainty Growth
 
 - Surface kind: theorem
-- Defense tier: supporting_defended
+- Defense tier: flagship_defended
 - Proof tier: V1
-- Program role: policy_schedule_extension
-- Scope note: Supporting design-schedule theorem for stale-data degradation handling.
-- Statement location: appendices/app_c_full_proofs.tex:941
-- Proof location: appendices/app_c_full_proofs.tex:941
-- Assumptions used: ['A6']
-- Typed obligations: []
+- Program role: stale_hold_uncertainty_growth
+- Scope note: Defended stale-hold uncertainty theorem: under bounded latent drift, stale observation radius grows conservatively as r_t+Ls.
+- Statement location: appendices/proofs/Tstale_uncertainty_growth.tex:1
+- Proof location: appendices/proofs/Tstale_uncertainty_growth.tex:7
+- Assumptions used: []
+- Typed obligations: ['No fresh observation arrives for s steps.', 'Latent state drift is bounded by L per step.', 'Certified release at the stale step is checked over the enlarged set.']
 - Unresolved assumptions: []
-- Dependencies: ['Exponential decay schedule', 'T3a upper envelope']
-- Weakest step: Design schedule rather than physical sensing law.
-- Rigor rating: narrowed_supporting_surface
-- Code correspondence: matches - Helper matches the stated schedule.
+- Dependencies: ['Triangle inequality', 'T5 certificate horizon check']
+- Weakest step: The theorem is bounded-drift containment, not a claim that an exponential reliability decay schedule is a physical law.
+- Rigor rating: paper_rigorous
+- Code correspondence: matches - The stale-hold helpers compute linear radius growth and certificate-horizon expiry under stale intervals.
 - Severity if broken: medium
-- Remediation class: keep scoped - Preserve design-schedule wording.
+- Remediation class: keep bounded-drift scope - Preserve the bounded-drift stale-hold radius statement and avoid deriving physical sensing laws from design schedules.
 - Legacy aliases: []
 - Code anchors:
-  - src/orius/dc3s/theoretical_guarantees.py:1435 (`stale_decay_bound`) - Decay witness.
+  - src/orius/universal_theory/stale_decay.py:6 (`stale_uncertainty_growth`) - Bounded-drift radius helper.
+  - src/orius/universal_theory/stale_decay.py:16 (`stale_certificate_expiry`) - Stale certificate horizon helper.
 - Test anchors:
-  - tests/test_theoretical_guarantees.py:290 (`test_reaches_epsilon`) - Schedule regression.
+  - tests/test_Tstale_uncertainty_growth.py:4 (`test_stale_growth_linear_and_expiry`) - Stale growth and expiry regression.
 
-### T_minimax: T_minimax: Minimax OASG Tradeoff
+### T_minimax: T_minimax: Finite Ambiguity-Class Minimax Lower Bound
 
-- Surface kind: scoped_extension
-- Defense tier: draft_non_defended
-- Proof tier: V0
-- Program role: stylized_minimax_extension
-- Scope note: Visible only as a stylized minimax extension.
-- Statement location: appendices/app_c_full_proofs.tex:999
-- Proof location: appendices/app_c_full_proofs.tex:999
+- Surface kind: scoped_flagship_theorem
+- Defense tier: flagship_defended
+- Proof tier: V1
+- Program role: finite_ambiguity_minimax_lower_bound
+- Scope note: Scoped flagship theorem for finite two-state boundary ambiguity classes; it is a lower bound only and does not claim global minimax optimality.
+- Statement location: appendices/proofs/Tminimax_finite_ambiguity.tex:1
+- Proof location: appendices/proofs/Tminimax_finite_ambiguity.tex:11
 - Assumptions used: []
-- Typed obligations: []
-- Unresolved assumptions: ['T3a/L1/L2 stylized lower-envelope bridge.']
-- Dependencies: ['Stylized lower-envelope witness']
-- Weakest step: Lower side still proxy-based.
-- Rigor rating: scoped_extension
-- Code correspondence: partial - Stylized helper only.
+- Typed obligations: ['The distribution class is finite two-state boundary problems.', 'Observation laws satisfy the stated TV bound.', 'Safe-action sets are disjoint.']
+- Unresolved assumptions: []
+- Dependencies: ['T10']
+- Weakest step: This is a scoped lower bound over a finite ambiguity class; no matching ORIUS upper bound is asserted as global optimality.
+- Rigor rating: paper_rigorous
+- Code correspondence: matches - The minimax helper delegates to the two-state boundary lower-bound calculator and exposes optional ORIUS coverage upper bounds separately.
 - Severity if broken: medium
-- Remediation class: future work - Keep out of defended counts.
+- Remediation class: keep scoped minimax wording - Do not use the word optimal unless a matching upper bound is added for the same policy and distribution class.
 - Legacy aliases: []
 - Code anchors:
-  - src/orius/dc3s/theoretical_guarantees.py:792 (`compute_tight_impossibility_bound`) - Stylized lower-envelope witness.
+  - src/orius/universal_theory/minimax_boundary.py:8 (`finite_ambiguity_minimax_lower_bound`) - Scoped minimax lower-bound helper.
 - Test anchors:
-  - tests/test_theoretical_guarantees.py:344 (`test_lower_bound_uses_alpha_and_w_bar`) - Formula regression.
+  - tests/test_Tminimax_finite_ambiguity.py:4 (`test_minimax_scoped_lower_bound`) - Scoped minimax lower-bound regression.
 
-### T_sensor_converse: T_sensor_converse: Sensor Quality Converse
+### T_sensor_converse: T_sensor_converse: Sensor Necessity Under Adapter Semantics
 
-- Surface kind: scoped_extension
-- Defense tier: draft_non_defended
-- Proof tier: V0
-- Program role: stylized_sensor_threshold_extension
-- Scope note: Visible only as a proxy threshold extension.
-- Statement location: appendices/app_c_full_proofs.tex:1050
-- Proof location: appendices/app_c_full_proofs.tex:1050
+- Surface kind: theorem
+- Defense tier: flagship_defended
+- Proof tier: V1
+- Program role: sensor_necessity_adapter_semantics
+- Scope note: Defended sensor-necessity theorem under adapter semantics: if an omitted latent coordinate changes safe-action sets to disjoint cores, observation-only mandatory release cannot certify safety without sensing, expansion, fallback, or denial.
+- Statement location: appendices/proofs/Tsensor_sensor_necessity.tex:1
+- Proof location: appendices/proofs/Tsensor_sensor_necessity.tex:9
 - Assumptions used: []
-- Typed obligations: []
-- Unresolved assumptions: ['T3a/L2/L3 proxy threshold bridge.']
-- Dependencies: ['Stylized inverse threshold helper']
-- Weakest step: Proxy threshold rather than defended converse.
-- Rigor rating: scoped_extension
-- Code correspondence: partial - Helper exposes the threshold honestly.
+- Typed obligations: ['Safe-action map depends on the omitted latent coordinate.', 'Two states differing only in that coordinate have disjoint safe-action sets.', 'Policy class is observation-only mandatory release.']
+- Unresolved assumptions: []
+- Dependencies: ['T9']
+- Weakest step: The theorem reduces to T9 and is valid only when sensor ablation creates an empty common safe core.
+- Rigor rating: paper_rigorous
+- Code correspondence: matches - Sensor ablation helpers remove observation keys, recompute safe cores, and identify critical sensor drops.
 - Severity if broken: medium
-- Remediation class: future work - Keep out of defended counts.
+- Remediation class: keep adapter-semantics scope - Preserve the missing-coordinate and disjoint-safe-core hypotheses; do not claim every low-quality sensor is universally necessary.
 - Legacy aliases: []
 - Code anchors:
-  - src/orius/dc3s/theoretical_guarantees.py:896 (`sensor_quality_converse`) - Stylized threshold helper.
+  - src/orius/universal_theory/sensor_necessity.py:20 (`critical_sensor_test`) - Empty-core sensor ablation helper.
+  - src/orius/universal_theory/sensor_necessity.py:10 (`sensor_ablation`) - Sensor ablation helper.
 - Test anchors:
-  - tests/test_theoretical_guarantees.py:373 (`test_converse_holds_when_w_sufficient`) - Threshold regression.
+  - tests/test_Tsensor_necessity.py:4 (`test_sensor_drop_and_empty_core_trigger`) - Sensor necessity regression.
 
-### T_trajectory_PAC: T_trajectory_PAC: PAC Trajectory Certificate
+### T_trajectory_PAC: T_trajectory_PAC: Finite-Horizon PAC Release Certificate
 
 - Surface kind: theorem
 - Defense tier: flagship_defended
 - Proof tier: V1
 - Program role: trajectory_certificate
 - Scope note: Defended as the implemented Bonferroni/union-bound trajectory certificate and nothing stronger.
-- Statement location: appendices/app_c_full_proofs.tex:1087
-- Proof location: appendices/app_c_full_proofs.tex:1087
+- Statement location: appendices/proofs/TPAC_trajectory_certificate.tex:1
+- Proof location: appendices/proofs/TPAC_trajectory_certificate.tex:14
 - Assumptions used: ['A1', 'A4', 'A5', 'A9']
 - Typed obligations: ['Bonferroni/union-bound aggregation over the horizon.']
 - Unresolved assumptions: []
@@ -771,6 +783,6 @@ The current proof-strength and promotion authority is `reports/publication/theor
 - Remediation class: keep narrowed - Any future martingale strengthening must appear as a new theorem, not as a silent replacement.
 - Legacy aliases: []
 - Code anchors:
-  - src/orius/universal_theory/risk_bounds.py:621 (`pac_trajectory_safety_certificate`) - Canonical certificate helper.
+  - src/orius/universal_theory/risk_bounds.py:576 (`trajectory_union_bound_certificate`) - Canonical certificate helper.
 - Test anchors:
-  - tests/test_theoretical_guarantees.py:456 (`test_martingale_flag_set_correctly`) - Guards the narrowed semantics.
+  - tests/test_TPAC_trajectory_certificate.py:10 (`test_sum_of_budgets_below_delta_passes`) - Union-bound certificate regression.

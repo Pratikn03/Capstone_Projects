@@ -26,10 +26,12 @@ from orius.dc3s.supporting_results import (
     verify_intervention_safety_tradeoff,
     verify_intervention_sufficiency,
     verify_no_margin_compensation,
+    verify_oasg_existence_witness,
     verify_oasg_rate_lower_bound,
     verify_oasg_severity,
     verify_observation_gap_under_dropout,
     verify_perfect_telemetry_collapse,
+    verify_quality_ignorant_release_counterexample,
     verify_reliability_awareness_necessary,
     verify_reliability_proportional_safety,
     verify_safe_budget_monotonicity,
@@ -45,13 +47,20 @@ from orius.dc3s.supporting_results import (
 
 class TestRegister:
     def test_register_has_all_entries(self):
-        assert len(SUPPORTING_RESULTS_REGISTER) == 25
+        assert len(SUPPORTING_RESULTS_REGISTER) == 27
 
     def test_every_entry_has_code_witness(self):
         for key, entry in SUPPORTING_RESULTS_REGISTER.items():
             assert "code_witness" in entry, f"{key} missing code_witness"
             assert "name" in entry, f"{key} missing name"
             assert "kind" in entry, f"{key} missing kind"
+
+    def test_t1_t4_flagship_witnesses_are_registered(self):
+        assert SUPPORTING_RESULTS_REGISTER["T1"]["code_witness"] == "verify_oasg_existence_witness"
+        assert (
+            SUPPORTING_RESULTS_REGISTER["T4"]["code_witness"]
+            == "verify_quality_ignorant_release_counterexample"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════

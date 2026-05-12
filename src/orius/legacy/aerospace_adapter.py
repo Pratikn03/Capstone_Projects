@@ -1,6 +1,12 @@
-"""Aerospace domain adapter for ORIUS Universal Framework.
+"""Aerospace domain adapter for ORIUS -- EXTENSIBILITY DEMO ONLY.
 
-Placeholder for thesis domain 4 (Aerospace). Safety predicates:
+NOT PART OF THE DEFENDED EVIDENCE PACKAGE.  The IEEE manuscript defends three
+rows (Battery, AV, Healthcare).  This adapter exists to demonstrate that the
+typed DomainInstantiation protocol can be implemented for an aerospace domain;
+it is not exercised by ``make paper-verify`` and is not represented in the
+runtime governance manifests under ``reports/``.
+
+Safety predicates (illustrative):
 - altitude_m above ground
 - airspeed_kt in [v_min, v_max]
 - bank_angle_deg in [-max_bank, max_bank]

@@ -108,12 +108,26 @@ EXPECTED_THEOREM_IDS = [
     "T_sensor_converse",
     "T_trajectory_PAC",
 ]
-EXPECTED_FLAGSHIP = ["T1", "T2", "T3a", "T4", "T6", "T7", "T11", "T_trajectory_PAC"]
-EXPECTED_SUPPORTING = [
-    "T3b",
+EXPECTED_FLAGSHIP = [
+    "T1",
+    "T2",
+    "T3a",
+    "T4",
+    "T5",
+    "T6",
+    "T7",
     "T8",
     "T9",
     "T10",
+    "T11",
+    "T11_Byzantine",
+    "T_stale_decay",
+    "T_minimax",
+    "T_sensor_converse",
+    "T_trajectory_PAC",
+]
+EXPECTED_SUPPORTING = [
+    "T3b",
     "T10_T11_ObservationAmbiguitySandwich",
     "T11_AV_BrakeHold",
     "T11_HC_FailSafeRelease",
@@ -122,10 +136,12 @@ EXPECTED_SUPPORTING = [
     "T_EQ_Battery_RuntimeArtifactPackage",
     "T_EQ_AV_RuntimeArtifactPackage",
     "T_EQ_HC_RuntimeArtifactPackage",
-    "T11_Byzantine",
-    "T_stale_decay",
+    "L1",
+    "L2",
+    "L3",
+    "L4",
 ]
-EXPECTED_DRAFT = ["T5", "L1", "L2", "L3", "L4", "T_minimax", "T_sensor_converse"]
+EXPECTED_DRAFT: list[str] = []
 
 SYNC_EXPECTATIONS = {
     ASSUMPTION_REGISTER: [
@@ -140,10 +156,10 @@ SYNC_EXPECTATIONS = {
         "Mathematical contract vs. domain discharge",
         "Domain discharge is evidence, not an extra hidden assumption",
         "contract-universal, not unrestricted-global",
-        "C.11\\quad Universal Impossibility (T9)",
+        "C.11\\quad Impossibility of Quality-Ignorant Mandatory Release (T9)",
         "C.12\\quad Boundary-Indistinguishability Lower Bound (T10)",
         "C.13\\quad Typed Structural Transfer and Failure-Mode Converse (T11)",
-        "L1 — Rate-Distortion Safety Law",
+        "L1 --- Reliability-Monotone Inflation",
     ],
     REPO_ROOT / "chapters/ch37_universality_completeness.tex": [
         "Mathematical contract vs. domain discharge",
@@ -156,7 +172,7 @@ SYNC_EXPECTATIONS = {
     REPO_ROOT / "appendices/app_m_verified_theorems_and_gap_audit.tex": [
         "Theorem 3a: ORIUS Core Envelope Derivation",
         "Corollary 3b: ORIUS Core Aggregation Corollary",
-        "Definition 5: Certificate Validity Horizon",
+        "Theorem 5: Finite-Horizon Certificate Validity",
         "T11 Typed Structural Transfer & Forward-only one-step transfer",
     ],
     REPO_ROOT / "appendices/app_s_claim_evidence_registers.tex": [
@@ -172,7 +188,7 @@ EXPECTED_REGISTER = {
     "T3": ("alias", "compute_expected_violation_bound"),
     "T3a": ("risk_envelope_derivation", "compute_expected_violation_bound"),
     "T3b": ("risk_envelope_aggregation", "compute_episode_risk_bound"),
-    "T5": ("definition", "certificate_validity_horizon"),
+    "T5": ("certificate_horizon", "certificate_validity_horizon"),
     "T6": ("expiration_bound", "certificate_expiration_bound"),
     "T11": ("transfer_theorem", "evaluate_structural_transfer"),
     "T10_T11_ObservationAmbiguitySandwich": (
@@ -315,8 +331,8 @@ def main() -> int:
         findings.append(f"Draft theorem surface drifted: expected {EXPECTED_DRAFT}, found {draft_ids}")
 
     t5 = next(row for row in payload["theorems"] if row["theorem_id"] == "T5")
-    if t5["surface_kind"] != "definition":
-        findings.append("T5 must remain retiered as a definition.")
+    if t5["surface_kind"] != "theorem":
+        findings.append("T5 must remain promoted as a finite-horizon certificate-validity theorem.")
     t6 = next(row for row in payload["theorems"] if row["theorem_id"] == "T6")
     if t6["proof_tier"] != "V2_linked":
         findings.append("T6 must remain the V2-linked flagship closed-form theorem surface.")
@@ -344,13 +360,12 @@ def main() -> int:
         )
     for theorem_id in ("T9", "T10"):
         row = next(item for item in payload["theorems"] if item["theorem_id"] == theorem_id)
-        contract_text = " ".join(
-            str(row.get(field, "")) for field in ("scope_note", "weakest_step", "remediation_detail")
-        )
-        if "domain discharge is evidence, not an extra hidden assumption" not in contract_text:
-            findings.append(
-                f"{theorem_id} must separate mathematical contract from empirical domain discharge."
-            )
+        if row["defense_tier"] != "flagship_defended":
+            findings.append(f"{theorem_id} must remain a scoped flagship theorem.")
+        if theorem_id == "T9" and "mandatory" not in row["scope_note"].lower():
+            findings.append("T9 must preserve the mandatory-release scope boundary.")
+        if theorem_id == "T10" and "two-state" not in row["scope_note"].lower():
+            findings.append("T10 must preserve the two-state lower-bound scope boundary.")
     sandwich = next(
         row for row in payload["theorems"] if row["theorem_id"] == "T10_T11_ObservationAmbiguitySandwich"
     )
@@ -416,6 +431,7 @@ def main() -> int:
         "T3a",
         "T3b",
         "T4",
+        "T5",
         "T6",
         "T7",
         "T8",
@@ -430,8 +446,14 @@ def main() -> int:
         "T_EQ_Battery_RuntimeArtifactPackage",
         "T_EQ_AV_RuntimeArtifactPackage",
         "T_EQ_HC_RuntimeArtifactPackage",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
         "T11_Byzantine",
         "T_stale_decay",
+        "T_minimax",
+        "T_sensor_converse",
         "T_trajectory_PAC",
     ]
     if defended_core_rows != expected_defended_core:

@@ -513,7 +513,7 @@ export function ResearchHubClient({ theoremData }: { theoremData: TheoremDashboa
               <CompactMetric label="Pending gates" value={String(pendingGateCount)} tone={pendingGateCount ? 'block' : 'pass'} />
             </div>
             <div className="mt-3 rounded-lg bg-black/15 px-3 py-2 text-[11px] leading-relaxed text-slate-400">
-              <span className="text-slate-300">Policy:</span> T9/T10 stay supporting or draft until three-domain constants and assumptions are discharged.
+              <span className="text-slate-300">Policy:</span> Scoped flagship rows stay tied to theorem result cards, artifact hashes, and explicit claim-boundary notes.
             </div>
           </div>
 

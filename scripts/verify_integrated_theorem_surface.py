@@ -7,9 +7,9 @@ The hard-gated proof surface contains 18 rows:
       * T1--T8, with active defense tiers imported from active_theorem_audit
   - 8 appendix proof restatements in Appendix C
 
-This script validates traceability/release-gate properties without promoting
-retiered surfaces. In particular T5 stays a draft/non-defended definition and
-T8 stays supporting-defended, matching reports/publication/active_theorem_audit.
+This script validates traceability/release-gate properties against the active
+theorem audit. T5 and T8 now remain in the hard-gated release surface as
+scoped flagship theorem rows, matching reports/publication/active_theorem_audit.
 It emits:
   - reports/publication/integrated_theorem_gate.csv
   - reports/publication/integrated_theorem_gate.json
@@ -140,10 +140,10 @@ APPENDIX_MAP = {
     "C.2 One-Step Safety Preservation": "Safety Preservation",
     "C.3 Battery ORIUS Core Bound": "ORIUS Core Bound",
     "C.4 Observation Necessity / No Free Safety": "Observation Necessity / No Free Safety",
-    "C.5 Certificate Validity Horizon": "Certificate validity horizon",
+    "C.5 Certificate Validity Horizon": "Finite-Horizon Certificate Validity",
     "C.6 Certificate Expiration Bound": "Certificate expiration bound",
     "C.8 Feasible Fallback Existence": "Feasible fallback existence",
-    "C.9 Graceful Degradation Dominance": "Graceful degradation dominance",
+    "C.9 Graceful Degradation Dominance": "Graceful Degradation Dominance with Useful Work",
 }
 HARD_GATED_KEYS = {"S1", "S2", "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"}
 
@@ -396,15 +396,9 @@ def _load_rows() -> list[GateRow]:
         artifact_ok = _artifacts_ok(artifact_paths)
         partial = traceability_status.startswith("partial")
         pass_gate = source_exists and code_ok and artifact_ok and not partial
-        if theorem_key == "T5" and defense_tier == "draft_non_defended" and surface_kind == "definition":
-            pass_gate = source_exists and code_ok and artifact_ok
         notes = []
         if partial:
             notes.append("partial traceability")
-        if theorem_key == "T5" and defense_tier == "draft_non_defended":
-            notes.append("definition locked; excluded from defended headline counts")
-        if theorem_key == "T8" and defense_tier == "supporting_defended":
-            notes.append("supporting surface locked; excluded from flagship count")
         if not source_exists:
             notes.append("missing source")
         if not code_ok:

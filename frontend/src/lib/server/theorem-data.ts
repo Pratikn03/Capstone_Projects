@@ -57,6 +57,19 @@ type PromotionGateCsvRow = {
   blocker: string;
 };
 
+type PromotionMatrixCsvRow = {
+  theorem_id: string;
+  statement_complete?: string;
+  assumptions_complete?: string;
+  proof_file?: string;
+  code_anchor?: string;
+  tests_count?: string;
+  artifacts_count?: string;
+  claim_boundary?: string;
+  promotion_ready?: string;
+  artifact_hashes_complete?: string;
+};
+
 type PromotionScorecardCandidate = {
   title?: string;
   current_tier?: string;
@@ -81,12 +94,13 @@ type PromotionGateLoadResult = {
 
 const DASHBOARD_THEOREM_IDS = ['T1', 'T2', 'T3a', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11'];
 const SORT_ORDER = new Map(DASHBOARD_THEOREM_IDS.map((id, index) => [id, index]));
-const PROMOTION_PACKAGE_REQUIRED_IDS = new Set(['T9', 'T10']);
-const PROMOTION_SCORECARD_SOURCE = 'reports/publication/theorem_promotion_scorecard.json';
-const T9_T10_PROMOTION_STATUS_SOURCE_LABEL = 'T9/T10 status source: reports/publication/theorem_promotion_scorecard.json';
+const PROMOTION_PACKAGE_REQUIRED_IDS = new Set<string>();
+const PROMOTION_SCORECARD_SOURCE = 'reports/publication/theorem_promotion_matrix.csv';
+const THEOREM_PROMOTION_AUTHORITY_LABEL =
+  'promotion authority: reports/publication/theorem_promotion_matrix.csv + theorem_result_cards/*.json';
 
 const PROMOTION_POLICY =
-  'A theorem can be flagship only if it has statement, assumptions, proof, code anchor, tests, artifact evidence, and domain applicability matrix. T9/T10 remain assumption-qualified supporting theorems unless their promotion package discharges constants and assumptions across Battery, AV, and Healthcare.';
+  'A theorem can be flagship only if it has statement, assumptions, proof, code anchor, tests, artifact evidence, artifact hashes, manuscript anchor, and a claim-boundary note. The dashboard follows the active audit and the generated theorem promotion matrix; it does not hand-demote scoped flagship rows.';
 
 function resolveRepoRoot(): string {
   let current = process.cwd();
@@ -127,10 +141,6 @@ function promotionCandidatePromoted(promotionCandidate?: PromotionScorecardCandi
 }
 
 function tierFor(row: AuditRow, promotionCandidate?: PromotionScorecardCandidate): TheoremTier {
-  if (PROMOTION_PACKAGE_REQUIRED_IDS.has(row.theorem_id)) {
-    if (!promotionCandidatePromoted(promotionCandidate)) return 'draft';
-    return tierFromDefenseTier(row.surface_kind, promotionCandidate?.current_tier);
-  }
   return tierFromDefenseTier(row.surface_kind, row.defense_tier);
 }
 
@@ -152,19 +162,10 @@ function domainApplicabilityFor(row: AuditRow, promotionCandidate?: PromotionSco
     return 'Universal: any compliant domain inherits the ORIUS runtime-assurance contract.';
   }
   if (row.theorem_id === 'T9' || row.theorem_id === 'T10') {
-    if (!promotionCandidate) {
-      return `Not promoted: missing ${PROMOTION_SCORECARD_SOURCE}; promotion status must not fall back to audit-only data.`;
-    }
-    if (promotionCandidatePromoted(promotionCandidate)) {
-      return `Generated promotion package marks this theorem promotion-ready; source ${PROMOTION_SCORECARD_SOURCE}.`;
-    }
-    const blockers = promotionCandidate.blocking_gates?.length
-      ? promotionCandidate.blocking_gates.join(', ')
-      : 'three-domain discharge incomplete';
-    return `Not promoted: generated promotion package says promotion_ready=false; blocking gates: ${blockers}. ${T9_T10_PROMOTION_STATUS_SOURCE_LABEL}.`;
+    return `Scoped flagship lower-bound row; ${THEOREM_PROMOTION_AUTHORITY_LABEL}.`;
   }
   if (row.theorem_id === 'T5') {
-    return 'Definition shared by the runtime certificate vocabulary; not a defended theorem.';
+    return 'Flagship finite-horizon runtime certificate theorem; validity ends at expiry or invalidating evidence.';
   }
   return 'Current dashboard row follows the active publication audit and its bounded scope note.';
 }
@@ -198,6 +199,83 @@ function titleCaseGate(value: string): string {
 
 function csvGatePasses(value: string): boolean {
   return ['1', 'true', 'yes'].includes(value.trim().toLowerCase());
+}
+
+function positiveInteger(value: string | undefined): boolean {
+  return Number(value ?? '0') > 0;
+}
+
+function gatePassValue(passed: boolean): string {
+  return passed ? '1' : '0';
+}
+
+function matrixRowToGates(row: PromotionMatrixCsvRow): PromotionGateCsvRow[] {
+  const theoremId = row.theorem_id;
+  return [
+    {
+      theorem_id: theoremId,
+      gate: 'statement',
+      gate_pass: gatePassValue(csvGatePasses(row.statement_complete ?? '')),
+      evidence: 'statement_complete=yes',
+      blocker: 'statement is incomplete',
+    },
+    {
+      theorem_id: theoremId,
+      gate: 'assumptions',
+      gate_pass: gatePassValue(csvGatePasses(row.assumptions_complete ?? '')),
+      evidence: 'assumptions_complete=yes',
+      blocker: 'assumptions are incomplete',
+    },
+    {
+      theorem_id: theoremId,
+      gate: 'proof',
+      gate_pass: gatePassValue(Boolean(row.proof_file)),
+      evidence: row.proof_file ?? '',
+      blocker: 'missing proof file',
+    },
+    {
+      theorem_id: theoremId,
+      gate: 'code',
+      gate_pass: gatePassValue(Boolean(row.code_anchor)),
+      evidence: row.code_anchor ?? '',
+      blocker: 'missing code anchor',
+    },
+    {
+      theorem_id: theoremId,
+      gate: 'tests',
+      gate_pass: gatePassValue(positiveInteger(row.tests_count)),
+      evidence: `${row.tests_count ?? '0'} registered test(s)`,
+      blocker: 'missing registered tests',
+    },
+    {
+      theorem_id: theoremId,
+      gate: 'artifact',
+      gate_pass: gatePassValue(positiveInteger(row.artifacts_count)),
+      evidence: `${row.artifacts_count ?? '0'} registered artifact(s)`,
+      blocker: 'missing registered artifacts',
+    },
+    {
+      theorem_id: theoremId,
+      gate: 'artifact_hash',
+      gate_pass: gatePassValue(csvGatePasses(row.artifact_hashes_complete ?? '')),
+      evidence: 'artifact_hashes_complete=yes',
+      blocker: 'artifact hashes are incomplete',
+    },
+    {
+      theorem_id: theoremId,
+      gate: 'claim_boundary',
+      gate_pass: gatePassValue(Boolean(row.claim_boundary)),
+      evidence: row.claim_boundary ?? '',
+      blocker: 'missing claim-boundary note',
+    },
+    {
+      theorem_id: theoremId,
+      gate: 'promotion_ready',
+      gate_pass: gatePassValue(csvGatePasses(row.promotion_ready ?? '')),
+      evidence: PROMOTION_SCORECARD_SOURCE,
+      blocker: 'promotion matrix does not mark this row ready',
+    },
+  ];
 }
 
 function promotionGatesFromCsv(rows: PromotionGateCsvRow[]): TheoremPromotionGate[] {
@@ -363,21 +441,19 @@ function parseCsvRecords<T extends Record<string, string>>(raw: string): T[] {
 }
 
 async function loadPromotionGateRows(repoRoot: string): Promise<PromotionGateLoadResult> {
-  const gatePath = path.join(repoRoot, 'reports', 'publication', 'theorem_promotion_gates.csv');
-  const scorecardPath = path.join(repoRoot, PROMOTION_SCORECARD_SOURCE);
+  const gatePath = path.join(repoRoot, PROMOTION_SCORECARD_SOURCE);
+  const legacyScorecardPath = path.join(repoRoot, 'reports', 'publication', 'theorem_promotion_scorecard.json');
   const rowsByTheorem = new Map<string, PromotionGateCsvRow[]>();
-  const scorecard: PromotionScorecardPayload = existsSync(scorecardPath)
-    ? JSON.parse(await fs.readFile(scorecardPath, 'utf-8'))
+  const scorecard: PromotionScorecardPayload = existsSync(legacyScorecardPath)
+    ? JSON.parse(await fs.readFile(legacyScorecardPath, 'utf-8'))
     : {};
   if (existsSync(gatePath)) {
-    const rows = parseCsvRecords<PromotionGateCsvRow>(await fs.readFile(gatePath, 'utf-8'));
+    const rows = parseCsvRecords<PromotionMatrixCsvRow>(await fs.readFile(gatePath, 'utf-8'));
     for (const row of rows) {
-      const bucket = rowsByTheorem.get(row.theorem_id) ?? [];
-      bucket.push(row);
-      rowsByTheorem.set(row.theorem_id, bucket);
+      rowsByTheorem.set(row.theorem_id, matrixRowToGates(row));
     }
   }
-  const scorecardAvailable = Boolean(scorecard.candidates);
+  const scorecardAvailable = existsSync(gatePath);
   return {
     rowsByTheorem,
     sourceAvailable: existsSync(gatePath) && scorecardAvailable,
@@ -414,7 +490,7 @@ export async function loadTheoremDashboardData(): Promise<TheoremDashboardData> 
     draftNonDefended: theorems.filter((row) => row.tier === 'draft').length,
     definitionIds: theorems.filter((row) => row.tier === 'definition').map((row) => row.displayId),
     sourcePath: existsSync(auditPath)
-      ? `reports/publication/active_theorem_audit.json; ${T9_T10_PROMOTION_STATUS_SOURCE_LABEL}`
+      ? `reports/publication/active_theorem_audit.json; ${THEOREM_PROMOTION_AUTHORITY_LABEL}`
       : 'reports/publication/theorem_surface_register.csv',
     sourceUpdatedAt: stat ? stat.mtime.toISOString() : null,
   };

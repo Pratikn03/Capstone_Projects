@@ -3,23 +3,23 @@
     "T10": {
       "blocking_gates": [],
       "candidate_status": "promotion_ready",
-      "current_tier": "supporting_defended",
+      "current_tier": "flagship_defended",
       "promotion_ready": true,
-      "remediation_detail": "Keep T10 tied to reports/publication/theorem_promotion_evidence/T10_*.json and preserve the explicit A13 boundary-testing scope in all theorem-facing surfaces; domain discharge is evidence, not an extra hidden assumption.",
-      "title": "Boundary-indistinguishability lower bound, T10",
-      "weakest_step": "The lower bound is boundary-testing scoped; the p_t and TV constants are empirical artifacts for the locked domains, not universal constants for arbitrary future domains."
+      "remediation_detail": "Do not describe T10 as a full minimax frontier; the scoped minimax row is T_minimax and still lacks a global optimality claim; domain discharge is evidence, not an extra hidden assumption.",
+      "title": "Boundary-Indistinguishability Lower Bound",
+      "weakest_step": "The result is a two-hypothesis lower bound, not a sharp global frontier for arbitrary policies or observation models."
     },
     "T9": {
       "blocking_gates": [],
       "candidate_status": "promotion_ready",
-      "current_tier": "supporting_defended",
+      "current_tier": "flagship_defended",
       "promotion_ready": true,
-      "remediation_detail": "Keep T9 tied to reports/publication/theorem_promotion_evidence/T9_*.json and rerun the promotion validator whenever a domain trace or threshold changes; domain discharge is evidence, not an extra hidden assumption.",
-      "title": "Universal Impossibility, T9",
-      "weakest_step": "The finite-mixing witness is empirical and domain-discharge based, so new domains must rerun the T9 evidence builder rather than inheriting the constants automatically."
+      "remediation_detail": "Keep T9 tied to empty-safe-core witnesses and do not restate it as a universal impossibility for policies allowed to abstain or fail closed; domain discharge is evidence, not an extra hidden assumption.",
+      "title": "Impossibility of Quality-Ignorant Mandatory Release",
+      "weakest_step": "The impossibility applies only to mandatory observation-only release; optional abstention, fallback, uncertainty expansion, or denial of release are outside the lower-bound class."
     }
   },
-  "generated_at_utc": "2026-05-07T14:07:38.747727+00:00",
+  "generated_at_utc": "2026-05-12T22:33:11.849370+00:00",
   "policy": "T9/T10 can become flagship only when formal statement, explicit assumptions, mathematical proof, code anchor, tests, artifact evidence for Battery/AV/Healthcare, domain applicability matrix, and domain constants/assumptions all pass.",
   "promotion_ready": true,
   "required_domains": [
@@ -42,5 +42,5 @@
     "universal_constants_and_assumptions"
   ],
   "source": "reports/publication/active_theorem_audit.json",
-  "source_sha256": "ca0b769714c7d891a4a4dac9450c4af1ae6f706ab9e93e4a9ddc1a629de70e34"
+  "source_sha256": "b996ccb4f2034da8181cabf12ac94a24b20eaf9215a1d0b102d41af241ee4122"
 }

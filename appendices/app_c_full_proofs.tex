@@ -292,24 +292,9 @@ finite-horizon and class-scoped exactly as claimed in T4.  \qedhere
 \end{proof}
 
 \section{C.5\quad Certificate Validity Horizon}\label{sec:proof-cert-valid}
-\begin{theorem}[restated]
-Under A1, A2, A4--A7, the battery safety certificate remains valid for the
-largest integer horizon $\tau_t$ whose forward tube stays inside the SOC
-constraint set.  In the active audit this row is treated as a constructive
-definition rather than as part of the defended headline theorem count.
-\end{theorem}
-\begin{proof}
-The forward tube propagates the reliability-inflated interval under the
-certified safe action while adding the worst-case sub-Gaussian drift radius
-$\sigma_d\sqrt{\Delta}$.  The certificate remains valid exactly while that
-tube is contained in $[\SOC_{\min},\SOC_{\max}]$.  The runtime helper
-\texttt{certificate\_validity\_horizon()} computes this maximal integer
-horizon directly from the chapter definition.  Both T5 and T6 are
-registered in \texttt{THEOREM\_REGISTER}
-(\texttt{src/orius/dc3s/theoretical\_guarantees.py}) and enforced at
-runtime: the API router checks $\tau_t \ge 1$ at each step and fails the
-guarantee when violated.  \qedhere
-\end{proof}
+\paragraph{Proof source.} This section restates T5,
+\emph{Finite-Horizon Certificate Validity}.
+\input{appendices/proofs/T5_certificate_validity.tex}
 
 \section{C.6\quad Certificate Expiration Bound}\label{sec:proof-expiration}
 \begin{theorem}[restated]
@@ -378,36 +363,9 @@ safe.  \qedhere
 \end{proof}
 
 \section{C.9\quad Graceful Degradation Dominance}\label{sec:proof-graceful}
-\begin{theorem}[restated]
-Under A1--A5 and A8, for any paired graceful and uncontrolled violation
-sequences generated under the same admissible fault trace, the sequence-level
-comparison
-\[
-  z_t^{\mathrm{graceful}} \le z_t^{\mathrm{uncontrolled}}
-  \quad\forall t
-\]
-implies
-\[
-  V^{\mathrm{graceful}} \le V^{\mathrm{uncontrolled}},
-\]
-with strict inequality whenever the graceful sequence is strictly smaller on at
-least one step.
-\end{theorem}
-\begin{proof}
-Summing the stepwise inequality over the shared trace gives
-\[
-  \sum_{t=1}^{T} z_t^{\mathrm{graceful}}
-  \le
-  \sum_{t=1}^{T} z_t^{\mathrm{uncontrolled}},
-\]
-which is exactly the displayed dominance statement for the cumulative
-violation counts.  Strict inequality follows if the graceful sequence is
-strictly smaller on at least one step.  The helper
-\texttt{evaluate\_graceful\_degradation\_dominance()} implements this
-paired-sequence comparison directly.  The appendix does not promote a broader
-absorbing-landing dynamics theorem beyond this scoped supporting surface.
-\qedhere
-\end{proof}
+\paragraph{Proof source.} This section restates T8,
+\emph{Graceful Degradation Dominance with Useful Work}.
+\input{appendices/proofs/T8_graceful_dominance.tex}
 
 \section{C.10\quad Safe-Budget Monotonicity Proposition}\label{sec:proof-budget}
 \begin{proposition}[restated]
@@ -419,104 +377,13 @@ $m_t=q_t/(w_t+\epsilon)$ is monotone decreasing in $w_t$, so $B_t$
 increases with $w_t$.  \qedhere
 \end{proof}
 
-\section{C.11\quad Universal Impossibility (T9)}\label{sec:proof-universal-impossibility}
-\textbf{Theorem reference.}
-The authoritative statement is Theorem~\ref{thm:universal-impossibility} in
-Chapter~\ref{ch:universality-completeness}.  It is repeated here as a
-supporting, assumption-qualified extension so that the full proof appendix
-covers the complete theorem inventory rather than only the battery witness
-ladder.
+\section{C.11\quad Impossibility of Quality-Ignorant Mandatory Release (T9)}
+\label{sec:proof-universal-impossibility}
+\input{appendices/proofs/T9_no_free_safety.tex}
 
-\begin{proof}[Appendix proof copy]
-By Assumption~A10b, the fault process is $\varphi$-mixing with geometric
-decay, so a buffer gap of length $\tau_{\mathrm{mix}}$ makes sufficiently
-separated windows approximately independent in total variation.  Partition the
-horizon into analysis windows of length $\ell$ separated by those buffers.
-Inside each analysis window, invoke the battery no-free-safety witness from
-Section~\ref{sec:proof-no-free}: a controller that does not adapt its safety
-margin to the reliability process admits an admissible degraded-observation
-sequence with positive violation probability.  The boundary-reachability and
-exogenous-fault structure are exactly the ingredients isolated in A11 and A12,
-so they package that window-level witness into a constant $c>0$ such that
-$p_{\mathrm{win}} \ge c\,d$ when the mean degradation rate is $d$.
-
-Let $Z_j^{\mathrm{win}}$ indicate whether the $j$th separated window incurs a
-true-state violation and define
-\[
-  D_j =
-  Z_j^{\mathrm{win}} -
-  \mathbb{E}\!\left[
-    Z_j^{\mathrm{win}}
-    \mid
-    \mathcal{F}_{(j-1)(\ell+\tau_{\mathrm{mix}})}
-  \right].
-\]
-The sequence $\{D_j\}$ is a martingale difference sequence with
-$|D_j| \le 1$.  Azuma--Hoeffding therefore yields exponential concentration of
-the centered partial sums around their mean.  Since the expected number of bad
-windows is at least $kcd$ over $k$ separated windows, the probability that the
-total violation count drops below a constant fraction of $kcd$ decays like
-$\exp(-\Omega(dT))$.  Taking expectations gives
-$\mathbb{E}[V_T] \ge \Omega(dT)$, which is the claimed
-$\mathbb{E}[V_T] \ge c\,d\,T$ lower bound up to renaming the constant.
-\end{proof}
-
-\section{C.12\quad Boundary-Indistinguishability Lower Bound (T10)}\label{sec:proof-frontier-lower-bound}
-\textbf{Theorem reference.}
-The authoritative statement is Theorem~\ref{thm:information-theoretic-lower-bound}
-in Chapter~\ref{ch:universality-completeness}.  The proof below preserves its
-supporting, assumption-qualified interpretation as a lower-bound frontier
-theorem under explicit extra hypotheses, including the supplied boundary-mass
-and OASG-severity sequences.
-
-\begin{proof}[Appendix proof copy]
-Fix a step $t$ and the binary boundary-testing subproblem with latent
-hypotheses $H_{0,t}$ and $H_{1,t}$.  Because the controller only acts through
-the degraded observation channel, its decision is a binary test between the
-observation laws $P_{0,t}$ and $P_{1,t}$.  By A13,
-\[
-  \mathrm{TV}(P_{0,t},P_{1,t}) \le w_t.
-\]
-Therefore Le~Cam's lemma gives
-\[
-  \max\!\bigl(
-    \Prob[\psi_t \text{ errs}\mid H_{0,t}],
-    \Prob[\psi_t \text{ errs}\mid H_{1,t}]
-  \bigr)
-  \ge
-  \frac{1-\mathrm{TV}(P_{0,t},P_{1,t})}{2}
-  \ge
-  \frac{1-w_t}{2}.
-\]
-Whenever the unsafe-side hypothesis $H_{1,t}$ holds and the controller makes
-that binary mistake, the step contributes a true-state violation and at least
-$\delta_t$ severity-weighted OASG.  Therefore
-\[
-  \Prob[Z_t = 1]
-  \ge
-  \Prob(H_{1,t})\Prob[\psi_t \text{ errs}\mid H_{1,t}]
-  \ge
-  p_t\,\frac{1-w_t}{2}.
-\]
-Summing over the horizon and applying linearity of expectation gives
-\[
-  \mathbb{E}[V_T(\pi)]
-  \ge
-  \frac{1}{2}\sum_{t=1}^T p_t(1-w_t).
-\]
-The same events contribute at least $\delta_t$ to the OASG metric, so
-\[
-  \mathbb{E}[\mathrm{OASG}_T(\pi)]
-  \ge
-  \frac{1}{2}\sum_{t=1}^T \delta_t p_t(1-w_t).
-\]
-The special case $p_t \ge \alpha/2$ for all $t$ yields the stated frontier
-$\mathbb{E}[V_T(\pi)] \ge \tfrac{1}{4}\alpha(1-\bar{w})T$.  The proof does not
-claim a sharper constant without a domain-specific argument for the
-boundary-mass and severity sequences $\{p_t,\delta_t\}$, which is exactly why
-T10 is defended as an assumption-qualified lower bound rather than as a global
-minimax theorem.
-\end{proof}
+\section{C.12\quad Boundary-Indistinguishability Lower Bound (T10)}
+\label{sec:proof-frontier-lower-bound}
+\input{appendices/proofs/T10_boundary_lower_bound.tex}
 
 \section{C.13\quad Typed Structural Transfer and Failure-Mode Converse (T11)}\label{sec:proof-typed-transfer}
 \textbf{Theorem reference.}
@@ -716,474 +583,60 @@ deployment readiness.
 \end{proof}
 
 %% ====================================================================
-%%  C.14  L1 — Rate-Distortion Safety Law
+%%  C.14  L1 --- Reliability-Monotone Inflation
 %% ====================================================================
-\section{L1 — Rate-Distortion Safety Law}\label{sec:proof-L1}
-
-\begin{theorem}[L1: Rate-Distortion Safety Law]
-Let $X\in\{0,1\}$ denote the latent safe/unsafe state with entropy
-$H(X)$, let the observation channel have capacity $C$ bits per use, and
-let $\alpha\in(0,1)$ be the conformal miscoverage level.  On the
-\emph{stylized binary-source surrogate} used by the ORIUS law helper, we
-define the lower-envelope safety distortion by
-\[
-  D^{*}(C)\;\ge\;\alpha\,\max\!\bigl(0,\,1-C/H(X)\bigr).
-\]
-\end{theorem}
-
-\begin{proof}
-This law is a scoped modeling surrogate rather than a standalone
-information-theoretic converse.  The ORIUS extension surface adopts the
-normalised unresolved-state fraction
-$\max(0,1-C/H(X))$ as a binary-source distortion envelope and scales it
-by the runtime risk budget $\alpha$.  Substituting that surrogate
-definition yields the displayed lower envelope immediately.  The clamp at
-zero handles the full-channel regime $C\ge H(X)$.
-\end{proof}
-
-\paragraph{Worked example.}
-Battery SOC monitoring: $H(X)=1$ bit (binary safe/unsafe), $C=0.7$ bits
-(30\% packet loss degrades the channel), $\alpha=0.10$.
-Then $D^{*}\ge 0.10\times(1-0.7)=0.03$: at least a 3\% safety-violation
-proxy is reported by the stylized law helper.  This is a bounded design
-calculation, not a defended impossibility claim for the live battery
-pipeline.
-
-\paragraph{Scope boundary / non-claim.}
-L1 is kept in the appendix because it explains the extension-law
-calculators, but the active audit does \emph{not} treat this linear
-lower envelope as a fully discharged Fano-tight converse.
+\section{L1 --- Reliability-Monotone Inflation}\label{sec:proof-L1}
+\input{appendices/proofs/L1_reliability_inflation.tex}
 
 %% ====================================================================
-%%  C.15  L2 — Capacity Bridge
+%%  C.15  L2 --- Safe-Set Antitonicity
 %% ====================================================================
-\section{L2 — Capacity Bridge}\label{sec:proof-L2}
-
-\begin{theorem}[L2: Capacity Bridge]
-Let $w_t\in[0,1]$ be the OQE reliability weight.  On a fixed evaluation
-surface where a domain-specific proxy constant $\kappa_d>0$ has been
-calibrated, the ORIUS law helper uses the bridge
-\[
-  \bar w\;\le\;\kappa_d\,\frac{C}{H(X)},
-\]
-as a capacity proxy.
-\end{theorem}
-
-\begin{proof}
-This appendix now treats L2 as an explicit proxy bridge, not as a proved
-theorem of the live OQE.  Once $\kappa_d$ is fixed for the chosen
-surface, the displayed inequality is exactly the bridge relation that the
-code helper checks.  A separate empirical or theoretical identification
-of $\kappa_d$ is required outside this appendix.
-\end{proof}
-
-\paragraph{Worked example.}
-With $C=0.7$ bits, $H(X)=1$ bit, $\kappa_d=0.95$ (estimated on battery
-SCADA data), the bridge gives $\bar w\le 0.95\times 0.70=0.665$.  An
-episode with $\bar w=0.72$ would violate the bridge and signal
-miscalibration.
-
-\paragraph{Scope boundary / non-claim.}
-The active audit treats L2 as a domain-scoped proxy relation.  It is not
-currently defended as a theorem deriving the heuristic OQE score from
-mutual information.
+\section{L2 --- Safe-Set Antitonicity}\label{sec:proof-L2}
+\input{appendices/proofs/L2_safe_set_antitonicity.tex}
 
 %% ====================================================================
-%%  C.16  L3 — Critical Capacity Theorem
+%%  C.16  L3 --- Intervention Threshold
 %% ====================================================================
-\section{L3 — Critical Capacity Theorem}\label{sec:proof-L3}
-
-\begin{theorem}[L3: Critical Capacity]
-For any target violation rate $\varepsilon<\alpha$, define the stylized
-critical capacity
-\[
-  C^{*}_d\;=\;\frac{H(X)\,(1-\varepsilon/\alpha)}{\kappa_d}.
-\]
-Then any certification argument that uses the L2 proxy bridge together
-with the executable T3-style upper envelope requires $C\ge C^{*}_d$.
-\end{theorem}
-
-\begin{proof}
-The executable upper envelope gives
-$\mathrm{TSVR}\le\alpha(1-\bar w)$, so demanding
-$\mathrm{TSVR}\le\varepsilon$ forces
-$\bar w\ge 1-\varepsilon/\alpha$.  Under the L2 proxy bridge,
-$\bar w\le\kappa_d\,C/H(X)$, hence
-\[
-  1-\varepsilon/\alpha\;\le\;\kappa_d\,\frac{C}{H(X)}.
-\]
-Rearranging yields $C\ge C^{*}_d$.  Thus $C^{*}_d$ is the threshold
-required by the stylized bridge-and-achievability argument.
-\end{proof}
-
-\paragraph{Worked example.}
-$\alpha=0.10$, $\varepsilon=0.02$, $\kappa_d=1$, $H(X)=1$ bit.
-$C^{*}_d=1\times(1-0.02/0.10)/1=0.80$ bits.
-Within the stylized bridge argument, any channel with $C<0.80$ bits
-fails to support a $2\%$ TSVR certificate.
-
-\paragraph{Scope boundary / non-claim.}
-L3 is not presented as an independent universal impossibility theorem.
-It is an algebraic threshold derived from the L2 proxy and the T3-style
-upper envelope.
+\section{L3 --- Intervention Threshold}\label{sec:proof-L3}
+\input{appendices/proofs/L3_intervention_threshold.tex}
 
 %% ====================================================================
-%%  C.17  L4 — Achievability-Converse Sandwich
+%%  C.17  L4 --- Observation-Ambiguity Safety Sandwich
 %% ====================================================================
-\section{L4 — Achievability-Converse Sandwich}\label{sec:proof-L4}
-
-\begin{theorem}[L4: Achievability-Converse Sandwich]
-For the binary safe/unsafe state model:
-\[
-  \frac{\alpha}{K}\,(1-\bar w)
-  \;\le\;\mathrm{TSVR}^{*}
-  \;\le\;\alpha\,(1-\bar w),
-\]
-where the upper side is the executable T3-style envelope and the lower
-side is the stylized L1/L2 proxy lower envelope.  The constant $K$
-captures the surrogate gap and does not grow with $T$.
-\end{theorem}
-
-\begin{proof}
-\textbf{Upper side (executable achievability).}
-The defended T3-style envelope gives
-$\mathrm{TSVR}\le\alpha(1-\bar w)$.
-
-\textbf{Lower side (stylized proxy).}
-L1 contributes the surrogate lower envelope in capacity space and L2
-maps that lower envelope into reliability space through the proxy
-constant $\kappa_d$.  Writing $K=1/\kappa_d$ yields the displayed lower
-side
-\[
-  \frac{\alpha}{K}(1-\bar w).
-\]
-Combining the executable upper side with the stylized lower side gives
-the displayed sandwich.
-\end{proof}
-
-\paragraph{Worked example.}
-$\bar w=0.85$, $\alpha=0.10$, $K=2$.
-Lower: $(0.10/2)(1-0.85)=0.0075$.
-Upper: $0.10\times(1-0.85)=0.015$.
-The stylized law family spans $[0.75\%,\,1.5\%]$.  This interval is a
-proxy comparison band, not a sharp theorem about the locked battery
-release.
-
-\paragraph{Scope boundary / non-claim.}
-The active audit treats L4 as an executable upper bound plus a stylized
-proxy lower side.  It is \emph{not} promoted as a closed optimality
-characterization.
+\section{L4 --- Observation-Ambiguity Safety Sandwich}\label{sec:proof-L4}
+\input{appendices/proofs/L4_ambiguity_sandwich.tex}
 
 %% ====================================================================
-%%  C.18  T11\_Byzantine — Byzantine-Tolerant OQE Bound
+%%  C.18  T11\_Byzantine --- Byzantine-Robust Reliability Aggregation
 %% ====================================================================
-\section{T11\_Byzantine --- Byzantine-Tolerant OQE
-Bound}\label{sec:proof-T11-byz}
-
-\begin{theorem}[T11\_Byzantine: Byzantine Trimmed-Mean Bound]
-Given a window of $W$ sensor readings with at most fraction $f<1/3$
-Byzantine (adversarial) sensors, the symmetric trimmed mean with trim
-fraction $\beta\ge f$ on each side and under the explicit
-\emph{tail-contamination model} in which every Byzantine reading lies in one
-of the trimmed tails satisfies
-\[
-  |\hat\mu_{\mathrm{trim}}-\mu_{\mathrm{true}}|
-  \;\le\;\frac{2\sigma_{\mathrm{honest}}}{\sqrt{W(1-2f)}}
-\]
-with probability $\ge 1-2e^{-2}\approx 0.729$.
-\end{theorem}
-
-\begin{proof}
-Under the stated tail-contamination model, trimming $\beta W$ readings from
-each tail removes all adversarial values because $\beta\ge f$ on each side.
-The remaining
-\[
-  W_{\mathrm{eff}} = W(1-2f)
-\]
-readings are therefore honest, and their dispersion is controlled by
-$\sigma_{\mathrm{honest}}$.
-
-By Hoeffding's inequality applied to $W_{\mathrm{eff}}$ i.i.d.\
-sub-Gaussian readings with parameter $\sigma_{\mathrm{honest}}$:
-\[
-  \Pr\!\bigl[|\hat\mu_{\mathrm{trim}}-\mu_{\mathrm{true}}|
-  > t\bigr]
-  \;\le\;2\exp\!\Bigl(-\frac{W_{\mathrm{eff}}\,t^{2}}{2\sigma_{\mathrm{honest}}^{2}}\Bigr).
-\]
-Setting
-\[
-  t=\frac{2\sigma_{\mathrm{honest}}}{\sqrt{W_{\mathrm{eff}}}}
-\]
-gives
-\[
-  \Pr\!\bigl[|\hat\mu_{\mathrm{trim}}-\mu_{\mathrm{true}}| > t\bigr]
-  \le
-  2e^{-2}.
-\]
-Hence the stated width holds with success probability at least
-$1-2e^{-2}\approx 0.729$.  The threshold $f<1/3$ ensures
-$W_{\mathrm{eff}}>W/3>0$, so the trimmed window is non-empty.
-\end{proof}
-
-\paragraph{Worked example.}
-$W=30$ readings, $f=0.10$ (3~adversarial), $\sigma_{\mathrm{honest}}=2.0\,\text{MW}$.
-$W_{\mathrm{eff}}=30\times 0.80=24$.
-Bound: $4.0/\sqrt{24}=0.816\,\text{MW}$.
-The trimmed mean is within $0.82\,\text{MW}$ of the true value with
-$\ge 73\%$ confidence even under adversarial corruption.
+\section{T11\_Byzantine --- Byzantine-Robust Reliability Aggregation}
+\label{sec:proof-T11-byz}
+\input{appendices/proofs/T11Byz_robust_reliability.tex}
 
 %% ====================================================================
-%%  C.19  T\_stale\_decay — Stale-Decay Graceful Degradation
+%%  C.19  T\_stale\_decay --- Stale-Hold Uncertainty Growth
 %% ====================================================================
-\section{T\_stale\_decay --- Stale-Decay Graceful
-Degradation}\label{sec:proof-T-stale}
-
-\begin{theorem}[T\_stale\_decay: Stale-Decay Schedule]
-Under stale telemetry persisting for $k>\tau_{\max}$ steps (Assumption
-A6), the OQE reliability weight decays geometrically:
-\[
-  w_t(k)\;=\;w_0\,\gamma^{k-\tau_{\max}},\qquad k>\tau_{\max},
-\]
-where $\gamma\in(0,1)$ is the decay rate.  The weight reaches the
-floor $\varepsilon$ at step
-\[
-  N_\varepsilon\;=\;\tau_{\max}+\Bigl\lceil
-  \frac{\ln(\varepsilon/w_0)}{\ln\gamma}\Bigr\rceil.
-\]
-Moreover, the episode TSVR under stale decay satisfies
-$\mathrm{TSVR}\le\alpha\bigl(1-\bar w_{\mathrm{stale}}\bigr)$ where
-$\bar w_{\mathrm{stale}}$ accounts for the geometric series.
-\end{theorem}
-
-\begin{proof}
-During $k\le\tau_{\max}$, the telemetry is within the detection lag
-bound (A6) and $w_t=w_0$.  For $k>\tau_{\max}$, each additional step of
-staleness multiplies the previous weight by $\gamma$:
-$w_t(k)=w_0\gamma^{k-\tau_{\max}}$ by induction.
-
-Setting $w_0\gamma^{N-\tau_{\max}}=\varepsilon$ and solving:
-$N-\tau_{\max}=\ln(\varepsilon/w_0)/\ln\gamma$.  Taking the ceiling
-gives $N_\varepsilon$.
-
-The episode-average reliability over $T$ steps with staleness onset at
-step $t_0$ is:
-\[
-  \bar w\;=\;\frac{1}{T}\Bigl[\sum_{k=1}^{\tau_{\max}}w_0
-  +\sum_{k=\tau_{\max}+1}^{T}w_0\gamma^{k-\tau_{\max}}\Bigr]
-  \;=\;\frac{w_0}{T}\Bigl[\tau_{\max}
-  +\frac{1-\gamma^{T-\tau_{\max}}}{1-\gamma}\Bigr].
-\]
-The TSVR bound follows from T3 (Core Bound):
-$\mathrm{TSVR}\le\alpha(1-\bar w)$.
-
-\textbf{Remark.}  The geometric decay is a \emph{design choice}, not a
-derived property of the physical system.  It encodes the principle that
-stale observations carry exponentially less information, consistent with
-the channel-capacity interpretation (capacity of an erasure channel with
-increasing erasure probability).
-\end{proof}
-
-\paragraph{Worked example.}
-$w_0=0.95$, $\gamma=0.85$, $\tau_{\max}=6$ steps, $\varepsilon=0.05$.
-$N_\varepsilon=6+\lceil\ln(0.05/0.95)/\ln(0.85)\rceil
-=6+\lceil-2.944/(-0.1625)\rceil=6+19=25$ steps.
-After 25 steps of persistent staleness the system enters safe-landing
-mode ($w_t\le 0.05$).
+\section{T\_stale\_decay --- Stale-Hold Uncertainty Growth}
+\label{sec:proof-T-stale}
+\input{appendices/proofs/Tstale_uncertainty_growth.tex}
 
 %% ====================================================================
-%%  C.20  T\_minimax — Tight OASG Minimax Tradeoff
+%%  C.20  T\_minimax --- Finite Ambiguity-Class Minimax Lower Bound
 %% ====================================================================
-\section{T\_minimax --- Tight OASG Minimax
-Tradeoff}\label{sec:proof-T-minimax}
-
-\begin{theorem}[T\_minimax: Minimax OASG Tradeoff]
-Under degraded observation with mean reliability $\bar w$, the current
-extension surface combines a stylized lower envelope with the defended
-T3-style upper envelope:
-\[
-  \frac{\alpha}{K}\sum_{t=1}^{T}(1-w_t)
-  \;\le\;\mathbb{E}[V_T]
-  \;\le\;\alpha\sum_{t=1}^{T}(1-w_t),
-\]
-where $K=2$ for binary state spaces and $V_T=\sum_{t=1}^{T}Z_t$ is the
-cumulative violation count.
-\end{theorem}
-
-\begin{proof}
-\textbf{Upper bound.}  By T3 (Core Bound), DC3S ensures
-$\Pr[Z_t=1\mid\mathcal{H}_t]\le\alpha(1-w_t)$, so linearity of
-expectation gives
-$\mathbb{E}[V_T]\le\alpha\sum_t(1-w_t)$.
-
-\textbf{Lower bound.}  The extension surface adopts the stylized L1/L2
-proxy lower envelope $r_t\ge(\alpha/K)(1-w_t)$.  This follows because:
-\begin{enumerate}
-\item L1 gives $D^{*}(C_t)\ge\alpha(1-C_t/H(X))$ where $C_t$ is the
-  effective per-step channel capacity.
-\item L2 translates: $1-w_t\le 1-\kappa_d C_t/H(X)$, i.e.,
-  $1-C_t/H(X)\ge(1-w_t)/\kappa_d$.
-\item Substituting: $r_t\ge\alpha(1-w_t)/\kappa_d$.  With
-  $K=1/\kappa_d$ (which equals $2$ for BSC at worst-case crossover):
-  $r_t\ge(\alpha/K)(1-w_t)$.
-\end{enumerate}
-Summing over $T$ steps and taking expectations completes the proxy
-sandwich.
-\end{proof}
-
-\paragraph{Worked example.}
-$T=100$ steps, $\bar w=0.90$, $\alpha=0.10$, $K=2$.
-Lower: $(0.10/2)\times 100\times 0.10=0.50$ expected violations.
-Upper: $0.10\times 100\times 0.10=1.00$ expected violations.
-The resulting interval is a stylized comparison band.  It is not a
-sharp minimax certificate for the locked deployment artifacts.
-
-\paragraph{Scope boundary / non-claim.}
-T\textsubscript{minimax} remains a scoped extension theorem because its
-lower side inherits the open L1/L2 proxy bridge.
+\section{T\_minimax --- Finite Ambiguity-Class Minimax Lower Bound}
+\label{sec:proof-T-minimax}
+\input{appendices/proofs/Tminimax_finite_ambiguity.tex}
 
 %% ====================================================================
-%%  C.21  T\_sensor — Information-Theoretic Sensor Quality Converse
+%%  C.21  T\_sensor\_converse --- Sensor Necessity Under Adapter Semantics
 %% ====================================================================
-\section{T\_sensor\_converse --- Sensor Quality
-Converse}\label{sec:proof-T-sensor}
-
-\begin{theorem}[T\_sensor\_converse: Sensor Quality Converse]
-For any controller $\pi$ and target $\mathrm{TSVR}(\pi)\le\varepsilon$:
-\[
-  \bar w\;\ge\;1-\frac{\varepsilon}{\alpha}.
-\]
-This threshold is sufficient by the executable T3-style envelope and
-necessary only inside the stylized L2/L3 bridge model.
-\end{theorem}
-
-\begin{proof}
-\textbf{Stylized necessity.}
-Under the L2/L3 proxy bridge, $\bar w<1-\varepsilon/\alpha$ means the
-stylized threshold is not met.
-
-\textbf{Executable sufficiency.}
-If $\bar w\ge 1-\varepsilon/\alpha$, then
-$\alpha(1-\bar w)\le\varepsilon$, and DC3S achieves
-$\mathrm{TSVR}\le\alpha(1-\bar w)\le\varepsilon$.
-\end{proof}
-
-\paragraph{Worked example.}
-$\alpha=0.10$, $\varepsilon=0.02$.
-$\bar w\ge 1-0.02/0.10=0.80$.
-To guarantee $\le 2\%$ violations, mean sensor reliability must be at
-least $80\%$ according to the stylized threshold calculator.
-
-\paragraph{Scope boundary / non-claim.}
-The active audit does not treat T\textsubscript{sensor} as a fully
-defended universal converse for all controllers; it is the inverse of
-the executable upper envelope plus the scoped L2/L3 bridge.
+\section{T\_sensor\_converse --- Sensor Necessity Under Adapter Semantics}
+\label{sec:proof-T-sensor}
+\input{appendices/proofs/Tsensor_sensor_necessity.tex}
 
 %% ====================================================================
-%%  C.22  T\_trajectory\_PAC — Distribution-Free Trajectory Certificate
+%%  C.22  T\_trajectory\_PAC --- Finite-Horizon PAC Release Certificate
 %% ====================================================================
-\section{T\_trajectory\_PAC --- Distribution-Free Trajectory Safety
-Certificate}\label{sec:proof-T-trajectory-PAC}
-
-\begin{theorem}[T\_trajectory\_PAC: PAC Trajectory Certificate]
-Under A1, A4, A5, A9, and the implemented Bonferroni/union-bound aggregation
-over the horizon, for horizon $H$, calibration size $n_{\mathrm{cal}}$, and
-confidence target $1-\delta$:
-\[
-  \Pr\!\bigl[\text{all }H\text{ steps safe}\bigr]
-  \;\ge\;1-H\alpha(1-\bar w)-\varepsilon_{\mathrm{fs}}-\delta/2,
-\]
-where the implemented finite-sample correction is
-\[
-  \varepsilon_{\mathrm{fs}}
-  =
-  \sqrt{\frac{\ln(4/\delta)}{2n_{\mathrm{eff}}}},
-  \qquad
-  n_{\mathrm{eff}}
-  =
-  \Bigl\lfloor n_{\mathrm{cal}} \min_{t\le H} w_t \Bigr\rfloor.
-\]
-The reliability-deflated $n_{\mathrm{eff}}$ is a conservative executable
-calibration rule used by the helper, not a claim of optimal split-conformal
-sample complexity.
-
-The maximum trajectory horizon certified at confidence $1-\delta$ by this
-bound is
-\[
-  H_{\max}
-  =
-  \max\!\left\{
-    0,\;
-    \Bigl\lfloor
-      \frac{\delta/2-\varepsilon_{\mathrm{fs}}}{\alpha(1-\bar w)}
-    \Bigr\rfloor
-  \right\}.
-\]
-\end{theorem}
-
-\begin{proof}
-\textbf{Step 1 (per-step risk).}
-By T3, $\Pr[Z_t=1\mid\mathcal{H}_t]\le\alpha(1-w_t)$.
-
-\textbf{Step 2 (trajectory aggregation by union bound).}
-Let $E_t=\{Z_t=1\}$ denote a stepwise true-state violation.  Then
-\[
-  \Pr\!\Bigl[\bigcup_{t=1}^{H} E_t\Bigr]
-  \;\le\;\sum_{t=1}^{H}\Pr[E_t]
-  \;\le\;\sum_{t=1}^{H}\alpha(1-w_t)
-  \;\le\;H\alpha(1-\bar w).
-\]
-
-\textbf{Step 3 (finite-sample correction).}
-The conformal quantile $\hat q$ estimated from $n_{\mathrm{cal}}$ points
-satisfies (Vovk, 2005):
-$\Pr[\hat q<q_{\mathrm{true}}]\le\varepsilon_{\mathrm{fs}}$.
-The executable helper conservatively deflates the effective calibration size by
-the worst reliability over the certified prefix:
-\[
-  n_{\mathrm{eff}}
-  =
-  \Bigl\lfloor n_{\mathrm{cal}} \min_{t\le H} w_t \Bigr\rfloor.
-\]
-
-\textbf{Step 4 (combining).}
-\begin{align*}
-  &\Pr[\exists\,t\in[H]:\text{violation}]\\
-  &\quad\le\underbrace{H\alpha(1-\bar w)}_{\text{risk budget}}
-  +\underbrace{\varepsilon_{\mathrm{fs}}}_{\text{calibration error}}
-  +\underbrace{\delta/2}_{\text{exit-time budget}}
-\end{align*}
-\[
-  \Rightarrow\;\Pr[\text{all safe}]\ge 1-H\alpha(1-\bar w)
-  -\varepsilon_{\mathrm{fs}}-\delta/2.
-\]
-To certify the trajectory at confidence $1-\delta$, it is sufficient that
-\[
-  1-H\alpha(1-\bar w)-\varepsilon_{\mathrm{fs}}-\delta/2
-  \ge 1-\delta.
-\]
-Rearranging gives
-\[
-  H\alpha(1-\bar w)\le \delta/2-\varepsilon_{\mathrm{fs}}.
-\]
-If the right-hand side is negative, the bound certifies no positive horizon.
-Otherwise flooring the quotient gives the displayed $H_{\max}$.
-\end{proof}
-
-\paragraph{Worked example.}
-$\bar w=0.90$, $\alpha=0.10$, $n_{\mathrm{cal}}=300$, $\delta=0.05$,
-$\min_t w_t=0.60$.
-$n_{\mathrm{eff}}=\lfloor 300\times 0.60\rfloor=180$.
-$\varepsilon_{\mathrm{fs}}=\sqrt{\ln(80)/(360)}=\sqrt{4.382/360}=0.110$.
-Because $\delta/2-\varepsilon_{\mathrm{fs}}=0.025-0.110=-0.085<0$, the
-certificate is vacuous at the $95\%$ confidence target and
-\[
-  H_{\max}=0.
-\]
-With this calibration size and reliability floor, the implemented helper
-honestly reports that no positive trajectory horizon is certified at the
-requested confidence level.
-
-\paragraph{Scope boundary / non-claim.}
-The defended executable surface for T\textsubscript{PAC} is the
-Bonferroni/union-bound certificate above.  No separate
-Ville/supermartingale strengthening is claimed in the live repo.
+\section{T\_trajectory\_PAC --- Finite-Horizon PAC Release Certificate}
+\label{sec:proof-T-trajectory-PAC}
+\input{appendices/proofs/TPAC_trajectory_certificate.tex}

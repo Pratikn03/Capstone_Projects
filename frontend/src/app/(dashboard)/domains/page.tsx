@@ -79,7 +79,7 @@ const DOMAINS: Domain[] = [
     ir: '0.0%',
     status: 'verified',
     statusLabel: 'Locked artifact',
-    description: 'Reference witness row for the defended battery proof spine. T5 is a definition; T8 is supporting; T9/T10 are supporting rows; draft extensions stay out of the defended headline count.',
+    description: 'Reference witness row for the defended battery proof spine. T5, T8, T9, and T10 are now scoped flagship theorem rows, while historical draft text stays archived outside the defended register.',
   },
   {
     key: 'av',
@@ -120,12 +120,12 @@ const THEOREM_COLUMNS = [
   { id: 'T2', label: 'T2', qualifier: 'Flagship', href: '/theorems#theorem-t2' },
   { id: 'T3', label: 'T3', qualifier: 'Flagship', href: '/theorems#theorem-t3' },
   { id: 'T4', label: 'T4', qualifier: 'Flagship', href: '/theorems#theorem-t4' },
-  { id: 'T5', label: 'T5', qualifier: 'Definition', href: '/theorems#theorem-t5' },
+  { id: 'T5', label: 'T5', qualifier: 'Flagship', href: '/theorems#theorem-t5' },
   { id: 'T6', label: 'T6', qualifier: 'Flagship', href: '/theorems#theorem-t6' },
   { id: 'T7', label: 'T7_Battery', qualifier: 'Battery', href: '/theorems#theorem-t7_battery' },
-  { id: 'T8', label: 'T8', qualifier: 'Supporting', href: '/theorems#theorem-t8' },
-  { id: 'T9', label: 'T9', qualifier: 'Supporting', href: '/theorems#theorem-t9' },
-  { id: 'T10', label: 'T10', qualifier: 'Supporting', href: '/theorems#theorem-t10' },
+  { id: 'T8', label: 'T8', qualifier: 'Flagship', href: '/theorems#theorem-t8' },
+  { id: 'T9', label: 'T9', qualifier: 'Flagship', href: '/theorems#theorem-t9' },
+  { id: 'T10', label: 'T10', qualifier: 'Flagship', href: '/theorems#theorem-t10' },
   { id: 'T11', label: 'T11', qualifier: 'Runtime', href: '/theorems#theorem-t11' },
 ];
 
@@ -147,11 +147,11 @@ const CLAIMS: Claim[] = [
   { id: 'C002', claim: 'DC3S one-step repair preserves true safety', theorems: 'T2', evidence: 'Inductive proof + empirical' },
   { id: 'C003', claim: 'Expected violations bounded by α(1−w̄)T', theorems: 'T3', evidence: 'Martingale proof + battery data' },
   { id: 'C004', claim: 'Quality-ignorant controllers are fundamentally unsafe', theorems: 'T4', evidence: 'Constructive witness + ablation' },
-  { id: 'C005', claim: 'Certificate validity horizon is defined; expiration is bounded for the battery witness row', theorems: 'T5, T6', evidence: 'Forward tube definition + expiration-bound artifact' },
+  { id: 'C005', claim: 'Certificate validity is a finite-horizon theorem; expiration is bounded for the battery witness row', theorems: 'T5, T6', evidence: 'Forward tube proof + expiration-bound artifact' },
   { id: 'C006', claim: 'Feasible fallback theorem is battery-specific; AV/Healthcare use one-step runtime lemmas', theorems: 'T7_Battery, T6_AV_FallbackValidity, T6_HC_FallbackValidity', evidence: 'C7_BatteryFallback proof + runtime-contract witnesses' },
-  { id: 'C007', claim: 'Graceful degradation comparison is a supporting bounded surface', theorems: 'T8', evidence: '6 fault × 7 controller comparison' },
-  { id: 'C008', claim: 'T9 is supporting after cross-domain mixing and witness constants are discharged', theorems: 'T9', evidence: 'T9 promotion evidence for Battery, AV, and Healthcare' },
-  { id: 'C009', claim: 'T10 is supporting after boundary mass and TV bridge are discharged across domains', theorems: 'T10', evidence: 'T10 boundary-law evidence for Battery, AV, and Healthcare' },
+  { id: 'C007', claim: 'Graceful degradation proves paired-trace safety dominance while preserving useful work', theorems: 'T8', evidence: 'Policy frontier and useful-work artifacts' },
+  { id: 'C008', claim: 'Quality-ignorant mandatory release is impossible when the common safe core is empty', theorems: 'T9', evidence: 'T9 ambiguity witnesses for Battery, AV, and Healthcare' },
+  { id: 'C009', claim: 'Boundary-indistinguishable two-state problems impose a TV lower bound', theorems: 'T10', evidence: 'T10 boundary-pair artifacts and lower-bound curve' },
   { id: 'C010', claim: 'Any compliant domain inherits the ORIUS runtime-assurance contract', theorems: 'T11', evidence: 'Typed adapter + promoted three-domain lane' },
   { id: 'C011', claim: 'Battery DC3S achieves zero TSVR under nominal + fault scenarios; other domains are bounded runtime-contract rows', theorems: 'T2, T3, T7_Battery', evidence: 'ORIUS-Bench battery suite + runtime-contract witnesses' },
 ];
@@ -408,11 +408,11 @@ export default function DomainsPage() {
           </table>
         </div>
         <p className="mt-3 text-[11px] text-slate-500 leading-relaxed">
-          Green cells indicate full witness/application for the current domain surface. Amber cells indicate scoped,
-          supporting, definition, or runtime-linked theorem coverage. T5 is definitional, T7_Battery is battery-specific, and
+          Green cells indicate full witness/application for the current domain surface. Amber cells indicate scoped
+          flagship, flagship lemma, flagship definition, or runtime-linked theorem coverage. T5 is finite-horizon, T7_Battery is battery-specific, and
           C7_BatteryFallback names the battery fallback proof surface. AV/Healthcare close through bounded T11 runtime
-          contracts plus domain fallback-validity lemmas, not equal battery proof depth. T9/T10 amber cells now mirror the
-          Theorem Ledger: supporting, assumption-qualified cross-domain evidence backed by the promotion package, not draft rows.
+          contracts plus domain fallback-validity lemmas, not equal battery proof depth. T9/T10 amber cells mark scoped
+          flagship lower-bound application rather than draft or supporting status.
         </p>
         <div className="flex gap-4 mt-3 pt-3 border-t border-white/[0.04]">
           <div className="flex items-center gap-1.5">
@@ -421,7 +421,7 @@ export default function DomainsPage() {
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-amber-400 text-sm">○</span>
-            <span className="text-[10px] text-slate-500">Scoped / supporting / runtime-linked</span>
+            <span className="text-[10px] text-slate-500">Scoped flagship / lemma / runtime-linked</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-slate-600 text-sm">—</span>

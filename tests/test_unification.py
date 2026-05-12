@@ -10,6 +10,7 @@ Verifies that CBFAsORIUS and RobustMPCAsORIUS:
 import numpy as np
 import pytest
 
+from orius.dc3s.supporting_results import verify_quality_ignorant_release_counterexample
 from orius.universal.contract import ContractVerifier, UniversalAdapterProtocol
 from orius.universal.unification import CBFAsORIUS, RobustMPCAsORIUS
 
@@ -75,6 +76,21 @@ class TestCBFAsORIUS:
                 f"CBFAsORIUS always returns w_t=1.0, but got {w_t} under {fault_scenario}. "
                 "This demonstrates why CBF fails under telemetry degradation (T9)."
             )
+
+    def test_t4_executable_quality_ignorant_counterexample(self):
+        """T4 has a concrete fixed-margin counterexample, not just prose."""
+        witness = verify_quality_ignorant_release_counterexample(
+            fixed_margin=0.05,
+            true_margin=-0.02,
+            observation_gap=0.08,
+            reliability=0.4,
+        )
+
+        assert witness["holds"] is True
+        assert witness["counterexample_exists"] is True
+        assert witness["mandatory_release"] is True
+        assert witness["quality_ignored"] is True
+        assert witness["true_violates"] is True
 
     def test_invalid_gamma_raises(self):
         with pytest.raises(ValueError, match="gamma"):
