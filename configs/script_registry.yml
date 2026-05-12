@@ -37,6 +37,7 @@ legacy_manual_scripts:
     - scripts/build_crash_av_dataset.py
     - scripts/build_data_integrity_audit.py
     - scripts/build_dense_domain_data.py
+    - scripts/evaluate_dc3s.py
     - scripts/build_half_life_tables.py
     - scripts/build_metrics_snapshot.py
     - scripts/build_nuscenes_av_bridge.py

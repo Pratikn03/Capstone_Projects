@@ -355,7 +355,7 @@ def _notebook_specs() -> list[dict[str, Any]]:
                         "reports/publication/fig_final_runtime_tsvr.png",
                         "reports/publication/fig_final_utility_delta.png",
                         "reports/publication/final_paper_results_summary.json",
-                        "reports/publication/orius_book_final_results.pdf",
+                        "paper/paper.pdf",
                     ]
                     rows = []
                     for relpath in required:
@@ -413,7 +413,7 @@ def _inventory_rows(specs: list[dict[str, Any]]) -> list[dict[str, str]]:
         "21_utility_preserving_safety_analysis.ipynb": "reports/publication/utility_preserving_safety_scorecard.csv",
         "22_theorem_audit_traceability.ipynb": "reports/publication/active_theorem_audit.csv | reports/publication/theorem_result_cards/*.json",
         "23_freeze_release_reproducibility_audit.ipynb": "reports/split_training/latest_release_id.txt | reports/predeployment_freeze/<release>/*.json",
-        "24_publication_package_quality_audit.ipynb": "reports/publication/tbl_final_*.tex | reports/publication/fig_final_*.png | reports/publication/orius_book_final_results.pdf",
+        "24_publication_package_quality_audit.ipynb": "reports/publication/tbl_final_*.tex | reports/publication/fig_final_*.png | paper/paper.pdf",
     }
     for spec in specs:
         name = Path(spec["path"]).name

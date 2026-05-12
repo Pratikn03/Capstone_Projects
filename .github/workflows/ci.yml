@@ -59,6 +59,11 @@ jobs:
         run: python scripts/sync_paper_assets.py --check
       - name: Paper 1 Lock Drift Check
         run: python scripts/check_paper1_lock_drift.py
+      - name: Verify artifact manifests (SHA-256)
+        # Backs the IEEE detailed §XI.E reproducibility claim.  --allow-missing
+        # tolerates heavy artifacts (nuPlan archives, model checkpoints) absent
+        # from the CI checkout; any hash mismatch still fails the build.
+        run: python scripts/verify_manifests.py --reports-root reports --repo-root . --allow-missing
       - name: Build package
         run: python -m build
 

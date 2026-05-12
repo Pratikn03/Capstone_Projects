@@ -1,6 +1,6 @@
 # ORIUS Training Pipeline
 
-This document describes the **production-ready** training pipeline implemented in ORIUS. All features ensure **leakage-safe**, **reproducible**, and **statistically rigorous** model training suitable for academic publication and production deployment.
+This document describes the publication-grade ORIUS training pipeline. The pipeline is designed for **leakage-safe**, **reproducible**, and **statistically rigorous** model training suitable for academic publication and bounded predeployment validation; it is not, by itself, a production deployment certification.
 
 ## Overview
 
@@ -36,7 +36,7 @@ X_train_scaled = scaler.transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 ```
 
-**Option B: sklearn Pipeline (Production-Grade GBM)**
+**Option B: sklearn Pipeline (Release-Grade GBM)**
 ```bash
 # Enable Pipeline for GBM (ensures leakage-safe preprocessing)
 python -m orius.forecasting.train --config configs/train_forecast.yaml --use-pipeline
@@ -539,4 +539,4 @@ For issues or questions:
 - Review `artifacts/manifest_*.json` for run details
 - Compare manifests: `orius.utils.manifest.compare_manifests()`
 
-**All Production-Grade features are production-ready and tested.**
+**All release-grade training features are tested for bounded predeployment research validation.**

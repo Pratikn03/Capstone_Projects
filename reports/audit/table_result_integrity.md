@@ -1,0 +1,61 @@
+# Table/Result Integrity Audit
+
+- Generated: `2026-05-12T22:34:46.123809+00:00`
+- Passes: `False`
+- Blocking findings: `171`
+- Warning findings: `74`
+- Scanned: `{'csv': 279, 'json': 192, 'tex': 85, 'duckdb': 0}`
+
+## Top Blocking Findings
+- `paper/assets/tables/generated/tbl_battery_deep_oqe_summary.tex` `not_applicable`: rendered_placeholder_cell (not_applicable)
+- `paper/assets/tables/generated/tbl_intervention_tradeoff.tex` `not_applicable`: rendered_placeholder_cell (not_applicable)
+- `paper/assets/tables/generated/tbl_vehicle_leaderboard.tex` `not_applicable`: rendered_placeholder_cell (not_applicable)
+- `paper/assets/tables/generated/tbl_multi_domain_evidence_gate.tex` `not_applicable`: rendered_placeholder_cell (not_applicable)
+- `paper/assets/tables/generated/tbl_per_domain_controller_comparison.tex` `not_applicable`: rendered_placeholder_cell (not_applicable)
+- `paper/assets/tables/generated/tbl_healthcare_leaderboard.tex` `not_applicable`: rendered_placeholder_cell (not_applicable)
+- `paper/assets/tables/generated/tbl_constraint_satisfaction.tex` `not_applicable`: rendered_placeholder_cell (not_applicable)
+- `reports/publication/domain_runtime_contract_witnesses.csv` `failed_obligations`: placeholder_or_blank_cell (50/75 rows contain missing/placeholder values.)
+- `reports/publication/domain_runtime_contract_witnesses.csv` `failure_reason`: placeholder_or_blank_cell (50/75 rows contain missing/placeholder values.)
+- `reports/publication/active_theorem_audit.csv` `assumptions_used`: placeholder_or_blank_cell (19/29 rows contain missing/placeholder values.)
+- `reports/publication/active_theorem_audit.csv` `typed_obligations`: placeholder_or_blank_cell (8/29 rows contain missing/placeholder values.)
+- `reports/publication/active_theorem_audit.csv` `unresolved_assumptions`: placeholder_or_blank_cell (29/29 rows contain missing/placeholder values.)
+- `reports/publication/battery_deep_oqe_summary.csv` `heuristic`: placeholder_or_blank_cell (2/5 rows contain missing/placeholder values.)
+- `reports/publication/utility_preserving_safety_scorecard.csv` `orius_intervention_rate`: placeholder_or_blank_cell (1/3 rows contain missing/placeholder values.)
+- `reports/publication/utility_preserving_safety_scorecard.csv` `safety_reference_intervention_rate`: placeholder_or_blank_cell (1/3 rows contain missing/placeholder values.)
+- `reports/publication/utility_preserving_safety_scorecard.csv` `intervention_reduction_vs_safety_reference`: placeholder_or_blank_cell (1/3 rows contain missing/placeholder values.)
+- `reports/publication/utility_preserving_safety_scorecard.csv` `orius_fallback_rate`: placeholder_or_blank_cell (1/3 rows contain missing/placeholder values.)
+- `reports/publication/utility_preserving_safety_scorecard.csv` `safety_reference_fallback_rate`: placeholder_or_blank_cell (1/3 rows contain missing/placeholder values.)
+- `reports/publication/utility_preserving_safety_scorecard.csv` `fallback_reduction_vs_safety_reference`: placeholder_or_blank_cell (1/3 rows contain missing/placeholder values.)
+- `reports/publication/theorem_promotion_gates.csv` `blocker`: placeholder_or_blank_cell (24/24 rows contain missing/placeholder values.)
+- `reports/publication/orius_maturity_matrix.csv` `blocker`: placeholder_or_blank_cell (3/3 rows contain missing/placeholder values.)
+- `reports/publication/chapters40_44_domain_evidence_register.csv` `blocker`: placeholder_or_blank_cell (3/3 rows contain missing/placeholder values.)
+- `reports/publication/utility_preserving_safety_scorecard.json` `rows.0.orius_intervention_rate`: placeholder_or_null_value (not_applicable)
+- `reports/publication/utility_preserving_safety_scorecard.json` `rows.0.safety_reference_intervention_rate`: placeholder_or_null_value (not_applicable)
+- `reports/publication/utility_preserving_safety_scorecard.json` `rows.0.intervention_reduction_vs_safety_reference`: placeholder_or_null_value (not_applicable)
+
+## Top Warnings
+- `paper/assets/tables/tbl02_ablations.csv` `true_soc_violation_rate_wilcoxon_stat`: all_zero_metric_review (9 numeric values are all zero.)
+- `paper/assets/tables/tbl02_ablations.csv` `true_soc_violation_severity_p95_wilcoxon_stat`: all_zero_metric_review (9 numeric values are all zero.)
+- `paper/assets/tables/tbl01_main_results.csv` `true_soc_violation_rate_ci_low`: all_zero_metric_review (5 numeric values are all zero.)
+- `paper/assets/tables/tbl01_main_results.csv` `true_soc_violation_severity_p95_ci_low`: all_zero_metric_review (5 numeric values are all zero.)
+- `paper/assets/tables/tbl01_main_results.csv` `intervention_rate_ci_low`: all_zero_metric_review (5 numeric values are all zero.)
+- `reports/publication/cross_region_transfer.csv` `intervention_rate`: all_zero_metric_review (96 numeric values are all zero.)
+- `reports/publication/cross_region_transfer.csv` `grid_import_violation_rate`: all_zero_metric_review (96 numeric values are all zero.)
+- `reports/publication/runtime_summary.csv` `recovery_latency`: all_zero_metric_review (4 numeric values are all zero.)
+- `reports/publication/fault_family_coverage.csv` `coverage`: all_zero_metric_review (12 numeric values are all zero.)
+- `reports/publication/certificate_half_life_blackout.csv` `violations`: all_zero_metric_review (4 numeric values are all zero.)
+- `reports/publication/battery_deep_oqe_safety_metrics.csv` `true_soc_violation_rate`: all_zero_metric_review (12 numeric values are all zero.)
+- `reports/publication/battery_deep_oqe_safety_metrics.csv` `recovery_latency`: all_zero_metric_review (12 numeric values are all zero.)
+- `reports/publication/cross_region_transfer_summary.csv` `intervention_rate_mean`: all_zero_metric_review (32 numeric values are all zero.)
+- `reports/publication/cross_region_transfer_summary.csv` `intervention_rate_std`: all_zero_metric_review (32 numeric values are all zero.)
+- `reports/publication/ablation_table.csv` `grid_import_violation_rate`: all_zero_metric_review (576 numeric values are all zero.)
+- `reports/publication/battery_reliability_baselines_summary.csv` `hidden_gap_rate`: all_zero_metric_review (5 numeric values are all zero.)
+- `reports/publication/table2_ablations.csv` `true_soc_violation_rate_wilcoxon_stat`: all_zero_metric_review (9 numeric values are all zero.)
+- `reports/publication/table2_ablations.csv` `true_soc_violation_severity_p95_wilcoxon_stat`: all_zero_metric_review (9 numeric values are all zero.)
+- `reports/publication/fault_performance_packet_drop.csv` `violations`: all_zero_metric_review (5 numeric values are all zero.)
+- `reports/publication/battery_deep_oqe_fault_family_coverage.csv` `coverage`: all_zero_metric_review (12 numeric values are all zero.)
+- `reports/publication/battery_deep_oqe_runtime_summary.csv` `recovery_latency`: all_zero_metric_review (4 numeric values are all zero.)
+- `reports/publication/dc3s_main_table.csv` `grid_import_violation_rate`: all_zero_metric_review (240 numeric values are all zero.)
+- `reports/publication/sensitivity_grid.csv` `grid_import_violation_rate`: all_zero_metric_review (1296 numeric values are all zero.)
+- `reports/publication/cpsbench_merged_sweep.csv` `grid_import_violation_rate`: all_zero_metric_review (640 numeric values are all zero.)
+- `reports/publication/Tsensor_sensor_ablation.csv` `violation`: all_zero_metric_review (3 numeric values are all zero.)

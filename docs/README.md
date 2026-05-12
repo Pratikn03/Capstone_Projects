@@ -1,6 +1,6 @@
 # ORIUS Documentation
 
-Comprehensive documentation for the ORIUS universal safety framework, thesis package, and supporting research artifacts.
+Comprehensive documentation for ORIUS, a reliability-aware runtime safety layer for physical AI under degraded observation, plus the thesis package and supporting research artifacts.
 
 ## Index
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Audit table/result artifacts for publishable placeholder hygiene.
 
-The audit is intentionally broader than the paper-only manifest checks: it
-looks at report CSV/JSON/TeX surfaces and the local audit DuckDB files.  Numeric
-zero values are reported as warnings only because zero is a valid safety result
-for ORIUS violation/failure metrics.
+The default audit covers claim-governing publication and promoted domain
+surfaces, not every local run cache.  Numeric zero values are reported as
+warnings only because zero is a valid safety result for ORIUS violation/failure
+metrics.
 """
 
 from __future__ import annotations
@@ -27,8 +27,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 DEFAULT_ROOTS = (
     "paper/assets/tables",
-    "reports",
-    "data/audit",
+    "reports/publication",
+    "reports/battery_av/battery",
+    "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest",
+    "reports/healthcare/heldout_95",
+    "reports/hil/software_hil_95",
 )
 SKIP_PARTS = {
     ".git",
@@ -123,6 +126,7 @@ ZERO_REVIEW_MARKERS = (
     "violation",
     "width",
 )
+MAX_SCAN_BYTES = 100 * 1024 * 1024
 
 
 @dataclass(frozen=True)
@@ -165,7 +169,14 @@ def rel(path: Path) -> str:
 
 
 def _should_skip(path: Path) -> bool:
-    return path.name.startswith("._") or any(part in SKIP_PARTS for part in path.parts)
+    if path.name.startswith("._") or any(part in SKIP_PARTS for part in path.parts):
+        return True
+    if path.is_symlink():
+        return True
+    try:
+        return path.stat().st_size > MAX_SCAN_BYTES
+    except OSError:
+        return True
 
 
 def _iter_files(roots: Iterable[str]) -> Iterable[Path]:
