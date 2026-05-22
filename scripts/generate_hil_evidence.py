@@ -46,7 +46,7 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate HIL evidence package")
     parser.add_argument("--steps", type=int, default=48, help="Steps per scenario")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--out-dir", default="reports/hil")
+    parser.add_argument("--out-dir", "--output-dir", default="reports/hil")
     return parser.parse_args()
 
 

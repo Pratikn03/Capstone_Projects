@@ -166,7 +166,7 @@ def parse_args() -> argparse.Namespace:
         description="Freeze a final release family into manuscript and publication outputs"
     )
     parser.add_argument("--release-id", required=True)
-    parser.add_argument("--out-dir", default=str(PUBLICATION_DIR))
+    parser.add_argument("--out-dir", "--output-dir", default=str(PUBLICATION_DIR))
     return parser.parse_args()
 
 

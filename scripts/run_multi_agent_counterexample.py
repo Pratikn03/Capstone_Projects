@@ -20,7 +20,7 @@ from orius.multi_agent.scenarios import run_transformer_capacity_scenario
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out", default="reports/multi_agent", help="Output directory")
+    parser.add_argument("--out", "--output", default="reports/multi_agent", help="Output directory")
     args = parser.parse_args()
 
     out = Path(args.out)

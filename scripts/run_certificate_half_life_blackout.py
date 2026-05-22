@@ -41,7 +41,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Certificate half-life blackout benchmark")
     parser.add_argument("--seeds", nargs="+", type=int, default=[42])
     parser.add_argument("--horizons", nargs="+", type=int, default=[0, 1, 4, 12, 24, 48])
-    parser.add_argument("--out-dir", type=Path, default=Path("reports/publication"))
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=Path("reports/publication"))
     args = parser.parse_args()
 
     out_dir = args.out_dir

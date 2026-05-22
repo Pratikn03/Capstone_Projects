@@ -112,7 +112,7 @@ def validate_research_package(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out-dir", type=Path, default=PUBLICATION_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=PUBLICATION_DIR)
     parser.add_argument("--min-sources", type=int, default=500)
     args = parser.parse_args()
     result = validate_research_package(out_dir=args.out_dir, min_sources=args.min_sources)

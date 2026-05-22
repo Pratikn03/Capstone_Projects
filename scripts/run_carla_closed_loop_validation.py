@@ -288,7 +288,7 @@ def run_carla_closed_loop_validation(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--carla-root", type=Path, default=DEFAULT_CARLA_ROOT)
-    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument("--max-episodes", type=int, default=24)
     parser.add_argument("--max-steps-per-episode", type=int, default=600)
     parser.add_argument(

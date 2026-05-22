@@ -216,7 +216,7 @@ def main() -> int:
     parser.add_argument("--all-pairs", action="store_true", help="Evaluate all region permutations")
     parser.add_argument("--models", nargs="+", default=["baseline_gbm"], help="Model names to evaluate")
     parser.add_argument("--targets", nargs="+", default=TARGETS, help="Target columns")
-    parser.add_argument("--out", default="reports/transfer_study.json", help="Output path")
+    parser.add_argument("--out", "--output", default="reports/transfer_study.json", help="Output path")
     args = parser.parse_args()
 
     if args.all_pairs:

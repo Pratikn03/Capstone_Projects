@@ -27,7 +27,7 @@ def _resolve_repo_path(raw: str) -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build Paper 3 artifacts")
-    parser.add_argument("--out", default="reports/paper3", help="Output directory")
+    parser.add_argument("--out", "--output", default="reports/paper3", help="Output directory")
     args = parser.parse_args()
 
     out = _resolve_repo_path(args.out)

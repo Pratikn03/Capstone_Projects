@@ -12,7 +12,7 @@ from orius.forecasting.uncertainty.shift_aware import SubgroupCoverageTracker, w
 def main() -> None:
     p = argparse.ArgumentParser(description="Run shift-aware conditional coverage audit")
     p.add_argument("--input", required=True, help="CSV with y_true,y_pred,lower,upper,reliability_w")
-    p.add_argument("--out-dir", default="reports/publication")
+    p.add_argument("--out-dir", "--output-dir", default="reports/publication")
     args = p.parse_args()
 
     path = Path(args.input)

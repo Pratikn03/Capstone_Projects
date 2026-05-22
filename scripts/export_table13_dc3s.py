@@ -29,7 +29,7 @@ CONTROLLER_ORDER = [
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Export publication-ready Table 13 from the DC3S main table")
     parser.add_argument("--input", default="reports/publication/dc3s_main_table.csv")
-    parser.add_argument("--out-dir", default="reports/publication")
+    parser.add_argument("--out-dir", "--output-dir", default="reports/publication")
     return parser.parse_args()
 
 

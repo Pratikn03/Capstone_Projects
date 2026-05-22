@@ -193,7 +193,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--dataset", choices=["DE", "US", "ALL"], default="ALL")
     parser.add_argument("--apply", action="store_true", help="Write de-dup changes to feature parquet files")
     parser.add_argument("--run-hooks", action="store_true", help="Run dataset refresh commands")
-    parser.add_argument("--out", default="reports/publish/data_refresh_summary.json")
+    parser.add_argument("--out", "--output", default="reports/publish/data_refresh_summary.json")
     return parser.parse_args()
 
 

@@ -215,7 +215,7 @@ def main() -> int:
     parser.add_argument("--processed-dir", type=Path, default=DEFAULT_PROCESSED)
     parser.add_argument("--canonical-reports", type=Path, default=DEFAULT_CANONICAL_REPORTS)
     parser.add_argument("--audit-reports", type=Path, default=DEFAULT_AUDIT_REPORTS)
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
     payload = build_report(args.raw_dir, args.processed_dir, args.canonical_reports, args.audit_reports)
     write_outputs(args.out, payload)

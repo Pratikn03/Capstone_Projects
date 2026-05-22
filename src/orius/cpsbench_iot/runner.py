@@ -1851,7 +1851,7 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run CPSBench-IoT benchmark")
     parser.add_argument("--scenario", type=str, default="nominal")
     parser.add_argument("--seed", type=int, default=11)
-    parser.add_argument("--out-dir", type=str, default="reports/publication")
+    parser.add_argument("--out-dir", "--output-dir", type=str, default="reports/publication")
     parser.add_argument("--horizon", type=int, default=168)
     return parser.parse_args()
 

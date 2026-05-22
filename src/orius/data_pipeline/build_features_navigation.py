@@ -71,7 +71,7 @@ def build_features(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build navigation features for training")
     parser.add_argument("--in", dest="input", type=Path, default=DEFAULT_RAW, help="Input CSV")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Output directory")
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT, help="Output directory")
     args = parser.parse_args()
     if not args.input.exists():
         return 1

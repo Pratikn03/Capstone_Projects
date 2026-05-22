@@ -289,7 +289,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Multi-domain fault-type ablation")
     parser.add_argument("--seeds", type=int, default=5)
     parser.add_argument("--horizon", type=int, default=48)
-    parser.add_argument("--out", default="reports/multi_domain_ablation")
+    parser.add_argument("--out", "--output", default="reports/multi_domain_ablation")
     args = parser.parse_args()
 
     out = Path(args.out)

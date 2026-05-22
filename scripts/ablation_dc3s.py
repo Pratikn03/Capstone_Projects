@@ -77,7 +77,7 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--seeds", nargs="*", type=int, default=None)
     p.add_argument("--scenarios", nargs="*", default=None)
     p.add_argument("--horizon", type=int, default=None)
-    p.add_argument("--out-dir", default=str(cfg.get("out_dir", "reports/publication")))
+    p.add_argument("--out-dir", "--output-dir", default=str(cfg.get("out_dir", "reports/publication")))
     return p.parse_args()
 
 

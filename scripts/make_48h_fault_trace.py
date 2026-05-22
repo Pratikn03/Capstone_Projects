@@ -12,7 +12,7 @@ def main() -> None:
     p.add_argument("--fault", default="stale_sensor")
     p.add_argument("--window", type=int, default=48)
     p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--out-dir", default="reports/fault_benchmark")
+    p.add_argument("--out-dir", "--output-dir", default="reports/fault_benchmark")
     args = p.parse_args()
     out = ensure_dir(REPO_ROOT / args.out_dir)
     run_script(

@@ -679,7 +679,7 @@ def build_av_closed_loop_planner_artifacts(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=DEFAULT_RUNTIME_DIR)
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--max-rows", type=int, default=None)
     parser.add_argument("--rows-per-controller-fault-family", type=int, default=5_000)
     parser.add_argument("--dt-sec", type=float, default=0.1)

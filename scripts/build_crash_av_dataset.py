@@ -468,7 +468,7 @@ def build_crash_dataset(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build crash AV dataset from Waymo + synthetic")
     parser.add_argument("--waymo-csv", type=Path, default=DEFAULT_WAYMO_CSV)
-    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument("--seed", type=int, default=RNG_SEED)
     args = parser.parse_args()
 

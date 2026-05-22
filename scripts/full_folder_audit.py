@@ -782,7 +782,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run a full-folder audit with semantic and metadata review modes."
     )
-    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=DEFAULT_OUT_DIR)
     args = parser.parse_args()
     summary = run_full_folder_audit(out_dir=args.out_dir)
     print(json.dumps(summary, indent=2))

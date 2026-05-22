@@ -55,7 +55,7 @@ def main():
     parser.add_argument("--config", default="configs/train_dl.yaml")
     parser.add_argument("--train-path", default="data/processed/splits/train.parquet")
     parser.add_argument("--val-path", default="data/processed/splits/val.parquet")
-    parser.add_argument("--out-dir", default="artifacts/models")
+    parser.add_argument("--out-dir", "--output-dir", default="artifacts/models")
     args = parser.parse_args()
 
     # 1) Load config.

@@ -11,7 +11,7 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Compare legacy vs shift-aware interval evidence")
     p.add_argument("--legacy-csv", required=True)
     p.add_argument("--shift-csv", required=True)
-    p.add_argument("--out-dir", default="reports/publication")
+    p.add_argument("--out-dir", "--output-dir", default="reports/publication")
     p.add_argument("--target-coverage", type=float, default=0.9)
     p.add_argument("--max-width-increase", type=float, default=5.0)
     args = p.parse_args()

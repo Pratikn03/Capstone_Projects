@@ -12,7 +12,7 @@ def main() -> None:
     p.add_argument(
         "--controllers", nargs="*", default=["det_lp", "robust_fixed", "cvar", "dc3s", "dc3s_ftit"]
     )
-    p.add_argument("--out-dir", default="reports/fault_benchmark")
+    p.add_argument("--out-dir", "--output-dir", default="reports/fault_benchmark")
     args = p.parse_args()
     out = ensure_dir(REPO_ROOT / args.out_dir)
     run_script("run_cpsbench.py", "--out-dir", "reports/publication")

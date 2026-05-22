@@ -116,7 +116,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Universal ORIUS software-in-loop validation")
     parser.add_argument("--seeds", type=int, default=3)
     parser.add_argument("--rows", type=int, default=48)
-    parser.add_argument("--out", default="reports/universal_sil_validation")
+    parser.add_argument("--out", "--output", default="reports/universal_sil_validation")
     args = parser.parse_args()
 
     out_dir = Path(args.out)

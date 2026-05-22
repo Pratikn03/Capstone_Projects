@@ -140,7 +140,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="ORIUS-Bench release runner")
     parser.add_argument("--seeds", type=int, default=5, help="Number of random seeds")
     parser.add_argument("--horizon", type=int, default=96, help="Episode length (steps)")
-    parser.add_argument("--out", type=str, default="reports/orius_bench", help="Output directory")
+    parser.add_argument("--out", "--output", type=str, default="reports/orius_bench", help="Output directory")
     args = parser.parse_args()
 
     out = Path(args.out)

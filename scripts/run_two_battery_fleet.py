@@ -22,7 +22,7 @@ def _sync_step_log_alias(out_dir) -> None:
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Run the canonical two-battery fleet scenario")
-    p.add_argument("--out-dir", default="reports/fleet")
+    p.add_argument("--out-dir", "--output-dir", default="reports/fleet")
     args = p.parse_args()
 
     out = ensure_dir(REPO_ROOT / args.out_dir)

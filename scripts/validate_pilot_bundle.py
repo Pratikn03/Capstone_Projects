@@ -83,7 +83,7 @@ def validate_bundle(bundle_dir: str) -> dict[str, Any]:
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate a future-pilot evidence bundle")
     parser.add_argument("--bundle-dir", required=True)
-    parser.add_argument("--out", default=None)
+    parser.add_argument("--out", "--output", default=None)
     return parser.parse_args()
 
 

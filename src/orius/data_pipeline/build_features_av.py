@@ -137,7 +137,7 @@ def main() -> int:
     parser.add_argument(
         "--in", dest="input", type=Path, default=DEFAULT_RAW, help="Input CSV or raw TFRecord directory"
     )
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Output directory")
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT, help="Output directory")
     parser.add_argument(
         "--max-shards", type=int, default=None, help="Limit raw shard scans in scenario-native mode"
     )

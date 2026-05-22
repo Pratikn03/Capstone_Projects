@@ -8,7 +8,7 @@ from _battery_wrappers_common import REPO_ROOT, copy_outputs, ensure_dir, run_sc
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Build battery fault benchmark tables")
-    p.add_argument("--out-dir", default="reports/fault_benchmark")
+    p.add_argument("--out-dir", "--output-dir", default="reports/fault_benchmark")
     args = p.parse_args()
     out = ensure_dir(REPO_ROOT / args.out_dir)
     run_script(

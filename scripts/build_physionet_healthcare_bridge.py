@@ -409,7 +409,7 @@ def main() -> int:
     parser.add_argument(
         "--n-patients", type=int, default=30, help="Number of patients to download (default: 30)"
     )
-    parser.add_argument("--out-dir", type=Path, default=None)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 

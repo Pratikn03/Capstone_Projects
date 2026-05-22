@@ -265,7 +265,7 @@ def build_summary(sweep: list, adversarial: list, separation: list, regret: list
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out", default="reports/deep_theory", help="Output directory")
+    parser.add_argument("--out", "--output", default="reports/deep_theory", help="Output directory")
     args = parser.parse_args()
 
     out = Path(args.out)

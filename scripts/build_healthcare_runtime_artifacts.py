@@ -1042,7 +1042,7 @@ def build_healthcare_runtime_artifacts(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build promoted healthcare runtime artifacts.")
     parser.add_argument("--dataset-path", type=Path, default=DEFAULT_DATASET_PATH)
-    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument("--seeds", type=int, default=None)
     parser.add_argument("--horizon", type=int, default=None)
     parser.add_argument("--start-seed", type=int, default=2000)

@@ -208,7 +208,7 @@ def run_healthcare_heldout_runtime_replay(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--splits-dir", type=Path, default=DEFAULT_SPLITS_DIR)
-    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument(
         "--comparators",
         type=str,

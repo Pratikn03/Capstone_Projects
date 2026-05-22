@@ -122,7 +122,7 @@ def time_split(
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--in", dest="in_path", required=True)
-    p.add_argument("--out", dest="out_dir", default="data/processed/splits")
+    p.add_argument("--out", "--output", dest="out_dir", default="data/processed/splits")
     p.add_argument("--timestamp-col", default="timestamp")
     p.add_argument("--train-ratio", type=float, default=0.70)
     p.add_argument("--calibration-ratio", type=float, default=0.05)

@@ -26,7 +26,7 @@ from orius.certos.runtime import CertOSConfig, CertOSRuntime
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--steps", type=int, default=96)
-    parser.add_argument("--out", default="reports/certos")
+    parser.add_argument("--out", "--output", default="reports/certos")
     args = parser.parse_args()
 
     out = Path(args.out)

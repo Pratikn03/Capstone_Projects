@@ -13,7 +13,7 @@ from _battery_wrappers_common import REPO_ROOT, ensure_dir
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Make probing figures wrapper")
-    p.add_argument("--out-dir", default="reports/probing")
+    p.add_argument("--out-dir", "--output-dir", default="reports/probing")
     args = p.parse_args()
     out = ensure_dir(REPO_ROOT / args.out_dir)
     df = pd.read_csv(REPO_ROOT / "reports/publication/active_probing_spoofing_detection.csv")

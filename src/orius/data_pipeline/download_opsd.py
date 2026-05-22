@@ -52,7 +52,7 @@ def download(
 def main():
     """CLI entrypoint for OPSD downloader."""
     p = argparse.ArgumentParser()
-    p.add_argument("--out", default="data/raw", help="Output directory")
+    p.add_argument("--out", "--output", default="data/raw", help="Output directory")
     p.add_argument("--version", default=DEFAULT_VERSION, help="OPSD release folder (e.g. 2020-10-06)")
     p.add_argument("--file", default=DEFAULT_FILE, help="Filename to download")
     p.add_argument("--retries", type=int, default=3, help="HTTP retry attempts")

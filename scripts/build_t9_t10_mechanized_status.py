@@ -141,7 +141,7 @@ def build_mechanized_status(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out-dir", type=Path, default=PUBLICATION_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=PUBLICATION_DIR)
     parser.add_argument("--run-lean", action="store_true")
     args = parser.parse_args()
     build_mechanized_status(out_dir=args.out_dir, run_lean=args.run_lean)

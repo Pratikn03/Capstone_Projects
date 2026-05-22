@@ -299,7 +299,7 @@ sx4 = sx2  # ⑤ CERTIFY (under ③ CONSTRAIN — right of bottom row)
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--out", default="reports/figures/architecture.png")
+    ap.add_argument("--out", "--output", default="reports/figures/architecture.png")
     ap.add_argument("--svg", default="reports/figures/architecture.svg")
     ap.add_argument("--paper", default="paper/assets/figures/fig01_architecture")
     args = ap.parse_args()

@@ -588,7 +588,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run the canonical three-domain ORIUS validation harness")
     parser.add_argument("--seeds", type=int, default=1)
     parser.add_argument("--horizon", type=int, default=24)
-    parser.add_argument("--out", type=Path, default=REPO_ROOT / "reports" / "universal_orius_validation")
+    parser.add_argument("--out", "--output", type=Path, default=REPO_ROOT / "reports" / "universal_orius_validation")
     parser.add_argument(
         "--allow-support-tier",
         action="store_true",

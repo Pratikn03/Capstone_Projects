@@ -32,7 +32,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--features", default="data/processed/features.parquet")
     p.add_argument("--splits", default="data/processed/splits")
-    p.add_argument("--out-dir", default="artifacts/backtests")
+    p.add_argument("--out-dir", "--output-dir", default="artifacts/backtests")
     p.add_argument("--target", default="load_mw", choices=TARGETS)
     args = p.parse_args()
     set_seed(42)

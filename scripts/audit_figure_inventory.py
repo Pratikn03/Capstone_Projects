@@ -202,7 +202,7 @@ def _render_markdown(payload: dict[str, Any]) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Audit figure/publication artifact inventory and freshness")
-    parser.add_argument("--out-dir", default="reports/publish")
+    parser.add_argument("--out-dir", "--output-dir", default="reports/publish")
     parser.add_argument("--manifest", default="paper/metrics_manifest.json")
     parser.add_argument("--run-start-utc", default=None)
     args = parser.parse_args()

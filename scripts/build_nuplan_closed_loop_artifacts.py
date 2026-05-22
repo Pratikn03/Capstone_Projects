@@ -293,7 +293,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=DEFAULT_RUNTIME_DIR)
     parser.add_argument("--surface-dir", type=Path, default=DEFAULT_SURFACE_DIR)
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--planner-max-rows", type=int, default=None)
     args = parser.parse_args()
     artifacts = build_nuplan_closed_loop_artifacts(

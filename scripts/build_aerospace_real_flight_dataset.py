@@ -320,7 +320,7 @@ def main() -> int:
         description="Build aerospace real-flight runtime dataset from provider telemetry"
     )
     parser.add_argument("--external-root", type=Path, default=None, help="Override ORIUS_EXTERNAL_DATA_ROOT")
-    parser.add_argument("--out", type=Path, default=PROCESSED_CSV, help="Output processed runtime CSV")
+    parser.add_argument("--out", "--output", type=Path, default=PROCESSED_CSV, help="Output processed runtime CSV")
     args = parser.parse_args()
     try:
         output = build_real_flight_runtime(external_root=args.external_root, out_csv=args.out)

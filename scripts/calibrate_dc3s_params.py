@@ -210,7 +210,7 @@ def main() -> None:
     )
     parser.add_argument("--alpha", type=float, default=0.10)
     parser.add_argument("--coverage-slack", type=float, default=0.01)
-    parser.add_argument("--out", default="configs/dc3s_calibrated.yaml")
+    parser.add_argument("--out", "--output", default="configs/dc3s_calibrated.yaml")
     parser.add_argument("--results-json", default=None, help="Optional path to write full grid results")
     args = parser.parse_args()
 

@@ -407,7 +407,7 @@ def main():
     """CLI entrypoint for EIA‑930 feature generation."""
     p = argparse.ArgumentParser()
     p.add_argument("--in", dest="in_dir", required=True, help="Input directory (data/raw/us_eia930)")
-    p.add_argument("--out", dest="out_dir", default="data/processed/us_eia930", help="Output directory")
+    p.add_argument("--out", "--output", dest="out_dir", default="data/processed/us_eia930", help="Output directory")
     p.add_argument("--ba", default="MISO", help="Balancing Authority code (e.g., MISO, PJM, CAISO)")
     p.add_argument("--start", default=None, help="Start date (YYYY-MM-DD)")
     p.add_argument("--end", default=None, help="End date (YYYY-MM-DD)")

@@ -46,7 +46,7 @@ def main() -> int:
         default="three_domain_lane",
         help="Accepted for backward compatibility; both values refresh the same canonical 3-domain lane.",
     )
-    parser.add_argument("--out", type=Path, default=REFRESH_DIR)
+    parser.add_argument("--out", "--output", type=Path, default=REFRESH_DIR)
     parser.add_argument(
         "--external-root", type=Path, default=None, help="Accepted for compatibility but not required."
     )

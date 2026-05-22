@@ -95,7 +95,7 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         help="Optional JSON file with expected counts keyed by item type",
     )
-    parser.add_argument("--out", type=Path, default=None, help="Optional JSON output path")
+    parser.add_argument("--out", "--output", type=Path, default=None, help="Optional JSON output path")
     parser.add_argument(
         "--strict",
         action="store_true",

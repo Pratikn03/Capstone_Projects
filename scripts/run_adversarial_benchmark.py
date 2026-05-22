@@ -217,7 +217,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="ORIUS adversarial fault benchmark")
     parser.add_argument("--seeds", type=int, default=5)
     parser.add_argument("--horizon", type=int, default=48)
-    parser.add_argument("--out", default="reports/adversarial_run/")
+    parser.add_argument("--out", "--output", default="reports/adversarial_run/")
     args = parser.parse_args()
 
     print("=== ORIUS Adversarial Fault Benchmark ===")

@@ -60,7 +60,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Update LaTeX PaperMetric values from stats summary JSON")
     parser.add_argument("--paper", default="paper/paper.tex")
     parser.add_argument("--stats", default="reports/publication/stats_summary.json")
-    parser.add_argument("--out", default="paper/assets/data/metrics_values.tex")
+    parser.add_argument("--out", "--output", default="paper/assets/data/metrics_values.tex")
     args = parser.parse_args()
 
     paper_path = Path(args.paper)

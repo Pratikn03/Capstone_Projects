@@ -12,7 +12,7 @@ from orius.forecasting.uncertainty.shift_aware import AdaptiveQuantileState, upd
 def main() -> None:
     p = argparse.ArgumentParser(description="Replay adaptive quantile updates over time")
     p.add_argument("--input", required=True, help="CSV with covered column (0/1)")
-    p.add_argument("--out", default="reports/publication/adaptive_quantile_trace.csv")
+    p.add_argument("--out", "--output", default="reports/publication/adaptive_quantile_trace.csv")
     p.add_argument("--mode", choices=["fixed", "aci_basic", "aci_clipped"], default="aci_clipped")
     p.add_argument("--alpha", type=float, default=0.1)
     p.add_argument("--step", type=float, default=0.01)

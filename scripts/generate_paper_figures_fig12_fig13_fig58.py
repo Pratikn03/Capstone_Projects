@@ -214,7 +214,7 @@ def fig58_gap_distribution(out_path: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate FIG12, FIG13, FIG58 for paper")
-    parser.add_argument("--out-dir", default=str(OUT_DIR))
+    parser.add_argument("--out-dir", "--output-dir", default=str(OUT_DIR))
     args = parser.parse_args()
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

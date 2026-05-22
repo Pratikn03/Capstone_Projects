@@ -162,7 +162,7 @@ def validate_assumption_discharge(*, out_dir: Path = PUBLICATION_DIR) -> dict[st
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out-dir", type=Path, default=PUBLICATION_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=PUBLICATION_DIR)
     args = parser.parse_args()
     result = validate_assumption_discharge(out_dir=args.out_dir)
     print(

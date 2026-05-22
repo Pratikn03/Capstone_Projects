@@ -41,7 +41,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--scenario", default="drift_combo")
     parser.add_argument("--seeds", nargs="+", type=int, default=[11, 22, 33, 44, 55])
     parser.add_argument("--horizon", type=int, default=96)
-    parser.add_argument("--out-dir", default="reports/publication")
+    parser.add_argument("--out-dir", "--output-dir", default="reports/publication")
     return parser.parse_args()
 
 

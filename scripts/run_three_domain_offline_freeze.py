@@ -1063,7 +1063,7 @@ def run_freeze(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run full three-domain offline predeployment freeze.")
     parser.add_argument("--release-id", default=None)
-    parser.add_argument("--out", type=Path, default=REPO_ROOT / "reports" / "predeployment_freeze")
+    parser.add_argument("--out", "--output", type=Path, default=REPO_ROOT / "reports" / "predeployment_freeze")
     parser.add_argument(
         "--profile",
         choices=["standard", "aggressive", "max", "production-max-fast"],

@@ -154,7 +154,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--test", required=True)
     p.add_argument("--target", default="load_mw")
     p.add_argument("--features", default=None)
-    p.add_argument("--out", default="reports/publication")
+    p.add_argument("--out", "--output", default="reports/publication")
     return p
 
 

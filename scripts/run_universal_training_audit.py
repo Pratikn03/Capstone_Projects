@@ -501,7 +501,7 @@ def _write_tex(path: Path, rows: list[dict[str, object]]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Audit/train peer-domain ORIUS forecasting surfaces")
-    parser.add_argument("--out", default="reports/universal_training_audit")
+    parser.add_argument("--out", "--output", default="reports/universal_training_audit")
     parser.add_argument("--train-missing", action="store_true")
     parser.add_argument("--repair-invalid-splits", action="store_true")
     args = parser.parse_args()

@@ -90,7 +90,7 @@ def build_cost_safety_pareto(main_table_path: Path, out_dir: Path) -> dict[str, 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Build cost-safety Pareto artifact")
     p.add_argument("--main-table", default="reports/publication/dc3s_main_table.csv")
-    p.add_argument("--out-dir", default="reports/publication")
+    p.add_argument("--out-dir", "--output-dir", default="reports/publication")
     return p
 
 

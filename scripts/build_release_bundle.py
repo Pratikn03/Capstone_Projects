@@ -19,7 +19,7 @@ def _latest_run_id(runs_dir: Path) -> str | None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", default=None, help="Run ID under artifacts/runs")
-    parser.add_argument("--out", default=None, help="Output bundle directory")
+    parser.add_argument("--out", "--output", default=None, help="Output bundle directory")
     args = parser.parse_args()
 
     runs_dir = Path("artifacts/runs")

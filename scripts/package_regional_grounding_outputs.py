@@ -22,7 +22,7 @@ def _read_csv(path: Path) -> pd.DataFrame:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Package canonical regional grounding outputs.")
-    parser.add_argument("--out-dir", default="reports/publication")
+    parser.add_argument("--out-dir", "--output-dir", default="reports/publication")
     args = parser.parse_args()
 
     out_dir = ensure_dir(REPO_ROOT / args.out_dir)

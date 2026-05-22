@@ -19,7 +19,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--models-dir", default="artifacts/models")
     parser.add_argument("--uncertainty-dir", default="artifacts/uncertainty")
-    parser.add_argument("--out", default="artifacts/registry/models.json")
+    parser.add_argument("--out", "--output", default="artifacts/registry/models.json")
     parser.add_argument("--run-id", default=None, help="Optional run id for registry snapshot")
     args = parser.parse_args()
 

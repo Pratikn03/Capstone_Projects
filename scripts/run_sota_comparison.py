@@ -369,7 +369,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="SOTA safety-strategy comparison")
     parser.add_argument("--seeds", type=int, default=3)
     parser.add_argument("--rows", type=int, default=48, help="Episode horizon (steps per seed)")
-    parser.add_argument("--out", default="reports/sota_comparison")
+    parser.add_argument("--out", "--output", default="reports/sota_comparison")
     args = parser.parse_args()
 
     out_dir = Path(args.out)

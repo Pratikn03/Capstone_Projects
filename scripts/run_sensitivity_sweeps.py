@@ -38,7 +38,7 @@ def _parse_int_list(raw: str) -> list[int]:
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run DC3S CPSBench sensitivity sweeps")
-    parser.add_argument("--out-dir", default="reports/publication")
+    parser.add_argument("--out-dir", "--output-dir", default="reports/publication")
     parser.add_argument("--horizon", type=int, default=168)
     parser.add_argument("--scenarios", default="drift_combo,dropout")
     parser.add_argument("--seeds", default="11,22,33,44,55")

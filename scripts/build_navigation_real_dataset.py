@@ -179,7 +179,7 @@ def main() -> int:
         description="Build navigation_orius.csv from external KITTI Odometry data"
     )
     parser.add_argument("--external-root", type=Path, default=None, help="Override ORIUS_EXTERNAL_DATA_ROOT")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Output navigation CSV")
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT, help="Output navigation CSV")
     parser.add_argument(
         "--sequence",
         dest="sequences",

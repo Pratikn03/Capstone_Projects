@@ -283,7 +283,7 @@ def main() -> int:
     parser.add_argument("--bidmc", type=Path, default=DEFAULT_BIDMC)
     parser.add_argument("--mimic", type=Path, default=DEFAULT_MIMIC)
     parser.add_argument("--eicu-root", type=Path, default=DEFAULT_EICU_ROOT)
-    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument("--dev-sources", type=str, default="bidmc")
     parser.add_argument("--holdout-sources", type=str, default="mimic3,eicu")
     parser.add_argument("--time-forward", action="store_true")

@@ -149,7 +149,7 @@ def main() -> None:
     ap.add_argument("--region", default="DE", help="SMARD region code (default: DE)")
     ap.add_argument("--start", required=True, help="Start datetime (ISO 8601, UTC)")
     ap.add_argument("--end", required=True, help="End datetime (ISO 8601, UTC)")
-    ap.add_argument("--out", default="data/raw/carbon_signals.csv")
+    ap.add_argument("--out", "--output", default="data/raw/carbon_signals.csv")
     ap.add_argument(
         "--factors", default="configs/carbon_factors.yaml", help="YAML file with emission factors"
     )

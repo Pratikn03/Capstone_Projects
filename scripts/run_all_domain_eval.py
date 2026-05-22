@@ -601,7 +601,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--rows", type=int, default=DEFAULT_ROWS)
-    parser.add_argument("--out", default=str(DEFAULT_OUT))
+    parser.add_argument("--out", "--output", default=str(DEFAULT_OUT))
     parser.add_argument(
         "--allow-support-tier",
         action="store_true",

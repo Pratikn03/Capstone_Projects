@@ -90,7 +90,7 @@ def _fetch_chunk(
 def main():
     """CLI entrypoint for weather downloader."""
     p = argparse.ArgumentParser()
-    p.add_argument("--out", default="data/raw", help="Output directory")
+    p.add_argument("--out", "--output", default="data/raw", help="Output directory")
     p.add_argument("--lat", type=float, default=52.52, help="Latitude (default: Berlin)")
     p.add_argument("--lon", type=float, default=13.405, help="Longitude (default: Berlin)")
     p.add_argument("--start", default="2017-01-01", help="Start date (YYYY-MM-DD)")

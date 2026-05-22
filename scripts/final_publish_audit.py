@@ -502,7 +502,7 @@ def _build_markdown_report(
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run final pre-publish audit orchestration")
     parser.add_argument("--config", default="configs/publish_audit.yaml")
-    parser.add_argument("--out-dir", default=None)
+    parser.add_argument("--out-dir", "--output-dir", default=None)
     parser.add_argument("--baseline-ref", default="origin/main")
     parser.add_argument("--max-runtime-hours", type=float, default=None)
     parser.add_argument("--iot-steps", type=int, default=72)

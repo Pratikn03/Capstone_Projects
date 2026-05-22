@@ -359,7 +359,7 @@ def run_benchmark(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Paper 3 four-policy benchmark")
-    parser.add_argument("--out", default="reports/paper3", help="Paper 3 output directory")
+    parser.add_argument("--out", "--output", default="reports/paper3", help="Paper 3 output directory")
     parser.add_argument(
         "--publication-out",
         default="reports/publication",

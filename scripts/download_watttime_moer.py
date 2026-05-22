@@ -52,7 +52,7 @@ def main() -> None:
     ap.add_argument("--region", required=True, help="WattTime region (e.g., CAISO_NORTH, PJM, MISO)")
     ap.add_argument("--start", required=True, help="Start datetime (ISO 8601, UTC)")
     ap.add_argument("--end", required=True, help="End datetime (ISO 8601, UTC)")
-    ap.add_argument("--out", default="data/raw/moer_signals.csv")
+    ap.add_argument("--out", "--output", default="data/raw/moer_signals.csv")
     ap.add_argument("--username", default=os.getenv("WATTTIME_USERNAME"))
     ap.add_argument("--password", default=os.getenv("WATTTIME_PASSWORD"))
     ap.add_argument("--retries", type=int, default=3, help="HTTP retry attempts")

@@ -122,7 +122,7 @@ def export_bundle(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Export a future-pilot evidence bundle")
-    parser.add_argument("--out-dir", required=True)
+    parser.add_argument("--out-dir", "--output-dir", required=True)
     parser.add_argument("--iot-db", default="data/audit/iot_loop.duckdb")
     parser.add_argument("--audit-db", default="data/audit/dc3s_audit.duckdb")
     parser.add_argument("--audit-table", default="dispatch_certificates")

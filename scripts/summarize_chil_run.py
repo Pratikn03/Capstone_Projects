@@ -183,7 +183,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--audit-table", default="dispatch_certificates")
     parser.add_argument("--device-id", default=None)
     parser.add_argument("--agent-log", default=None)
-    parser.add_argument("--out", required=True)
+    parser.add_argument("--out", "--output", required=True)
     return parser.parse_args()
 
 

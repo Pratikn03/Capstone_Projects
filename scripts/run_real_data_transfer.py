@@ -278,7 +278,7 @@ def main() -> None:
     )
     parser.add_argument("--seeds", type=int, default=5)
     parser.add_argument("--horizon", type=int, default=48)
-    parser.add_argument("--out", type=Path, default=ROOT / "reports" / "real_data_transfer")
+    parser.add_argument("--out", "--output", type=Path, default=ROOT / "reports" / "real_data_transfer")
     args = parser.parse_args()
 
     args.out.mkdir(parents=True, exist_ok=True)

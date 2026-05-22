@@ -59,7 +59,7 @@ def _load_metadata(path: Path) -> dict | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify ORIUS-Bench replayability")
-    parser.add_argument("--out", default="reports/orius_bench", help="Output directory")
+    parser.add_argument("--out", "--output", default="reports/orius_bench", help="Output directory")
     args = parser.parse_args()
 
     out_dir = _resolve_repo_path(args.out)

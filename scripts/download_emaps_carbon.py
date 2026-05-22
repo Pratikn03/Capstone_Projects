@@ -46,7 +46,7 @@ def main() -> None:
     ap.add_argument("--zone", required=True, help="Zone code (e.g., DE-LU)")
     ap.add_argument("--start", required=True, help="Start datetime (ISO 8601, UTC)")
     ap.add_argument("--end", required=True, help="End datetime (ISO 8601, UTC)")
-    ap.add_argument("--out", default="data/raw/carbon_signals.csv")
+    ap.add_argument("--out", "--output", default="data/raw/carbon_signals.csv")
     ap.add_argument("--token", default=os.getenv("ELECTRICITYMAPS_TOKEN"))
     ap.add_argument("--base-url", default="https://api.electricitymaps.com")
     ap.add_argument("--endpoint", default="/v3/carbon-intensity/past-range")

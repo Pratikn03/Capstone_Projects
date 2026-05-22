@@ -126,7 +126,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--include-untracked", action="store_true")
     parser.add_argument("--format", choices={"json", "csv"}, default="csv")
-    parser.add_argument("--out", type=Path)
+    parser.add_argument("--out", "--output", type=Path)
     args = parser.parse_args()
 
     rows = list(iter_inventory(include_untracked=args.include_untracked))

@@ -131,7 +131,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run ORIUS Universal Framework across the registered runtime domains"
     )
-    parser.add_argument("--out", default="reports/multi_domain", help="Output directory")
+    parser.add_argument("--out", "--output", default="reports/multi_domain", help="Output directory")
     args = parser.parse_args()
 
     out = Path(args.out)

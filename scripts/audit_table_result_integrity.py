@@ -613,7 +613,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--root", action="append", default=None, help="Repo-relative root to scan; may be repeated."
     )
-    parser.add_argument("--out-dir", default="reports/audit")
+    parser.add_argument("--out-dir", "--output-dir", default="reports/audit")
     parser.add_argument(
         "--no-fail", action="store_true", help="Write report but do not exit nonzero on blocking findings."
     )

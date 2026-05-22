@@ -67,7 +67,7 @@ def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Cross-region DC³S transfer evaluation")
     p.add_argument("--seeds", nargs="*", type=int, default=None)
     p.add_argument("--horizon", type=int, default=None)
-    p.add_argument("--out-dir", default="reports/publication")
+    p.add_argument("--out-dir", "--output-dir", default="reports/publication")
     return p.parse_args()
 
 

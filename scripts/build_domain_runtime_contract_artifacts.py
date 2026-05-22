@@ -269,7 +269,7 @@ def main() -> int:
     parser.add_argument("--healthcare-trace", type=Path, default=DEFAULT_HEALTHCARE_TRACE)
     parser.add_argument("--av-cert-db", type=Path, default=DEFAULT_AV_CERT_DB)
     parser.add_argument("--healthcare-cert-db", type=Path, default=DEFAULT_HEALTHCARE_CERT_DB)
-    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument("--no-normalize-traces", action="store_true")
     parser.add_argument("--no-certificate-recovery", action="store_true")
     parser.add_argument("--max-publication-witnesses-per-domain", type=int, default=25)

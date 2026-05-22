@@ -290,7 +290,7 @@ def write_manifest(manifest: dict[str, object], out_path: Path) -> Path:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("."), help="Repository root to scan.")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Manifest output path.")
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT, help="Manifest output path.")
     return parser.parse_args()
 
 

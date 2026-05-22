@@ -46,7 +46,7 @@ def _load_graceful():
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Paper 3 runtime linkage demo")
-    parser.add_argument("--out", default="reports/paper3", help="Output directory")
+    parser.add_argument("--out", "--output", default="reports/paper3", help="Output directory")
     args = parser.parse_args()
 
     out_dir = _resolve_repo_path(args.out)

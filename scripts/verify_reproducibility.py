@@ -73,7 +73,7 @@ def _parse_args() -> argparse.Namespace:
         description="Verify publication artifact hashes against the release manifest"
     )
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST, help="Release manifest path")
-    parser.add_argument("--out", type=Path, default=None, help="Optional JSON report output path")
+    parser.add_argument("--out", "--output", type=Path, default=None, help="Optional JSON report output path")
     return parser.parse_args()
 
 

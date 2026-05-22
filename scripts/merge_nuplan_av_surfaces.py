@@ -41,7 +41,7 @@ def _parse_args() -> argparse.Namespace:
         required=True,
         help="Processed nuPlan surface directory; repeat in merge order",
     )
-    parser.add_argument("--out-dir", type=Path, required=True, help="Merged output surface directory")
+    parser.add_argument("--out-dir", "--output-dir", type=Path, required=True, help="Merged output surface directory")
     parser.add_argument(
         "--maps-zip", type=Path, default=None, help="Optional maps zip path recorded in the merged manifest"
     )

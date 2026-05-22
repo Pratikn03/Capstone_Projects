@@ -253,7 +253,7 @@ def maybe_execute_healthcare(args: argparse.Namespace, manifest: dict[str, Any])
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Stage next-run AV/healthcare dataset expansion")
-    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--healthcare-patients", type=int, default=200)
     parser.add_argument("--waymo-max-shards", type=int, default=30)
     parser.add_argument("--waymo-max-scenarios", type=int, default=10000)

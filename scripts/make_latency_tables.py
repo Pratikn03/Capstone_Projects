@@ -10,7 +10,7 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Generate latency tables wrapper")
     p.add_argument("--iterations", type=int, default=10000)
     p.add_argument("--warmup", type=int, default=200)
-    p.add_argument("--out-dir", default="reports/latency")
+    p.add_argument("--out-dir", "--output-dir", default="reports/latency")
     args = p.parse_args()
     out = ensure_dir(REPO_ROOT / args.out_dir)
     run_script(

@@ -52,7 +52,7 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--window", type=int, default=48, help="Trace window in hours")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--out-dir", default="reports/publication")
+    parser.add_argument("--out-dir", "--output-dir", default="reports/publication")
     return parser.parse_args()
 
 

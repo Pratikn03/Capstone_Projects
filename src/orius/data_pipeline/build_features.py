@@ -344,7 +344,7 @@ def load_signals(path: Path) -> pd.DataFrame:
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--in", dest="in_dir", required=True, help="Input directory (data/raw)")
-    parser.add_argument("--out", dest="out_dir", default="data/processed", help="Output directory")
+    parser.add_argument("--out", "--output", dest="out_dir", default="data/processed", help="Output directory")
     parser.add_argument("--country", default="DE", help="OPSD country code to extract (default: DE)")
     parser.add_argument(
         "--weather", default=None, help="Optional weather file (csv/parquet) to merge on timestamp"

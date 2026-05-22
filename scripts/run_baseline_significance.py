@@ -217,7 +217,7 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--region", required=True)
     p.add_argument("--release-id", required=True)
     p.add_argument("--predictions-dir", type=Path, default=None)
-    p.add_argument("--out-dir", type=Path, default=REPO_ROOT / "reports" / "publication")
+    p.add_argument("--out-dir", "--output-dir", type=Path, default=REPO_ROOT / "reports" / "publication")
     p.add_argument("--targets", nargs="+", default=list(DEFAULT_TARGETS))
     p.add_argument("--reference", default=DEFAULT_REFERENCE)
     p.add_argument("--baselines", nargs="+", default=list(DEFAULT_BASELINES))

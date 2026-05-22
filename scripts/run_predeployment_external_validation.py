@@ -673,7 +673,7 @@ def build_predeployment_external_validation(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run ORIUS predeployment external-validation gates.")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--min-battery-steps", type=int, default=96)
     parser.add_argument("--min-av-steps", type=int, default=1_531_104)
     parser.add_argument("--max-av-fallback-rate", type=float, default=0.50)

@@ -25,7 +25,7 @@ import pandas as pd
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build fault performance table")
     parser.add_argument("--in-csv", default="reports/publication/cpsbench_merged_sweep.csv")
-    parser.add_argument("--out-dir", default="reports/publication")
+    parser.add_argument("--out-dir", "--output-dir", default="reports/publication")
     return parser.parse_args()
 
 

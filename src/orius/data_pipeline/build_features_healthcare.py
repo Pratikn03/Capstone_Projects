@@ -640,7 +640,7 @@ def build_features(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build Healthcare features for training")
     parser.add_argument("--in", dest="inputs", type=Path, action="append", default=None, help="Input CSV")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Output directory")
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT, help="Output directory")
     parser.add_argument(
         "--max-input",
         action="store_true",

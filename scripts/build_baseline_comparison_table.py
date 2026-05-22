@@ -487,7 +487,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--release-id", default=None, help="Read DE and US_MISO inputs from this accepted release family"
     )
-    parser.add_argument("--out-dir", type=Path, default=OUT_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=OUT_DIR)
     parser.add_argument(
         "--de-dir", type=Path, default=None, help="Directory containing DE week2_metrics.json"
     )

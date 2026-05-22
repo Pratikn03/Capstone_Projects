@@ -15,7 +15,7 @@ from scripts.compute_reliability_group_coverage import build_summary
 def main() -> None:
     p = argparse.ArgumentParser(description="Run Mondrian subgroup evaluation wrapper")
     p.add_argument("--input-trace", default="reports/publication/48h_trace_final_us.csv")
-    p.add_argument("--out-dir", default="reports/calibration")
+    p.add_argument("--out-dir", "--output-dir", default="reports/calibration")
     args = p.parse_args()
     out = ensure_dir(REPO_ROOT / args.out_dir)
     df = pd.read_csv(REPO_ROOT / args.input_trace)

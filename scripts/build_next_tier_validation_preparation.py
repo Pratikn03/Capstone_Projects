@@ -160,7 +160,7 @@ def build_next_tier_validation_preparation(*, out_dir: Path = DEFAULT_OUT) -> di
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
     summary = build_next_tier_validation_preparation(out_dir=args.out)
     print(f"[next_tier_validation_preparation] status={summary['status']} out={args.out}")

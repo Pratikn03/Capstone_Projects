@@ -260,7 +260,7 @@ def generate_synthetic_flight(out_path: Path, n_steps: int = 5000) -> Path:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build Aerospace datasets for ORIUS")
     parser.add_argument("--source", choices=["cmapss", "synthetic"], default="cmapss", help="Dataset source")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Output CSV path")
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT, help="Output CSV path")
     parser.add_argument(
         "--steps", type=int, default=5000, help="Number of timesteps for synthetic generation"
     )

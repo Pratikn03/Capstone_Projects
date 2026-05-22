@@ -559,7 +559,7 @@ def build_research_package(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out-dir", type=Path, default=PUBLICATION_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=PUBLICATION_DIR)
     parser.add_argument("--min-sources", type=int, default=500)
     parser.add_argument("--offline", action="store_true")
     args = parser.parse_args()

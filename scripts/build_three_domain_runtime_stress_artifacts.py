@@ -230,7 +230,7 @@ def build_runtime_stress_artifacts(out_dir: Path = DEFAULT_OUT) -> dict[str, Any
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build three-domain real runtime stress artifacts.")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
     manifest = build_runtime_stress_artifacts(args.out)
     print(f"[runtime-stress] all_passed={manifest['all_passed']} summary={manifest['summary_csv']}")

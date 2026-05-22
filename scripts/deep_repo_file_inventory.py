@@ -381,7 +381,7 @@ def build_inventory() -> tuple[list[FileRecord], dict[str, object]]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Inventory and classify repository files.")
-    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=DEFAULT_OUT_DIR)
     args = parser.parse_args()
 
     rows, summary = build_inventory()

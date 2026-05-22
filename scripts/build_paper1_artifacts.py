@@ -322,7 +322,7 @@ def _write_svg_frontier(ctrl_data: list[tuple[str, float, float]], out_dir: Path
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build Paper 1 battery/DC3S artifacts")
-    parser.add_argument("--out", default="reports/paper1", help="Output directory")
+    parser.add_argument("--out", "--output", default="reports/paper1", help="Output directory")
     parser.add_argument(
         "--publication-dir",
         default="reports/publication",

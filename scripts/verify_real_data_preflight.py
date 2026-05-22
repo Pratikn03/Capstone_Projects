@@ -142,7 +142,7 @@ def main() -> int:
         "--external-root", type=Path, default=None, help="Override ORIUS_EXTERNAL_DATA_ROOT for this check"
     )
     parser.add_argument("--min-free-gib", type=float, default=DEFAULT_MIN_FREE_GIB)
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
 
     domains = args.domains or DOMAIN_NAMES

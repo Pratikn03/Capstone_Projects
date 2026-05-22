@@ -88,7 +88,7 @@ def _parse_args() -> argparse.Namespace:
         description="Generate reproducibility appendix TeX from release manifest"
     )
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST, help="Release manifest path")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Output TeX path")
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT, help="Output TeX path")
     return parser.parse_args()
 
 

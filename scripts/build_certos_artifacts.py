@@ -34,7 +34,7 @@ def _resolve_repo_path(raw: str) -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build CertOS artifacts")
-    parser.add_argument("--out", default="reports/certos", help="Output directory")
+    parser.add_argument("--out", "--output", default="reports/certos", help="Output directory")
     args = parser.parse_args()
 
     out = _resolve_repo_path(args.out)

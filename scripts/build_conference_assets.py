@@ -54,7 +54,7 @@ DATASET_META = {
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build conference-style dataset cards and paper figures")
-    parser.add_argument("--out-dir", default=str(DEFAULT_OUT_DIR))
+    parser.add_argument("--out-dir", "--output-dir", default=str(DEFAULT_OUT_DIR))
     parser.add_argument("--dataset-summary", default=str(DATASET_SUMMARY_DEFAULT))
     return parser.parse_args()
 

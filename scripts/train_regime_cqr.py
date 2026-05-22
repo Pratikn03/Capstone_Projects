@@ -93,7 +93,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--vol-window", type=int, default=24)
     p.add_argument("--backend-policy", choices=("strict", "fallback"), default="strict")
     p.add_argument("--quantile-backend", default="lightgbm")
-    p.add_argument("--out", default="reports/publication")
+    p.add_argument("--out", "--output", default="reports/publication")
     return p
 
 

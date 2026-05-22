@@ -89,7 +89,7 @@ def build_assumption_discharge(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=Path, default=REPO_ROOT)
-    parser.add_argument("--out-dir", type=Path, default=PUBLICATION_DIR)
+    parser.add_argument("--out-dir", "--output-dir", type=Path, default=PUBLICATION_DIR)
     parser.add_argument("--max-rows", type=int, default=_env_max_rows())
     parser.add_argument("--min-rows", type=int, default=1000)
     parser.add_argument("--boundary-margin", type=float, default=0.5)

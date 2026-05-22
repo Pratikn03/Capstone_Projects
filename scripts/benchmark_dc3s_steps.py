@@ -36,7 +36,7 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Benchmark core DC3S per-step functions")
     parser.add_argument("--iterations", type=int, default=10000)
     parser.add_argument("--warmup", type=int, default=200)
-    parser.add_argument("--out", default="reports/dc3s_latency_benchmark.json")
+    parser.add_argument("--out", "--output", default="reports/dc3s_latency_benchmark.json")
     parser.add_argument(
         "--publication-csv",
         default="reports/publication/dc3s_latency_summary.csv",

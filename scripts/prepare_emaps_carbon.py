@@ -32,7 +32,7 @@ def _convert_units(values: pd.Series, unit: str) -> pd.Series:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="in_path", required=True, help="Input CSV/Parquet from Electricity Maps")
-    ap.add_argument("--out", dest="out_path", default="data/raw/price_carbon_signals.csv")
+    ap.add_argument("--out", "--output", dest="out_path", default="data/raw/price_carbon_signals.csv")
     ap.add_argument("--timestamp-col", default=None, help="Timestamp column name (auto-detect if omitted)")
     ap.add_argument(
         "--carbon-col", default=None, help="Carbon intensity column name (auto-detect if omitted)"

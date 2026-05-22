@@ -9,7 +9,7 @@ from _battery_wrappers_common import REPO_ROOT, ensure_dir, write_manifest
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Run aging proxy analysis wrapper")
-    p.add_argument("--out-dir", default="reports/aging")
+    p.add_argument("--out-dir", "--output-dir", default="reports/aging")
     args = p.parse_args()
     out = ensure_dir(REPO_ROOT / args.out_dir)
     ft = pd.read_csv(REPO_ROOT / "reports/publication/fault_performance_table.csv").rename(

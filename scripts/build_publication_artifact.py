@@ -156,7 +156,7 @@ PAPER_ASSET_SOURCE_MAP = {
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Build full publication artifact package")
-    p.add_argument("--out-dir", default="reports/publication")
+    p.add_argument("--out-dir", "--output-dir", default="reports/publication")
     p.add_argument("--horizon", type=int, default=96)
     p.add_argument("--seeds", nargs="*", type=int, default=None)
     p.add_argument("--scenarios", nargs="*", default=None)

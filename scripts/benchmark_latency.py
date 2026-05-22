@@ -128,7 +128,7 @@ def benchmark_domain(
 def main() -> int:
     parser = argparse.ArgumentParser(description="ORIUS DC3S latency benchmark")
     parser.add_argument("--n", type=int, default=1000, help="Steps per domain")
-    parser.add_argument("--out", default="reports/latency_run/", help="Output directory")
+    parser.add_argument("--out", "--output", default="reports/latency_run/", help="Output directory")
     args = parser.parse_args()
 
     out_path = Path(args.out)

@@ -9,7 +9,7 @@ from _battery_wrappers_common import REPO_ROOT, ensure_dir
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Make HIL tables wrapper")
-    p.add_argument("--out-dir", default="reports/hil")
+    p.add_argument("--out-dir", "--output-dir", default="reports/hil")
     args = p.parse_args()
     out = ensure_dir(REPO_ROOT / args.out_dir)
     step = pd.read_csv(out / "hil_step_log.csv")

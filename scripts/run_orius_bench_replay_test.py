@@ -54,7 +54,7 @@ def _file_hash(path: Path) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="ORIUS-Bench replayability test")
-    parser.add_argument("--out", default="reports/orius_bench", help="Output directory")
+    parser.add_argument("--out", "--output", default="reports/orius_bench", help="Output directory")
     args = parser.parse_args()
 
     out_dir = _resolve_repo_path(args.out)

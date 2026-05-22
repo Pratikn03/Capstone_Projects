@@ -18,7 +18,7 @@ def main() -> None:
     parser.add_argument("--country", default="DE", help="Country code (default: DE)")
     parser.add_argument("--start-year", type=int, default=2015)
     parser.add_argument("--end-year", type=int, default=2020)
-    parser.add_argument("--out", default="data/raw/holidays_de.csv")
+    parser.add_argument("--out", "--output", default="data/raw/holidays_de.csv")
     args = parser.parse_args()
 
     hset = holidays.country_holidays(args.country, years=range(args.start_year, args.end_year + 1))

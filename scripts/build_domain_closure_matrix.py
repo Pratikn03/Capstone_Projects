@@ -208,7 +208,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Build the three-domain ORIUS closure matrices")
     parser.add_argument("--validation-report", type=Path, required=True)
     parser.add_argument("--training-report", type=Path, required=True)
-    parser.add_argument("--out", type=Path, default=Path("reports/universal_orius_validation"))
+    parser.add_argument("--out", "--output", type=Path, default=Path("reports/universal_orius_validation"))
     args = parser.parse_args()
 
     out_dir = args.out

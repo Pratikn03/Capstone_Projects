@@ -219,7 +219,7 @@ def _render_markdown(payload: dict[str, Any]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Audit git delta against baseline ref")
     parser.add_argument("--baseline-ref", default="origin/main")
-    parser.add_argument("--out-dir", default="reports/publish")
+    parser.add_argument("--out-dir", "--output-dir", default="reports/publish")
     parser.add_argument("--scope-config", default="configs/publish_audit.yaml")
     args = parser.parse_args()
 

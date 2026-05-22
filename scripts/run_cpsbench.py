@@ -23,7 +23,7 @@ DEFAULT_SEEDS = [11, 22, 33, 44, 55]
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run CPSBench-IoT default benchmark suite")
-    parser.add_argument("--out-dir", default="reports/publication")
+    parser.add_argument("--out-dir", "--output-dir", default="reports/publication")
     parser.add_argument("--horizon", type=int, default=168)
     parser.add_argument(
         "--seeds", nargs="*", type=int, default=None, help="Override seeds, e.g. --seeds 0 1 2"

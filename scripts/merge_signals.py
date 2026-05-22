@@ -20,7 +20,7 @@ def main() -> None:
         "--carbon", required=True, help="Carbon signals CSV/Parquet (timestamp, carbon_kg_per_mwh)"
     )
     ap.add_argument("--moer", required=True, help="MOER signals CSV/Parquet (timestamp, moer_kg_per_mwh)")
-    ap.add_argument("--out", default="data/raw/price_carbon_signals.csv")
+    ap.add_argument("--out", "--output", default="data/raw/price_carbon_signals.csv")
     args = ap.parse_args()
 
     carbon = _load(Path(args.carbon))

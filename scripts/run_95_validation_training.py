@@ -161,7 +161,7 @@ def main() -> int:
     parser.add_argument("--carla-dir", type=Path, required=True)
     parser.add_argument("--healthcare-dir", type=Path, required=True)
     parser.add_argument("--battery-hil-dir", type=Path, required=True)
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--out", "--output", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
     manifest = build_95_validation_manifest(
         nuplan_runtime=args.nuplan_runtime,
