@@ -1,12 +1,16 @@
 
 \subsection{Three-Domain Per-Step Coverage Verification}
 
-The per-step risk lemma (Lemma~\ref{lem:per-step-risk}) states that
-$\Pr[Z_t = 1] \le \alpha(1 - w_t)$ for each step~$t$, given marginal
-conformal coverage at level~$1 - \alpha$ and the monotone inflation
-assumption~(A5).  The current defended paper uses this lemma only across the
-active Battery, AV, and Healthcare claim surface.  Earlier exploratory rows are
-not promoted in this proof check.
+The per-step risk lemma (Lemma~\ref{lem:per-step-risk}) is used only after a
+domain supplies the explicit predictable budget
+\[
+  \Pr[Z_t = 1\mid\mathcal H_t] \le r_t,
+  \qquad r_t\le\alpha(1-w_t),
+\]
+on the fixed certified budget trace.  Marginal conformal coverage alone is not
+treated as sufficient.  The current defended paper uses this contract only
+across the active Battery, AV, and Healthcare claim surface.  Earlier
+exploratory rows are not promoted in this proof check.
 
 \paragraph{Battery energy storage.}
 The battery witness row uses the locked CPSBench replay surface and its

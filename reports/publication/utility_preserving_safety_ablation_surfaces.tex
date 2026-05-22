@@ -1,0 +1,29 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Required ORIUS component-ablation surfaces. Non-isolated compact evidence is retained as boundary evidence rather than converted into unsupported numeric claims.}
+\label{tab:utility-preserving-ablation-surfaces}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llllrrl}
+\toprule
+Removed surface & Domain & Evidence & Baseline/controller & Baseline TSVR & ORIUS TSVR & Comparability\\
+\midrule
+no\_certificate\_gate & Autonomous Vehicles & runtime\_denominator & stale\_certificate\_no\_temporal\_guard & 0.263610 & 0.000163 & non\_comparable\_combined\_certificate\_temporal\_guard\\
+no\_fallback & Autonomous Vehicles & runtime\_denominator & stale\_certificate\_no\_temporal\_guard & 0.263610 & 0.000163 & non\_comparable\_combined\_with\_temporal\_guard\\
+no\_reliability & Autonomous Vehicles & runtime\_denominator & robust\_fixed\_deceleration & 0.252319 & 0.000163 & comparable\_runtime\_native\\
+no\_repair & Autonomous Vehicles & runtime\_denominator & baseline & 0.289250 & 0.000163 & comparable\_runtime\_native\\
+no\_uncertainty & Autonomous Vehicles & not\_isolated\_in\_compact\_evidence & baseline & 0.289250 & 0.000163 & non\_comparable\_combined\_nominal\_no\_uncertainty\_surface\\
+no\_certificate\_gate & Battery Energy Storage & runtime\_denominator & deep:dc3s\_wrapped & 0.000000 & 0.000000 & non\_comparable\_combined\_certificate\_temporal\_guard\\
+no\_fallback & Battery Energy Storage & runtime\_denominator & deep:dc3s\_wrapped & 0.000000 & 0.000000 & non\_comparable\_combined\_with\_temporal\_guard\\
+no\_reliability & Battery Energy Storage & runtime\_denominator & deep:dc3s\_wrapped & 0.000000 & 0.000000 & comparable\_runtime\_native\\
+no\_repair & Battery Energy Storage & runtime\_denominator & deep:dc3s\_wrapped & 0.000000 & 0.000000 & comparable\_runtime\_native\\
+no\_uncertainty & Battery Energy Storage & not\_isolated\_in\_compact\_evidence & deep:dc3s\_wrapped & 0.000000 & 0.000000 & non\_comparable\_combined\_nominal\_no\_uncertainty\_surface\\
+no\_certificate\_gate & Medical and Healthcare Monitoring & runtime\_denominator & stale\_certificate\_no\_temporal\_guard & 0.000029 & 0.000000 & non\_comparable\_combined\_certificate\_temporal\_guard\\
+no\_fallback & Medical and Healthcare Monitoring & runtime\_denominator & stale\_certificate\_no\_temporal\_guard & 0.000029 & 0.000000 & non\_comparable\_combined\_with\_temporal\_guard\\
+no\_reliability & Medical and Healthcare Monitoring & runtime\_denominator & fixed\_conservative\_alert & 0.200420 & 0.000000 & comparable\_runtime\_native\\
+no\_repair & Medical and Healthcare Monitoring & runtime\_denominator & baseline & 0.194489 & 0.000000 & comparable\_runtime\_native\\
+no\_uncertainty & Medical and Healthcare Monitoring & not\_isolated\_in\_compact\_evidence & baseline & 0.194489 & 0.000000 & non\_comparable\_combined\_nominal\_no\_uncertainty\_surface\\
+no\_signature\_hash\_gate & Cross-domain governance & governance\_fail\_closed & no\_controller\_for\_governance\_gate & not\_a\_tsvr\_metric & not\_a\_tsvr\_metric & non\_comparable\_governance\_gate\\
+\bottomrule
+\end{tabular}}
+\end{table*}

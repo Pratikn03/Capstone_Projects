@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build empirical T10 assumption-discharge artifacts for three domains."""
+"""Build empirical T10 boundary-pair TV-radius artifacts for three domains."""
 
 from __future__ import annotations
 

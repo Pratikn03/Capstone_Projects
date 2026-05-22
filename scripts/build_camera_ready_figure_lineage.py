@@ -351,9 +351,10 @@ def data_hints(stem: str, artifact: Path | None) -> dict[str, list[str]]:
         "training_interval_widths",
         "shift_aware_runtime",
         "fault_family_coverage",
+        "fault_family_coverage_heatmap",
         "runtime_metrics",
     }:
-        scripts = ["scripts/build_waymo_av_dry_run_report.py"]
+        scripts = ["scripts/build_waymo_av_dry_run_report.py", "scripts/build_orius_ieee_assets.py"]
         data = [
             "reports/orius_av/nuplan_allzip_grouped/training_summary.csv",
             "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv",
@@ -448,6 +449,78 @@ def design_source_for(stem: str, artifact: Path | None) -> dict[str, Any]:
     }
 
 
+def figure_reading_for(stem: str, classification: str, artifact: Path | None) -> str:
+    """Return the reviewer-facing point of a figure without inspecting private data."""
+    artifact_text = rel(artifact) or ""
+    text = f"{stem} {artifact_text}".lower()
+    if classification == "static_diagram":
+        if "theory_runtime_domain_flow" in text:
+            return "Concept map linking the theory objects, runtime release contract, and domain adapters."
+        if "governance_matrix" in text:
+            return "Runtime governance diagram showing certificate, audit, and claim-boundary responsibilities."
+        if "multi_domain" in text:
+            return "Cross-domain validation schematic showing which evidence tiers are complete or bounded."
+        if "theorem_gate" in text:
+            return "Theorem-promotion gate showing proof, code, test, artifact, and manuscript obligations."
+        if "universal_framework" in text or "architecture" in text:
+            return "ORIUS architecture overview showing the degraded-observation runtime safety layer."
+        return "Static explanatory diagram; numeric claims must be checked against linked tables and artifacts."
+    if classification == "screenshot":
+        return "UI or repository screenshot used as contextual evidence, not as a numeric result surface."
+    if classification == "legacy_archive":
+        return "Archived figure kept for traceability; it is not a current claim-governing result."
+    if classification != "data_plot":
+        return "Unused or auxiliary image; not part of the current LaTeX claim surface."
+
+    if "reliability_baselines" in text:
+        return "Battery baseline trade-off: true-state violation, coverage, conservatism, repair, and utility cost."
+    if "battery_deep_oqe_safety_metrics" in text:
+        return "DeepOQE runtime witness: zero-violation safety with intervention and graceful-degradation trade-offs."
+    if "battery_deep_oqe_summary" in text:
+        return "DeepOQE diagnostic summary comparing reliability estimation and fault-detection behavior."
+    if "raw_sequence_track" in text:
+        return "Sequence-model benchmark showing whether learned telemetry features improve forecasting quality."
+    if "runtime_metrics" in text:
+        return "AV runtime-denominator metrics from bounded nuPlan/Waymo-style replay evidence."
+    if "shift_aware_runtime" in text:
+        return "Shift-aware AV runtime comparison showing effect of degraded-observation distribution shifts."
+    if "training_interval_widths" in text:
+        return "AV training/calibration interval-width behavior used to audit uncertainty conservatism."
+    if "fault_family_coverage" in text:
+        return "AV fault-family coverage heatmap showing which degraded-observation cases are represented."
+    if "observed_vs_true_counterexamples" in text:
+        return "Observed-state versus true-state counterexamples motivating reliability-aware release."
+    if "shift_aware_before_after" in text:
+        return "Before/after subgroup calibration shift audit for runtime reliability correction."
+    if "coverage_width_tradeoff" in text or "coverage_width" in text:
+        return "Coverage-width trade-off: calibration quality versus conservatism across reliability groups."
+    if "final_runtime_tsvr" in text:
+        return "Claim-governing runtime TSVR comparison across Battery, AV, and Healthcare."
+    if "final_training_picp90" in text:
+        return "Training/calibration PICP@90 quality across the promoted domains."
+    if "final_utility_delta" in text:
+        return "Utility-preserving safety summary showing retained utility under safety constraints."
+    if "graceful" in text:
+        return "Graceful-degradation policy comparison under fault duration and fallback pressure."
+    if "blackout" in text or "halflife" in text:
+        return "Certificate half-life and blackout response showing validity decay under stale observation."
+    if "t5_horizon" in text:
+        return "T5 certificate-horizon witness: validity horizon versus reliability under fault pressure."
+    if "t8_safety" in text:
+        return "T8 safety-work frontier: graceful policy dominance with retained useful work."
+    if "t10_lower" in text:
+        return "T10 lower-bound curve: unavoidable observation-only risk versus total variation separation."
+    if "tsensor" in text:
+        return "Sensor-necessity witness: safe-core collapse under critical sensor removal."
+    if "sweep_heatmap" in text:
+        return "Hyperparameter surface used to check robustness rather than a single cherry-picked setting."
+    if "violation" in text or "severity" in text:
+        return "Fault-stress safety outcome plot showing true-state violation and severity under degradation."
+    if "forecast" in text or "drift" in text or "model_comparison" in text or "multi_horizon" in text:
+        return "Domain forecast/backtest diagnostic supporting adapter-level validation, not deployment closure."
+    return "Data-generated result figure; linked scripts and source tables define the numeric claim."
+
+
 def source_hashes(paths: list[str]) -> dict[str, str]:
     hashes: dict[str, str] = {}
     for p in paths:
@@ -503,6 +576,7 @@ def build_entries() -> dict[str, Any]:
                 "bytes": image.stat().st_size,
                 "sha256": sha256(image),
                 "classification": classification,
+                "figure_reading": figure_reading_for(stem, classification, image),
                 "latex_used": bool(image_refs),
                 "archive_only": archive_only,
                 "latex_references": [
@@ -533,6 +607,7 @@ def build_entries() -> dict[str, Any]:
                 "bytes": 0,
                 "sha256": "not_applicable",
                 "classification": classification,
+                "figure_reading": figure_reading_for(Path(ref.graphic).stem, classification, None),
                 "latex_used": True,
                 "archive_only": archive_only,
                 "latex_references": [
@@ -625,6 +700,7 @@ def write_outputs(payload: dict[str, Any]) -> None:
     fieldnames = [
         "artifact_path",
         "classification",
+        "figure_reading",
         "latex_used",
         "archive_only",
         "bytes",
@@ -642,6 +718,7 @@ def write_outputs(payload: dict[str, Any]) -> None:
                 {
                     "artifact_path": entry["artifact_path"] or "not_canonical",
                     "classification": entry["classification"],
+                    "figure_reading": entry["figure_reading"],
                     "latex_used": entry["latex_used"],
                     "archive_only": entry["archive_only"],
                     "bytes": entry["bytes"],
@@ -677,17 +754,18 @@ def render_markdown(payload: dict[str, Any]) -> str:
         "",
         "## LaTeX-Used Figures",
         "",
-        "| Artifact | Class | Sources | Errors |",
-        "| --- | --- | --- | --- |",
+        "| Artifact | Class | What it shows | Sources | Errors |",
+        "| --- | --- | --- | --- | --- |",
     ]
     for entry in payload["entries"]:
         if not entry["latex_used"]:
             continue
         sources = entry["source_scripts"] + entry["source_data"]
         lines.append(
-            "| {artifact} | {cls} | {sources} | {errors} |".format(
+            "| {artifact} | {cls} | {reading} | {sources} | {errors} |".format(
                 artifact=entry["artifact_path"] or entry["latex_references"][0]["graphic"],
                 cls=entry["classification"],
+                reading=entry["figure_reading"],
                 sources="<br>".join(sources) if sources else "-",
                 errors="<br>".join(entry["verification_errors"]) if entry["verification_errors"] else "-",
             )

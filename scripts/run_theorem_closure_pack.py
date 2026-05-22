@@ -563,13 +563,13 @@ def registry(artifacts: dict[str, list[str]]) -> list[dict[str, Any]]:
             "claim_boundary": "two-state lower bound, not global minimax frontier",
         },
         "T10_T11_ObservationAmbiguitySandwich": {
-            "title": "Covered Observation-Ambiguity Optimality",
+            "title": "Covered Observation-Ambiguity Safety Sandwich",
             "status": "flagship_corollary",
             "assumptions": ["observation_ambiguity_class", "covered_uncertainty_set", "alpha_coverage"],
             "proof_file": "appendices/app_c_full_proofs.tex",
             "code_anchor": "src/orius/universal_theory/observation_ambiguity.py",
             "tests": ["tests/test_observation_ambiguity_optimality.py"],
-            "claim_boundary": "contract-universal covered observation ambiguity, not unrestricted global optimality",
+            "claim_boundary": "contract-universal lower/upper safety sandwich, not unrestricted global optimality",
         },
         "T11_AV_BrakeHold": {
             "title": "AV Brake-Hold Runtime Lemma",

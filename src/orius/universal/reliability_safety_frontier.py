@@ -70,10 +70,11 @@ def compute_frontier(
         List of FrontierPoint, one per w̄ value, sorted by increasing w̄.
 
     Design note:
-        The correction term uses log(T) not log(1/δ) because T10's proof integrates
-        over the Borel-Cantelli fault windows rather than using a union-bound argument.
-        For T < e ≈ 2.718, log(T) < 1; we clamp to max(log(T), 1) to keep the
-        correction meaningful for short episodes.
+        This helper is a diagnostic frontier calculator, not the active T10 theorem.
+        Active T10 is the two-state TV lower bound in
+        ``orius.universal_theory.boundary_indistinguishability``. The log(T)
+        correction below is retained as a conservative plotting convention for
+        historical frontier artifacts.
     """
     if not (0 < alpha < 1):
         raise ValueError(f"alpha must be in (0, 1), got {alpha}")

@@ -49,24 +49,24 @@ the runtime invariants to end-to-end safety guarantees under stated assumptions
 
 \subsection{Scope and Claims}
 
-Unlike broader planning drafts that motivated ORIUS with additional candidate rows,
-this manuscript restricts its defended empirical lane to \textbf{three active domains}
+Unlike broader planning drafts that motivated ORIUS with additional candidate domains,
+this manuscript restricts its empirical claim surface to \textbf{three active domains}
 with locked, reproducible artifacts and explicit evidence tiers:
 
 \begin{enumerate}[nosep]
-  \item \textbf{Battery Energy Storage (BESS)}: dispatch optimisation under degraded
+        \item \textbf{Battery Energy Storage (BESS)}: dispatch optimisation under degraded
         state-of-charge telemetry on locked CPSBench replay artifacts.  Battery is the
-        theorem-grade witness row and carries the deepest artifact-to-proof closure.
+        primary validation domain and carries the deepest artifact-to-proof closure.
   \item \textbf{Autonomous Vehicles (AV)}: longitudinal prediction of ego-speed and
         relative gap under degraded perception, validated on the completed all-zip
         grouped nuPlan replay surface with explicit non-closure of full
         autonomous-driving field deployment.
   \item \textbf{Medical and Healthcare Monitoring}: bounded monitoring and alert release
-        under degraded vital-sign observations.  Healthcare is promoted as a bounded
-        MIMIC-backed runtime row; its claims remain narrower than the battery witness row.
+        under degraded vital-sign observations.  Healthcare is validated as a bounded
+        MIMIC-backed runtime domain; its claims remain narrower than the battery domain.
 \end{enumerate}
 
-The three active rows share the same kernel binary, the same contract
+The three active domains share the same kernel binary, the same contract
 stack, the same governance pipeline, and the same CertOS certificate chain.
 
 \subsection{Contributions}
@@ -83,13 +83,13 @@ The principal contributions of this paper are:
         prediction intervals without offline recalibration (\cref{sec:shift}).
   \item A bounded three-domain empirical lane:
         \begin{itemize}[nosep]
-          \item \textbf{Battery witness row}: zero true-state violations on the promoted
+          \item \textbf{Battery primary validation domain}: zero true-state violations on the promoted
                 runtime slice, with the deepest theorem-to-artifact alignment.
-          \item \textbf{AV bounded row}: 1{,}531{,}104 all-zip grouped nuPlan replay
+          \item \textbf{AV bounded validation domain}: 1{,}531{,}104 all-zip grouped nuPlan replay
                 steps and certificates; ORIUS reduces TSVR from 0.289250 for the
                 no-wrapper baseline to 0.000163 on the promoted replay row, while the
                 harder relative-gap shift table remains explicitly marked as bounded.
-          \item \textbf{Healthcare bounded row}: TSVR reduced from 0.194489 to 0.000000 on
+          \item \textbf{Healthcare bounded validation domain}: TSVR reduced from 0.194489 to 0.000000 on
                 the promoted MIMIC monitoring surface, with grouped calibration and
                 governance evidence reported explicitly as bounded claims.
         \end{itemize}
@@ -99,20 +99,20 @@ The principal contributions of this paper are:
 
 \paragraph{What this paper proves and what it does not.}
 The theorem chain (T1--T11) is stated on the typed-contract algebra, but the
-repo-truthful rigor posture is tracked theorem-by-theorem in the active audit
+proof posture is tracked theorem-by-theorem in the active theorem-evidence matrix
 rather than flattened to ``proved in full generality.'' Empirical confirmation
 is restricted to the three domains above.  In
 particular:
 \begin{itemize}[nosep]
   \item The Battery domain achieves $\TSVR = 0$ (zero true-state violations) and
-        serves as a \emph{reference witness}: it demonstrates the full pipeline
+        serves as the \emph{primary validation domain}: it demonstrates the full pipeline
         end-to-end with the deepest artifact-to-theorem closure.
-  \item The AV domain is a \emph{bounded proof-validated} row: ORIUS is promoted only
+  \item The AV domain is a \emph{bounded validation} domain: ORIUS is evaluated only
         under the longitudinal TTC + predictive-entry-barrier contract, with bounded
         nuPlan replay artifacts and no claim of full road deployment closure.
-  \item The Healthcare domain is a \emph{bounded proof-validated} row: ORIUS is promoted
+  \item The Healthcare domain is a \emph{bounded validation} domain: ORIUS is evaluated
         only for monitoring and alert-release semantics on the MIMIC-backed healthcare lane.
-        Certificate-valid release is reported from runtime-emitted healthcare CVA on this row.
+        Certificate-valid release is reported from runtime-emitted healthcare CVA on this surface.
   \item Shift-awareness guarantees are bounded to the drift rates observed during
         validation; adversarial robustness under intentional telemetry attacks has
         not been evaluated.
@@ -127,6 +127,6 @@ work.  \Cref{sec:architecture} details the \dcs{} kernel and typed interfaces.
 \Cref{sec:shift} introduces the shift-aware mechanism.  \Cref{sec:battery}
 and~\cref{sec:av} provide the deepest per-domain empirical sections for BESS and AV,
 while \Cref{sec:crossdomain} synthesises the active three-domain lane, including the
-bounded Healthcare row.
+bounded Healthcare domain.
 \Cref{sec:reproducibility} documents the reproducibility infrastructure.
 \Cref{sec:limitations} discusses limitations.  \Cref{sec:conclusion} concludes.

@@ -15,7 +15,7 @@ import json
 import math
 import re
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -33,6 +33,128 @@ DEFAULT_ROOTS = (
     "reports/healthcare/heldout_95",
     "reports/hil/software_hil_95",
 )
+
+# Strict blocking is intentionally limited to the current claim-governing
+# publication surfaces.  Broader generated, archived, and historical report
+# surfaces are still scanned by default, but their findings are downgraded to
+# non-blocking warnings so the release gate reflects the active claim surface
+# instead of old run caches.
+CURRENT_CLAIM_GOVERNING_SURFACES = {
+    "paper/assets/tables/tbl01_main_results.csv",
+    "paper/assets/tables/tbl02_ablations.csv",
+    "paper/assets/tables/tbl03_cqr_group_coverage.csv",
+    "paper/assets/tables/tbl04_transfer_stress.csv",
+    "paper/assets/tables/tbl05_dataset_summary.csv",
+    "paper/assets/tables/tbl06_hyperparams.csv",
+    "paper/assets/tables/tbl07_dataset_cards.csv",
+    "paper/assets/tables/tbl08_forecast_baselines.csv",
+    "reports/publication/claim_governing_three_domain_runtime_evidence.tex",
+    "reports/publication/final_freeze_validation_for_paper.csv",
+    "reports/publication/final_paper_results_summary.json",
+    "reports/publication/final_runtime_safety_for_paper.csv",
+    "reports/publication/final_training_quality_for_paper.csv",
+    "reports/publication/novelty_separation_matrix.csv",
+    "reports/publication/novelty_separation_matrix.json",
+    "reports/publication/orius_cross_domain_design_principles.csv",
+    "reports/publication/orius_domain_closure_matrix.csv",
+    "reports/publication/orius_failure_modes_falsification_table.csv",
+    "reports/publication/orius_framework_gap_matrix.csv",
+    "reports/publication/orius_literature_matrix.csv",
+    "reports/publication/orius_maturity_matrix.csv",
+    "reports/publication/orius_module_claim_crosswalk.csv",
+    "reports/publication/orius_monograph_chapter_map.csv",
+    "reports/publication/orius_publication_artifact_index.csv",
+    "reports/publication/orius_universal_claim_matrix.csv",
+    "reports/publication/runtime_release_contract_witnesses.csv",
+    "reports/publication/runtime_release_contract_witnesses.json",
+    "reports/publication/runtime_release_contract_witnesses.tex",
+    "reports/publication/security_governance_ablation_matrix.csv",
+    "reports/publication/theorem_defensibility_10.json",
+    "reports/publication/theorem_promotion_matrix.json",
+    "reports/publication/three_domain_ablation_matrix.csv",
+    "reports/publication/three_domain_baseline_suite.csv",
+    "reports/publication/three_domain_forecast_calibration_runtime_evidence.csv",
+    "reports/publication/three_domain_forecast_calibration_runtime_evidence.json",
+    "reports/publication/three_domain_grouped_coverage.csv",
+    "reports/publication/three_domain_grouped_width.csv",
+    "reports/publication/three_domain_ml_benchmark.csv",
+    "reports/publication/three_domain_ml_benchmark_summary.json",
+    "reports/publication/three_domain_negative_controls.csv",
+    "reports/publication/three_domain_nonvacuity_checks.json",
+    "reports/publication/three_domain_reliability_calibration.csv",
+    "reports/publication/three_domain_utility_safety_dominance.csv",
+    "reports/publication/three_domain_utility_safety_dominance.json",
+    "reports/publication/tbl_final_freeze_validation.tex",
+    "reports/publication/tbl_final_runtime_safety.tex",
+    "reports/publication/tbl_final_training_quality.tex",
+    "reports/publication/tbl_final_utility_preserving_safety.tex",
+    "reports/publication/utility_preserving_safety_ablation_surfaces.csv",
+    "reports/publication/utility_preserving_safety_ablation_surfaces.tex",
+    "reports/publication/utility_preserving_safety_claim_table.csv",
+    "reports/publication/utility_preserving_safety_claim_table.tex",
+    "reports/publication/utility_preserving_safety_scorecard.csv",
+    "reports/publication/utility_preserving_safety_scorecard.json",
+    "reports/publication/what_orius_is_not_matrix.csv",
+    "reports/publication/what_orius_is_not_matrix.json",
+}
+CURRENT_CLAIM_GOVERNING_PREFIXES = (
+    "reports/publication/theorem_result_cards/",
+)
+NONBLOCKING_SURFACE_DETAIL = (
+    "Non-current historical/generated surface; audited for visibility but excluded "
+    "from the strict current-publication gate."
+)
+CSV_SEMANTIC_BLANK_COLUMNS_BY_SURFACE_AND_DOMAIN = {
+    "reports/publication/utility_preserving_safety_scorecard.csv": {
+        "Battery Energy Storage": {
+            "orius_intervention_rate",
+            "safety_reference_intervention_rate",
+            "intervention_reduction_vs_safety_reference",
+            "orius_fallback_rate",
+            "safety_reference_fallback_rate",
+            "fallback_reduction_vs_safety_reference",
+        },
+    },
+    "reports/publication/three_domain_utility_safety_dominance.csv": {
+        "Medical and Healthcare Monitoring": {
+            "orius_progress_total",
+            "orius_near_miss_rate",
+            "orius_collision_proxy_rate",
+            "orius_mean_abs_jerk",
+        },
+    },
+}
+JSON_SEMANTIC_BLANK_COLUMNS_BY_SURFACE_AND_DOMAIN = {
+    source.replace(".csv", ".json"): mapping
+    for source, mapping in CSV_SEMANTIC_BLANK_COLUMNS_BY_SURFACE_AND_DOMAIN.items()
+}
+UTILITY_SCORECARD_JSON_OPTIONAL_COLUMNS = {
+    ("claim_comparison_rows", "shutdown_or_fallback_only_conservatism"): {
+        "reference_intervention_rate",
+        "orius_intervention_rate",
+        "intervention_delta",
+        "reference_fallback_rate",
+        "orius_fallback_rate",
+        "fallback_delta",
+    },
+    ("claim_comparison_rows", "predictor_only_safety"): {
+        "reference_utility",
+        "orius_utility",
+        "utility_delta",
+        "reference_fallback_rate",
+        "orius_fallback_rate",
+        "fallback_delta",
+    },
+    ("ablation_surface_rows", "no_signature_hash_gate"): {
+        "baseline_controller",
+        "baseline_tsvr",
+        "orius_tsvr",
+        "absolute_tsvr_reduction",
+        "relative_tsvr_reduction",
+        "baseline_intervention_rate",
+        "orius_intervention_rate",
+    },
+}
 SKIP_PARTS = {
     ".git",
     ".venv",
@@ -203,8 +325,95 @@ def _looks_missing(value: Any, column: str = "") -> bool:
     if lower in SEMANTIC_TOKENS:
         return False
     if lower == "none":
+        if "blocker" in column.lower():
+            return False
         return any(marker in column.lower() for marker in MISSING_CONTEXT_MARKERS)
     return lower in BLOCKING_TOKENS
+
+
+def _is_current_claim_governing_surface(path: Path) -> bool:
+    source = rel(path)
+    return source in CURRENT_CLAIM_GOVERNING_SURFACES or any(
+        source.startswith(prefix) for prefix in CURRENT_CLAIM_GOVERNING_PREFIXES
+    )
+
+
+def _as_nonblocking_context(finding: Finding) -> Finding:
+    detail = finding.detail
+    if not detail:
+        detail = NONBLOCKING_SURFACE_DETAIL
+    elif NONBLOCKING_SURFACE_DETAIL not in detail:
+        detail = f"{detail} {NONBLOCKING_SURFACE_DETAIL}"
+    return replace(finding, severity="warning", blocking=False, detail=detail)
+
+
+def _apply_strict_scope(
+    path: Path, findings: list[Finding], *, strict_current_only: bool
+) -> list[Finding]:
+    if not strict_current_only or _is_current_claim_governing_surface(path):
+        return findings
+    return [_as_nonblocking_context(finding) for finding in findings]
+
+
+def _csv_semantic_blank_allowed(source: str, column: str, row: pd.Series) -> bool:
+    by_domain = CSV_SEMANTIC_BLANK_COLUMNS_BY_SURFACE_AND_DOMAIN.get(source)
+    if not by_domain:
+        return False
+    domain = str(row.get("domain", "")).strip()
+    return column in by_domain.get(domain, set())
+
+
+def _json_semantic_blank_allowed(source: str, root: Any, parts: list[str]) -> bool:
+    if (
+        source == "reports/publication/theorem_defensibility_10.json"
+        and _theorem_defensibility_blank_allowed(root, parts)
+    ):
+        return True
+    by_domain = JSON_SEMANTIC_BLANK_COLUMNS_BY_SURFACE_AND_DOMAIN.get(source)
+    if (
+        source == "reports/publication/utility_preserving_safety_scorecard.json"
+        and _utility_scorecard_json_blank_allowed(root, parts)
+    ):
+        return True
+    if not by_domain or len(parts) < 3 or parts[0] != "rows" or not parts[1].isdigit():
+        return False
+    rows = root.get("rows") if isinstance(root, dict) else None
+    if not isinstance(rows, list):
+        return False
+    row_index = int(parts[1])
+    if row_index >= len(rows) or not isinstance(rows[row_index], dict):
+        return False
+    domain = str(rows[row_index].get("domain", "")).strip()
+    return parts[-1] in by_domain.get(domain, set())
+
+
+def _utility_scorecard_json_blank_allowed(root: Any, parts: list[str]) -> bool:
+    if len(parts) < 3 or not isinstance(root, dict) or not parts[1].isdigit():
+        return False
+    section = parts[0]
+    rows = root.get(section)
+    if not isinstance(rows, list):
+        return False
+    row_index = int(parts[1])
+    if row_index >= len(rows) or not isinstance(rows[row_index], dict):
+        return False
+    row = rows[row_index]
+    discriminator = str(row.get("comparison") or row.get("requested_surface") or "").strip()
+    return parts[-1] in UTILITY_SCORECARD_JSON_OPTIONAL_COLUMNS.get((section, discriminator), set())
+
+
+def _theorem_defensibility_blank_allowed(root: Any, parts: list[str]) -> bool:
+    if parts != ["formal", "lake_output"] or not isinstance(root, dict):
+        return False
+    formal = root.get("formal")
+    if not isinstance(formal, dict):
+        return False
+    checks = formal.get("checks")
+    return (
+        isinstance(checks, dict)
+        and formal.get("pass") is True
+        and checks.get("formal_core_lake_build") is True
+    )
 
 
 def _semantic_recommendation(column: str) -> str:
@@ -257,7 +466,14 @@ def _scan_csv(path: Path) -> list[Finding]:
 
     for column in df.columns:
         series = df[column].map(lambda value: str(value).strip())
-        missing_mask = series.map(lambda value, current_column=column: _looks_missing(value, current_column))
+        missing_mask = pd.Series(
+            [
+                _looks_missing(value, str(column))
+                and not _csv_semantic_blank_allowed(source, str(column), df.loc[index])
+                for index, value in series.items()
+            ],
+            index=df.index,
+        )
         count = int(missing_mask.sum())
         if count:
             sample_index = str(int(missing_mask[missing_mask].index[0]) + 2)
@@ -324,7 +540,7 @@ def _scan_json(path: Path) -> list[Finding]:
         elif isinstance(value, list):
             for index, child_value in enumerate(value):
                 walk(child_value, [*parts, str(index)])
-        elif _looks_missing(value, key):
+        elif _looks_missing(value, key) and not _json_semantic_blank_allowed(source, payload, parts):
             findings.append(
                 Finding(
                     "error",
@@ -520,29 +736,34 @@ def _duckdb_allowed_null_mask(df: pd.DataFrame, column: str) -> pd.Series:
     return mask
 
 
-def run_audit(roots: Iterable[str]) -> tuple[list[Finding], dict[str, Any]]:
+def run_audit(
+    roots: Iterable[str], *, strict_current_only: bool = True
+) -> tuple[list[Finding], dict[str, Any]]:
     findings: list[Finding] = []
     scanned = {"csv": 0, "json": 0, "tex": 0, "duckdb": 0}
     for path in _iter_files(roots):
         suffix = path.suffix.lower()
+        path_findings: list[Finding] = []
         if suffix == ".csv":
             scanned["csv"] += 1
-            findings.extend(_scan_csv(path))
+            path_findings = _scan_csv(path)
         elif suffix == ".json":
             scanned["json"] += 1
-            findings.extend(_scan_json(path))
+            path_findings = _scan_json(path)
         elif suffix == ".tex":
             scanned["tex"] += 1
-            findings.extend(_scan_tex(path))
+            path_findings = _scan_tex(path)
         elif suffix == ".duckdb" and path.parent.name == "audit":
             scanned["duckdb"] += 1
-            findings.extend(_scan_duckdb(path))
+            path_findings = _scan_duckdb(path)
+        findings.extend(_apply_strict_scope(path, path_findings, strict_current_only=strict_current_only))
 
     blocking = [finding for finding in findings if finding.blocking]
     warnings = [finding for finding in findings if not finding.blocking]
     summary = {
         "generated_at_utc": datetime.now(UTC).isoformat(),
         "roots": list(roots),
+        "strict_scope": "current_claim_governing_surfaces" if strict_current_only else "all_scanned_surfaces",
         "scanned": scanned,
         "finding_count": len(findings),
         "blocking_count": len(blocking),
@@ -617,13 +838,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--no-fail", action="store_true", help="Write report but do not exit nonzero on blocking findings."
     )
+    parser.add_argument(
+        "--all-blocking",
+        action="store_true",
+        help="Treat findings from historical/generated surfaces as blocking too.",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     roots = args.root or list(DEFAULT_ROOTS)
-    findings, summary = run_audit(roots)
+    findings, summary = run_audit(roots, strict_current_only=not args.all_blocking)
     _write_outputs(findings, summary, REPO_ROOT / args.out_dir)
     print(json.dumps(summary, indent=2))
     if summary["blocking_count"] and not args.no_fail:

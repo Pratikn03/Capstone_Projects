@@ -1,23 +1,19 @@
 \chapter{Mathematical Foundations and Safety Guarantees}
 \label{ch:mathematical-foundations}
 
-\section{Why the theorem surface is promotion-gated}
+\section{The theorem spine}
 ORIUS is not defended by one grand theorem claiming safety for every plant,
-every sensor regime, and every domain.  The mathematical surface is defended by
-a promotion gate: every active theorem-like row must have a statement,
-assumptions, proof, code anchor, tests, artifact evidence, artifact hashes, and
-a claim-boundary note before it is allowed to appear as a flagship theorem,
-flagship corollary, flagship lemma, or flagship definition.
+sensor regime, and domain. The main theorem spine is narrower: degraded
+observation can make observation-only mandatory release unsafe; reliability-aware
+uncertainty sets can restore a covered release guarantee; and the runtime must
+repair, fallback, certify, or deny release when the covered safe set no longer
+admits the candidate action.
 
-The current manuscript-facing truth source is the theorem promotion matrix in
-\path{reports/publication/theorem_promotion_matrix.csv} and the corresponding
-result cards in \path{reports/publication/theorem_result_cards/}.  Historical
-draft/proxy rows are retained only as archived audit context; they are not part
-of the defended theorem register.  This keeps the dissertation from making a
-false choice between abstraction and implementation.  The theorem surface is
-written against typed runtime objects, explicit assumptions, and
-artifact-backed diagnostics.  As a result, the strongest claims are not merely
-conceptual and they are not merely empirical.
+The detailed promotion audit is kept in the appendices and machine-readable
+result cards. The main body carries only the theorem spine needed to understand
+the thesis. This prevents proof governance from overwhelming the mathematical
+argument while keeping every theorem traceable to assumptions, code, tests, and
+artifacts.
 
 \section{Notation and assumption discipline}
 The formal objects used in this chapter are simple but exact:
@@ -54,39 +50,30 @@ This definition is deliberately agnostic to plant family. The adapter chooses th
 meaning of admissibility and true-state violation. The universal layer fixes the semantic
 pattern of the failure event.
 
-\section{The paper-facing theorem surface}
-The paper-facing theory chapter now carries a flagship-grade theorem package,
-not merely a short narrative subset.  The permanent T1--T11 labels remain
-stable for traceability, while newer scoped surfaces use stable identifiers such
-as \texttt{T11\_Byzantine}, \texttt{T\_stale\_decay},
-\texttt{T\_minimax}, and \texttt{T\_sensor\_converse}.  The claim is
+\section{Main paper-facing theorem package}
+The permanent T1--T11 labels remain stable for repository traceability, while
+the prose below groups them into a cleaner theorem package. The claim is
 deliberately conditional: ORIUS is safety-optimal under covered observation
 ambiguity, not globally optimal for every possible physical-AI system.
 
 \begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Promotion-gated theorem package synchronized with the repository result cards.}
+\footnotesize
+\caption{Main theorem spine. Appendix registers contain the proof, code, test, artifact, and hash details for each surface.}
 \label{tab:promotion-gated-theorem-package}
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{llll}
+\begin{tabularx}{\textwidth}{llX}
 \toprule
-\textbf{Surface} & \textbf{Promoted status} & \textbf{Defended claim boundary} & \textbf{Result-card evidence}\\
+\textbf{Surface} & \textbf{Role} & \textbf{Claim boundary}\\
 \midrule
-T1--T4 & Flagship theorems / corollaries & OASG, one-step preservation, envelope, and observation necessity under stated assumptions & \path{reports/publication/theorem_result_cards/T1.json}--\path{T4.json}\\
-T5 & Flagship theorem & Finite-horizon certificate validity; invalidates on contradictory evidence & \path{reports/publication/theorem_result_cards/T5.json}\\
-T6--T8 & Flagship theorems & Expiration, feasible fallback, and graceful degradation with useful work & \path{reports/publication/theorem_result_cards/T6.json}--\path{T8.json}\\
-T9--T10 & Flagship theorems & Mandatory-release impossibility and two-state boundary lower bound & \path{reports/publication/theorem_result_cards/T9.json}--\path{T10.json}\\
-\texttt{T10\_T11} sandwich & Flagship corollary & Observation-only lower bound versus ORIUS $\alpha$-covered upper bound & \path{reports/publication/theorem_result_cards/T10_T11_ObservationAmbiguitySandwich.json}\\
-T11 and domain lemmas & Flagship theorem / lemmas & Typed structural transfer and bounded AV/Healthcare runtime postconditions & \path{reports/publication/theorem_result_cards/T11.json}\\
-\texttt{T11\_Byzantine} & Flagship theorem & Robust aggregation only for $b<n/2$ Byzantine channels & \path{reports/publication/theorem_result_cards/T11_Byzantine.json}\\
-\texttt{T\_stale\_decay} & Flagship theorem & Stale-hold uncertainty growth under bounded drift & \path{reports/publication/theorem_result_cards/T_stale_decay.json}\\
-\texttt{T\_trajectory\_PAC} & Flagship theorem & Finite-horizon union-bound certificate, not a Ville-strengthened claim & \path{reports/publication/theorem_result_cards/T_trajectory_PAC.json}\\
-L1--L4 & Flagship lemmas & Runtime monotonicity and ambiguity-sandwich law suite & \path{reports/publication/theorem_result_cards/L1.json}--\path{L4.json}\\
-\texttt{T\_minimax} & Scoped flagship theorem & Finite ambiguity-class minimax lower bound; no global minimax optimality claim & \path{reports/publication/theorem_result_cards/T_minimax.json}\\
-\texttt{T\_sensor\_converse} & Flagship theorem & Sensor necessity under adapter semantics and disjoint safe sets & \path{reports/publication/theorem_result_cards/T_sensor_converse.json}\\
+T1--T4 & Core release safety & OASG existence, one-step preservation, risk envelope, and observation necessity under stated assumptions.\\
+T5--T8 & Temporal runtime behavior & Certificate horizon, expiration, feasible fallback, and graceful degradation with useful work.\\
+T9--T10 & Ambiguity lower bounds & Mandatory-release impossibility and two-state boundary lower bound for observation-only release.\\
+T10--T11 sandwich & Main optimality corollary & Observation-only lower bound versus ORIUS $\alpha$-covered upper bound.\\
+T11 and domain lemmas & Structural transfer & Typed adapter transfer and bounded Battery, AV, and Healthcare runtime postconditions.\\
+Robust/stale extensions & Observation degradation laws & Byzantine reliability aggregation for $b<n/2$, stale-hold uncertainty growth, and finite-horizon PAC release certificates.\\
+L1--L4, minimax, sensor & Scoped supporting laws & Runtime monotonicity, finite ambiguity-class minimax, and sensor necessity under adapter semantics.\\
 \bottomrule
-\end{tabular}}
+\end{tabularx}
 \end{table}
 
 \begin{theorem}[OASG existence under degraded observation]
@@ -146,15 +133,32 @@ safe for every state in $\mathcal{X}_t$, then
 \[
   \operatorname{TSVR}_{\mathrm{ORIUS}}\le \alpha,
 \]
-with zero violation under exact coverage.  This is the
-\texttt{T10\_T11\_ObservationAmbiguitySandwich}: the lower bound applies to
-observation-only release, while the upper bound applies to reliability-aware
-covered release.
+with zero violation under exact coverage. This is the observation-ambiguity
+safety sandwich: the lower bound applies to observation-only release, while the
+upper bound applies to reliability-aware covered release. The repository keeps
+the stable identifier \texttt{T10\_T11}; the main text uses the shorter name for
+readability.
 
 Table~\ref{tab:theory-counterexamples} records the main counterexamples that
 would make a stronger version of the theorem false. They are included in the
 main text because they define the exact boundary between the defended ORIUS
 claim and an overclaim.
+
+\section{What ORIUS does not prove}
+The theorem spine is intentionally not a universal safety certificate for all
+physical AI. ORIUS does not prove that every plant admits a safe fallback, that
+every domain adapter is correct by construction, that calibration coverage
+holds after arbitrary distribution shift, or that a repaired action is useful
+whenever it is safe. It also does not prove road deployment safety, prospective
+clinical validity, physical battery bench safety, or global minimax optimality
+over all possible controllers and environments.
+
+The positive result is narrower and more useful: under explicit coverage,
+safe-set, adapter, repair, fallback, and certificate assumptions, the ORIUS
+release contract converts degraded observation into a fail-closed decision:
+release a covered safe action, repair it, fallback, or deny release. The
+counterexamples below are therefore not weaknesses hidden from the reader; they
+are the boundary conditions that keep the theorem package mathematically honest.
 
 \begin{table}[htbp]
 \centering

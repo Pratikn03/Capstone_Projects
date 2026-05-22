@@ -1,0 +1,1 @@
+Authentication required. Please run 'coderabbit auth login' in an interactive session or provide --api-key.

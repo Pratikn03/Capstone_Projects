@@ -2,17 +2,24 @@
   "applicability_status": "boundary_testing_empirical_discharge",
   "artifact_exists": true,
   "artifact_source": "reports/publication/theorem_promotion_evidence/T10_battery.json",
-  "assumptions_status": "A13_empirically_discharged_for_domain",
+  "assumptions_status": "boundary_pair_tv_and_disjoint_safe_sets_discharged",
   "auxiliary_trace_paths": [
     "reports/publication/48h_trace.csv"
   ],
   "blocker": "",
   "boundary_mass": 0.0328719723183391,
   "boundary_testing_subproblem_status": "boundary_testing_subproblem_constructed",
+  "boundary_tv_radius": {
+    "estimate": 0.7604166666666667,
+    "passed": true,
+    "radius": 0.9984218854283224,
+    "slack": 0.05
+  },
+  "boundary_tv_radius_status": "boundary_tv_radius_discharged",
   "constants_status": "domain_boundary_constants_discharged",
   "counterfactual_pairing_method": "same-domain boundary-law bridge using observed/true SoC margins m = min(soc, capacity - soc)",
   "domain": "battery",
-  "generated_at_utc": "2026-05-03T17:09:48.714223+00:00",
+  "generated_at_utc": "2026-05-13T02:54:58.235232+00:00",
   "le_cam_lower_bound": 0.00041450403690888106,
   "mean_reliability": 0.9484218854283224,
   "n_auxiliary_rows": 4,
@@ -44,7 +51,7 @@
     "estimate": 0.7604166666666667,
     "passed": true
   },
-  "tv_bridge_status": "tv_bridge_discharged",
+  "tv_bridge_status": "boundary_tv_radius_discharged",
   "unsafe_boundary_mass": 0.0034602076124567475,
   "unsafe_boundary_mass_status": "unsafe_boundary_mass_discharged"
 }

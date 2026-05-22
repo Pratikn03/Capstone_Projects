@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the T9/T10 theorem-promotion gate package.
 
-This package never retieres T9/T10 by hand. It makes the promotion path
+This package never retires T9/T10 by hand. It makes the promotion path
 executable: all required gates are explicit, blockers are tracked when present,
 and the generated status changes only when the registry plus Battery, AV, and
 Healthcare evidence satisfy every gate.
@@ -130,15 +130,15 @@ def _audit_rows_by_id(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 def _default_domain_discharge_rows(theorem_id: str) -> list[DomainDischarge]:
     if theorem_id == "T9":
-        blocker = "witness constant and geometric-mixing bridge are not discharged across Battery, AV, and Healthcare"
+        blocker = "empty-safe-core witness evidence is not discharged across Battery, AV, and Healthcare"
         return [
             DomainDischarge(
                 theorem_id,
                 "battery",
                 "domain_scoped_not_universal",
                 "",
-                "domain_scoped_witness_constant",
-                "A10b_A11_not_three_domain_discharged",
+                "domain_scoped_empty_safe_core_witness",
+                "empty_safe_core_obligations_not_three_domain_discharged",
                 False,
                 blocker,
             ),
@@ -148,15 +148,15 @@ def _default_domain_discharge_rows(theorem_id: str) -> list[DomainDischarge]:
             ),
         ]
     if theorem_id == "T10":
-        blocker = "unsafe-side boundary-mass bridge is explicit and not discharged as a universal three-domain constant"
+        blocker = "two-state boundary pair and TV radius are not discharged across Battery, AV, and Healthcare"
         return [
             DomainDischarge(
                 theorem_id,
                 "battery",
                 "boundary_model_scoped_not_universal",
                 "",
-                "boundary_mass_supplied_explicitly",
-                "A13_boundary_mass_bridge_not_universal",
+                "boundary_pair_supplied_explicitly",
+                "boundary_pair_tv_not_three_domain_discharged",
                 False,
                 blocker,
             ),
@@ -203,12 +203,10 @@ def _payload_supports_promotion(payload: dict[str, Any], publication_dir: Path) 
     if not _path_exists(str(payload.get("source_trace_path", "")), publication_dir):
         return False
     if payload.get("theorem_id") == "T9":
-        mixing = payload.get("mixing_proxy") if isinstance(payload.get("mixing_proxy"), dict) else {}
         return (
             _positive(payload.get("witness_constant"), minimum)
             and _positive(payload.get("degradation_rate"), minimum)
             and _positive(payload.get("boundary_reachability_rate"), minimum)
-            and bool(mixing.get("finite_mixing_proxy"))
         )
     if payload.get("theorem_id") == "T10":
         tv_bridge = payload.get("tv_bridge") if isinstance(payload.get("tv_bridge"), dict) else {}

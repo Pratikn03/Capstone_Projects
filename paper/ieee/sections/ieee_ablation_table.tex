@@ -1,0 +1,88 @@
+%% ieee_ablation_table.tex
+%% Ablation and baseline comparison across AV and Healthcare domains.
+%% Numbers sourced from:
+%%   reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv
+%%   reports/healthcare/runtime_comparator_summary.csv
+
+\section{Ablation: Which Components Are Necessary?}
+\label{sec:ieee-ablation}
+
+Table~\ref{tab:ieee-ablation} decomposes the ORIUS result by removing one
+component at a time.  The AV ($n{=}1.53$M) and Healthcare ($n{=}137$K) domains
+are used because they have the largest denominators and widest baseline TSVR gaps.
+
+Three lessons emerge.
+\begin{enumerate}[leftmargin=1.25em,itemsep=0.2em]
+\item \textbf{Quality signal is load-bearing.}
+  Removing the reliability assessment (\texttt{predictor\_only})
+  returns TSVR to baseline in both domains---the Detect stage cannot be omitted.
+\item \textbf{Reliability-conditioned widening is load-bearing.}
+  Standard conformal without reliability conditioning
+  (\texttt{conformal\_alert\_only}) does not close the gap:
+  TSVR remains elevated because inflation is decoupled from degradation.
+\item \textbf{Temporal certificates are load-bearing.}
+  Removing the certificate-expiry guard (\texttt{stale\_certificate})
+  raises TSVR by allowing certificates issued under optimistic reliability to be reused.
+\end{enumerate}
+
+\begin{table*}[t]
+\centering
+\caption{%
+  Component ablation.  AV $n{=}1.53$M steps; Healthcare $n{=}137$K steps.
+  Each row removes one ORIUS stage; TSVR = True-State Violation Rate.
+}
+\label{tab:ieee-ablation}
+\small
+\begin{tabular}{@{}p{0.23\textwidth}rrrrl@{}}
+\toprule
+\textbf{Variant} &
+\textbf{AV TSVR} &
+\textbf{HC TSVR} &
+\textbf{AV int.} &
+\textbf{HC int.} &
+\textbf{Stage removed} \\
+\midrule
+\textbf{ORIUS (full stack)}
+  & $\mathbf{0.016\%}$
+  & $\mathbf{0.000\%}$
+  & $50.0\%$
+  & $48.0\%$
+  & --- \\
+Predictor only (no runtime)
+  & $28.93\%$
+  & $20.04\%$
+  & $0.0\%$
+  & $0.0\%$
+  & Detect + Calib.\ + Shield + Cert. \\
+Conformal, no reliability
+  & $27.74\%$
+  & $20.04\%$
+  & $25.1\%$
+  & $100\%$
+  & Detect (quality signal) \\
+Stale cert., no temporal guard
+  & $26.36\%$
+  & $0.003\%$
+  & $34.1\%$
+  & $100\%$
+  & Certify (temporal guard) \\
+RSS/CBF filter (AV only)
+  & $7.80\%$
+  & ---
+  & $38.7\%$
+  & ---
+  & Detect + Calibrate \\
+Always-brake / always-alert
+  & $0.0\%$
+  & $0.0\%$
+  & $100\%$
+  & $100\%$
+  & Full nominal stack \\
+\bottomrule
+\end{tabular}\\[4pt]
+{\footnotesize
+  RSS/CBF filter uses a deterministic geometric safety filter with no reliability
+  score; residual TSVR of $7.8\%$ confirms that deterministic constraints alone
+  do not close the gap under degraded observation.
+}
+\end{table*}

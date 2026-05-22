@@ -162,46 +162,69 @@ def build_tbl02():
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        r"\small",
-        r"\caption{Ablation study: DC$^3$S violation-rate reduction vs.\ baselines under telemetry faults. Two-gate verification: relative reduction $\ge10$\% \emph{and} Wilcoxon signed-rank $p < 0.01$.}",
+        r"\footnotesize",
+        r"\caption{Ablation study: DC$^3$S violation-rate reduction under telemetry faults. The gate requires both material effect ($\ge10$\% relative reduction) and statistical evidence ($p<0.01$); rows marked ``stat only'' improve significantly but miss the material-effect threshold.}",
         r"\label{tab:TBL02_ABLATIONS}",
-        r"\setlength{\tabcolsep}{3pt}",
+        r"\setlength{\tabcolsep}{4pt}",
         r"\renewcommand{\arraystretch}{1.05}",
-        r"\resizebox{\linewidth}{!}{%",
-        r"\begin{tabular}{llrrrrrrc}",
+        r"\begin{tabularx}{\textwidth}{llrrrrX}",
         r"\toprule",
-        r"Scope & Fault & $n$ & Base Rate & DC$^3$S Rate & Rel.\ Red.\ (\%) & $W$ stat & $p$-value & Pass \\",
+        r"Scope & Fault / baseline & $n$ & Base & DC$^3$S & Rel.\ red.\ (\%) & Gate \\",
         r"\midrule",
     ]
 
     prev_scope = None
+    seen: set[tuple[str, str, str]] = set()
     for _, row in df.iterrows():
         scope = str(row.get("analysis_scope", ""))
         fault = str(row.get("fault_dimension", row.get("scenario", "")))
+        scenario = str(row.get("scenario", ""))
         baseline_ctrl = str(row.get("baseline_controller", ""))
         n = int(row.get("n_pairs", 0))
         base_rate = float(row.get("true_soc_violation_rate_baseline_mean", 0))
         dc3s_rate = float(row.get("true_soc_violation_rate_dc3s_mean", 0))
         rel_red = float(row.get("true_soc_violation_rate_rel_reduction", 0)) * 100
-        w_stat = float(row.get("true_soc_violation_rate_wilcoxon_stat", 0))
         p_val = float(row.get("true_soc_violation_rate_wilcoxon_p", 1))
         passes = bool(row.get("passes_all_thresholds", False))
 
         # Format p-value properly
         p_str = "$<$0.001" if p_val < 0.001 else f"{p_val:.3f}"
 
-        pass_str = r"\checkmark" if passes else r"$\times$"
+        if passes:
+            gate = f"pass; p={p_str}"
+        elif rel_red < 0:
+            gate = f"worse; p={p_str}"
+        elif p_val < 0.01:
+            gate = f"stat only; p={p_str}"
+        else:
+            gate = f"not sig.; p={p_str}"
 
         scope_short = (
             scope.replace("primary_aggregate_fault_sweep", "primary")
             .replace("secondary_fault_dimension", "secondary")
             .replace("secondary_scenario", r"sec.\ scenario")
         )
-        fault_short = fault.replace("_", r"\_").replace("aggregate", "all")
+        fault_short = (
+            fault.replace("delay_jitter", "delay+jitter")
+            .replace("out_of_order", "out-of-order")
+            .replace("_", r"\_")
+            .replace("aggregate", "all")
+        )
 
         # Add baseline controller info for secondary_scenario
         if "secondary_scenario" in scope:
-            fault_short = f"{fault_short} (vs.\\ {baseline_ctrl.replace('_', chr(92) + '_')})"
+            scenario_short = scenario.replace("drift_combo", "drift combo").replace("_", r"\_")
+            baseline_short = (
+                baseline_ctrl.replace("deterministic_lp", "deterministic LP")
+                .replace("robust_fixed_interval", "robust fixed")
+                .replace("_", r"\_")
+            )
+            fault_short = f"{scenario_short} vs.\\ {baseline_short}"
+
+        dedupe_key = (scope_short, fault_short, baseline_ctrl)
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
 
         # Midrule between scope changes
         if prev_scope is not None and scope != prev_scope:
@@ -210,10 +233,10 @@ def build_tbl02():
 
         lines.append(
             f"{scope_short} & {fault_short} & {n} & {base_rate:.3f} & {dc3s_rate:.3f} & "
-            f"{rel_red:+.1f} & {w_stat:.1f} & {p_str} & {pass_str} \\\\"
+            f"{rel_red:+.1f} & {gate} \\\\"
         )
 
-    lines.extend([r"\bottomrule", r"\end{tabular}", r"}", r"\end{table}"])
+    lines.extend([r"\bottomrule", r"\end{tabularx}", r"\end{table}"])
 
     tex = "\n".join(lines)
     (OUT / "tbl02_ablations.tex").write_text(tex, encoding="utf-8")

@@ -2,19 +2,19 @@
   "deltas_vs_reference": {
     "adaptive_conformal_repair": {
       "delta_coverage_90": -0.009126933333333365,
-      "delta_expected_cost_usd": -26346.02456229925,
+      "delta_expected_cost_usd": -10780.338081479073,
       "delta_mean_interval_width_mw": -1082.2953133000005,
       "delta_observed_state_violation_rate": 0.0,
-      "delta_repair_rate": -0.014087499999999996,
+      "delta_repair_rate": -0.018849300000000006,
       "delta_true_state_violation_rate": 0.0
     },
     "deterministic_no_repair": {
       "delta_coverage_90": -0.08829370000000003,
-      "delta_expected_cost_usd": -123582.65741944313,
+      "delta_expected_cost_usd": -10671.942190229893,
       "delta_mean_interval_width_mw": -3403.4169438,
-      "delta_observed_state_violation_rate": 0.03908723333333333,
-      "delta_repair_rate": -0.027976233333333333,
-      "delta_true_state_violation_rate": 0.03908723333333333
+      "delta_observed_state_violation_rate": 0.007539600000000002,
+      "delta_repair_rate": -0.018849300000000006,
+      "delta_true_state_violation_rate": 0.007539600000000002
     },
     "orius_repair": {
       "delta_coverage_90": 0.0,
@@ -25,28 +25,28 @@
       "delta_true_state_violation_rate": 0.0
     },
     "orius_wrapped": {
-      "delta_coverage_90": -0.08750010000000008,
-      "delta_expected_cost_usd": -198262.57956904173,
-      "delta_mean_interval_width_mw": -3346.6267775333336,
+      "delta_coverage_90": -0.08730166666666672,
+      "delta_expected_cost_usd": -8691.847411036491,
+      "delta_mean_interval_width_mw": -3344.6271425,
       "delta_observed_state_violation_rate": 0.0,
-      "delta_repair_rate": -0.027976233333333333,
+      "delta_repair_rate": -0.018650900000000005,
       "delta_true_state_violation_rate": 0.0
     },
     "robust_fixed_interval": {
       "delta_coverage_90": -0.08829370000000003,
-      "delta_expected_cost_usd": -204150.86510574818,
+      "delta_expected_cost_usd": -11106.640377342701,
       "delta_mean_interval_width_mw": -3403.4169438,
-      "delta_observed_state_violation_rate": 0.25575380000000003,
-      "delta_repair_rate": -0.027976233333333333,
-      "delta_true_state_violation_rate": 0.25575380000000003
+      "delta_observed_state_violation_rate": 0.013095266666666668,
+      "delta_repair_rate": -0.018849300000000006,
+      "delta_true_state_violation_rate": 0.013095266666666668
     }
   },
   "metrics_by_method": {
     "adaptive_conformal_repair": {
       "coverage_90": 0.9625000666666665,
       "display_name": "Adaptive Conformal + Repair",
-      "expected_cost_musd": 394.1565306681136,
-      "expected_cost_usd": 394156530.6681136,
+      "expected_cost_musd": 394.27290748128485,
+      "expected_cost_usd": 394272907.48128486,
       "family": "adaptive conformal",
       "hidden_gap_rate": 0.0,
       "mean_interval_width_mw": 2824.2524354999996,
@@ -54,31 +54,31 @@
       "n_runs": 30,
       "observed_state_violation_rate": 0.0,
       "repair_enabled": true,
-      "repair_rate": 0.013888733333333337,
+      "repair_rate": 0.0,
       "source_controller": "aci_conformal",
       "true_state_violation_rate": 0.0
     },
     "deterministic_no_repair": {
       "coverage_90": 0.8833332999999999,
       "display_name": "Deterministic LP",
-      "expected_cost_musd": 394.05929403525647,
-      "expected_cost_usd": 394059294.03525645,
+      "expected_cost_musd": 394.2730158771761,
+      "expected_cost_usd": 394273015.8771761,
       "family": "point forecast",
       "hidden_gap_rate": 0.0,
       "mean_interval_width_mw": 503.1308050000001,
       "method_id": "deterministic_no_repair",
       "n_runs": 30,
-      "observed_state_violation_rate": 0.03908723333333333,
+      "observed_state_violation_rate": 0.007539600000000002,
       "repair_enabled": false,
       "repair_rate": 0.0,
       "source_controller": "deterministic_lp",
-      "true_state_violation_rate": 0.03908723333333333
+      "true_state_violation_rate": 0.007539600000000002
     },
     "orius_repair": {
       "coverage_90": 0.9716269999999999,
       "display_name": "ORIUS FTIT",
-      "expected_cost_musd": 394.1828766926759,
-      "expected_cost_usd": 394182876.6926759,
+      "expected_cost_musd": 394.2836878193663,
+      "expected_cost_usd": 394283687.81936634,
       "family": "repair-and-certify",
       "hidden_gap_rate": 0.0,
       "mean_interval_width_mw": 3906.5477488,
@@ -86,41 +86,41 @@
       "n_runs": 30,
       "observed_state_violation_rate": 0.0,
       "repair_enabled": true,
-      "repair_rate": 0.027976233333333333,
+      "repair_rate": 0.018849300000000006,
       "source_controller": "dc3s_ftit",
       "true_state_violation_rate": 0.0
     },
     "orius_wrapped": {
-      "coverage_90": 0.8841268999999998,
+      "coverage_90": 0.8843253333333332,
       "display_name": "ORIUS Wrapped",
-      "expected_cost_musd": 393.98461411310683,
-      "expected_cost_usd": 393984614.11310685,
+      "expected_cost_musd": 394.2749959719553,
+      "expected_cost_usd": 394274995.9719553,
       "family": "repair-and-certify",
       "hidden_gap_rate": 0.0,
-      "mean_interval_width_mw": 559.9209712666667,
+      "mean_interval_width_mw": 561.9206063,
       "method_id": "orius_wrapped",
       "n_runs": 30,
       "observed_state_violation_rate": 0.0,
       "repair_enabled": true,
-      "repair_rate": 0.0,
+      "repair_rate": 0.0001984,
       "source_controller": "dc3s_wrapped",
       "true_state_violation_rate": 0.0
     },
     "robust_fixed_interval": {
       "coverage_90": 0.8833332999999999,
       "display_name": "Robust Fixed Interval",
-      "expected_cost_musd": 393.97872582757014,
-      "expected_cost_usd": 393978725.82757014,
+      "expected_cost_musd": 394.272581178989,
+      "expected_cost_usd": 394272581.178989,
       "family": "static interval",
       "hidden_gap_rate": 0.0,
       "mean_interval_width_mw": 503.1308050000001,
       "method_id": "robust_fixed_interval",
       "n_runs": 30,
-      "observed_state_violation_rate": 0.25575380000000003,
+      "observed_state_violation_rate": 0.013095266666666668,
       "repair_enabled": false,
       "repair_rate": 0.0,
       "source_controller": "robust_fixed_interval",
-      "true_state_violation_rate": 0.25575380000000003
+      "true_state_violation_rate": 0.013095266666666668
     }
   },
   "notes": [
@@ -146,7 +146,7 @@
   },
   "reference_method": "orius_repair",
   "source_artifact": "reports/publication/dc3s_main_table.csv",
-  "source_artifact_sha256": "dc7ee5123fbd1c618c10d8302d01978d86f0a55326e16924305a6f0f1e8dfc89",
+  "source_artifact_sha256": "ec7c96d421a1cd391349decb12ce31d0ba42a95eb4a6757bf7de65622e3d67ab",
   "source_family": "locked_battery_controller_table",
   "study": "battery_reliability_baselines"
 }

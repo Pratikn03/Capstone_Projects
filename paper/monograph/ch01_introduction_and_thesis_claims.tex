@@ -1,15 +1,13 @@
 \chapter{Introduction and Thesis Claims}
 \label{ch:introduction-thesis-claims}
 
-A battery dispatch stack can continue releasing power while feeder telemetry has already gone
-stale enough to hide a true state-of-charge or network violation. A vehicle controller can
-preserve lane-centering behavior even after the scene estimate has fallen behind the physical
-traffic geometry. A bedside monitoring policy can remain internally consistent while its input
-stream smooths away the very transition that should have triggered intervention. These systems
-look different at the level of plant dynamics and domain semantics, but they share one hidden
-law: \emph{physical AI acts on observations, not on reality}. Once the observation surface
-degrades, a system can continue to compute coherent actions while the physical basis for those
-actions has already failed.
+A battery dispatcher may release power after stale telemetry hides a state-of-charge
+violation. A vehicle controller may continue lane-centered behavior after the scene estimate
+falls behind the traffic geometry. A bedside monitor may remain internally consistent while
+its input stream smooths away the transition that should trigger intervention. These systems
+look different at the level of plant dynamics, but they share one hidden law:
+\emph{physical AI acts on observations, not on reality}. Once the observation surface
+degrades, coherent computation can continue after the physical basis for release has failed.
 
 This dissertation is organized around that release-boundary hazard. Its central claim is that
 physical-AI safety under degraded observation requires a dedicated runtime layer between nominal
@@ -85,6 +83,17 @@ The key point is architectural. ORIUS is written as a post-nominal layer. It wra
 domain controllers rather than assuming they can all be redesigned from first principles. That
 choice is what makes the framework portable across the active Battery, AV, and Healthcare lane
 without pretending that those domains share one plant model or one optimal nominal controller.
+
+\IfFileExists{reports/publication/tbl_executive_runtime_evidence.tex}{%
+\input{reports/publication/tbl_executive_runtime_evidence}%
+}{%
+\input{../reports/publication/tbl_executive_runtime_evidence}%
+}
+
+The table is intentionally narrow. It reports the current claim-governing runtime denominator
+and leaves deployment boundaries to the surrounding prose: battery is bounded predeployment
+evidence, AV is bounded nuPlan replay rather than road deployment, and healthcare is
+retrospective monitoring rather than live clinical validation.
 
 \begin{figure}[htbp]
 \centering

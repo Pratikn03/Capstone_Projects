@@ -48,12 +48,17 @@ structure SafetyDomain where
   observe : State → State
 
 /-- A `Set α` in this module is just a membership predicate.  We use this
-in place of importing Mathlib's `Set` so the build stays dependency-free. -/
+in place of importing Mathlib's `Set` so the build stays dependency-free.
+
+Note: Lean 4.29's `Membership` typeclass has signature `coll → elem → Prop`,
+so the instance below provides `s.contains x` shape via standard `x ∈ s`
+notation. -/
 def Set (α : Type) : Type := α → Prop
 
 namespace Set
 
-def mem {α : Type} (x : α) (s : Set α) : Prop := s x
+/-- Membership for a `Set α`: `x ∈ s` iff `s x` evaluates to `True`. -/
+def mem {α : Type} (s : Set α) (x : α) : Prop := s x
 
 instance {α : Type} : Membership α (Set α) := ⟨mem⟩
 
@@ -96,6 +101,8 @@ theorem t2_safety_preservation
     {x : D.State} {a : D.Action} {ω : D.Disturbance}
     (hx : x ∈ U) (ha : a ∈ tightActionSet D U) :
     D.safe (D.dynamics x a ω) := by
+  -- Unfold membership in the tightened action set: `a ∈ tightActionSet D U`
+  -- is definitionally `∀ x ∈ U, ∀ ω, safe (dynamics x a ω)`.
   exact ha x hx ω
 
 /-- A non-intervening (quality-ignorant, mandatory-release) controller: a
@@ -220,30 +227,27 @@ file is ported to Mathlib, `axiom_coverage_bound` becomes a proved lemma
 about the conformal predictor's marginal coverage.
 -/
 
-/-- Abstract probability surface: a `Rat` value in `[0, 1]` denoting
-P(event).  We avoid importing Mathlib's `Measure` for this skeleton; a
-Mathlib port would replace `Rat` with `ENNReal` and the inequalities with
-`MeasureTheory` facts. -/
-abbrev Probability := Rat
-
-/-- The conformal miscoverage budget `α`. -/
-abbrev MiscoverageBudget : Type := Rat
+/-- Abstract probability budget surface.  Core Lean 4 does not ship a
+`Real` or fully ordered `Rat` API; consistent with the other modules in this
+package (`T1T10`, `Program`) we model probability budgets as `Nat`-valued
+quantities -- think "violation budget out of `N` steps" rather than a real
+in `[0, 1]`.  A Mathlib port replaces `Nat` with `ENNReal` and the
+inequalities below with `MeasureTheory` facts. -/
+abbrev BudgetCount : Type := Nat
 
 /-- The structural form of the T11 probabilistic conclusion.
 
-This statement abstracts "the conditional probability of next-step safety
-exceeds `1 - α`" as an inequality between two `Rat` values supplied by the
+This statement abstracts "the conditional violation count exceeds the
+covered budget" as an inequality between two `Nat` values supplied by the
 calibration discharge.  The mechanization of the underlying measure-theoretic
-fact is gated to Mathlib; here we expose the proof shape so reviewers can
-see exactly what would be discharged. -/
+fact is gated to Mathlib; here we expose the proof shape -- transitivity of
+`≤` -- so reviewers can see exactly what would be discharged. -/
 theorem t11_probabilistic_lift_shape
-    (alpha : MiscoverageBudget)
-    (next_step_safe_probability : Probability)
-    (covered_probability : Probability)
-    (h_covered : covered_probability ≥ 1 - alpha)
-    (h_safe_on_covered : next_step_safe_probability ≥ covered_probability) :
-    next_step_safe_probability ≥ 1 - alpha := by
-  exact le_trans h_covered h_safe_on_covered
+    (uncoveredBudget coveredBudget achievedSafetyBudget : BudgetCount)
+    (h_covered : uncoveredBudget ≤ coveredBudget)
+    (h_safe_on_covered : coveredBudget ≤ achievedSafetyBudget) :
+    uncoveredBudget ≤ achievedSafetyBudget := by
+  exact Nat.le_trans h_covered h_safe_on_covered
 
 /-!
 ## What this module mechanizes vs. what is gated

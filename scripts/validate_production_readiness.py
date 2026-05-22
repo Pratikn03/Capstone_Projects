@@ -59,6 +59,12 @@ REQUIRED_RELEASE_SURFACES = [
     "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv",
     "reports/healthcare/runtime_summary.csv",
 ]
+DEPLOYMENT_ENVS = {"staging", "production", "prod", "deploy", "deployment"}
+TRUE_VALUES = {"1", "true", "yes", "y", "on", "required", "strict"}
+
+
+def _truthy_env(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in TRUE_VALUES
 
 
 def _sample_certificate() -> dict[str, object]:
@@ -130,6 +136,34 @@ def _check_secret_backend(deployment_grade: bool, findings: list[str], warnings:
         warnings.append(
             f"secret backend is {backend}; acceptable for local/server research but not KMS/HSM-grade"
         )
+
+
+def _check_strict_profile_expectations(strict: bool, findings: list[str]) -> None:
+    if not strict:
+        return
+    env = os.getenv("ORIUS_ENV", "").strip().lower()
+    if env not in DEPLOYMENT_ENVS:
+        findings.append("strict mode requires ORIUS_ENV=production or ORIUS_ENV=staging")
+    if not _truthy_env("ORIUS_REQUIRE_CERT_SIGNATURE"):
+        findings.append("strict mode requires ORIUS_REQUIRE_CERT_SIGNATURE=1")
+    if not _truthy_env("ORIUS_REQUIRE_DEVICE_SIGNATURE"):
+        findings.append("strict mode requires ORIUS_REQUIRE_DEVICE_SIGNATURE=1")
+    if not get_device_keys():
+        findings.append(
+            "strict mode requires configured ORIUS_DEVICE_KEYS or device_keys from "
+            "ORIUS_SECRETS_FILE/ORIUS_SECRETS_COMMAND"
+        )
+    if not _truthy_env("ORIUS_REQUIRE_ARTIFACT_MANIFEST"):
+        findings.append("strict mode requires ORIUS_REQUIRE_ARTIFACT_MANIFEST=1")
+    if not _truthy_env("ORIUS_REQUIRE_MODEL_HASH"):
+        findings.append("strict mode requires ORIUS_REQUIRE_MODEL_HASH=1")
+    active_key_id = os.getenv("ORIUS_CERTIFICATE_ACTIVE_KEY_ID") or os.getenv("ORIUS_CERTIFICATE_KEY_ID")
+    if not active_key_id:
+        findings.append(
+            "strict mode requires ORIUS_CERTIFICATE_ACTIVE_KEY_ID for auditable certificate key rotation"
+        )
+    elif active_key_id not in get_certificate_keys():
+        findings.append("strict mode active certificate key ID is not present in configured keys")
 
 
 def _check_certificate_signing(strict: bool, findings: list[str], warnings: list[str]) -> None:
@@ -355,6 +389,7 @@ def validate(
     strict = strict or deployment_grade
     _check_auth(strict, findings, warnings)
     _check_secret_backend(deployment_grade, findings, warnings)
+    _check_strict_profile_expectations(strict, findings)
     _check_certificate_signing(strict, findings, warnings)
     _check_deployment_identity_and_signing(deployment_grade, findings)
     _check_model_provenance(findings)

@@ -54,6 +54,37 @@ battery field operation.
 4. Rebuild certificate witnesses and verify the append-only event chain.
 5. Document affected command IDs, certificate hashes, and rollback decision.
 
+Example containment command set:
+
+```bash
+export ORIUS_CERTIFICATE_ACTIVE_KEY_ID=orius-cert-YYYY-MM-emergency
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_deployment_security.py
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_production_readiness.py --strict
+```
+
+Do not delete the compromised key before historical witnesses are copied to the
+incident evidence bundle. Disable it for new signing in the managed secret source
+and keep verification-only access under the incident retention policy.
+
+## Planned Key Rotation
+
+1. Add the next certificate key and next per-device key IDs to the managed secret
+   payload while keeping the current IDs valid.
+2. Confirm strict readiness with the current `ORIUS_CERTIFICATE_ACTIVE_KEY_ID`.
+3. Rotate `ORIUS_CERTIFICATE_ACTIVE_KEY_ID` to the next certificate key.
+4. Provision devices to send the next `device_key_id` and confirm telemetry,
+   command polling, and ACK paths verify.
+5. Add retired device key IDs to `ORIUS_REVOKED_DEVICE_KEYS` after the overlap
+   window and re-run the IoT HMAC tests.
+
+Rotation validation examples:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/test_dc3s_certificate_full.py::TestStoreAndGet::test_signature_verification_uses_certificate_key_id_for_rotation -q
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/test_iot_device_hmac.py -q
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/test_production_readiness_validator.py -q
+```
+
 ## Device Revocation
 
 1. Add the device ID or device key ID to the managed revocation source used by
@@ -63,6 +94,29 @@ battery field operation.
 3. Confirm signed telemetry, command polling, and ACKs from the revoked device fail.
 4. Provision a replacement credential only after device identity and firmware state
    are verified.
+
+Revocation validation examples:
+
+```bash
+export ORIUS_REVOKED_DEVICE_KEYS='{"edge-device-001": ["edge-key-2026-01"]}'
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/test_iot_device_hmac.py::test_revoked_iot_device_credential_fails -q
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_deployment_security.py
+```
+
+## mTLS Ingress Failure
+
+ORIUS expects mTLS enforcement at the ingress layer for deployment-grade claims.
+If the ingress layer reports a client-certificate failure:
+
+1. Keep `ORIUS_REQUIRE_MTLS=1`; do not bypass the check to restore availability.
+2. Confirm the device CA bundle path in `ORIUS_DEVICE_CA_BUNDLE` matches the
+   deployed ingress trust store.
+3. Verify the certificate subject/SAN maps to the same `device_id` inventory used
+   by HMAC device keys.
+4. Revoke the certificate at the ingress CA or service-mesh layer if compromise is
+   suspected, then revoke the matching HMAC key ID.
+5. Preserve ingress access logs, certificate serials, ORIUS request IDs, and IoT
+   nonce records in the incident evidence bundle.
 
 ## Model Artifact Rollback
 
@@ -87,3 +141,15 @@ battery field operation.
 - `scripts/validate_production_readiness.py --deployment-grade` passes only for
   field/deployment claims.
 - The git tree and final release manifest are clean and reproducible.
+
+## Incident Record Template
+
+- Incident ID:
+- Start/end UTC:
+- Affected domain, device IDs, certificate key IDs, and model artifact hashes:
+- Triggering alert and first failing validator/test:
+- Containment actions and exact commands:
+- Evidence bundle paths:
+- Rotation/revocation decisions:
+- Recovery validators and outputs:
+- Remaining deployment-scope exclusions:

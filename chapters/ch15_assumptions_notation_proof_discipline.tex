@@ -194,9 +194,9 @@ T4 No Free Safety & & \checkmark & & & & & & & & & Fixed-margin, quality-ignoran
 T5 Certificate Horizon & \checkmark & \checkmark & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Forward-tube containment construction \\
 T6 Certificate Expiration Bound & & & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Closed-form first-passage lower bound with explicit confidence parameter \\
 T7 Feasible Fallback Existence & \checkmark & & & \checkmark & & & & & & \checkmark & Piecewise hold-or-safe-landing fallback construction \\
-T8 Graceful Degradation Dominance & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & & & & & \checkmark & Shared-fault comparison coupling between graceful and uncontrolled release \\
-T9 Universal Impossibility & & & & \checkmark & & & & \checkmark & & & Per-window degraded-observation witness under persistent degradation \\
-T10 Boundary-Indistinguishability Lower Bound & \checkmark & \checkmark & & & & \checkmark & & & & & Boundary prior and observation-law indistinguishability hypothesis \\
+T8 Graceful Degradation Dominance & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & & & & & \checkmark & Shared-fault comparison plus useful-work threshold \\
+T9 Mandatory-Release Impossibility & & & & & & & & & & & Nonempty ambiguity class with empty common safe core \\
+T10 Boundary-Indistinguishability Lower Bound & & & & & & & & & & & Two-state TV bound plus disjoint safe-action sets \\
 T11 Typed Structural Transfer & & & & & & & & & & & Coverage, soundness, repair-membership, and fallback-admissibility obligations \\
 \bottomrule
 \end{tabular}%
@@ -250,9 +250,9 @@ remains.  Table~\ref{tab:gap-closure-map} makes that dependency explicit.
 \midrule
 Observed-state safety can disagree with true-state safety. & S1, T1, T2 & Observation-consistent state set and repaired safe action & Closed on the battery reference surface. \\
 \addlinespace
-Ignoring reliability may still look operationally attractive. & T4, T9 & Necessity of reliability-aware repair under persistent degradation & Closed as a structural impossibility result; battery remains the witness surface. \\
+Ignoring reliability may still look operationally attractive. & T4, T9 & Fixed-margin witness and empty-safe-core mandatory-release impossibility & Closed as a scoped structural impossibility result; battery remains the witness surface. \\
 \addlinespace
-The $\alpha(1-\bar{w})T$ envelope may be only a loose upper bound. & T3, T10 & Reliability-risk frontier under explicit boundary-indistinguishability assumptions & Closed conservatively on a stylized frontier model; full sharpness remains battery-anchored. \\
+The $\alpha(1-\bar{w})T$ envelope may be only a loose upper bound. & T3, T10 & Conservative upper envelope plus two-state TV lower-bound primitive & Closed conservatively; no global frontier or matching minimax claim is made. \\
 \addlinespace
 Cross-domain portability could be mistaken for equal proof depth. & T11 + tier tables & Explicit one-step transfer obligations and tiered discharge rules & Closed at the contract level; empirical discharge remains tiered by domain. \\
 \addlinespace

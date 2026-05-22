@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build empirical T9 assumption-discharge artifacts for three domains."""
+"""Build empirical T9 empty-safe-core witness artifacts for three domains."""
 
 from __future__ import annotations
 

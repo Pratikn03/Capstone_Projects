@@ -1,12 +1,22 @@
 \paragraph{Theorem \texttt{T\_sensor\_converse}: Sensor Necessity Under Adapter Semantics.}
-Let \(x^j\) be a latent coordinate on which the safe-action map depends. If the
-observation map contains no information about \(x^j\), and there exist
-\(x_0,x_1\) differing only in \(x^j\) with
-\(C(x_0)\cap C(x_1)=\varnothing\), then no observation-only mandatory-release
-policy can certify safety without additional sensing, uncertainty expansion,
-fallback, or denial.
+Let \(x^j\) be a latent coordinate on which the safe-action map depends. Suppose
+the adapter observation map is invariant to that coordinate: whenever two states
+differ only in \(x^j\), they have the same observation. If there exist
+\(x_0,x_1\) differing only in \(x^j\) such that
+\[
+  h(x_0)=h(x_1)=o,
+  \qquad
+  C(x_0)\cap C(x_1)=\varnothing,
+\]
+then no observation-only mandatory-release policy can certify safety over the
+ambiguity class containing \(x_0,x_1\) without additional sensing, uncertainty
+expansion, fallback, or denial.
 
 \paragraph{Proof.}
-Since \(h\) omits \(x^j\), the two states produce the same observation and lie
-in the same ambiguity class. Their safe-action sets are disjoint, so the common
-safe core of that class is empty. The result follows immediately from T9.
+By the adapter-invariance hypothesis, \(x_0\) and \(x_1\) produce the same
+observation \(o\), so both states lie in the nonempty ambiguity class
+\(B(o)\). Because \(C(x_0)\cap C(x_1)=\varnothing\), the common safe core over
+that class is empty. T9 then rules out certification by any total
+observation-only mandatory-release policy on \(B(o)\). Additional sensing,
+uncertainty expansion, fallback, or denial are the escape routes because they
+change the observation map or leave the mandatory-release policy class.

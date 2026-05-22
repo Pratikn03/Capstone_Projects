@@ -67,15 +67,17 @@ def test_t1_to_t10_theorem_statements_are_strong_but_scoped() -> None:
     assert "conditional one-step shield theorem" in ch04
     assert "A1, A2, A4, A5, A6, A7, and A9" in ch04
     assert "fixed-margin quality-ignorant" in ch04
-    assert "rate at which OASG grows" in ch04
+    assert "Any repeated-window rate claim" in ch04
     assert r"\tau_t^{(\delta)}" in ch04
     assert "with probability at least $1-\\delta$" in ch04
     assert "piecewise hold-or-safe-landing rule" in ch04
-    assert "sequence-level comparison is the full defended T8" in ch04
+    assert "paired-trace safety-plus-work comparison" in ch04
+    assert "full defended T8 surface" in ch04
 
-    assert r"\mathbb{E}\!\left[\mathrm{OASG}_T(\pi)\right]" in ch37
-    assert r"\sum_{t=1}^T \delta_t p_t(1-w_t)" in ch37
-    assert "grows linearly with the degradation" in ch37
+    assert "T9 is the empty-safe-core" in ch37
+    assert "mandatory-release impossibility theorem" in ch37
+    assert r"\frac{1-\epsilon}{2}" in ch37
+    assert "a horizon-summed frontier" in ch37
     assert "Mathematical contract vs. domain discharge" in ch37
     assert "domain discharge artifacts are evidence, not an extra hidden assumption" in ch37
     assert "contract-universal, not unrestricted-global" in ch37

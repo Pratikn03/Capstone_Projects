@@ -2,8 +2,8 @@ theorem_id,defense_tier,item_type,item,resolution_status,evidence_location
 T1,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
 T1,flagship_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:65
 T1,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
-T1,flagship_defended,appendix_assumption,A11,registered,appendices/app_b_assumptions.tex:172
-T1,flagship_defended,appendix_assumption,A12,registered,appendices/app_b_assumptions.tex:183
+T1,flagship_defended,appendix_assumption,A11,registered,appendices/app_b_assumptions.tex:174
+T1,flagship_defended,appendix_assumption,A12,registered,appendices/app_b_assumptions.tex:185
 T2,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
 T2,flagship_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:65
 T2,flagship_defended,appendix_assumption,A3,registered,appendices/app_b_assumptions.tex:75
@@ -27,7 +27,7 @@ T3b,supporting_defended,appendix_assumption,A9,registered,appendices/app_b_assum
 T4,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
 T4,flagship_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:65
 T4,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
-T4,flagship_defended,appendix_assumption,A11,registered,appendices/app_b_assumptions.tex:172
+T4,flagship_defended,appendix_assumption,A11,registered,appendices/app_b_assumptions.tex:174
 T5,flagship_defended,appendix_assumption,A1,registered,appendices/app_b_assumptions.tex:53
 T5,flagship_defended,appendix_assumption,A2,registered,appendices/app_b_assumptions.tex:65
 T5,flagship_defended,appendix_assumption,A3,registered,appendices/app_b_assumptions.tex:75
@@ -47,7 +47,8 @@ T8,flagship_defended,appendix_assumption,A5,registered,appendices/app_b_assumpti
 T8,flagship_defended,appendix_assumption,A8,registered,appendices/app_b_assumptions.tex:122
 T8,flagship_defended,typed_obligation,Paired graceful and uncontrolled policies are evaluated on the same admissible fault trace.,proof_linked,src/orius/benchmarks/graceful_degradation.py:99
 T8,flagship_defended,typed_obligation,The useful-work threshold lambda is declared before evaluating dominance.,proof_linked,src/orius/benchmarks/graceful_degradation.py:99
-T9,flagship_defended,typed_obligation,Mandatory release policy depends only on the observation.,proof_linked,src/orius/universal_theory/ambiguity.py:18
+T9,flagship_defended,typed_obligation,Mandatory release policy is total and depends only on the observation.,proof_linked,src/orius/universal_theory/ambiguity.py:18
+T9,flagship_defended,typed_obligation,The observation ambiguity class is nonempty.,proof_linked,src/orius/universal_theory/ambiguity.py:18
 T9,flagship_defended,typed_obligation,The observation ambiguity class has empty common safe core.,proof_linked,src/orius/universal_theory/ambiguity.py:18
 T10,flagship_defended,typed_obligation,Two latent boundary states induce observation distributions within the stated TV radius.,proof_linked,src/orius/universal_theory/boundary_indistinguishability.py:14
 T10,flagship_defended,typed_obligation,The two state-conditioned safe-action sets are disjoint.,proof_linked,src/orius/universal_theory/boundary_indistinguishability.py:14
@@ -102,9 +103,11 @@ T11_Byzantine,flagship_defended,typed_obligation,Honest scores lie in an interva
 T_stale_decay,flagship_defended,typed_obligation,No fresh observation arrives for s steps.,proof_linked,src/orius/universal_theory/stale_decay.py:6
 T_stale_decay,flagship_defended,typed_obligation,Latent state drift is bounded by L per step.,proof_linked,src/orius/universal_theory/stale_decay.py:6
 T_stale_decay,flagship_defended,typed_obligation,Certified release at the stale step is checked over the enlarged set.,proof_linked,src/orius/universal_theory/stale_decay.py:6
-T_minimax,flagship_defended,typed_obligation,The distribution class is finite two-state boundary problems.,proof_linked,src/orius/universal_theory/minimax_boundary.py:8
+T_minimax,flagship_defended,typed_obligation,The distribution class is nonempty and consists of finite two-state boundary problems.,proof_linked,src/orius/universal_theory/minimax_boundary.py:8
 T_minimax,flagship_defended,typed_obligation,Observation laws satisfy the stated TV bound.,proof_linked,src/orius/universal_theory/minimax_boundary.py:8
 T_minimax,flagship_defended,typed_obligation,Safe-action sets are disjoint.,proof_linked,src/orius/universal_theory/minimax_boundary.py:8
+T_minimax,flagship_defended,typed_obligation,Loss is worst-latent-state mandatory-release risk.,proof_linked,src/orius/universal_theory/minimax_boundary.py:8
+T_sensor_converse,flagship_defended,typed_obligation,Adapter observation map is invariant to the omitted latent coordinate.,proof_linked,src/orius/universal_theory/sensor_necessity.py:20
 T_sensor_converse,flagship_defended,typed_obligation,Safe-action map depends on the omitted latent coordinate.,proof_linked,src/orius/universal_theory/sensor_necessity.py:20
 T_sensor_converse,flagship_defended,typed_obligation,Two states differing only in that coordinate have disjoint safe-action sets.,proof_linked,src/orius/universal_theory/sensor_necessity.py:20
 T_sensor_converse,flagship_defended,typed_obligation,Policy class is observation-only mandatory release.,proof_linked,src/orius/universal_theory/sensor_necessity.py:20
@@ -112,4 +115,5 @@ T_trajectory_PAC,flagship_defended,appendix_assumption,A1,registered,appendices/
 T_trajectory_PAC,flagship_defended,appendix_assumption,A4,registered,appendices/app_b_assumptions.tex:84
 T_trajectory_PAC,flagship_defended,appendix_assumption,A5,registered,appendices/app_b_assumptions.tex:91
 T_trajectory_PAC,flagship_defended,appendix_assumption,A9,registered,appendices/app_b_assumptions.tex:141
-T_trajectory_PAC,flagship_defended,typed_obligation,Bonferroni/union-bound aggregation over the horizon.,proof_linked,src/orius/universal_theory/risk_bounds.py:576
+T_trajectory_PAC,flagship_defended,typed_obligation,Bonferroni/union-bound aggregation over the finite horizon.,proof_linked,src/orius/universal_theory/risk_bounds.py:576
+T_trajectory_PAC,flagship_defended,typed_obligation,"No temporal independence, Ville, or supermartingale condition is claimed.",proof_linked,src/orius/universal_theory/risk_bounds.py:576

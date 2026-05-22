@@ -102,11 +102,15 @@ aggregation is algebraic bookkeeping rather than a new theorem burden.
 \subsection{Theorem 4: Observation Necessity / No Free Safety}
 \label{sec:thm-no-free}
 
-\textbf{Statement.} Within the fixed-margin, quality-ignorant controller
-class, there exists an admissible degraded-observation sequence that produces
-an observation-action safety gap and hence a true-state violation.
+\textbf{Statement.} Within the fixed-margin, quality-ignorant
+mandatory-release controller class, if an admissible degraded-observation gap
+exceeds the fixed margin at a boundary-sensitive release step, there exists an
+admissible degraded-observation sequence that produces an observation-action
+safety gap and hence a true-state violation.
 
-\textbf{Assumptions.} A3 (feasible safe repair exists), A8 (admissible fallback policy). Quality-ignorant baselines lack reliability-aware inflation.
+\textbf{Assumptions.} A1, A2, A4, A11, plus the finite fixed-margin and
+boundary-sensitive release witness. Quality-ignorant baselines lack
+reliability-aware inflation.
 
 \textbf{Proof status.} Constructive witness theorem on the battery reference
 surface, plus empirical ablation support.
@@ -180,16 +184,16 @@ and does not claim cross-domain transfer on its own.
 \subsection{Theorem 8: Graceful Degradation Dominance}
 \label{sec:thm-graceful-dominance}
 
-\textbf{Statement.} The defended T8 surface is the paired sequence-level
-comparison: for graceful and uncontrolled violation sequences produced under
-the same admissible fault trace,
+\textbf{Statement.} The defended T8 surface is the paired safety--work
+comparison: for graceful and uncontrolled policies produced under the same
+admissible fault trace,
 \[
-  z_t^{\mathrm{graceful}} \le z_t^{\mathrm{uncontrolled}} \;\; \forall t
-  \quad\Longrightarrow\quad
-  V^{\mathrm{graceful}} \le V^{\mathrm{uncontrolled}}.
+  Z_t^G \le Z_t^U \;\; \forall t
+  \qquad\text{and}\qquad
+  W_G\ge\lambda W_U
 \]
-Strict improvement is claimed only when the graceful sequence is strictly
-smaller on at least one step.
+for a declared \(\lambda\in(0,1]\).  This proves weak dominance in the
+safety--work preorder and does not claim global fallback optimality.
 
 \textbf{Assumptions.} A1--A5, A8.
 
@@ -206,9 +210,9 @@ and the broader absorbing-landing interpretation remains outside this claim.
 
 \textbf{Statement.} For an observation~$o$ with ambiguity class
 $B(o)=\{x:h(x)=o\}$ and common safe core
-$K(o)=\cap_{x\in B(o)}C(x)$, if $K(o)=\varnothing$, then no
-observation-only mandatory-release controller can guarantee true-state safety
-for every latent state in $B(o)$.
+$K(o)=\cap_{x\in B(o)}C(x)$, if $B(o)\ne\varnothing$ and
+$K(o)=\varnothing$, then no total observation-only mandatory-release controller
+can guarantee true-state safety for every latent state in $B(o)$.
 
 \textbf{Assumptions.} Mandatory observation-only release and an empty common
 safe-core witness for the ambiguity class.
@@ -224,22 +228,24 @@ fallback, or deny release.
 \subsection{Theorem 10: Boundary-Indistinguishability Lower Bound}
 \label{sec:thm-info-lower-bound}
 
-\textbf{Statement.} Under the explicit boundary-mass and
-indistinguishability hypotheses of T10, every controller~$\pi$ satisfies the
-scoped lower bound
-$\mathbb{E}[V_T(\pi)] \ge \tfrac{1}{4}\,\alpha(1-\bar{w})T$.
+\textbf{Statement.} For two latent boundary states \(x_0,x_1\) with observation
+laws \(P_0,P_1\), if \(d_{\mathrm{TV}}(P_0,P_1)\le\epsilon\) and
+\(C(x_0)\cap C(x_1)=\varnothing\), then every observation-only mandatory-release
+controller satisfies
+\[
+  \sup_{i\in\{0,1\}}\Pr_{O\sim P_i}[\pi(O)\notin C(x_i)]
+  \ge \frac{1-\epsilon}{2}.
+\]
 
-\textbf{Assumptions.} A1, A2, A5$'$ (calibration regularity), conformal
-coverage condition.
+\textbf{Assumptions.} Two-state boundary pair, TV bound, disjoint safe-action
+sets, and mandatory observation-only release.
 
-\textbf{Proof status.} Narrowed stylized lower-bound surface under extra
-calibration/indistinguishability assumptions.  The active audit records that
-the one-sided Le~Cam step remains open, so the code witness is treated as a
-scoped lower-bound calculator rather than a sharp frontier theorem.
+\textbf{Proof status.} Flagship scoped lower-bound theorem.  The proof reduces
+release success to binary testing success and therefore no longer depends on an
+unstated one-sided Le~Cam step or on identifying \(w_t\) with TV distance.
 
-\textbf{Code anchor.} \texttt{src/orius/universal/reliability\_safety\_frontier.py}
-(\texttt{compute\_frontier}, \texttt{is\_dc3s\_optimal}); 25 unit tests
-in \texttt{tests/test\_reliability\_frontier.py}.
+\textbf{Code anchor.} \texttt{src/orius/universal\_theory/boundary\_indistinguishability.py}
+(\texttt{two\_state\_lower\_bound}, \texttt{estimate\_total\_variation}).
 
 \subsection{Theorem 11: Typed Structural Transfer}
 \label{sec:thm-universality-completeness}

@@ -1067,7 +1067,7 @@ Claim authority: `{_repo_rel(CLAIM_LEDGER)}`.
 
 The theorem wording must keep the lower-bound and upper-bound pieces separate: observation-only controllers face a Bayes ambiguity lower bound, while ORIUS gets an alpha-bounded upper guarantee only under covered uncertainty sets.
 
-Publication-safe optimality language: ORIUS is **safety-optimal under covered observation ambiguity**, not globally optimal for every physical-AI system.
+Publication-safe comparison language: ORIUS has a **lower/upper safety sandwich under covered observation ambiguity**, not a global optimality theorem for every physical-AI system.
 
 ## 3. What Is Implemented At Runtime?
 

@@ -1,7 +1,7 @@
 \documentclass[10pt,journal,twocolumn]{IEEEtran}
 \input{orius_ieee_detailed_preamble.tex}
 
-\title{ORIUS: A Universal Runtime Safety Layer for Physical AI\\under Degraded Observation ---\\Battery Witness Row with Bounded AV and Healthcare Validation}
+\title{ORIUS: A Universal Runtime Safety Layer for Physical AI\\under Degraded Observation ---\\Primary Battery Validation with Bounded AV and Healthcare Evidence}
 \author{Pratik Niroula}
 \date{May 2026}
 
@@ -25,13 +25,13 @@ observation-consistent state set, \textbf{Constrain}~the admissible action set,
 The ORIUS architecture is \emph{universal by design}: the kernel, benchmark schema,
 contract stack, and governance surface are domain-agnostic.  Domain specifics are
 isolated in thin adapter modules that implement six typed methods.  This paper
-reports the active \emph{three-domain defended lane} with one theorem-grade witness
-row and two bounded promoted rows:
+reports a three-domain validation program with one primary validation domain and two
+bounded cross-domain validation domains:
 
 \begin{enumerate}[nosep]
   \item \textbf{Battery Energy Storage}: dispatch optimisation under degraded SoC
-        telemetry, validated on locked CPSBench replay artifacts.  Battery remains
-        the witness row with the deepest theorem-to-code-to-artifact closure; the
+        telemetry, validated on locked CPSBench replay artifacts.  Battery provides
+        the deepest theorem-to-code-to-artifact closure; the
         promoted runtime slice achieves zero true-state violations.
   \item \textbf{Autonomous Vehicles}: ego-speed and relative-gap prediction under
         degraded perception, validated on the all-zip grouped nuPlan replay surface
@@ -40,16 +40,16 @@ row and two bounded promoted rows:
         \emph{(replay surface; not closed-loop road deployment)}, and explicit
         non-closure of road deployment or full autonomous-driving field closure.
   \item \textbf{Medical and Healthcare Monitoring}: bounded alert-release monitoring
-        under degraded vital-sign observations, promoted through a MIMIC-backed
-        healthcare row with bounded runtime and governance claims.
+        under degraded vital-sign observations, validated through a MIMIC-backed
+        bounded runtime and governance surface.
 \end{enumerate}
 
-All promoted rows maintain 100\% certificate-chain validity, 100\% audit completeness,
+All promoted runtime surfaces maintain 100\% certificate-chain validity, 100\% audit completeness,
 and zero contract failures on their active runtime surfaces.  All results are reproducible
-from locked artifacts with SHA-256 hashes.  We report a strict defended theorem core,
+from locked artifacts with SHA-256 hashes.  We report a strict theorem core,
 the complete shift-aware adaptive uncertainty mechanism, and a three-domain synthesis
 showing that the same kernel survives domain change without semantic loss while keeping
-battery-specific proof depth clearly distinguished from the bounded AV and Healthcare rows.
+battery-specific proof depth clearly distinguished from the bounded AV and Healthcare evidence.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -77,6 +77,17 @@ cyber-physical systems, battery energy storage, autonomous vehicles, healthcare 
 \onecolumn
 \appendices
 \input{detailed_sections/detailed_appendix.tex}
+
+\clearpage
+\section{Full Theorem Appendix Attachment}
+\label{app:full_theorem_package_attachment}
+The following pages attach the generated theorem appendix used to check consistency
+between proof statements, code anchors, tests, and artifacts. This attachment supports
+review of the detailed draft; it does not introduce additional theorem claims beyond
+the scoped theorem register. The editable source is
+\texttt{appendices/app\_c\_all\_theorems.tex}.
+
+\includepdf[pages=-,pagecommand={}]{../../appendices/app_c_all_theorems.pdf}
 
 \bibliographystyle{IEEEtran}
 \bibliography{../bibliography/orius_monograph}

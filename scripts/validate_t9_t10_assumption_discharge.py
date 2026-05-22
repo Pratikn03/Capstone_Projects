@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate T9/T10 assumption-discharge artifacts."""
+"""Validate T9/T10 domain-evidence discharge artifacts."""
 
 from __future__ import annotations
 
@@ -74,22 +74,21 @@ def _promotion_ready_is_supported(payload: dict[str, Any], *, out_dir: Path) -> 
     if theorem_id == "T9":
         required = (
             "witness_constant_status",
+            "empty_safe_core_status",
             "degradation_rate_status",
             "boundary_reachability_status",
-            "mixing_bridge_status",
             "constants_status",
             "assumptions_status",
         )
-        mixing = payload.get("mixing_proxy") if isinstance(payload.get("mixing_proxy"), dict) else {}
         numeric_supported = (
             _positive(payload.get("witness_constant"), minimum=minimum)
             and _positive(payload.get("degradation_rate"), minimum=minimum)
             and _positive(payload.get("boundary_reachability_rate"), minimum=minimum)
-            and bool(mixing.get("finite_mixing_proxy"))
         )
     elif theorem_id == "T10":
         required = (
             "tv_bridge_status",
+            "boundary_tv_radius_status",
             "unsafe_boundary_mass_status",
             "reliability_sequence_status",
             "boundary_testing_subproblem_status",

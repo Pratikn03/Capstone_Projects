@@ -8,17 +8,17 @@ artifact surfaces.
 
 \begin{table*}[h]
 \centering
-\caption{Compact theory surface used by the flagship IEEE draft.}
+\caption{Compact theory surface used by the IEEE draft.}
 \label{tab:ieee-appendix-theory}
 \small
 \begin{tabularx}{\textwidth}{@{}p{0.18\textwidth}p{0.24\textwidth}p{0.22\textwidth}p{0.28\textwidth}@{}}
 \toprule
-\textbf{Claim family} & \textbf{Runtime interpretation} & \textbf{Strongest current row} & \textbf{Boundary in the IEEE draft}\\
+\textbf{Claim family} & \textbf{Runtime interpretation} & \textbf{Strongest current domain} & \textbf{Boundary in the IEEE draft}\\
 \midrule
-OASG existence & Degraded observation can make an observed-safe action true-state unsafe & Battery witness & Treated as structural across domains, but most deeply closed in the witness row.\\
-Monotone inflation & Lower reliability widens the observation-consistent state set and tightens admissible actions & Battery witness; bounded transfer elsewhere & Claimed as a contract property, not as equal theorem depth everywhere.\\
-Repair safety & Repaired or fallback actions reduce or bound true-state violations under sound uncertainty and repair maps & Battery plus defended bounded rows & Empirical strength varies by domain maturity.\\
-Governed release & Certificate integrity and lifecycle transitions are part of the scientific safety object & Battery witness; bounded AV and Healthcare rows & The active IEEE draft is literal Battery + AV + Healthcare only.\\
+OASG existence & Degraded observation can make an observed-safe action true-state unsafe & Battery & Treated as structural across domains, but most deeply closed in the primary validation domain.\\
+Monotone inflation & Lower reliability widens the observation-consistent state set and tightens admissible actions & Battery; bounded transfer elsewhere & Claimed as a contract property, not as equal theorem depth everywhere.\\
+Repair safety & Repaired or fallback actions reduce or bound true-state violations under sound uncertainty and repair maps & Battery plus bounded validation domains & Empirical strength varies by domain maturity.\\
+Governed release & Certificate integrity and lifecycle transitions are part of the scientific safety object & Battery; bounded AV and Healthcare & The active IEEE draft is literal Battery + AV + Healthcare only.\\
 \bottomrule
 \end{tabularx}
 \end{table*}

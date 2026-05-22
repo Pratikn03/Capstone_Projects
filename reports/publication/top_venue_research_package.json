@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-05-10T00:00:00Z",
+  "generated_at_utc": "2026-05-13T03:20:24Z",
   "status": "top_venue_defensible_predeployment_package",
   "primary_thesis_sentence": "ORIUS provides a reliability-aware runtime safety layer for physical AI under degraded observation, enforcing certificate-backed action release through uncertainty coverage, repair, and fallback.",
   "main_theory_claim": "Observation-only mandatory-release controllers face a lower bound under safety-relevant ambiguity; ORIUS achieves an alpha-bounded upper guarantee under covered uncertainty sets.",
@@ -212,7 +212,7 @@
   ],
   "uplift_95plus_achieved": false,
   "final_paper_results": {
-    "generated_at_utc": "2026-05-10T00:00:00Z",
+    "generated_at_utc": "2026-05-13T03:20:24Z",
     "release_id": "PREDEPLOY_SPLIT_CPU_20260507T163124Z",
     "training_rows": 9,
     "runtime_rows": 3,

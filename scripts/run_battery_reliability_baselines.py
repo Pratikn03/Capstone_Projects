@@ -32,6 +32,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -298,33 +299,82 @@ def _render_figure(summary: dict[str, Any], path: Path) -> None:
     specs = {spec.method_id: spec for spec in DEFAULT_CONTROLLER_SPECS}
     labels = [row["display_name"] for row in rows]
     colors = [specs[row["method_id"]].color for row in rows]
-    y = list(range(len(rows)))
+    y = np.arange(len(rows))
 
-    fig, axes = plt.subplots(2, 2, figsize=(11, 7))
-    panels = [
-        ("true_state_violation_rate", "True TSVR (%)", lambda x: 100.0 * float(x), "{:.2f}"),
-        ("coverage_90", "PICP@90", float, "{:.3f}"),
-        ("mean_interval_width_mw", "Mean Interval Width (MW)", float, "{:.1f}"),
-        ("repair_rate", "Repair Rate (%)", lambda x: 100.0 * float(x), "{:.2f}"),
-    ]
-    for ax, (key, title, transform, fmt) in zip(axes.flat, panels, strict=True):
-        values = [transform(row[key]) for row in rows]
-        ax.barh(y, values, color=colors, edgecolor="black", linewidth=0.5)
-        ax.set_title(title)
-        ax.set_yticks(
-            y, labels if key in {"true_state_violation_rate", "mean_interval_width_mw"} else [""] * len(y)
+    plt.rcParams.update(
+        {
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.titleweight": "bold",
+            "font.size": 10,
+        }
+    )
+    fig = plt.figure(figsize=(12.0, 6.8), constrained_layout=True)
+    gs = fig.add_gridspec(2, 3, width_ratios=[1.25, 1.0, 1.0])
+    ax_safety = fig.add_subplot(gs[:, 0])
+    ax_cov = fig.add_subplot(gs[0, 1])
+    ax_width = fig.add_subplot(gs[0, 2])
+    ax_repair = fig.add_subplot(gs[1, 1])
+    ax_cost = fig.add_subplot(gs[1, 2])
+
+    safety_values = [100.0 * float(row["true_state_violation_rate"]) for row in rows]
+    bars = ax_safety.barh(y, safety_values, color=colors, edgecolor="#202020", linewidth=0.6)
+    ax_safety.set_yticks(y, labels)
+    ax_safety.invert_yaxis()
+    ax_safety.set_xlabel("True-state violation rate (%)")
+    ax_safety.set_title("Safety outcome")
+    ax_safety.grid(axis="x", alpha=0.22)
+    safety_axis_max = max([*safety_values, 1.0])
+    ax_safety.set_xlim(0, safety_axis_max * 1.22)
+    for bar, value in zip(bars, safety_values, strict=True):
+        ax_safety.text(
+            bar.get_width() + safety_axis_max * 0.025,
+            bar.get_y() + bar.get_height() / 2,
+            f"{value:.2f}",
+            va="center",
+            fontsize=9,
         )
-        ax.grid(axis="x", alpha=0.3)
-        xmax = max(values) if values else 1.0
-        if xmax <= 0:
-            xmax = 1.0
-        ax.set_xlim(0.0, xmax * 1.18)
-        for idx, value in enumerate(values):
-            ax.text(value + xmax * 0.02, idx, fmt.format(value), va="center", fontsize=9)
-    axes[0, 0].invert_yaxis()
-    axes[1, 0].invert_yaxis()
-    fig.suptitle("Locked Battery Controller-Family Comparison", fontsize=13, fontweight="bold")
-    fig.tight_layout()
+
+    coverage = [float(row["coverage_90"]) for row in rows]
+    ax_cov.scatter(coverage, y, s=95, color=colors, edgecolor="#202020", zorder=3)
+    ax_cov.axvspan(0.90, 1.0, color="#dff0d8", alpha=0.55, label="target >= 0.90")
+    ax_cov.set_xlim(0.84, 1.0)
+    ax_cov.set_yticks(y, [""] * len(rows))
+    ax_cov.invert_yaxis()
+    ax_cov.set_xlabel("PICP@90")
+    ax_cov.set_title("Coverage")
+    ax_cov.grid(axis="x", alpha=0.22)
+
+    widths_gw = [float(row["mean_interval_width_mw"]) / 1000.0 for row in rows]
+    ax_width.scatter(widths_gw, y, s=95, color=colors, edgecolor="#202020", zorder=3)
+    ax_width.set_yticks(y, [""] * len(rows))
+    ax_width.invert_yaxis()
+    ax_width.set_xlabel("Interval width (GW)")
+    ax_width.set_title("Conservatism")
+    ax_width.grid(axis="x", alpha=0.22)
+
+    repairs = [100.0 * float(row["repair_rate"]) for row in rows]
+    ax_repair.scatter(repairs, y, s=95, color=colors, edgecolor="#202020", zorder=3)
+    ax_repair.set_yticks(y, [""] * len(rows))
+    ax_repair.invert_yaxis()
+    ax_repair.set_xlabel("Repair rate (%)")
+    ax_repair.set_title("Runtime action")
+    ax_repair.grid(axis="x", alpha=0.22)
+
+    min_cost = min(float(row["expected_cost_musd"]) for row in rows)
+    cost_delta = [float(row["expected_cost_musd"]) - min_cost for row in rows]
+    ax_cost.scatter(cost_delta, y, s=95, color=colors, edgecolor="#202020", zorder=3)
+    ax_cost.set_yticks(y, [""] * len(rows))
+    ax_cost.invert_yaxis()
+    ax_cost.set_xlabel("Cost delta vs. best ($M)")
+    ax_cost.set_title("Utility cost")
+    ax_cost.grid(axis="x", alpha=0.22)
+
+    fig.suptitle(
+        "Battery reliability baselines: safety, coverage, and utility trade-off",
+        fontsize=14,
+        fontweight="bold",
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, dpi=300, bbox_inches="tight")
     plt.close(fig)

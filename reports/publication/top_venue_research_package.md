@@ -1,6 +1,6 @@
 # Top-Venue Research Package: ORIUS / DC3S / GridPulse
 
-Generated: `2026-05-10T00:00:00Z`
+Generated: `2026-05-13T03:20:24Z`
 
 ## Positioning Verdict
 
@@ -37,8 +37,8 @@ Claim authority: `docs/claim_ledger.md`.
 Observation-only mandatory-release controllers face a lower bound under safety-relevant ambiguity; ORIUS achieves an alpha-bounded upper guarantee under covered uncertainty sets.
 
 Active theorem audit rows: `29`.
-Defense tiers: `{'flagship_defended': 8, 'supporting_defended': 14, 'draft_non_defended': 7}`.
-- `T4`: `flagship_defended`, `paper_rigorous`, code `partial`
+Defense tiers: `{'flagship_defended': 16, 'supporting_defended': 13}`.
+- `T4`: `flagship_defended`, `paper_rigorous`, code `matches`
 - `T10_T11_ObservationAmbiguitySandwich`: `supporting_defended`, `proof_runtime_linked`, code `matches`
 - `T11`: `flagship_defended`, `paper_rigorous`, code `matches`
 - `T11_AV_BrakeHold`: `supporting_defended`, `proof_runtime_linked`, code `matches`
@@ -46,7 +46,7 @@ Defense tiers: `{'flagship_defended': 8, 'supporting_defended': 14, 'draft_non_d
 
 The theorem wording must keep the lower-bound and upper-bound pieces separate: observation-only controllers face a Bayes ambiguity lower bound, while ORIUS gets an alpha-bounded upper guarantee only under covered uncertainty sets.
 
-Publication-safe optimality language: ORIUS is **safety-optimal under covered observation ambiguity**, not globally optimal for every physical-AI system.
+Publication-safe comparison language: ORIUS has a **lower/upper safety sandwich under covered observation ambiguity**, not a global optimality theorem for every physical-AI system.
 
 ## 3. What Is Implemented At Runtime?
 

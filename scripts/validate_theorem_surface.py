@@ -150,7 +150,7 @@ SYNC_EXPECTATIONS = {
         "A10b --- Geometric mixing telemetry",
         "A11 --- Arbitrage boundary reachability",
         "A12 --- Controller-fault independence",
-        "A13 --- TV bridge",
+        "A13 --- Boundary TV radius",
     ],
     REPO_ROOT / "appendices/app_c_full_proofs.tex": [
         "Mathematical contract vs. domain discharge",
@@ -192,7 +192,7 @@ EXPECTED_REGISTER = {
     "T6": ("expiration_bound", "certificate_expiration_bound"),
     "T11": ("transfer_theorem", "evaluate_structural_transfer"),
     "T10_T11_ObservationAmbiguitySandwich": (
-        "supporting_optimality_corollary",
+        "supporting_ambiguity_sandwich_corollary",
         "build_observation_ambiguity_contract_summary",
     ),
 }

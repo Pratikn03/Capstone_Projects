@@ -297,7 +297,7 @@ def test_t9_discharge_blocks_zero_witness_constant() -> None:
 
     assert payload["promotion_ready"] is False
     assert payload["witness_constant"] == 0.0
-    assert "witness_constant" in payload["blocker"]
+    assert "empty_safe_core_witness" in payload["blocker"]
 
 
 def test_t10_discharge_computes_tv_bridge_boundary_mass_and_le_cam_inputs() -> None:

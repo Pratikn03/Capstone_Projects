@@ -427,15 +427,47 @@ def _write_publication_files() -> None:
         "current_status",
     ]
     _write_csv(PUBLICATION_DIR / "orius_domain_closure_matrix.csv", closure_rows, closure_fieldnames)
-    _write_simple_tex_table(
+    display_domain = {
+        "Battery Energy Storage": "Battery",
+        "Autonomous Vehicles": "AV",
+        "Medical and Healthcare Monitoring": "Healthcare",
+    }
+    display_tier = {
+        "runtime_contract_closed": "bounded runtime",
+        "reference": "witness",
+    }
+    _write_text(
         PUBLICATION_DIR / "tbl_orius_domain_closure_matrix.tex",
-        ["Domain", "Tier", "Source", "Baseline TSVR", "ORIUS TSVR"],
-        [
-            [row["domain"], row["tier"], row["source"], row["baseline_tsvr"], row["orius_tsvr"]]
-            for row in closure_rows
-        ],
-        "Canonical Battery + AV + Healthcare closure matrix.",
-        "tbl:orius-domain-closure-matrix",
+        "\n".join(
+            [
+                r"\begin{table}[htbp]",
+                r"\centering",
+                r"\small",
+                r"\caption{Canonical promoted-domain closure matrix.}",
+                r"\label{tbl:orius-domain-closure-matrix}",
+                r"\begin{tabular}{@{}lllrr@{}}",
+                r"\toprule",
+                r"Domain & Tier & Source & Baseline TSVR & ORIUS TSVR\\",
+                r"\midrule",
+                *[
+                    " & ".join(
+                        _tex_escape(cell)
+                        for cell in [
+                            display_domain.get(row["domain"], row["domain"]),
+                            display_tier.get(row["tier"], row["tier"]),
+                            row["source"].replace("_", " "),
+                            row["baseline_tsvr"],
+                            row["orius_tsvr"],
+                        ]
+                    )
+                    + r"\\"
+                    for row in closure_rows
+                ],
+                r"\bottomrule",
+                r"\end{tabular}",
+                r"\end{table}",
+            ]
+        ),
     )
 
     scorecard_rows = [

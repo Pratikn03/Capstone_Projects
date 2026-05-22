@@ -66,13 +66,57 @@ PYTHONDONTWRITEBYTECODE=1 .venv/bin/python scripts/validate_paper_claims.py
 
 This profile is fail-closed for certificate signing and device identity. If keys are missing in `production` or `staging`, release paths should fail instead of emitting unsigned evidence.
 
+Strict profile expectations enforced by `scripts/validate_production_readiness.py --strict`:
+
+- `ORIUS_ENV` must be `production` or `staging`; strict mode is not a dev/test alias.
+- `ORIUS_REQUIRE_CERT_SIGNATURE=1`, `ORIUS_REQUIRE_DEVICE_SIGNATURE=1`, `ORIUS_REQUIRE_ARTIFACT_MANIFEST=1`, and `ORIUS_REQUIRE_MODEL_HASH=1` must be explicit, even though some runtime helpers also fail closed when `ORIUS_ENV=production`.
+- `ORIUS_CERTIFICATE_ACTIVE_KEY_ID` must identify the current certificate signing key so release witnesses are auditable across rotations.
+- `device_keys` must be available from `ORIUS_SECRETS_FILE`, `ORIUS_DEVICE_KEYS`, or the managed secret command; unsigned IoT telemetry, command polling, and ACKs are not acceptable in this profile.
+- This strict profile still does not prove field deployment readiness. It is a local/server production-security floor for release hardening and predeployment evidence generation.
+
+## Device Identity and mTLS-Ready Boundary
+
+ORIUS currently authenticates IoT request bodies with per-device `HMAC-SHA256` fields: `device_id`, `device_key_id`, `device_ts_utc`, `device_nonce`, and `device_signature`. The runtime rejects stale timestamps, replayed nonces, missing device keys, revoked credentials, and invalid signatures when device signatures are required.
+
+For mTLS, ORIUS is ingress-ready rather than a TLS terminator. A deployment should terminate client-certificate TLS at a load balancer, reverse proxy, or service mesh that:
+
+- trusts only the provisioned device CA bundle referenced by `ORIUS_DEVICE_CA_BUNDLE`;
+- maps the verified client certificate subject/SAN to the same `device_id` inventory used for HMAC keys;
+- strips any inbound identity headers before setting trusted internal identity headers;
+- blocks requests with missing, expired, revoked, or mismatched client certificates before they reach the API;
+- leaves HMAC enabled as an application-layer proof to cover forwarded requests, replay detection, and command ACK integrity.
+
+`ORIUS_REQUIRE_MTLS=1` is therefore a deployment-grade gate that asserts the external ingress layer is mandatory and configured; it is not evidence that this Python process implements TLS termination.
+
+## Key Rotation Posture
+
+Certificate keys and device keys should use overlapping current/next IDs. Keep at least one standby key in the managed secret source before changing the active ID:
+
+1. Add `orius-cert-YYYY-MM-next` and new per-device key IDs to the managed secret payload.
+2. Deploy with both old and new keys present; keep `ORIUS_CERTIFICATE_ACTIVE_KEY_ID` on the old key while verifying signatures against both IDs.
+3. Rotate `ORIUS_CERTIFICATE_ACTIVE_KEY_ID` to the new key and begin provisioning devices with the new `device_key_id`.
+4. Move retired device key IDs to `revoked_device_keys` after the overlap window.
+5. Keep old certificate keys available only for historical verification until the audit retention window closes; do not use them for new release witnesses.
+
+Recommended rotation checks:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/test_dc3s_certificate_full.py::TestStoreAndGet::test_signature_verification_uses_certificate_key_id_for_rotation -q
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/test_iot_device_hmac.py -q
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/test_production_readiness_validator.py -q
+```
+
 ## Deployment-Grade / Field Claim Profile
 
-Do not use local env-file secrets for field/deployment claims. A deployment-grade claim additionally requires a managed secret source, device certificate ingress, final release manifests, and completed domain validation gates:
+Do not use local env-file secrets for field/deployment claims. Start from the strict local/server profile above, then add a managed secret source, device certificate ingress, final release manifests, and completed domain validation gates:
 
 ```bash
 export ORIUS_SECRET_BACKEND=external_command   # or aws_kms/gcp_kms/azure_key_vault/hsm/vault
 export ORIUS_SECRETS_COMMAND="/absolute/path/secret-provider --format json"
+export ORIUS_REQUIRE_CERT_SIGNATURE=1
+export ORIUS_REQUIRE_DEVICE_SIGNATURE=1
+export ORIUS_REQUIRE_ARTIFACT_MANIFEST=1
+export ORIUS_REQUIRE_MODEL_HASH=1
 export ORIUS_REQUIRE_MTLS=1
 export ORIUS_DEVICE_CA_BUNDLE=/absolute/path/device-ca.pem
 export ORIUS_REVOKED_DEVICE_KEYS='{"edge-device-001": ["edge-key-2026-01"]}'

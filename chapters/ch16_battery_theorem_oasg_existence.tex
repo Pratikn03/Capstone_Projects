@@ -148,14 +148,18 @@ price variance is non-zero.
 
 \begin{theorem}[OASG Existence]
 \label{thm:oasg-existence}
-Under Assumptions A1, A2, and A4, for any dropout rate $d > 0$ and any
-optimal arbitrage controller, there exists a time step $t^*$ such that
+Under Assumptions A1, A2, A4, A11, and A12, for any dropout rate $d > 0$ and
+any optimal arbitrage controller satisfying the battery boundary-reachability
+witness, there exists an admissible degraded-observation realization and a time
+step $t^*$ such that
 \[
   \phi_{\text{obs}}(a_{t^*}) = 1 \quad\text{and}\quad
   \phi_{\text{true}}(a_{t^*}) = 0.
 \]
 That is, the controller selects an action that appears safe in the
-observed state but violates a constraint in the true state.
+observed state but violates a constraint in the true state.  This is an
+existence witness, not a claim that every degraded step or every controller
+produces an OASG.
 \end{theorem}
 
 \begin{proof}
@@ -165,10 +169,10 @@ $|\mathcal{T}_{\text{bnd}}| \ge f_{\text{bnd}}\,T$ such that for
 $t \in \mathcal{T}_{\text{bnd}}$, the true SOC is within
 $\delta_{\text{bnd}}$ of a constraint bound.
 
-By Lemma~\ref{lem:obs-gap-dropout}, for dropout rate $d > 0$ the
-observation error has $\mathbb{E}[|\xi_t|] > 0$.  In particular,
-with positive probability, $|\xi_t| > \delta_{\text{bnd}}$ for
-some $t \in \mathcal{T}_{\text{bnd}}$.
+By Lemma~\ref{lem:obs-gap-dropout}, Assumption~A2, and the controller-fault
+co-occurrence condition in A12, there is an admissible degraded-observation
+realization with an observation gap larger than the remaining boundary slack at
+some $t\in\mathcal{T}_{\text{bnd}}$.
 
 At such a step $t^*$, the observed state $\hat{x}_{t^*} = x_{t^*} + \xi_{t^*}$
 is displaced from the true state by more than the distance to the
@@ -181,6 +185,9 @@ the true state across the bound:
   \hat{x}_{t^*} + \Delta(a_{t^*}) \ge \text{SOC}_{\min}.
 \]
 Hence $\phi_{\text{obs}}(a_{t^*}) = 1$ and $\phi_{\text{true}}(a_{t^*}) = 0$.
+The proof uses A11 for the boundary-sensitive step and A12 for coexistence of
+that step with the telemetry fault; domains that cannot discharge those
+obligations do not inherit this theorem.
 \end{proof}
 
 \section{Interpretive Table}

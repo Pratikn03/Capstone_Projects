@@ -116,11 +116,12 @@ non-binary state spaces, which we leave as future work.
 \textbf{Attack.}  T2 proves one-step safety but the thesis claims
 multi-step trajectory safety without an explicit inductive invariant.
 
-\textbf{Defense.}  T\textsubscript{PAC} (Proof~C.22) now provides the
-trajectory certificate via Ville's inequality on the supermartingale
-$S_k = \sum_{t=1}^{k}(Z_t - \alpha(1-w_t))$.  The per-step T2 bound
-serves as the supermartingale increment condition.  The inductive
-invariant is the non-negativity of the stopped supermartingale.
+\textbf{Defense.}  T\textsubscript{PAC} (Proof~C.22) is deliberately the
+finite-horizon Bonferroni certificate: if
+\(\Pr[Z_t=1]\le\epsilon_t\) and \(\sum_t\epsilon_t\le\delta\), then the
+trajectory is violation-free with probability at least \(1-\delta\).  No
+Ville/supermartingale strengthening is claimed unless a future theorem adds
+the required martingale increment condition and code path.
 
 \subsection{R5/R8: ``No real BESS hardware; linear SOC model''}
 \textbf{Attack.}  All results are simulation-only with a simplified
@@ -209,11 +210,12 @@ non-binary state spaces, which we leave as future work.
 \textbf{Attack.}  T2 proves one-step safety but the thesis claims
 multi-step trajectory safety without an explicit inductive invariant.
 
-\textbf{Defense.}  T\textsubscript{PAC} (Proof~C.22) now provides the
-trajectory certificate via Ville's inequality on the supermartingale
-$S_k = \sum_{t=1}^{k}(Z_t - \alpha(1-w_t))$.  The per-step T2 bound
-serves as the supermartingale increment condition.  The inductive
-invariant is the non-negativity of the stopped supermartingale.
+\textbf{Defense.}  T\textsubscript{PAC} (Proof~C.22) is deliberately the
+finite-horizon Bonferroni certificate: if
+\(\Pr[Z_t=1]\le\epsilon_t\) and \(\sum_t\epsilon_t\le\delta\), then the
+trajectory is violation-free with probability at least \(1-\delta\).  No
+Ville/supermartingale strengthening is claimed unless a future theorem adds
+the required martingale increment condition and code path.
 
 \subsection{R5/R8: ``No real BESS hardware; linear SOC model''}
 \textbf{Attack.}  All results are simulation-only with a simplified

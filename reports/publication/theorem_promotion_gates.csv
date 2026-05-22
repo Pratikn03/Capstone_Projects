@@ -1,7 +1,7 @@
 theorem_id,current_tier,candidate_status,gate,gate_pass,evidence,blocker,required_for_flagship
 T9,flagship_defended,promotion_ready,formal_theorem_statement,1,appendices/proofs/T9_no_free_safety.tex:1,,True
-T9,flagship_defended,promotion_ready,explicit_assumptions,1,Mandatory release policy depends only on the observation. | The observation ambiguity class has empty common safe core.,,True
-T9,flagship_defended,promotion_ready,mathematical_proof,1,appendices/proofs/T9_no_free_safety.tex:11; proof_tier=V1,,True
+T9,flagship_defended,promotion_ready,explicit_assumptions,1,Mandatory release policy is total and depends only on the observation. | The observation ambiguity class is nonempty. | The observation ambiguity class has empty common safe core.,,True
+T9,flagship_defended,promotion_ready,mathematical_proof,1,appendices/proofs/T9_no_free_safety.tex:13; proof_tier=V1,,True
 T9,flagship_defended,promotion_ready,mechanized_proof,1,reports/publication/t9_t10_mechanized_proof_status.json,,True
 T9,flagship_defended,promotion_ready,research_package,1,reports/publication/t9_t10_research_scorecard.json,,True
 T9,flagship_defended,promotion_ready,code_anchor,1,src/orius/universal_theory/ambiguity.py:18 | src/orius/universal_theory/ambiguity.py:36,,True

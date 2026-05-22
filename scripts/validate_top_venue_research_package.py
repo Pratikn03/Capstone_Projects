@@ -47,7 +47,7 @@ REQUIRED_PHRASES = (
     CANONICAL_ORIUS_FRAMING,
     "observation-only mandatory-release controllers face a lower bound",
     "ORIUS achieves an alpha-bounded upper guarantee",
-    "safety-optimal under covered observation ambiguity",
+    "lower/upper safety sandwich under covered observation ambiguity",
     "runtime assurance",
     "conformal",
     "control barrier",

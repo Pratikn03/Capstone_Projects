@@ -9,7 +9,9 @@ Then
   \le \sum_{t=1}^{T}\epsilon_t .
 \]
 Therefore, if \(\sum_{t=1}^{T}\epsilon_t\le\delta\), the trajectory is
-violation-free with probability at least \(1-\delta\).
+violation-free with probability at least \(1-\delta\). The same conclusion
+holds when the runtime supplies predictable conditional budgets
+\(\Pr(Z_t=1\mid\mathcal H_{t-1})\le\epsilon_t\), after taking expectations.
 
 \paragraph{Proof.}
 The event \(\{\sum_{t=1}^{T}Z_t\ge 1\}\) is the union of the per-step violation
@@ -22,4 +24,4 @@ events \(\cup_{t=1}^{T}\{Z_t=1\}\). By the union bound,
 If the sum is at most \(\delta\), then the complementary no-violation event has
 probability at least \(1-\delta\). This defended surface is exactly the
 finite-horizon Bonferroni certificate; it does not claim a Ville or
-supermartingale strengthening.
+supermartingale strengthening and does not require temporal independence.

@@ -1,0 +1,19 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Utility-preserving safety claim table. ORIUS is compared against predictor-only and shutdown/fallback-only references without promoting non-comparable rows.}
+\label{tab:utility-preserving-claim-table}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llllrrrl}
+\toprule
+Domain & Comparison & Reference & Relation & Ref. TSVR & ORIUS TSVR & TSVR reduction & Comparability\\
+\midrule
+Battery Energy Storage & shutdown\_or\_fallback\_only\_conservatism & immediate\_shutdown & less\_conservative\_than\_shutdown\_or\_fallback\_only & 0.000000 & 0.000000 & 0.000000 & comparable\_fail\_safe\_reference\\
+Autonomous Vehicles & shutdown\_or\_fallback\_only\_conservatism & always\_brake & less\_conservative\_than\_shutdown\_or\_fallback\_only & 0.241286 & 0.241200 & 0.000086 & comparable\_fail\_safe\_reference\\
+Medical and Healthcare Monitoring & shutdown\_or\_fallback\_only\_conservatism & always\_alert & less\_conservative\_than\_shutdown\_or\_fallback\_only & 0.000000 & 0.000000 & 0.000000 & comparable\_fail\_safe\_reference\\
+Battery Energy Storage & predictor\_only\_safety & stronger\_predictor\_without\_runtime\_adaptation (deep:dc3s\_wrapped) & no\_observed\_safety\_separation & 0.000000 & 0.000000 & 0.000000 & non\_comparable\_no\_observed\_safety\_separation\\
+Autonomous Vehicles & predictor\_only\_safety & stronger\_predictor\_without\_runtime\_adaptation (predictor\_only\_no\_runtime) & safer\_than\_predictor\_only & 0.289250 & 0.000163 & 0.289087 & comparable\_runtime\_native\\
+Medical and Healthcare Monitoring & predictor\_only\_safety & stronger\_predictor\_without\_runtime\_adaptation (predictor\_only\_no\_runtime) & safer\_than\_predictor\_only & 0.194489 & 0.000000 & 0.194489 & comparable\_runtime\_native\\
+\bottomrule
+\end{tabular}}
+\end{table*}

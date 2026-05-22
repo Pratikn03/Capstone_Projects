@@ -29,8 +29,8 @@ supplies a predictable residual-risk budget sequence $r_t$ such that
   \qquad\text{for all } t,
 \]
 and suppose further that the domain justifies the battery-style envelope
-$r_t \le \alpha(1-w_t)$.  Then the expected total violation count over
-horizon~$T$ satisfies
+$r_t \le \alpha(1-w_t)$ on the fixed certified budget trace.  Then the expected
+total violation count over horizon~$T$ satisfies
 \[
   \mathbb{E}[V] \;\le\; \alpha\,(1 - \bar{w})\,T,
 \]
@@ -39,6 +39,9 @@ $\bar{w} = T^{-1}\sum_{t=1}^T w_t$ is the episode-average reliability.
 The theorem is therefore an aggregation result for an explicit risk-envelope
 contract; it is not presented as a direct consequence of vanilla conformal
 exchangeability alone.
+If the reliability process is left random rather than conditioned on the
+recorded budget trace, the corresponding defensible statement is
+$\mathbb{E}[V]\le\alpha\sum_t\mathbb{E}[1-w_t]$.
 \end{theorem}
 
 \noindent\textbf{Remark.}  The bound depends on~$\alpha$, $\bar{w}$, and~$T$
@@ -123,8 +126,8 @@ one-step control of the violation indicator is used.
 
 \begin{theorem}[ORIUS Core Bound]
 \label{thm:core-bound}
-Under Assumptions A1, A2, A4, A5, A6, and A7, the expected total
-violation count under the DC3S shield satisfies
+Under Assumptions A1, A2, A4, A5, A6, and A7, the expected total violation
+count under the DC3S shield on the fixed certified budget trace satisfies
 \[
   \mathbb{E}[V] \;\le\; \alpha\,(1 - \bar{w})\,T,
 \]
@@ -250,32 +253,22 @@ not a converse optimality theorem.
 \section{Stylized Reliability-Risk Frontier (T10)}
 \label{sec:t10-lower-bound-ch18}
 
-T3 establishes that DC3S achieves $\mathbb{E}[V] \le \alpha(1-\bar{w})T$.
-The monograph's T10 lower-bound result adds a \emph{stylized} frontier model:
-by constructing boundary-testing subproblems and computing total-variation
-distance through the degraded observation channel, one obtains
-\[
-  \mathbb{E}\!\left[V_T(\pi)\right]
-  \;\ge\;
-  \tfrac{1}{4}\,\alpha(1-\bar{w})T
-\]
-for any controller~$\pi$ \emph{under the additional boundary-mass and
-indistinguishability assumptions stated in T10}.  Combined with the T3 upper
-bound, this yields the stylized frontier band
-\[
-  \tfrac{1}{4}\,\alpha(1-\bar{w})T
-  \;\le\;
-  \mathbb{E}[V_T(\pi)]
-  \;\le\;
-  \alpha(1-\bar{w})T.
-\]
-The factor-of-4 constant is therefore read as a witness to a nontrivial
-reliability-risk frontier, not as a globally sharp minimax claim for every
-observation model.  Any stronger coefficient claim would require a
-domain-specific argument beyond the theorem-local frontier assumptions.
+T3 establishes that DC3S achieves $\mathbb{E}[V] \le \alpha(1-\bar{w})T$ once
+the domain supplies the predictable risk budget.  The monograph's active T10
+lower-bound result is narrower: for a two-state boundary pair with observation
+laws within TV distance \(\epsilon\) and disjoint safe-action sets, every
+observation-only mandatory-release controller has worst-state release risk at
+least \((1-\epsilon)/2\).  This is a local lower-bound primitive, not a
+horizon-summed frontier and not an identification of \(w_t\) with TV distance.
 
-The \emph{reliability-safety frontier} derived from this pair of bounds gives
-the minimum infrastructure reliability for a target violation rate:
+The reliability-safety frontier plots are therefore interpreted as
+domain-specific diagnostics that plug a modeled \(\epsilon(w_t)\) into T10 and
+compare it with the conservative T3 upper envelope.  Any stronger coefficient
+or matching minimax claim would require a separate theorem over the same policy
+and distribution class.
+
+The conservative upper envelope gives the minimum infrastructure reliability
+suggested by the T3 budget for a target violation rate:
 \[
   \bar{w}^* \;=\; 1 - \frac{r^*}{\alpha T},
 \]

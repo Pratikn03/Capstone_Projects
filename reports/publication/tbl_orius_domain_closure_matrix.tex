@@ -1,14 +1,15 @@
 \begin{table}[htbp]
 \centering
-\caption{Canonical Battery + AV + Healthcare closure matrix.}
+\small
+\caption{Canonical promoted-domain closure matrix.}
 \label{tbl:orius-domain-closure-matrix}
-\begin{tabular}{lllll}
+\begin{tabular}{@{}lllrr@{}}
 \toprule
 Domain & Tier & Source & Baseline TSVR & ORIUS TSVR\\
 \midrule
-Battery Energy Storage & reference & locked\_artifact & 0.0083 & 0.0000\\
-Autonomous Vehicles & runtime\_contract\_closed & real\_data & 0.2893 & 0.0002\\
-Medical and Healthcare Monitoring & runtime\_contract\_closed & verified & 0.1945 & 0.0000\\
+Battery & witness & locked artifact & 0.0083 & 0.0000\\
+AV & bounded runtime & real data & 0.2893 & 0.0002\\
+Healthcare & bounded runtime & verified & 0.1945 & 0.0000\\
 \bottomrule
 \end{tabular}
 \end{table}

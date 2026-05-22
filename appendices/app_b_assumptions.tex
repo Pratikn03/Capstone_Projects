@@ -40,10 +40,10 @@ A7 & Causal certificate rule & The certificate update uses only history availabl
 A8 & Piecewise certified fallback & A fallback controller either safely holds on the interior or safely lands away from the boundary; otherwise it fails closed. \\
 A9 & Sub-Gaussian disturbance law & Disturbance increments are $\sigma_d$-sub-Gaussian. \\
 A10a & Polynomial mixing & Telemetry dependence decays polynomially, sufficient for weak-mixing arguments. \\
-A10b & Geometric mixing & Telemetry dependence decays geometrically, required by the current T9 windowing proof. \\
+A10b & Geometric mixing & Telemetry dependence decays geometrically; retained for archived weak-dependence diagnostics, not required by active T9. \\
 A11 & Arbitrage boundary reachability & The witness controller can be driven to a boundary-sensitive state under admissible demand. \\
 A12 & Controller-fault independence & The reliability process is conditionally independent of the controller action stream given the history. \\
-A13 & TV bridge & $\mathrm{TV}(P_{0,t},P_{1,t}) \le w_t$ for the T10 binary observation laws. \\
+A13 & Boundary TV radius & $d_{\mathrm{TV}}(P_0,P_1)\le\epsilon$ for a declared two-state boundary-pair witness. \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -165,8 +165,10 @@ The telemetry process is $\varphi$-mixing with geometric decay,
   \varphi(k)\le C\rho^k
   \quad \text{for some } C>0,\; \rho\in(0,1).
 \]
-\textbf{Battery interpretation:} this is the stronger dependence-decay
-assumption required by the current T9 separated-window proof.
+\textbf{Battery interpretation:} this remains available for archived
+weak-dependence diagnostics and historical separated-window analyses.  The
+active T9 proof no longer depends on A10b; it uses the typed empty-safe-core
+obligations stated in the theorem row.
 \end{assumption}
 
 \begin{assumption}[A11 --- Arbitrage boundary reachability]\label{assum:A11}
@@ -190,15 +192,14 @@ adaptive adversaries.  Claims under coupled control/fault processes require a
 separate dependence model.
 \end{assumption}
 
-\begin{assumption}[A13 --- TV bridge]\label{assum:A13}
-For the T10 binary boundary-testing observation laws,
+\begin{assumption}[A13 --- Boundary TV radius]\label{assum:A13}
+For a declared T10 two-state boundary-testing witness,
 \[
-  \mathrm{TV}(P_{0,t}, P_{1,t}) \le w_t
+  d_{\mathrm{TV}}(P_0, P_1) \le \epsilon .
 \]
-for every $t$.
-\textbf{Battery interpretation:} the reliability score is treated as an
-explicit upper bound on total-variation distinguishability for that scoped
-binary lower-bound construction.
+\textbf{Battery interpretation:} the runtime artifact supplies a boundary-pair
+observation law and an empirical TV radius.  The theorem does not identify the
+reliability score with TV distance; the radius is a witness-side artifact.
 \end{assumption}
 
 \section{Registry Usage Map}
@@ -221,8 +222,8 @@ T5 & A1, A2, A4, A5, A6, A7, A9 \\
 T6 & A4, A7, A9 \\
 T7 & A1, A4, A8 \\
 T8 & A1, A2, A3, A4, A5, A8 \\
-T9 & A10b, A11 \\
-T10 & A13 \\
+T9 & typed obligations: total mandatory policy, nonempty ambiguity class, empty common safe core \\
+T10 & typed obligations: two boundary observation laws within a declared TV radius and disjoint safe-action sets \\
 T11 & typed obligations only \\
 T11\textsubscript{Byz} & A9 \\
 T\textsubscript{stale} & A6 \\

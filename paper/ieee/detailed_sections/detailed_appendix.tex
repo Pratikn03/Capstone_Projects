@@ -46,16 +46,20 @@ $g_t$          & Relative gap to lead vehicle (m) & AV \\
 \textbf{ID} & \textbf{Statement} \\
 \midrule
 \endhead
-A1 & \textbf{Causal Availability}: At every step $t$, the observation $\ztt$ is causally available before action commitment. \\
-A2 & \textbf{Detector Soundness}: If $\wt = 1$ then $\ztt = \zt$; if $\ztt \ne \zt$ then $\wt < 1$. \\
-A3 & \textbf{Constraint Expressibility}: Safety constraints are a finite conjunction of state-action predicates evaluable over $\Ut$. \\
-A4 & \textbf{Fallback Safety}: $\asafe$ is safe for all $x \in \mathcal{X}$. \\
-A5 & \textbf{Conformal Coverage}: The base conformal predictor achieves coverage $\ge 1 - \alpha_{\mathrm{target}}$ on the calibration set. \\
-A6 & \textbf{Bounded Drift Rate}: Distribution shift rate is bounded within the adaptation window. \\
-A7 & \textbf{Finite Horizon}: Each episode has $T < \infty$. \\
-A8 & \textbf{Constraint Continuity}: Safety constraints are continuous in the state space. \\
-A9 & \textbf{Sub-Gaussian Drift Proxy}: The battery certificate drift process admits a sub-Gaussian scale and a boundary gap supporting the T6 first-passage bound. \\
-A10 & \textbf{Boundary-Active Controller}: The quality-ignorant baseline controller used in the T1 witness construction drives the true state within actuator-bounded distance of $\partial\mathcal{S}$ with positive frequency.  Discharged empirically by the non-zero baseline TSVR of the LP arbitrage and no-wrapper policies. \\
+A1 & \textbf{Almost-sure model error bound}: the one-step domain model error is bounded by an explicit slack used in shielded postconditions. \\
+A2 & \textbf{Telemetry-state bridge}: the reliability score bounds telemetry-state discrepancy through a known monotone function. \\
+A3 & \textbf{Feasible safe repair}: whenever repair is invoked, the tightened safe-action set is non-empty. \\
+A4 & \textbf{Known one-step dynamics}: the runtime can evaluate the one-step state increment induced by a candidate action. \\
+A5 & \textbf{Absorbed monotone tightening}: the model-error-absorbed margin is monotone non-increasing in reliability and uniformly bounded. \\
+A6 & \textbf{Bounded detector lag}: supported telemetry faults are detected within a finite configured lag. \\
+A7 & \textbf{Causal certificate rule}: certificates use only history available at release time. \\
+A8 & \textbf{Piecewise certified fallback}: fallback either safely holds, safely recovers inward, or fails closed. \\
+A9 & \textbf{Sub-Gaussian disturbance law}: disturbance increments satisfy the stated sub-Gaussian proxy used by T6 and trajectory-PAC surfaces. \\
+A10a & \textbf{Polynomial mixing telemetry}: retained for scoped weak-dependence diagnostics where polynomial decay is sufficient. \\
+A10b & \textbf{Geometric mixing telemetry}: retained for archived weak-dependence diagnostics; active T9 no longer depends on a separated-window mixing proof. \\
+A11 & \textbf{Arbitrage boundary reachability}: the witness controller can be driven to a boundary-sensitive state under admissible demand. \\
+A12 & \textbf{Controller-fault independence}: the fault/reliability process is conditionally independent of controller actions given history. \\
+A13 & \textbf{Boundary TV radius}: a declared two-state boundary witness satisfies $d_{\mathrm{TV}}(P_0,P_1)\le\epsilon$; this is not an identity between reliability and TV distance. \\
 \bottomrule
 \end{longtable}
 
@@ -71,25 +75,30 @@ A10 & \textbf{Boundary-Active Controller}: The quality-ignorant baseline control
 \textbf{ID} & \textbf{Name} & \textbf{Assumptions} & \textbf{Verification} \\
 \midrule
 \endhead
-T1  & OASG Existence                    & A1, A2, A4, A10 & Proof + Empirical + Code \\
-T2  & One-Step Safety Preservation      & A1--A3, A5, A7 & Proof + Empirical + Code \\
-T3  & ORIUS Core Bound                  & A1, A2, A4--A7 & Proof + Empirical + Code \\
-T4  & No Free Safety                    & A2, A4       & Proof + Empirical \\
-T5  & Finite-Horizon Certificate Validity & A1--A5     & Proof + Empirical + Code \\
-T6  & Certificate Expiration Bound      & A4, A7, A9   & Proof + Empirical + Code \\
-T7\_Battery  & Feasible Fallback Existence       & A1, A4, A8   & Proof + Code \\
+T1  & OASG Existence                    & A1, A2, A4, A11, A12 & Proof + Empirical + Code \\
+T2  & One-Step Safety Preservation      & A1--A5, A7 & Proof + Empirical + Code \\
+T3a & Covered Release Risk Envelope     & A1, A2, A4--A7, A9 & Proof + Empirical + Code \\
+T3b & Residual-Risk Corollary           & A1, A2, A4--A7, A9 & Corollary + Code \\
+T4  & Fixed-Margin No-Free-Safety Witness & A1, A2, A4, A11 & Proof + Empirical + Code \\
+T5  & Finite-Horizon Certificate Validity & A1, A2, A4--A7, A9 & Proof + Empirical + Code \\
+T6  & Certificate Expiration Bound      & A4, A7, A9 & Proof + Empirical + Code \\
+T7  & Feasible Fallback Existence       & A1, A4, A8 & Proof + Code \\
 T8  & Graceful Degradation Dominance with Useful Work & A1--A5, A8 & Proof + Empirical + Code \\
-T9  & Mandatory Release Impossibility   & Empty safe core & Proof + Empirical + Code \\
-T10 & Boundary-Indistinguishability LB  & Two-state TV & Proof + Empirical + Code \\
-T11 & Typed Structural Transfer         & A3--A5, A7, A8 & Proof + Code \\
+T9  & Mandatory Release Impossibility   & total mandatory policy; nonempty ambiguity class; empty common safe core & Proof + Empirical + Code \\
+T10 & Boundary-Indistinguishability LB  & two-state TV radius; disjoint safe-action sets & Proof + Empirical + Code \\
+T10/T11 & Covered Observation-Ambiguity Safety Sandwich & covered uncertainty set; common safe core & Corollary + Code \\
+T11 & Typed Structural Transfer         & coverage, safe-set soundness, repair, fallback, adapter obligations & Proof + Code \\
+T\textsubscript{minimax} & Finite Ambiguity-Class Minimax Lower Bound & finite two-state class; mandatory-release loss & Proof + Code \\
+T\textsubscript{sensor} & Sensor Necessity Under Adapter Semantics & missing coordinate; observation invariance; disjoint safe sets & Proof + Code \\
 \bottomrule
 \end{longtable}
 \normalsize
 
-The defended theorem surfaces have complete formal proofs, while scoped theorem
-rows remain claim-boundary constrained in the integrated audit.  The ``Empirical'' tag
-indicates that the theorem's predictions match the observed pipeline metrics.  The ``Code'' tag
-indicates a direct code-level anchor in the kernel or test suite.
+The generated theorem-promotion matrix is the status authority.  The
+``Empirical'' tag means that Battery, AV, and Healthcare evidence artifacts
+instantiate the theorem's scoped obligations; it is not an unbounded deployment
+claim.  The ``Code'' tag indicates a direct runtime, helper, or test-suite
+anchor.
 
 \section{Contract Predicate Register}\label{app:predicates}
 

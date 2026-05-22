@@ -49,3 +49,16 @@ AI/Codex helper scripts from becoming unreviewed release surface.
 Default PDF targets must not run it. Use `make table-result-integrity-repair`
 only after an audit identifies repairable table hygiene problems, then rerun
 `make table-result-integrity-audit`.
+
+## Table Integrity Audit Scope
+
+`scripts/audit_table_result_integrity.py` scans the active table roots plus
+historical/generated report surfaces, but the strict blocker set is limited to
+the current claim-governing publication allowlist in the script. Findings from
+archived, exploratory, generated, or superseded surfaces remain visible in the
+audit report as warnings so they are auditable without blocking release.
+
+Use `make table-result-integrity-audit` for the release gate. Use
+`PYTHONPATH=src .venv/bin/python scripts/audit_table_result_integrity.py --all-blocking`
+only when intentionally auditing every scanned historical/generated surface as a
+blocking cleanup target.

@@ -505,9 +505,9 @@ T4 Observation Necessity & & \checkmark & & & & & & & & Fixed-margin, quality-ig
 T5 Certificate Horizon & \checkmark & \checkmark & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Forward-tube containment construction \\
 T6 Certificate Expiration Bound & & & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Closed-form first-passage lower bound with explicit confidence parameter \\
 T7 Feasible Fallback Existence & \checkmark & & & \checkmark & & & & & & \checkmark & Piecewise hold-or-safe-landing fallback construction \\
-T8 Graceful Degradation Dominance & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & & & & & \checkmark & Shared-fault comparison coupling between graceful and uncontrolled release \\
-T9 Universal Impossibility & & & & \checkmark & & & & \checkmark & & & Per-window degraded-observation witness under persistent degradation \\
-T10 Boundary-Indistinguishability Lower Bound & \checkmark & \checkmark & & & & \checkmark & & & & & Boundary prior and observation-law indistinguishability hypothesis \\
+T8 Graceful Degradation Dominance & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & & & & & \checkmark & Shared-fault comparison plus useful-work threshold \\
+T9 Mandatory-Release Impossibility & & & & & & & & & & & Nonempty ambiguity class with empty common safe core \\
+T10 Boundary-Indistinguishability Lower Bound & & & & & & & & & & & Two-state TV bound plus disjoint safe-action sets \\
 T11 Typed Structural Transfer & & & & & & & & & & & Coverage, soundness, repair-membership, and fallback-admissibility obligations \\
 \bottomrule
 \end{tabular}%
@@ -849,7 +849,8 @@ That is, the controller selects an action that appears safe in the
 observed state but violates a constraint in the true state.  Equivalently,
 OASG is not a numerical artifact of a particular experiment: once boundary
 reachability and a nonzero observation-error tail coexist, an observed-safe /
-true-unsafe witness can be constructed.
+true-unsafe witness can be constructed.  This is an existence witness, not a
+claim that every degraded step or every controller produces an OASG.
 \end{theorem}
 
 \begin{proof}
@@ -877,6 +878,9 @@ the true state across the bound:
   \hat{x}_{t^*} + \Delta(a_{t^*}) \ge \text{SOC}_{\min}.
 \]
 Hence $\phi_{\text{obs}}(a_{t^*}) = 1$ and $\phi_{\text{true}}(a_{t^*}) = 0$.
+The proof uses A11 for the boundary-sensitive step and A12 for coexistence of
+that step with the telemetry fault; domains that cannot discharge those
+obligations do not inherit this theorem.
 \end{proof}
 
 \subsection{Interpretive Table}
@@ -1233,8 +1237,8 @@ supplies a predictable residual-risk budget sequence $r_t$ such that
   \qquad\text{for all } t,
 \]
 and suppose further that the domain justifies the reference-row envelope
-$r_t \le \alpha(1-w_t)$.  Then the expected total violation count over
-horizon~$T$ satisfies
+$r_t \le \alpha(1-w_t)$ on the fixed certified budget trace.  Then the expected
+total violation count over horizon~$T$ satisfies
 \[
   \mathbb{E}[V] \;\le\; \alpha\,(1 - \bar{w})\,T,
 \]
@@ -1243,6 +1247,9 @@ $\bar{w} = T^{-1}\sum_{t=1}^T w_t$ is the episode-average reliability.
 The theorem is therefore an aggregation result for an explicit risk-envelope
 contract; it is not presented as a direct consequence of vanilla conformal
 exchangeability alone.
+If the reliability process is left random rather than conditioned on the
+recorded budget trace, the corresponding defensible statement is
+$\mathbb{E}[V]\le\alpha\sum_t\mathbb{E}[1-w_t]$.
 \end{theorem}
 
 \noindent\textbf{Remark.}  The bound depends on~$\alpha$, $\bar{w}$, and~$T$
@@ -1313,8 +1320,8 @@ independence assumption is required.
 
 \begin{theorem}[ORIUS Core Bound]
 \label{thm:core-bound}
-Under Assumptions A1, A2, A4, A5, A6, A7, and A9, the expected total
-violation count under the DC3S shield satisfies
+Under Assumptions A1, A2, A4, A5, A6, A7, and A9, the expected total violation
+count under the DC3S shield on the fixed certified budget trace satisfies
 \[
   \mathbb{E}[V] \;\le\; \alpha\,(1 - \bar{w})\,T,
 \]
@@ -1542,10 +1549,10 @@ We first state the necessity result for an arbitrary CPS.
 \label{thm:no-free-safety-general}
 Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS
 satisfying Assumption~A2 with $g(w_t) > 0$ under degraded quality.
-For any quality-ignorant controller
-$\pi : \mathcal{X} \to \mathcal{U}$ (one whose action depends on
-$\hat{x}_t$ but not on $w_t$), there exists an admissible
-degraded-observation sequence $\{\xi_t\}_{t=1}^T$ and a time index
+For any fixed-margin quality-ignorant mandatory-release controller
+$\pi : \mathcal{X} \to \mathcal{U}$ whose admissible observation gap can exceed
+its fixed margin at a boundary-sensitive release step, there exists an
+admissible degraded-observation sequence $\{\xi_t\}_{t=1}^T$ and a time index
 $t^\star$ such that
 \[
   \phi_{\mathrm{obs}}(\pi(\hat{x}_{t^\star})) = 1
@@ -1585,8 +1592,9 @@ inflation module.
 
 \begin{lemma}[Admissible fault sequence existence]
 \label{lem:admissible-fault}
-For any quality-ignorant controller $\pi$ operating on the battery
-plant with dropout rate $d > 0$, there exists a fault sequence
+For any fixed-margin quality-ignorant controller $\pi$ operating on the battery
+plant with dropout rate $d > 0$ and an admissible gap larger than its fixed
+margin at a boundary-sensitive step, there exists a fault sequence
 $\{\xi_t\}_{t=1}^T$ satisfying Assumption~A2 such that:
 \begin{enumerate}
   \item Each $\xi_t$ is realisable under the dropout/drift model.
@@ -1647,21 +1655,24 @@ constraints.  The construction proceeds in three phases:
 \begin{theorem}[Observation Necessity / No Free Safety]
 \label{thm:no-free-safety}
 Under Assumptions~A2 and~A11, for any fixed-margin quality-ignorant
-controller $\pi$ and any dropout rate $d > 0$, there exists an admissible
-fault sequence such that $\pi$ incurs at least one true-state violation:
+mandatory-release controller $\pi$ and any dropout rate $d > 0$ whose
+admissible observation gap exceeds $m^\pi+\eta$ at a boundary-sensitive release
+step, there exists an admissible fault sequence such that $\pi$ incurs at least
+one true-state violation:
 \[
   \exists\,t^* \in \{1, \ldots, T\} : \quad
   \phi_{\text{obs}}(\pi(\hat{x}_{t^*})) = 1 \;\;\text{and}\;\;
   \phi_{\text{true}}(\pi(\hat{x}_{t^*})) = 0.
 \]
-The theorem is qualitative and witness-based.  The rate at which OASG grows
-with degradation budget is supplied separately by the boundary-
-indistinguishability lower bound in T10.
+The theorem is qualitative and witness-based.  Any repeated-window rate claim
+would require a separate promotion surface; the active T10 row is instead the
+two-state boundary-indistinguishability lower bound.
 \end{theorem}
 
 \begin{proof}
-By Lemma~\ref{lem:admissible-fault}, there exists a fault sequence
-with a concentrated fault window in which $|\xi_t| > \delta_{\text{bnd}}$.
+By Lemma~\ref{lem:admissible-fault} and the theorem's gap hypothesis, there
+exists a fault sequence with a concentrated fault window in which
+$|\xi_t| > \delta_{\text{bnd}}+m^\pi$ at the boundary-sensitive step.
 
 By Lemma~\ref{lem:no-margin}, the controller's margin $m^{\pi}$ does
 not increase during the fault window.
@@ -2008,37 +2019,35 @@ surface is the piecewise hold-or-safe-landing rule and nothing broader.
 
 \subsubsection{Graceful Degradation Dominance}
 
-\begin{theorem}[Graceful degradation dominance]
+\begin{theorem}[Graceful degradation dominance with useful work]
 \label{thm:graceful-dominance}
-Under Assumptions A1--A5 and A8, consider a paired graceful and
-uncontrolled rollout evaluated on the same admissible fault trace.  If the
-graceful controller releases a violation sequence
-$z^{\mathrm{graceful}}_{1:T}$ that is stepwise no worse than the paired
-uncontrolled sequence $z^{\mathrm{uncontrolled}}_{1:T}$, then the cumulative
-violation counts satisfy
+Under Assumptions A1--A5 and A8, consider paired graceful and uncontrolled
+rollouts evaluated on the same admissible fault trace.  Let \(Z_t^G,Z_t^U\) be
+their true-state violation indicators and \(W_G,W_U\) their useful-work totals.
+For a declared \(\lambda\in(0,1]\), if
 \[
-  V^{\text{graceful}} \;\le\; V^{\text{uncontrolled}}
+  Z_t^G\le Z_t^U\ \forall t
+  \qquad\text{and}\qquad
+  W_G\ge\lambda W_U,
 \]
-with strict inequality whenever the graceful sequence is strictly smaller on at
-least one step.  This sequence-level comparison is the full defended T8
-surface; the stronger absorbing-landing interpretation remains supporting-only.
+then the graceful policy weakly dominates uncontrolled persistence in the
+safety--work preorder.  This paired-trace safety-plus-work comparison is the
+full defended T8 surface; the stronger absorbing-landing interpretation remains
+supporting-only.
 \end{theorem}
 
 \begin{proof}
-Summing the paired stepwise inequality
-$z^{\mathrm{graceful}}_t \le z^{\mathrm{uncontrolled}}_t$ over
-$t=1,\dots,T$ gives
+Summing the paired stepwise inequality \(Z_t^G\le Z_t^U\) over
+\(t=1,\dots,T\) gives
 \[
-  \sum_{t=1}^{T} z^{\mathrm{graceful}}_t
+  \sum_{t=1}^{T} Z_t^G
   \le
-  \sum_{t=1}^{T} z^{\mathrm{uncontrolled}}_t,
+  \sum_{t=1}^{T} Z_t^U,
 \]
-which is exactly $V^{\mathrm{graceful}}\le V^{\mathrm{uncontrolled}}$.
-Strict inequality follows if the graceful sequence is strictly smaller on at
-least one step.  The executable helper
-\texttt{evaluate\_graceful\_degradation\_dominance()} implements precisely
-this paired-sequence comparison and does not claim a standalone
-absorbing-landing dynamics proof.
+which is the safety coordinate of the preorder.  The useful-work coordinate is
+the stated \(W_G\ge\lambda W_U\) hypothesis.  Immediate shutdown may satisfy
+the safety coordinate, but it is not a T8 witness unless it also satisfies the
+declared useful-work threshold.
 \end{proof}
 
 \subsubsection{Safe-Budget Monotonicity}

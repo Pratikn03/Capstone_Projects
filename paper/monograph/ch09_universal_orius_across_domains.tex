@@ -77,6 +77,25 @@ submission package.
   \input{../reports/publication/tbl_final_utility_preserving_safety}%
 }
 
+The utility claim is intentionally split into two reviewer-facing checks: ORIUS
+must be safer than predictor-only where the comparator is comparable, and it
+must preserve useful work relative to degenerate shutdown/fallback-only
+references.  The component-ablation table then records which removals have
+isolated runtime evidence and which are boundary-only because the compact
+surface does not isolate the component.
+
+\IfFileExists{reports/publication/utility_preserving_safety_claim_table.tex}{%
+  \input{reports/publication/utility_preserving_safety_claim_table}%
+}{%
+  \input{../reports/publication/utility_preserving_safety_claim_table}%
+}
+
+\IfFileExists{reports/publication/utility_preserving_safety_ablation_surfaces.tex}{%
+  \input{reports/publication/utility_preserving_safety_ablation_surfaces}%
+}{%
+  \input{../reports/publication/utility_preserving_safety_ablation_surfaces}%
+}
+
 \IfFileExists{reports/publication/tbl_final_freeze_validation.tex}{%
   \input{reports/publication/tbl_final_freeze_validation}%
 }{%

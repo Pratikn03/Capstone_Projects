@@ -47,6 +47,27 @@ The test-only auth bypass is valid only with `ORIUS_ENV=test` or inside pytest.
 .venv/bin/python scripts/validate_production_readiness.py
 ```
 
+## Clean-Clone Claim-Governing Tables
+
+After dependency installation, a clean clone can regenerate the manuscript-facing
+claim-governing runtime tables without raw datasets, model checkpoints, or heavy
+artifact builders:
+
+```bash
+make claim-governing-tables
+```
+
+This reads only tracked compact publication evidence:
+
+- `reports/publication/three_domain_ml_benchmark.csv`
+- `reports/publication/three_domain_forecast_calibration_runtime_evidence.csv`
+
+It refreshes:
+
+- `reports/publication/claim_governing_three_domain_runtime_evidence.tex`
+- `reports/publication/final_runtime_safety_for_paper.csv`
+- `reports/publication/tbl_final_runtime_safety.tex`
+
 ## Theorem Authority
 
 The current proof-strength authority is the promotion package:

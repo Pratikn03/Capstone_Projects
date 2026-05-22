@@ -1,17 +1,28 @@
 \paragraph{Theorem \texttt{T\_minimax}: Finite Ambiguity-Class Minimax Lower Bound.}
-Let \(\mathcal P_\epsilon\) be the class of two-state boundary problems with
+Let \(\mathcal P_\epsilon\) be a nonempty class of finite two-state boundary
+problems \(P=(x_0,x_1,P_0,P_1,C)\) satisfying
 \(d_{\mathrm{TV}}(P_0,P_1)\le\epsilon\) and
-\(C(x_0)\cap C(x_1)=\varnothing\). For observation-only mandatory-release
-controllers,
+\(C(x_0)\cap C(x_1)=\varnothing\). For a mandatory observation-only controller
+\(\pi\), define the worst-latent-state loss on \(P\) by
+\[
+  L(\pi,P)=
+  \sup_{i\in\{0,1\}}
+  \Pr_{O\sim P_i}[\pi(O)\notin C(x_i)] .
+\]
+Then
 \[
   \inf_{\pi\in\Pi_{\mathrm{obs}}}\sup_{P\in\mathcal P_\epsilon}
-  \Pr_P[\pi(O)\notin C(X)] \ge \frac{1-\epsilon}{2}.
+  L(\pi,P) \ge \frac{1-\epsilon}{2}.
 \]
 
 \paragraph{Proof.}
-Fix any \(\pi\). Applying Theorem T10 to the corresponding two-state problem
-gives a member of \(\mathcal P_\epsilon\) whose risk is at least
-\((1-\epsilon)/2\). Taking the supremum over \(\mathcal P_\epsilon\) preserves
-this lower bound for the fixed \(\pi\), and taking the infimum over \(\pi\)
-preserves it for the class. This is a finite ambiguity-class lower bound; it is
-not a global minimax optimality theorem.
+Fix any \(\pi\). For every \(P\in\mathcal P_\epsilon\), the hypotheses of T10
+hold by definition of the class, so
+\[
+  L(\pi,P)\ge\frac{1-\epsilon}{2}.
+\]
+Because the class is nonempty, taking the supremum over \(P\in\mathcal
+P_\epsilon\) preserves the same lower bound for the fixed \(\pi\). Taking the
+infimum over \(\pi\) then preserves it for the controller class. This is a
+finite ambiguity-class lower bound under the displayed loss; it is not a global
+minimax optimality theorem and does not assert a matching ORIUS upper bound.

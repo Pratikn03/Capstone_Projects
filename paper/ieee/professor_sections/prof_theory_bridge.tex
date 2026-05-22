@@ -107,15 +107,16 @@ actions.
 \begin{theorem}[T9: Impossibility of quality-ignorant mandatory release]
 \label{thm:prof-t9}
 For an observation \(o\), let \(B(o)=\{x:h(x)=o\}\) and
-\(K(o)=\cap_{x\in B(o)}C(x)\). If \(K(o)=\varnothing\), no
-observation-only mandatory-release controller can guarantee true-state safety
-for every \(x\in B(o)\).
+\(K(o)=\cap_{x\in B(o)}C(x)\). If \(B(o)\ne\varnothing\) and
+\(K(o)=\varnothing\), no total observation-only mandatory-release controller
+can guarantee true-state safety for every \(x\in B(o)\).
 \end{theorem}
 
 \begin{proof}[Proof sketch]
-The controller must choose one action \(a=\pi(o)\). Empty common safe core means
-no single action belongs to all \(C(x)\) for \(x\in B(o)\), so some latent state
-in the ambiguity class makes that mandatory release unsafe.
+The controller must choose one action \(a=\pi(o)\) for the nonempty ambiguity
+class. Empty common safe core means no single action belongs to all \(C(x)\) for
+\(x\in B(o)\), so some latent state in the ambiguity class makes that mandatory
+release unsafe.
 \end{proof}
 
 \subsection{T10: Boundary-indistinguishability lower bound}
@@ -135,11 +136,14 @@ mandatory-release controller satisfies
 \end{theorem}
 
 \begin{proof}[Proof sketch]
-This is a Le Cam style reduction.  The two disjoint safe-action sets mean one
-released action must be wrong for at least one latent state.  The smaller the
-total variation gap between the two observation laws, the less information the
-controller has about which state generated the observation.  The two-point
-testing inequality gives the displayed worst-case risk lower bound.
+This is a Le Cam style reduction.  For a deterministic release rule, let
+\(S_i=\{o:\pi(o)\in C(x_i)\}\).  Disjoint safe-action sets imply
+\(S_0\cap S_1=\varnothing\).  A test that decides \(x_0\) on \(S_0\) and
+\(x_1\) otherwise succeeds at least as often as the release rule is safe, so the
+two-point testing limit \((1+d_{\mathrm{TV}}(P_0,P_1))/2\) upper-bounds release
+success.  The displayed lower bound follows by complementing and taking the
+larger of the two state risks.  Randomized controllers follow by conditioning
+on their internal seed.
 \end{proof}
 
 \subsection{Active theorem package after promotion}

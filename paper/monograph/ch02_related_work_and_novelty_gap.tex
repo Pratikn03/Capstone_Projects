@@ -1,15 +1,12 @@
 \chapter{Related Work and the Novelty Gap}
 \label{ch:related-work-novelty-gap}
 
-ORIUS enters a crowded intellectual landscape, but the relevant literatures are crowded in a
-revealing way. Each contributes a necessary piece of the final argument: uncertainty
-quantification explains what can be said about predictive trust, runtime assurance explains
-why intervention must remain separate from nominal control, safe-control methods explain how
-constraints can reshape action, fault-detection work explains how degradation is recognized,
-and governance frameworks explain how claims and evidence must be bounded. The novelty gap
-appears only when those families are read together. They are rich in local technique yet
-still leave the release-boundary object of degraded observation split across separate
-traditions.
+ORIUS sits at the intersection of several mature literatures. Uncertainty quantification
+explains predictive trust, runtime assurance separates intervention from nominal control,
+safe-control methods reshape action under constraints, fault detection recognizes degraded
+telemetry, and governance frameworks bound claims with evidence. The novelty gap appears
+when these families are read together: each solves part of the release problem, but none
+stabilizes degraded-observation release as one typed runtime object.
 
 \section{Conformal prediction and adaptive calibration}
 Conformal prediction and related distribution-free uncertainty methods provide one of the
@@ -135,14 +132,12 @@ repair, governed fallback, and certificate semantics. That is why the related-wo
 organized by missing runtime objects rather than by model families alone.
 
 \section{The novelty gap ORIUS addresses}
-The literature becomes most powerful when these families are read together, but it also
-reveals a persistent separation of levels. Uncertainty methods stop at calibrated sets.
-Assurance methods stop at supervisory intervention. Safe-control methods stop at
-plant-specific repair geometry. Detection methods stop at identifying degraded telemetry.
-Domain systems stop at application-local safety practice. What is missing between them is a
-single typed runtime composition that starts with observation reliability and ends with
-repaired action, fallback, certificate semantics, and cross-domain replay under one common
-contract.
+Read together, the literatures reveal a persistent separation of levels. Uncertainty methods
+stop at calibrated sets. Assurance methods stop at supervisory intervention. Safe-control
+methods stop at plant-specific repair geometry. Detection methods stop at degraded-telemetry
+alarms. Domain systems stop at application-local safety practice. ORIUS targets the missing
+composition: a runtime contract that starts with observation reliability and ends with
+repaired action, fallback, certificate semantics, and cross-domain replay.
 
 The novelty sentence introduced in Chapter~\ref{ch:introduction-thesis-claims} is
 therefore read narrowly. For traceability, the canonical framing remains:
@@ -152,12 +147,10 @@ universal controller, or a new conditional-coverage theorem. The promoted ML sur
 grouped calibration by reliability bucket plus bounded runtime-safety deltas on the active
 three-domain lane.
 
-That missing composition is ORIUS's novelty claim. The dissertation does not argue that any
-one ORIUS component is unprecedented in isolation. It argues that the combination of
-observation reliability, action repair, certificate semantics, and universal replay has not
-previously been stabilized as one reusable runtime safety layer for physical AI. ORIUS is
-therefore not ``better forecasting,'' ``better perception,'' or ``one more controller.'' It
-is a release-boundary discipline for degraded-observation safety.
+That missing composition is ORIUS's novelty claim. No single ORIUS component is presented
+as unprecedented in isolation. The contribution is the combination: observation reliability,
+uncertainty inflation, action repair, fallback, certificate semantics, and replay evidence
+as one reusable release-boundary discipline.
 
 The closest plausible rival to ORIUS is not any single paper in these families. It is an
 imagined composition of them: adaptive conformal intervals for uncertainty, a safety filter

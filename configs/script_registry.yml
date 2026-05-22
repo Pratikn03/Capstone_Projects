@@ -8,6 +8,15 @@ scripts:
   scripts/build_theorem_summary_figures.py:
     status: manual
     reason: "Manual theorem-figure rebuild helper retained for publication refreshes outside the default gate."
+  scripts/regenerate_figures_phase_a.py:
+    status: manual
+    reason: "Manual camera-ready figure refresh helper for P0 universal-framework and runtime TSVR figures; not a default release entrypoint."
+  scripts/regenerate_figures_phase_b.py:
+    status: manual
+    reason: "Manual camera-ready figure refresh helper for theory/runtime-domain and theorem figures; not a default release entrypoint."
+  scripts/regenerate_figures_phase_c.py:
+    status: manual
+    reason: "Manual camera-ready figure refresh helper for utility, calibration, and governance figures; not a default release entrypoint."
   scripts/recalibrate_conformal_from_backtests.py:
     status: manual
     reason: "Manual calibration-maintenance helper for backtest reruns, not a default release entrypoint."

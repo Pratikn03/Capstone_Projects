@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-04-30T19:50:32.915813+00:00",
+  "generated_at_utc": "2026-05-13T03:18:30.528022+00:00",
   "min_sources": 500,
   "pass": true,
   "policy": "T9/T10 research support requires 500+ provenance-backed source rows by default plus proof-step dependency coverage.",
@@ -20,6 +20,7 @@
     "T9"
   ],
   "topic_families": [
+    "ambiguity_witnesses",
     "av_validation",
     "battery_validation",
     "conformal_shift",

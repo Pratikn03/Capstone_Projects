@@ -14,7 +14,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and conve
 - T2 (proof_runtime_linked, critical): strengthen proof - Keep the absorbed margin explicit in theorem text, repair metadata, and true-state invariance checks.
 - T3a (paper_rigorous, critical): strengthen proof - Keep the reliability-score disclaimer explicit and avoid reintroducing weighted-exchangeability overclaims.
 - T3b (paper_rigorous, medium): maintain split - Keep T3b corollary-only and avoid collapsing it back into a single overloaded T3 row.
-- T4 (paper_rigorous, high): keep scope explicit - Preserve the fixed-margin quality-ignorant controller definition and avoid broadening the theorem into a claim that every ambiguity class is unsafe.
+- T4 (paper_rigorous, high): keep scope explicit - Preserve the fixed-margin mandatory-release definition and the admissible degraded-gap hypothesis; avoid broadening the theorem into a claim that every ambiguity class or every controller is unsafe.
 - T5 (paper_rigorous, medium): keep finite-horizon scope - Preserve the reachable-tube containment hypothesis and do not convert T5 into an unconditional future-step probability law.
 - T6 (machine_checked_ready, high): keep flagship closed-form - Keep the no-delta legacy semantics out of the theorem-facing API and preserve the explicit first-passage side conditions.
 - T7 (proof_runtime_linked, medium): keep battery-specific - Preserve the piecewise hold-or-safe-landing scope and do not generalize T7 into a cross-domain transfer theorem.
@@ -22,7 +22,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and conve
 - T9 (paper_rigorous, high): keep mandatory-release scope - Keep T9 tied to empty-safe-core witnesses and do not restate it as a universal impossibility for policies allowed to abstain or fail closed; domain discharge is evidence, not an extra hidden assumption.
 - T10 (paper_rigorous, high): keep two-state scope - Do not describe T10 as a full minimax frontier; the scoped minimax row is T_minimax and still lacks a global optimality claim; domain discharge is evidence, not an extra hidden assumption.
 - T11 (paper_rigorous, critical): keep forward-only - Do not blur the supporting mini-harness into the active T11 transfer theorem.
-- T10_T11_ObservationAmbiguitySandwich (proof_runtime_linked, high): keep scoped optimality - Keep the theorem phrased as safety-optimal under covered observation ambiguity and contract-universal, not unrestricted-global.
+- T10_T11_ObservationAmbiguitySandwich (proof_runtime_linked, high): keep scoped lower-upper comparison - Keep the corollary phrased as a covered lower/upper safety sandwich, not as a global optimality theorem.
 - T11_AV_BrakeHold (proof_runtime_linked, high): fail closed - Missing T11 status, failed obligations, invalid certificate, or false postcondition must make the witness fail.
 - T11_HC_FailSafeRelease (proof_runtime_linked, high): fail closed - Missing T11 status, failed obligations, invalid certificate, or false postcondition must make the witness fail.
 - T6_AV_FallbackValidity (proof_runtime_linked, high): fail closed - Non-fail-safe fallback or failed postcondition must invalidate the witness.

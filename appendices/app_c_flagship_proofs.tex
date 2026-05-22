@@ -27,11 +27,12 @@
 This standalone article is the reviewer-facing integrated proof packet for
 ORIUS and the registry-canonical flagship-core execution draft. It presents the
 battery witness ladder T1--T8 first, then the defended ORIUS-wide extension
-surfaces T11 and T\_trajectory\_PAC.  The active theorem registry remains
-authoritative for defense tiers: T3 is presented through the flagship T3a
-theorem plus the supporting T3b corollary, T5 remains definition-level within
-the ladder, and T8 remains a supporting sequence-level result even though it is
-included here for reviewer continuity. The full integrated proof source remains
+surfaces T9, T10, T11, T\_trajectory\_PAC, T\_minimax, and
+T\_sensor\_converse in the full proof appendix.  The active theorem registry
+remains authoritative for defense tiers: T3 is presented through the flagship
+T3a theorem plus the supporting T3b corollary, while T5 and T8 are defended only
+under their narrowed certificate-horizon and safety-plus-useful-work statements.
+The full integrated proof source remains
 \texttt{appendices/app\_c\_full\_proofs.tex}.
 
 \section*{C.1 Strict Topological Notation and Dynamics}
@@ -184,10 +185,12 @@ If a predictable nonnegative sequence $r_t$ satisfies
   \Prob[Z_t = 1 \mid \mathcal{H}_t] \le r_t
   \qquad\text{for all } t,
 \]
-then
+then, on a fixed recorded budget trace,
 \[
   \E[V] \le \sum_{t=1}^T r_t.
 \]
+If the budget process is left random, the corresponding statement is
+\(\E[V]\le\sum_{t=1}^T\E[r_t]\).
 \end{lemma}
 
 \begin{proof}
@@ -198,8 +201,9 @@ Because $Z_t$ is an indicator,
   \Prob[Z_t=1 \mid \mathcal{H}_t]
   \le r_t.
 \]
-Taking unconditional expectations preserves the inequality, and summing across
-the horizon yields $\E[V] \le \sum_{t=1}^T r_t$. No temporal independence
+Taking unconditional expectations gives \(\E[Z_t]\le\E[r_t]\).  On the fixed
+recorded budget trace used by the theorem artifact, the budget values are
+constants, yielding $\E[V] \le \sum_{t=1}^T r_t$. No temporal independence
 assumption is required. \qedhere
 \end{proof}
 
@@ -210,7 +214,8 @@ budget
 \[
   \Prob[Z_t=1\mid\mathcal{H}_t] \le \alpha(1-w_t),
 \]
-the expected total violation count under the DC3S shield satisfies
+the expected total violation count under the DC3S shield on the fixed certified
+budget trace satisfies
 \[
   \E[V] \le \alpha(1-\bar w)T,
 \]
@@ -241,9 +246,10 @@ flagship-only appendix.
 
 \begin{theorem}[T4: No Free Safety]\label{thm:t4}
 \textbf{Assumptions.} A1, A2, A4, A11. \\
-\textbf{Statement.} For any fixed-margin quality-ignorant controller $\pi$ and
-any dropout rate $d>0$, there exists an admissible fault sequence and a time
-$t^\star$ such that
+\textbf{Statement.} For any fixed-margin quality-ignorant mandatory-release
+controller $\pi$ whose admissible degraded-observation gap exceeds
+$m^\pi+\eta$ at a boundary-sensitive release step, there exists an admissible
+fault sequence and a time $t^\star$ such that
 \[
   \phi_{\mathrm{obs}}(\pi(\hat{x}_{t^\star})) = 1
   \qquad\text{and}\qquad
@@ -261,11 +267,11 @@ controller. By A11, the battery witness controller can be driven through a
 boundary-sensitive baiting phase in which the state approaches the constraint
 surface while telemetry remains nominal.
 
-Because $d>0$, A2 admits an admissible degraded-observation fault window with a
-non-trivial observation gap. Choose a step $t^\star$ in that window where the
-accumulated observation error exceeds the controller's fixed margin plus the
-boundary distance available on the baited state. At that step the observed
-state still appears feasible relative to the controller's fixed margin, but the
+By the theorem's gap hypothesis and A2, choose a step $t^\star$ in an
+admissible degraded-observation fault window where the accumulated observation
+error exceeds the controller's fixed margin plus the boundary distance
+available on the baited state. At that step the observed state still appears
+feasible relative to the controller's fixed margin, but the
 true state has shifted across the boundary-facing side of the admissible set by
 more than the controller can compensate. A4 again supplies the shared
 one-step battery dynamics interpretation for the released action.
@@ -274,7 +280,9 @@ Therefore the action $\pi(\hat{x}_{t^\star})$ remains observed-state legal
 while creating a true-state violation. This yields an observation-action safety
 gap and hence at least one true-state violation on the constructed admissible
 sequence. The theorem is intentionally class-scoped to fixed-margin,
-quality-ignorant controllers on the battery witness row. \qedhere
+quality-ignorant mandatory-release controllers on the battery witness row; it
+does not attack adaptive margins, abstention, fallback, or fail-closed denial.
+\qedhere
 \end{proof}
 
 \section*{C.6 T5 --- Certificate Validity Horizon}
@@ -369,31 +377,33 @@ fallback guarantee beyond those executable cases. \qedhere
 
 \section*{C.9 T8 --- Graceful Degradation Dominance}
 
-\begin{proposition}[T8: Graceful Degradation Dominance]
+\begin{theorem}[T8: Graceful Degradation Dominance with Useful Work]
 \textbf{Assumptions.} A1--A5, A8. \\
-\textbf{Statement.} For graceful and uncontrolled violation sequences produced
-under the same admissible fault trace,
+\textbf{Statement.} For graceful and uncontrolled policies produced under the
+same admissible fault trace, let \(Z_t^G,Z_t^U\) be true-state violation
+indicators and \(W_G,W_U\) useful-work totals.  For a declared
+\(\lambda\in(0,1]\), if
 \[
-  z_t^{\mathrm{graceful}} \le z_t^{\mathrm{uncontrolled}} \;\; \forall t
-  \quad\Longrightarrow\quad
-  V^{\mathrm{graceful}} \le V^{\mathrm{uncontrolled}}.
+  Z_t^G \le Z_t^U \;\; \forall t
+  \qquad\text{and}\qquad
+  W_G\ge\lambda W_U,
 \]
-Strict improvement is claimed only when the graceful sequence is strictly
-smaller on at least one step.
-\end{proposition}
+then the graceful policy weakly dominates uncontrolled persistence in the
+safety--work preorder.  No global fallback optimality claim is made.
+\end{theorem}
 
 \begin{proof}
-Summing the stepwise dominance inequality over the shared admissible fault
-trace gives
+Summing the stepwise dominance inequality over the shared admissible fault trace
+gives
 \[
-  \sum_{t=1}^{T} z_t^{\mathrm{graceful}}
+  \sum_{t=1}^{T} Z_t^G
   \le
-  \sum_{t=1}^{T} z_t^{\mathrm{uncontrolled}},
+  \sum_{t=1}^{T} Z_t^U,
 \]
-which is exactly the claimed cumulative-count dominance statement.  Strict
-inequality follows if the graceful sequence is strictly smaller on at least one
-step.  This is the supporting T8 surface in the integrated ladder: a
-paired-sequence comparison and nothing stronger. \qedhere
+which is the safety coordinate of the preorder.  The hypothesis
+\(W_G\ge\lambda W_U\) is the useful-work coordinate.  Immediate shutdown may
+satisfy the first coordinate, but it is not a T8 witness unless it also meets
+the same useful-work threshold. \qedhere
 \end{proof}
 
 \section*{C.10 T11 --- Typed Structural Transfer}
@@ -488,6 +498,8 @@ By T3a,
 \[
   \Prob[Z_t=1\mid\mathcal{H}_t]\le\alpha(1-w_t).
 \]
+The displayed horizon algebra is interpreted on the fixed certified budget
+trace; leaving \(w_t\) random replaces each \(1-w_t\) by its expectation.
 
 \textbf{Step 2 (trajectory aggregation by union bound).}
 Let $E_t=\{Z_t=1\}$ denote a stepwise true-state violation. Then

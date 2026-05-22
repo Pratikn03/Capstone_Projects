@@ -116,10 +116,10 @@ surface_register_rows:
   - register_id: T10_T11_ObservationAmbiguitySandwich
     group: Defended theorem program
     environment: corollary
-    title: "T10_T11_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality"
-    context: Covered Observation-Ambiguity Optimality
+    title: "T10_T11_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Safety Sandwich"
+    context: Covered Observation-Ambiguity Safety Sandwich
     source: chapters/ch37_universality_completeness.tex
-    needle: '\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality]'
+    needle: '\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Safety Sandwich]'
   - register_id: T11_AV_BrakeHold
     group: Defended theorem program
     environment: lemma
@@ -514,7 +514,7 @@ theorems:
     proof_tier: V1
     program_role: bounded_necessity_witness
     status: active
-    scope_note: Defended as the observation-necessity witness for the fixed-margin quality-ignorant controller class on the battery row with explicit arbitrage reachability.
+    scope_note: Defended as the observation-necessity witness for fixed-margin quality-ignorant mandatory-release controllers on the battery row when an admissible degraded-observation gap exceeds the fixed margin at a boundary-sensitive release step.
     statement_source:
       file: chapters_merged/ch04_theoretical_foundations.tex
       needle: '\begin{theorem}[Observation Necessity / No Free Safety]'
@@ -531,13 +531,13 @@ theorems:
       - Definition: Quality-ignorant controller
       - Lemma: Admissible fault sequence existence
       - Lemma: No margin compensation for quality-ignorant controllers
-    weakest_step: The constructive witness is intentionally class-scoped; widening the controller class would require a new proof.
+    weakest_step: The constructive witness is intentionally class-scoped and gap-scoped; widening the controller class or removing the admissible-gap hypothesis would require a new proof.
     rigor_rating: paper_rigorous
     code_correspondence: matches
     code_correspondence_detail: The fixed-margin, quality-ignorant counterexample is now executable as a release witness and remains class-scoped.
     severity_if_broken: high
     remediation_class: keep scope explicit
-    remediation_detail: Preserve the fixed-margin quality-ignorant controller definition and avoid broadening the theorem into a claim that every ambiguity class is unsafe.
+    remediation_detail: Preserve the fixed-margin mandatory-release definition and the admissible degraded-gap hypothesis; avoid broadening the theorem into a claim that every ambiguity class or every controller is unsafe.
     code_anchors:
       - path: src/orius/dc3s/supporting_results.py
         symbol: verify_no_margin_compensation
@@ -802,7 +802,7 @@ theorems:
     proof_tier: V1
     program_role: impossibility_extension
     status: active
-    scope_note: Defended as a mandatory-release impossibility theorem; when an observation ambiguity class has empty common safe core, no observation-only controller can guarantee true-state safety for every latent state in that class; domain discharge is evidence, not an extra hidden assumption.
+    scope_note: Defended as a mandatory-release impossibility theorem; when a nonempty observation ambiguity class has empty common safe core, no total observation-only controller can guarantee true-state safety for every latent state in that class; domain discharge is evidence, not an extra hidden assumption.
     statement_source:
       file: appendices/proofs/T9_no_free_safety.tex
       needle: '\paragraph{Theorem T9: Impossibility of Quality-Ignorant Mandatory Release.}'
@@ -811,7 +811,8 @@ theorems:
       needle: '\paragraph{Proof.}'
     assumptions: []
     typed_obligations:
-      - Mandatory release policy depends only on the observation.
+      - Mandatory release policy is total and depends only on the observation.
+      - The observation ambiguity class is nonempty.
       - The observation ambiguity class has empty common safe core.
     unresolved_assumptions: []
     dependencies:
@@ -860,8 +861,9 @@ theorems:
       - The two state-conditioned safe-action sets are disjoint.
     unresolved_assumptions: []
     dependencies:
+      - Binary testing reduction
       - Le Cam two-point lemma
-    weakest_step: The result is a two-hypothesis lower bound, not a sharp global frontier for arbitrary policies or observation models.
+    weakest_step: The result is a two-hypothesis lower bound over mandatory release; it is not a sharp global frontier for arbitrary policies, abstaining controllers, or observation models.
     rigor_rating: paper_rigorous
     code_correspondence: matches
     code_correspondence_detail: The boundary-indistinguishability helper estimates total variation and evaluates the exact two-state lower-bound curve.
@@ -946,19 +948,19 @@ theorems:
       token: THM_T11
       artifact_path: reports/publication/orius_transfer_obligation_table.csv
   - id: T10_T11_ObservationAmbiguitySandwich
-    title: "T10_T11_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality"
+    title: "T10_T11_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Safety Sandwich"
     surface_kind: corollary
     defense_tier: supporting_defended
     proof_tier: V1_runtime_linked
-    program_role: supporting_observation_ambiguity_optimality
+    program_role: supporting_observation_ambiguity_sandwich
     status: active
-    scope_note: Supporting optimality corollary under covered observation ambiguity; contract-universal, not unrestricted-global; it does not assert unrestricted global optimality for all physical AI systems.
+    scope_note: Supporting lower/upper safety sandwich under covered observation ambiguity; contract-universal, not unrestricted-global; it does not assert unrestricted global optimality for all physical AI systems.
     statement_source:
       file: chapters/ch37_universality_completeness.tex
-      needle: '\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality]'
+      needle: '\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Safety Sandwich]'
     proof_source:
       file: appendices/app_c_full_proofs.tex
-      needle: '\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality]'
+      needle: '\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Safety Sandwich]'
     assumptions: []
     typed_obligations:
       - Observation ambiguity classes are explicit.
@@ -976,8 +978,8 @@ theorems:
     code_correspondence: matches
     code_correspondence_detail: The executable witness computes common safe cores, observation-only Bayes lower bounds, and covered ORIUS release upper bounds with explicit alpha-bound semantics.
     severity_if_broken: high
-    remediation_class: keep scoped optimality
-    remediation_detail: Keep the theorem phrased as safety-optimal under covered observation ambiguity and contract-universal, not unrestricted-global.
+    remediation_class: keep scoped lower-upper comparison
+    remediation_detail: Keep the corollary phrased as a covered lower/upper safety sandwich, not as a global optimality theorem.
     code_anchors:
       - path: src/orius/universal_theory/observation_ambiguity.py
         symbol: build_observation_ambiguity_contract_summary
@@ -1634,13 +1636,14 @@ theorems:
       needle: '\paragraph{Proof.}'
     assumptions: []
     typed_obligations:
-      - The distribution class is finite two-state boundary problems.
+      - The distribution class is nonempty and consists of finite two-state boundary problems.
       - Observation laws satisfy the stated TV bound.
       - Safe-action sets are disjoint.
+      - Loss is worst-latent-state mandatory-release risk.
     unresolved_assumptions: []
     dependencies:
       - T10
-    weakest_step: This is a scoped lower bound over a finite ambiguity class; no matching ORIUS upper bound is asserted as global optimality.
+    weakest_step: This is a scoped lower bound over a nonempty finite ambiguity class under worst-state loss; no matching ORIUS upper bound is asserted as global optimality.
     rigor_rating: paper_rigorous
     code_correspondence: matches
     code_correspondence_detail: The minimax helper delegates to the two-state boundary lower-bound calculator and exposes optional ORIUS coverage upper bounds separately.
@@ -1676,6 +1679,7 @@ theorems:
       needle: '\paragraph{Proof.}'
     assumptions: []
     typed_obligations:
+      - Adapter observation map is invariant to the omitted latent coordinate.
       - Safe-action map depends on the omitted latent coordinate.
       - Two states differing only in that coordinate have disjoint safe-action sets.
       - Policy class is observation-only mandatory release.
@@ -1725,7 +1729,8 @@ theorems:
       - A5
       - A9
     typed_obligations:
-      - Bonferroni/union-bound aggregation over the horizon.
+      - Bonferroni/union-bound aggregation over the finite horizon.
+      - No temporal independence, Ville, or supermartingale condition is claimed.
     unresolved_assumptions: []
     dependencies:
       - T3a

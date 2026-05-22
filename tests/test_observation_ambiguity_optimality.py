@@ -91,6 +91,6 @@ def test_contract_summary_links_t10_lower_bound_and_t11_upper_bound() -> None:
 
     assert summary["theorem_id"] == "T10_T11_ObservationAmbiguitySandwich"
     assert summary["source_theorems"] == ["T10", "T11"]
-    assert summary["theorem_type"] == "supporting_optimality_corollary"
+    assert summary["theorem_type"] == "supporting_ambiguity_sandwich_corollary"
     assert summary["all_executable_checks_passed"] is True
     assert "not a global" in summary["claim_boundary"]

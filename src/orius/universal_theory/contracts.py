@@ -1042,7 +1042,10 @@ ASSUMPTION_REGISTER: dict[str, dict[str, str]] = {
             "The telemetry process is phi-mixing with geometric decay "
             "phi(k) <= C rho^k for C > 0 and rho in (0,1)."
         ),
-        "role": ("Supports the current T9 separated-window proof under stronger dependence decay."),
+        "role": (
+            "Retained for archived weak-dependence diagnostics; the active T9 theorem uses "
+            "typed empty-safe-core obligations instead of a separated-window mixing proof."
+        ),
     },
     "A11": {
         "tag": "A11",
@@ -1071,12 +1074,13 @@ ASSUMPTION_REGISTER: dict[str, dict[str, str]] = {
     },
     "A13": {
         "tag": "A13",
-        "name": "TV bridge",
+        "name": "Boundary TV radius",
         "formal": (
-            "For the T10 binary boundary-testing observation laws, TV(P_{0,t}, P_{1,t}) <= w_t for every t."
+            "For a declared T10 two-state boundary-testing witness, d_TV(P_0, P_1) <= epsilon."
         ),
         "role": (
-            "Links the reliability score to distinguishability in the scoped binary lower-bound construction."
+            "Records the witness-side TV radius for a boundary pair; it does not identify "
+            "the reliability score with total-variation distance."
         ),
     },
 }

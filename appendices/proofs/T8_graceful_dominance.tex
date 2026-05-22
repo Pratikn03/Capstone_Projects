@@ -1,15 +1,34 @@
 \paragraph{Theorem T8: Graceful Degradation Dominance with Useful Work.}
-Let \(P_G\) be an ORIUS graceful-degradation policy and \(P_U\) an uncontrolled
-persistence policy evaluated on the same admissible fault trace. Let \(Z_t^G\)
-and \(Z_t^U\) be true-state violation indicators, and let \(W_G,W_U\) be useful
-work totals. If \(Z_t^G\le Z_t^U\) for all \(t\) and \(W_G\ge \lambda W_U\) for
-\(\lambda\in(0,1]\), then \(P_G\) weakly dominates \(P_U\) in safety while
-preserving at least a \(\lambda\)-fraction of useful work.
+Fix a finite horizon and a paired admissible fault trace. Let \(P_G\) be an
+ORIUS graceful-degradation policy and \(P_U\) an uncontrolled persistence policy
+evaluated on that same trace. Let \(Z_t^G,Z_t^U\in\{0,1\}\) be true-state
+violation indicators, and let \(W_G,W_U\ge0\) be the corresponding useful-work
+totals on the horizon. For a declared operating threshold
+\(\lambda\in(0,1]\), if
+\[
+  Z_t^G\le Z_t^U\quad \forall t
+  \qquad\text{and}\qquad
+  W_G\ge \lambda W_U,
+\]
+then \(P_G\) weakly dominates \(P_U\) in the safety--work preorder
+\[
+  P\preceq_{\lambda} Q
+  \quad\Longleftrightarrow\quad
+  \sum_t Z_t^P\le\sum_t Z_t^Q
+  \;\text{ and }\;
+  W_P\ge\lambda W_Q .
+\]
+This is a paired-trace dominance statement, not a claim that \(P_G\) is globally
+optimal among all fallback policies.
 
 \paragraph{Proof.}
-Summing the pointwise inequality gives
-\(\sum_t Z_t^G\le \sum_t Z_t^U\), so the graceful policy has no larger violation
-count or violation rate on the paired trace. The second hypothesis is exactly
-the useful-work lower bound. These two inequalities are the product-order
-dominance relation used by the theorem: safety is weakly improved and work is
-retained above the declared threshold.
+Summing the pointwise inequality over the fixed horizon gives
+\[
+  \sum_t Z_t^G\le \sum_t Z_t^U,
+\]
+so the graceful policy has no larger violation count, and therefore no larger
+violation rate, on the paired trace. The second hypothesis is exactly the
+useful-work lower bound \(W_G\ge\lambda W_U\). These two inequalities are the
+two coordinates of the stated preorder. Immediate shutdown can satisfy the
+safety coordinate, but it is a T8 witness only if it also satisfies the same
+useful-work threshold; otherwise it is outside the theorem's dominance claim.

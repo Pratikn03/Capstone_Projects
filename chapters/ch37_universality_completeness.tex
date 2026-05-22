@@ -24,7 +24,10 @@ In the paper-facing presentation, this chapter should be read as the final
 piece of a promoted but scoped theory arc.  T11 is the main transfer theorem.
 T9 and T10 are defended as observation-ambiguity lower bounds after the
 theorem-promotion gates discharge their constants and domain assumptions for
-the locked Battery, AV, and Healthcare artifacts.  \texttt{T\_minimax}
+the locked Battery, AV, and Healthcare artifacts.  T9 is the empty-safe-core
+mandatory-release impossibility theorem, not a universal failure theorem for
+controllers allowed to abstain or fail closed.  T10 is the two-state
+total-variation lower bound, not a global minimax frontier.  \texttt{T\_minimax}
 remains scoped to finite ambiguity classes; no unrestricted global minimax
 optimality claim is made.
 
@@ -90,9 +93,9 @@ reference proof ladder:
 \toprule
 \textbf{Theorem} & \textbf{Control-theory question} & \textbf{Role in the monograph} \\
 \midrule
-T9 & Is reliability-aware repair structurally necessary, or merely useful? & Necessity theorem for degraded-observation control \\
+T9 & When does observation-only mandatory release become impossible? & Empty-safe-core mandatory-release theorem \\
 \addlinespace
-T10 & Does the ORIUS envelope have the right scaling law, or is it loose? & Lower-bound theorem for degraded-observation risk \\
+T10 & How much risk is forced by indistinguishable boundary states? & Two-state TV lower-bound theorem \\
 \addlinespace
 T11 & Which structural obligations let the reference proof pattern transfer? & Template transfer theorem for new domains \\
 \bottomrule
@@ -101,9 +104,10 @@ T11 & Which structural obligations let the reference proof pattern transfer? & T
 
 The dependency order is strict.  T1--T8 establish the reference proof
 ladder.  T9 and T10 are assumption-qualified extensions under explicit
-domain-discharge artifacts: T9 frames the structural risk of ignoring
-reliability, and T10 records a boundary-indistinguishability frontier for the
-stated binary testing model.  T11 then identifies the obligations under which
+domain-discharge artifacts: T9 frames the structural risk of mandatory release
+when the common safe core is empty, and T10 records a
+boundary-indistinguishability lower bound for the stated binary testing model.
+T11 then identifies the obligations under which
 the same repair-and-bound structure transfers across domains.
 
 \paragraph{Mathematical contract vs. domain discharge.}
@@ -128,207 +132,120 @@ promoted.
 Theorem~\ref{thm:no-free-safety} shows, on the reference proof surface, that
 quality-ignorant safety logic can fail even when observed-state evaluation
 looks safe.  The broader universality claim is that this pathology is not a
-single-domain accident; T9 records the corresponding assumption-qualified
-extension under explicit mixing and boundary-reachability assumptions.  The
-locked Battery, AV, and Healthcare artifacts discharge these constants through
-the promotion evidence files \texttt{T9\_battery.json}, \texttt{T9\_av.json},
-and \texttt{T9\_healthcare.json}.
+single-domain accident; T9 records the corresponding scoped structural
+statement for observation-only mandatory release on a nonempty ambiguity class
+whose common safe core is empty.  The locked Battery, AV, and Healthcare
+artifacts instantiate such ambiguity witnesses through the promotion evidence
+files \texttt{T9\_battery.json}, \texttt{T9\_av.json}, and
+\texttt{T9\_healthcare.json}.
 
-\begin{theorem}[Universal Impossibility, T9]
+\begin{theorem}[Impossibility of quality-ignorant mandatory release, T9]
 \label{thm:universal-impossibility}
-Consider a closed-loop controller that does not adapt its safety margin to the
-telemetry reliability process $w_t$.  Under persistent observation degradation
-with non-zero fault rate and under the standing boundary-reachability
-assumptions used throughout this dissertation, there exists a constant
-$c > 0$ such that
+Let \(\Pi_{\mathrm{obs}}\) be total observation-only mandatory-release
+controllers \(\pi:\mathcal O\to\mathcal A\), and let
 \[
-  \mathbb{E}\!\left[V_T\right] \;\ge\; c \, d \, T,
+  B(o)=\{x\in\mathcal X:h(x)=o\},
+  \qquad
+  K(o)=\bigcap_{x\in B(o)}C(x)
 \]
-where $d$ is the mean degradation rate and $V_T$ is the true-state violation
-count over the horizon.
+be the ambiguity class and common safe core for observation \(o\).  If
+\(B(o)\ne\varnothing\) and \(K(o)=\varnothing\), then no controller
+\(\pi\in\Pi_{\mathrm{obs}}\) can guarantee true-state safety for every
+\(x\in B(o)\).
 \end{theorem}
 
-\begin{proof}[Proof (martingale--$\varphi$-mixing argument)]
-The proof proceeds in three steps.
-
-\medskip
-\noindent\textbf{Step~1: $\varphi$-mixing fault process.}
-By Assumption~A10b (Chapter~\ref{ch:assumptions}), the fault injection
-process $\{F_t\}$ is $\varphi$-mixing with coefficient $\varphi(k)\to 0$
-as $k\to\infty$.  Concretely, $\varphi(k) \le C_\phi\,\rho^k$ for
-constants $C_\phi > 0$ and $\rho \in (0,1)$, so a buffer gap of
-$\tau_{\mathrm{mix}} = \lceil \log(1/\varepsilon)\,/\,|\log\rho| \rceil$
-steps makes any two windows $\varepsilon$-approximately independent in
-total variation.
-
-\medskip
-\noindent\textbf{Step~2: Separated windows and per-window risk.}
-Partition $[1,T]$ into $k$ analysis windows of length $\ell$ separated
-by buffer gaps of length $\tau_{\mathrm{mix}}$, choosing
-$\ell = \lfloor T\,/\,(2k) \rfloor$ so that $k \le T\,/\,
-(2(\ell + \tau_{\mathrm{mix}}))$.  The reference-domain
-no-free-safety witness (Theorem~\ref{thm:no-free-safety}) is applied
-inside each window: if the controller does not adapt its safety margin
-to the OQE signal $w_t$, the observation gap drives the true state
-across the constraint boundary while the observed state appears feasible.
-The per-window violation probability satisfies
-$p_{\mathrm{win}} \ge c\,d$ for a positive constant $c > 0$ that depends
-on the boundary-reachability conditions of Assumption~A11.
-
-\medskip
-\noindent\textbf{Step~3: Martingale concentration.}
-Define $D_j = Z_j^{\mathrm{win}} - \mathbb{E}\!\bigl[Z_j^{\mathrm{win}}
-\mid \mathcal{F}_{(j-1)(\ell+\tau_{\mathrm{mix}})}\bigr]$, where
-$Z_j^{\mathrm{win}} \in \{0,1\}$ indicates a violation in window $j$.
-The sequence $\{D_j\}$ is a martingale difference sequence with
-$|D_j|\le 1$.  By the Azuma--Hoeffding inequality,
+\begin{proof}
+A total mandatory-release controller must choose one action \(a=\pi(o)\) for
+the entire ambiguity class \(B(o)\). If that action were safe for every
+\(x\in B(o)\), then
 \[
-  \Pr\!\Bigl[\,\textstyle\sum_{j=1}^k D_j \le -t\,\Bigr]
-  \;\le\; \exp\!\Bigl(-\tfrac{2t^2}{k}\Bigr).
+  a\in\bigcap_{x\in B(o)}C(x)=K(o),
 \]
-Since $\mathbb{E}\bigl[\sum_j Z_j^{\mathrm{win}}\bigr] \ge k\,c\,d$,
-setting $t = k\,c\,d/2$ gives
-\[
-  \Pr\!\Bigl[\,V_T \;\le\; \tfrac{k\,c\,d}{2}\,\Bigr]
-  \;\le\;
-  \exp\!\Bigl(-\tfrac{k\,c^2\,d^2}{2}\Bigr)
-  \;=\;
-  \exp\!\Bigl(-\Omega(dT)\Bigr).
-\]
-Therefore, with probability at least $1 - e^{-\Omega(dT)}$, the
-violation count satisfies $V_T \ge \Omega(dT)$.  Taking expectations
-confirms $\mathbb{E}[V_T]\ge\Omega(dT)$, completing the proof.
+contradicting \(K(o)=\varnothing\). Hence there exists
+\(x^\dagger\in B(o)\) with \(a\notin C(x^\dagger)\). The release is therefore
+not certifiably safe for the whole ambiguity class.
 \end{proof}
 
 \begin{remark}
-The martingale argument is strictly stronger than a Borel--Cantelli
-appeal: Borel--Cantelli requires pairwise independence across windows,
-which does not hold when the true state carries over between adjacent
-windows.  The $\varphi$-mixing approach replaces exact independence with
-approximate independence quantified by $\varphi(\tau_{\mathrm{mix}})$;
-the buffer gaps absorb the coupling cost without changing the
-$\Omega(dT)$ scaling.
+T9 is deliberately narrower than the historical ``universal impossibility''
+wording. It does not apply to policies allowed to abstain, expand the
+uncertainty set, invoke fallback, or deny release. Those are precisely the
+operations added by ORIUS. The theorem only attacks total observation-only
+mandatory release on ambiguity classes with empty common safe core.
 \end{remark}
 
-T9 is a supporting defended necessity extension for the universal kernel:
-under the explicit A10b/A11 hypotheses, and under the locked three-domain
-mixing and witness artifacts, it records why a controller that ignores
-reliability cannot remove the violation scaling by algorithmic tuning alone.
-Broader portability still requires rerunning the same discharge builder on the
-new domain rather than inheriting the Battery/AV/Healthcare constants.
+T9 is a defended necessity extension for the universal kernel because it
+identifies the exact structural condition under which observation-aware repair
+or fail-closed behavior is necessary. Broader portability still requires
+rerunning the ambiguity-class discharge builder on the new domain rather than
+inheriting the Battery/AV/Healthcare witnesses.
 
 % ----------------------------------------------------------------
 \section{Boundary-Indistinguishability Lower Bound (T10)}
 \label{sec:t10-lower-bound}
 % ----------------------------------------------------------------
 
-The core ORIUS bound from the reference domain is
-\[
-  \mathbb{E}\!\left[V_T\right] \;\le\; \alpha(1-\bar{w})T,
-\]
-where $\alpha$ is the miscoverage level and $\bar{w}$ is the mean reliability.
-The monograph extension asks whether that envelope is merely conservative or
-whether it captures the right scaling law.
-The locked T10 evidence files discharge the boundary-mass, paired
-safe/unsafe observation-law, and TV-bridge assumptions for Battery, AV, and
-Healthcare.  In the Battery case, the unsafe-side law is supplied by the
-locked 48-hour boundary-violation trace and transformed into the same margin
-units as the runtime trace.
+The core ORIUS upper bound is an envelope after a domain supplies a
+per-step risk contract. T10 is the complementary lower-bound primitive: it
+shows that if two boundary states induce nearly indistinguishable observations
+while requiring disjoint safe actions, observation-only mandatory release must
+incur nontrivial worst-state risk. The theorem is stated directly in total
+variation distance. Any mapping from reliability \(w_t\) to a TV radius is a
+domain-specific discharge step, not part of T10 itself.
 
 \begin{theorem}[Boundary-indistinguishability lower bound, T10]
 \label{thm:information-theoretic-lower-bound}
-Fix a horizon $T$.  For each step $t$, assume there exists a boundary-testing
-subproblem with two latent hypotheses $H_{0,t}$ (safe side of the boundary)
-and $H_{1,t}$ (unsafe side of the boundary) such that:
-\begin{enumerate}
-  \item the controller acts only through the degraded observation channel;
-  \item the observation laws $P_{0,t}$ and $P_{1,t}$ satisfy
-    $\mathrm{TV}(P_{0,t},P_{1,t}) \le w_t$;
-  \item the unsafe-side prior satisfies $\Prob(H_{1,t}) \ge p_t$ for some
-    boundary-mass sequence $p_t \in [0,1]$.
-  \item every unsafe-side mistaken release has OASG severity at least
-    $\delta_t \ge 0$.
-\end{enumerate}
-Then every controller $\pi$ satisfies
+Let \(x_0,x_1\) be two latent boundary states with induced observation laws
+\(P_0,P_1\). If
 \[
-  \mathbb{E}\!\left[V_T(\pi)\right]
-  \;\ge\;
-  \frac{1}{2}\sum_{t=1}^T p_t(1-w_t).
+  d_{\mathrm{TV}}(P_0,P_1)\le\epsilon
+  \qquad\text{and}\qquad
+  C(x_0)\cap C(x_1)=\varnothing,
 \]
-Moreover, the severity-weighted OASG satisfies
+then every observation-only mandatory-release controller \(\pi\) satisfies
 \[
-  \mathbb{E}\!\left[\mathrm{OASG}_T(\pi)\right]
-  \;\ge\;
-  \frac{1}{2}\sum_{t=1}^T \delta_t p_t(1-w_t).
-\]
-In particular, if $p_t \ge \alpha/2$ for all $t$, then
-\[
-  \mathbb{E}\!\left[V_T(\pi)\right]
-  \;\ge\;
-  \tfrac{1}{4}\,\alpha(1-\bar{w})T.
+  \sup_{i\in\{0,1\}}
+  \Pr_{O\sim P_i}\!\left[\pi(O)\notin C(x_i)\right]
+  \ge
+  \frac{1-\epsilon}{2}.
 \]
 \end{theorem}
 
 \begin{proof}
-Fix a step $t$ and consider the controller's binary decision problem on the
-safe/unsafe boundary subproblem.  By Le~Cam's lemma,
+It suffices to prove the deterministic case; randomized controllers follow by
+conditioning on the internal random seed and averaging. Define
 \[
-  \max\!\bigl(\Prob[\psi_t\text{ errs}\mid H_{0,t}],\;
-              \Prob[\psi_t\text{ errs}\mid H_{1,t}]\bigr)
-  \;\ge\;
-  \frac{1-\mathrm{TV}(P_{0,t},P_{1,t})}{2}
-  \;\ge\;
-  \frac{1-w_t}{2}.
+  S_i=\{o:\pi(o)\in C(x_i)\},\qquad i\in\{0,1\}.
 \]
-Whenever $H_{1,t}$ holds and the controller errs, the step contributes one
-true-state violation and at least $\delta_t$ severity-weighted OASG, so
+Because \(C(x_0)\cap C(x_1)=\varnothing\), the sets \(S_0\) and \(S_1\) are
+disjoint. The average release success probability is
 \[
-  \Prob[Z_t = 1]
-  \;\ge\;
-  \Prob(H_{1,t}) \cdot \Prob[\psi_t\text{ errs}\mid H_{1,t}]
-  \;\ge\;
-  p_t \cdot \frac{1-w_t}{2}.
+  \frac12\{P_0(S_0)+P_1(S_1)\}.
 \]
-Summing across the horizon and applying linearity of expectation yields
-\[
-  \mathbb{E}[V_T(\pi)]
-  \;\ge\;
-  \sum_{t=1}^T \Prob[Z_t = 1]
-  \;\ge\;
-  \frac{1}{2}\sum_{t=1}^T p_t(1-w_t).
-\]
-Multiplying the same per-step event by $\delta_t$ and summing gives
-\[
-  \mathbb{E}[\mathrm{OASG}_T(\pi)]
-  \ge
-  \frac{1}{2}\sum_{t=1}^T \delta_t p_t(1-w_t).
-\]
-The special case $p_t \ge \alpha/2$ then implies the stated
-$\tfrac{1}{4}\alpha(1-\bar{w})T$ frontier.  No stronger conclusion is claimed
-without a domain-specific argument that justifies the boundary-mass and
-severity sequences $p_t,\delta_t$.
+Since \(S_1\subseteq S_0^c\), the test that decides \(x_0\) on \(S_0\) and
+\(x_1\) otherwise has success probability at least this release success. The
+optimal testing success between \(P_0\) and \(P_1\) is
+\((1+d_{\mathrm{TV}}(P_0,P_1))/2\le(1+\epsilon)/2\). Thus the average release
+loss is at least \((1-\epsilon)/2\), and the larger of the two state-conditional
+release risks is at least that average.
 \end{proof}
 
 \begin{remark}
-T10 is an assumption-qualified supporting extension.  It is an information-theoretic lower bound
-for any controller that only sees the degraded observation channel under the
-explicit boundary-mass and indistinguishability hypotheses above.  It does
-not claim a globally sharp minimax constant for every observation model, but
-it does show that the $\alpha(1-\bar{w})T$ scaling cannot be dismissed as a
-pure artifact of one repair heuristic.  In its OASG form, the theorem states
-the explicit rate: the unavoidable gap grows linearly with the degradation
-budget $\sum_t(1-w_t)$, scaled by boundary mass and minimum violation severity.
+T10 is an information-theoretic two-state lower bound. It does not claim a
+globally sharp minimax constant, a horizon-summed frontier, or that the ORIUS
+reliability score \(w_t\) is itself a TV distance. Domain artifacts may derive
+a TV radius from a noise model and then instantiate T10, but that bridge is
+separate from the theorem.
 \end{remark}
 
-The resulting \emph{reliability-risk frontier} is useful even when read
-conservatively:
+The resulting reliability-risk discussion is therefore used conservatively. A
+domain-specific model may derive a function \(\epsilon(w_t)\) and plug it into
+the lower bound
 \[
-  \bar{w}^{\star}
-  \;=\;
-  1 - \frac{r^{\star}}{\alpha T},
+  \frac{1-\epsilon(w_t)}{2},
 \]
-for a target episode-level violation budget $r^{\star}$.  The canonical
-runtime helper for the conservative envelope lives in
+but the manuscript does not identify this plug-in curve with a universal
+frontier. The canonical runtime helper for the conservative upper envelope lives in
 \path{src/orius/universal_theory/risk_bounds.py}.  The richer frontier analysis
 used in this chapter is implemented in
 \path{src/orius/universal/reliability_safety_frontier.py}.  Together these
@@ -431,7 +348,7 @@ safety from any current safe state.  Therefore,
 which is the one-step safety-preservation statement.
 \end{proof}
 
-\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality]
+\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Safety Sandwich]
 \label{cor:observation-ambiguity-sandwich}
 Let $h:\mathcal{X}\to\mathcal{O}$ be the observation map.  For an observation
 $o$, define the ambiguity class

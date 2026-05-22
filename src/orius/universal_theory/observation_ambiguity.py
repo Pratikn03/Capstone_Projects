@@ -1,4 +1,4 @@
-"""Executable witnesses for observation-ambiguity necessity and optimality.
+"""Executable witnesses for the observation-ambiguity safety sandwich.
 
 The helpers in this module intentionally implement the corrected theorem
 surface: differing safe sets are not enough for an impossibility claim.  The
@@ -199,14 +199,14 @@ def build_observation_ambiguity_contract_summary(
     return {
         "theorem_id": "T10_T11_ObservationAmbiguitySandwich",
         "source_theorems": ["T10", "T11"],
-        "theorem_type": "supporting_optimality_corollary",
+        "theorem_type": "supporting_ambiguity_sandwich_corollary",
         "lower_bound": lower,
         "orius_upper_bound": upper,
         "all_executable_checks_passed": passed,
         "status": "runtime_linked" if passed else "contract_violation",
         "claim_boundary": (
-            "Safety-optimal under covered observation ambiguity; not a global "
-            "optimality theorem for every physical-AI system."
+            "Lower/upper comparison under covered observation ambiguity; not a "
+            "global optimality theorem for every physical-AI system."
         ),
     }
 

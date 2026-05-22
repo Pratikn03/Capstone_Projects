@@ -1,14 +1,15 @@
 \begin{table}[htbp]
 \centering
-\caption{Multi-Agent Fleet Coordination: joint safety violations and useful work under shared transformer capacity constraint (limit = 80\,MW, two batteries at 60\,MW each $= 120$\,MW proposed).  Independent protocol violates; ORIUS-coordinated eliminates violations.}
+\small
+\caption{Multi-agent coordination under a shared 80\,MW transformer limit. ORIUS eliminates joint violations without reducing useful work.}
 \label{tab:multi_agent}
-\begin{tabular}{lrrrr}
+\begin{tabular}{@{}lrrrr@{}}
 \toprule
-Protocol & Joint Violations & Local Violations & Useful Work (MWh) & Margin Quality \\
+Protocol & Joint viol. & Local viol. & Work (MWh) & Margin \\
 \midrule
-Independent (non-compositional) & 24 & 0 & 1920 & 0 \\
-Centralized (ORIUS-coordinated) & \textbf{0} & 0 & 1920 & 1 \\
-Distributed Negotiation & \textbf{0} & 0 & 1920 & 1 \\
+Independent & 24 & 0 & 1920 & 0 \\
+ORIUS coordinated & \textbf{0} & 0 & 1920 & 1 \\
+Distributed & \textbf{0} & 0 & 1920 & 1 \\
 \bottomrule
 \end{tabular}
 \end{table}

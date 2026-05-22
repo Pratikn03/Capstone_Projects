@@ -857,16 +857,37 @@ def build_replay_comparison(
         )
     md_path.write_text("\n".join(md_lines) + "\n", encoding="utf-8")
 
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-    pivot_ir = summary_rows.pivot(index="controller", columns="lane", values="intervention_rate").fillna(0.0)
-    pivot_gdq = summary_rows.pivot(index="controller", columns="lane", values="gdq").fillna(0.0)
-    pivot_ir.plot(kind="bar", ax=axes[0], color=["#a6761d", "#1b9e77"])
-    axes[0].set_title("Intervention rate")
-    axes[0].grid(axis="y", alpha=0.25)
-    pivot_gdq.plot(kind="bar", ax=axes[1], color=["#a6761d", "#1b9e77"])
-    axes[1].set_title("GDQ")
-    axes[1].grid(axis="y", alpha=0.25)
-    fig.tight_layout()
+    plot_rows = summary_rows.sort_values(["lane", "controller"]).copy()
+    plot_rows["label"] = (
+        plot_rows["lane"].str.title()
+        + " / "
+        + plot_rows["controller"].str.replace("dc3s_", "", regex=False).str.upper()
+    )
+    lane_colors = {"deep": "#0f766e", "heuristic": "#c2410c"}
+    colors = [lane_colors.get(str(lane), "#475569") for lane in plot_rows["lane"]]
+    y = np.arange(len(plot_rows))
+    fig, axes = plt.subplots(1, 3, figsize=(12.5, 4.2), sharey=True, constrained_layout=True)
+    panels = [
+        ("tsvr", "TSVR (%)", lambda value: 100.0 * float(value), "{:.2f}"),
+        ("intervention_rate", "Intervention (%)", lambda value: 100.0 * float(value), "{:.1f}"),
+        ("gdq", "GDQ", float, "{:.3f}"),
+    ]
+    for ax, (field, title, transform, fmt) in zip(axes, panels, strict=True):
+        values = [transform(value) for value in plot_rows[field]]
+        ax.barh(y, values, color=colors, edgecolor="#1f2937", linewidth=0.6)
+        ax.set_title(title, fontweight="bold")
+        ax.grid(axis="x", alpha=0.22)
+        xmax = max([*values, 1.0])
+        ax.set_xlim(0.0, xmax * 1.18)
+        for idx, value in enumerate(values):
+            ax.text(value + xmax * 0.025, idx, fmt.format(value), va="center", fontsize=9)
+    axes[0].set_yticks(y, plot_rows["label"])
+    axes[0].invert_yaxis()
+    fig.suptitle(
+        "Battery DeepOQE runtime witness: safety remains zero-violation; utility differs by release policy",
+        fontweight="bold",
+        fontsize=13,
+    )
     fig.savefig(fig_path, dpi=220)
     plt.close(fig)
 

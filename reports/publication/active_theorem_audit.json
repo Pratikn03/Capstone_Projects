@@ -47,11 +47,11 @@
         },
         {
           "assumption": "A11",
-          "location": "appendices/app_b_assumptions.tex:172"
+          "location": "appendices/app_b_assumptions.tex:174"
         },
         {
           "assumption": "A12",
-          "location": "appendices/app_b_assumptions.tex:183"
+          "location": "appendices/app_b_assumptions.tex:185"
         }
       ],
       "unresolved_assumptions": [],
@@ -117,8 +117,8 @@
       "program_role": "one_step_runtime_guarantee",
       "scope_note": "Defended as a one-step true-state postcondition whose tightened margin already absorbs the one-step model-error allowance.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1079",
-      "proof_location": "appendices/app_c_full_proofs.tex:111",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1083",
+      "proof_location": "appendices/app_c_full_proofs.tex:114",
       "assumptions_used": [
         "A1",
         "A2",
@@ -217,8 +217,8 @@
       "program_role": "runtime_risk_budget_derivation",
       "scope_note": "Defended as the per-step envelope derivation under the explicit battery assumptions and the narrowed reliability-score interpretation.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1314",
-      "proof_location": "appendices/app_c_full_proofs.tex:179",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1321",
+      "proof_location": "appendices/app_c_full_proofs.tex:182",
       "assumptions_used": [
         "A1",
         "A2",
@@ -324,8 +324,8 @@
       "program_role": "runtime_risk_budget_aggregation",
       "scope_note": "Derived corollary that converts the predictable per-step budget into the episode-average envelope.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1409",
-      "proof_location": "appendices/app_c_full_proofs.tex:179",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1416",
+      "proof_location": "appendices/app_c_full_proofs.tex:182",
       "assumptions_used": [
         "A1",
         "A2",
@@ -398,7 +398,7 @@
         {
           "path": "tests/test_active_theorem_audit.py",
           "symbol": "test_defense_tiers_match_the_rebuilt_core",
-          "location": "tests/test_active_theorem_audit.py:252",
+          "location": "tests/test_active_theorem_audit.py:254",
           "note": "Audit regression for the T3 split."
         }
       ]
@@ -410,10 +410,10 @@
       "defense_tier": "flagship_defended",
       "proof_tier": "V1",
       "program_role": "bounded_necessity_witness",
-      "scope_note": "Defended as the observation-necessity witness for the fixed-margin quality-ignorant controller class on the battery row with explicit arbitrage reachability.",
+      "scope_note": "Defended as the observation-necessity witness for fixed-margin quality-ignorant mandatory-release controllers on the battery row when an admissible degraded-observation gap exceeds the fixed margin at a boundary-sensitive release step.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1647",
-      "proof_location": "appendices/app_c_full_proofs.tex:241",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1655",
+      "proof_location": "appendices/app_c_full_proofs.tex:259",
       "assumptions_used": [
         "A1",
         "A2",
@@ -436,7 +436,7 @@
         },
         {
           "assumption": "A11",
-          "location": "appendices/app_b_assumptions.tex:172"
+          "location": "appendices/app_b_assumptions.tex:174"
         }
       ],
       "unresolved_assumptions": [],
@@ -445,13 +445,13 @@
         "{'Lemma': 'Admissible fault sequence existence'}",
         "{'Lemma': 'No margin compensation for quality-ignorant controllers'}"
       ],
-      "weakest_step": "The constructive witness is intentionally class-scoped; widening the controller class would require a new proof.",
+      "weakest_step": "The constructive witness is intentionally class-scoped and gap-scoped; widening the controller class or removing the admissible-gap hypothesis would require a new proof.",
       "rigor_rating": "paper_rigorous",
       "code_correspondence": "matches",
       "code_correspondence_detail": "The fixed-margin, quality-ignorant counterexample is now executable as a release witness and remains class-scoped.",
       "severity_if_broken": "high",
       "remediation_class": "keep scope explicit",
-      "remediation_detail": "Preserve the fixed-margin quality-ignorant controller definition and avoid broadening the theorem into a claim that every ambiguity class is unsafe.",
+      "remediation_detail": "Preserve the fixed-margin mandatory-release definition and the admissible degraded-gap hypothesis; avoid broadening the theorem into a claim that every ambiguity class or every controller is unsafe.",
       "legacy_aliases": [],
       "generator_targets": [
         "active_theorem_audit",
@@ -606,8 +606,8 @@
       "program_role": "temporal_expiration_bound",
       "scope_note": "Defended as the confidence-aware closed-form battery expiration theorem with explicit delta dependence and first-passage side conditions.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1884",
-      "proof_location": "appendices/app_c_full_proofs.tex:299",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1895",
+      "proof_location": "appendices/app_c_full_proofs.tex:323",
       "assumptions_used": [
         "A4",
         "A7",
@@ -685,8 +685,8 @@
       "program_role": "piecewise_fallback_existence",
       "scope_note": "Defended as a battery-specific piecewise fallback theorem: safe hold on the interior, safe landing near the boundary, and fail-closed infeasibility otherwise.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1981",
-      "proof_location": "appendices/app_c_full_proofs.tex:346",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1992",
+      "proof_location": "appendices/app_c_full_proofs.tex:370",
       "assumptions_used": [
         "A1",
         "A4",
@@ -771,7 +771,7 @@
       "scope_note": "Defended as paired-trace dominance; ORIUS weakly reduces true-state violations versus blind persistence while preserving a declared fraction of useful work.",
       "status": "active",
       "statement_location": "appendices/proofs/T8_graceful_dominance.tex:1",
-      "proof_location": "appendices/proofs/T8_graceful_dominance.tex:9",
+      "proof_location": "appendices/proofs/T8_graceful_dominance.tex:24",
       "assumptions_used": [
         "A1",
         "A2",
@@ -865,13 +865,14 @@
       "defense_tier": "flagship_defended",
       "proof_tier": "V1",
       "program_role": "impossibility_extension",
-      "scope_note": "Defended as a mandatory-release impossibility theorem; when an observation ambiguity class has empty common safe core, no observation-only controller can guarantee true-state safety for every latent state in that class; domain discharge is evidence, not an extra hidden assumption.",
+      "scope_note": "Defended as a mandatory-release impossibility theorem; when a nonempty observation ambiguity class has empty common safe core, no total observation-only controller can guarantee true-state safety for every latent state in that class; domain discharge is evidence, not an extra hidden assumption.",
       "status": "active",
       "statement_location": "appendices/proofs/T9_no_free_safety.tex:1",
-      "proof_location": "appendices/proofs/T9_no_free_safety.tex:11",
+      "proof_location": "appendices/proofs/T9_no_free_safety.tex:13",
       "assumptions_used": [],
       "typed_obligations": [
-        "Mandatory release policy depends only on the observation.",
+        "Mandatory release policy is total and depends only on the observation.",
+        "The observation ambiguity class is nonempty.",
         "The observation ambiguity class has empty common safe core."
       ],
       "assumption_locations": [],
@@ -935,9 +936,10 @@
       "assumption_locations": [],
       "unresolved_assumptions": [],
       "dependencies": [
+        "Binary testing reduction",
         "Le Cam two-point lemma"
       ],
-      "weakest_step": "The result is a two-hypothesis lower bound, not a sharp global frontier for arbitrary policies or observation models.",
+      "weakest_step": "The result is a two-hypothesis lower bound over mandatory release; it is not a sharp global frontier for arbitrary policies, abstaining controllers, or observation models.",
       "rigor_rating": "paper_rigorous",
       "code_correspondence": "matches",
       "code_correspondence_detail": "The boundary-indistinguishability helper estimates total variation and evaluates the exact two-state lower-bound curve.",
@@ -982,8 +984,8 @@
       "program_role": "typed_transfer_theorem",
       "scope_note": "Defended as the forward four-obligation one-step transfer theorem; the converse remains a separate structural failure proposition.",
       "status": "active",
-      "statement_location": "chapters/ch37_universality_completeness.tex:386",
-      "proof_location": "appendices/app_c_full_proofs.tex:388",
+      "statement_location": "chapters/ch37_universality_completeness.tex:303",
+      "proof_location": "appendices/app_c_full_proofs.tex:412",
       "assumptions_used": [],
       "typed_obligations": [
         "Coverage obligation for the observation-consistent state set.",
@@ -1027,7 +1029,7 @@
         {
           "path": "src/orius/dc3s/theoretical_guarantees.py",
           "symbol": "evaluate_structural_transfer",
-          "location": "src/orius/dc3s/theoretical_guarantees.py:722",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:726",
           "note": "Four-obligation executable witness."
         },
         {
@@ -1054,15 +1056,15 @@
     },
     {
       "theorem_id": "T10_T11_ObservationAmbiguitySandwich",
-      "title": "T10_T11_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality",
+      "title": "T10_T11_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Safety Sandwich",
       "surface_kind": "corollary",
       "defense_tier": "supporting_defended",
       "proof_tier": "V1_runtime_linked",
-      "program_role": "supporting_observation_ambiguity_optimality",
-      "scope_note": "Supporting optimality corollary under covered observation ambiguity; contract-universal, not unrestricted-global; it does not assert unrestricted global optimality for all physical AI systems.",
+      "program_role": "supporting_observation_ambiguity_sandwich",
+      "scope_note": "Supporting lower/upper safety sandwich under covered observation ambiguity; contract-universal, not unrestricted-global; it does not assert unrestricted global optimality for all physical AI systems.",
       "status": "active",
-      "statement_location": "chapters/ch37_universality_completeness.tex:434",
-      "proof_location": "appendices/app_c_full_proofs.tex:423",
+      "statement_location": "chapters/ch37_universality_completeness.tex:351",
+      "proof_location": "appendices/app_c_full_proofs.tex:447",
       "assumptions_used": [],
       "typed_obligations": [
         "Observation ambiguity classes are explicit.",
@@ -1083,8 +1085,8 @@
       "code_correspondence": "matches",
       "code_correspondence_detail": "The executable witness computes common safe cores, observation-only Bayes lower bounds, and covered ORIUS release upper bounds with explicit alpha-bound semantics.",
       "severity_if_broken": "high",
-      "remediation_class": "keep scoped optimality",
-      "remediation_detail": "Keep the theorem phrased as safety-optimal under covered observation ambiguity and contract-universal, not unrestricted-global.",
+      "remediation_class": "keep scoped lower-upper comparison",
+      "remediation_detail": "Keep the corollary phrased as a covered lower/upper safety sandwich, not as a global optimality theorem.",
       "legacy_aliases": [],
       "generator_targets": [
         "active_theorem_audit",
@@ -1141,8 +1143,8 @@
       "program_role": "bounded_domain_transfer_lemma",
       "scope_note": "Supporting AV runtime lemma under forward-only T11; bounded to promoted ORIUS replay rows and the longitudinal brake-hold postcondition.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:457",
-      "proof_location": "appendices/app_c_full_proofs.tex:457",
+      "statement_location": "appendices/app_c_full_proofs.tex:481",
+      "proof_location": "appendices/app_c_full_proofs.tex:481",
       "assumptions_used": [],
       "typed_obligations": [
         "T11 coverage obligation is runtime-linked.",
@@ -1215,8 +1217,8 @@
       "program_role": "bounded_domain_transfer_lemma",
       "scope_note": "Supporting healthcare runtime lemma under forward-only T11; bounded to promoted MIMIC monitoring rows and the fail-safe alert-release postcondition.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:477",
-      "proof_location": "appendices/app_c_full_proofs.tex:477",
+      "statement_location": "appendices/app_c_full_proofs.tex:501",
+      "proof_location": "appendices/app_c_full_proofs.tex:501",
       "assumptions_used": [],
       "typed_obligations": [
         "T11 coverage obligation is runtime-linked.",
@@ -1289,8 +1291,8 @@
       "program_role": "bounded_domain_certificate_validity",
       "scope_note": "Supporting AV certificate-validity lemma under T6/T11; degraded full-brake fallback releases are one-step valid only.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:496",
-      "proof_location": "appendices/app_c_full_proofs.tex:496",
+      "statement_location": "appendices/app_c_full_proofs.tex:520",
+      "proof_location": "appendices/app_c_full_proofs.tex:520",
       "assumptions_used": [],
       "typed_obligations": [
         "T6 first-passage validity semantics for positive-margin hold certificates.",
@@ -1350,8 +1352,8 @@
       "program_role": "bounded_domain_certificate_validity",
       "scope_note": "Supporting healthcare certificate-validity lemma under T6/T11; degraded max-alert fallback releases are one-step valid only.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:513",
-      "proof_location": "appendices/app_c_full_proofs.tex:513",
+      "statement_location": "appendices/app_c_full_proofs.tex:537",
+      "proof_location": "appendices/app_c_full_proofs.tex:537",
       "assumptions_used": [],
       "typed_obligations": [
         "T6 first-passage validity semantics for positive-margin hold certificates.",
@@ -1411,8 +1413,8 @@
       "program_role": "equal_domain_artifact_discipline",
       "scope_note": "Supporting artifact-discipline row; it checks battery theorem, runtime, comparator, ablation, negative-control, utility, and reproducibility evidence without changing the flagship theorem tier.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:529",
-      "proof_location": "appendices/app_c_full_proofs.tex:529",
+      "statement_location": "appendices/app_c_full_proofs.tex:553",
+      "proof_location": "appendices/app_c_full_proofs.tex:553",
       "assumptions_used": [],
       "typed_obligations": [
         "Battery locked witness runtime trace exists.",
@@ -1470,8 +1472,8 @@
       "program_role": "equal_domain_artifact_discipline",
       "scope_note": "Supporting artifact-discipline row for the bounded AV replay contract; it does not assert full autonomous-driving field closure.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:548",
-      "proof_location": "appendices/app_c_full_proofs.tex:548",
+      "statement_location": "appendices/app_c_full_proofs.tex:572",
+      "proof_location": "appendices/app_c_full_proofs.tex:572",
       "assumptions_used": [],
       "typed_obligations": [
         "Vehicle T11 and T6 runtime lemmas are linked.",
@@ -1536,8 +1538,8 @@
       "program_role": "equal_domain_artifact_discipline",
       "scope_note": "Supporting artifact-discipline row for the bounded healthcare monitoring contract; it does not assert regulated clinical deployment readiness.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:566",
-      "proof_location": "appendices/app_c_full_proofs.tex:566",
+      "statement_location": "appendices/app_c_full_proofs.tex:590",
+      "proof_location": "appendices/app_c_full_proofs.tex:590",
       "assumptions_used": [],
       "typed_obligations": [
         "Healthcare T11 and T6 runtime lemmas are linked.",
@@ -1812,7 +1814,7 @@
       "scope_note": "Defended robust reliability aggregation theorem for bounded scores with at most b<n/2 Byzantine channels and honest scores in a radius-rho interval.",
       "status": "active",
       "statement_location": "appendices/proofs/T11Byz_robust_reliability.tex:1",
-      "proof_location": "appendices/proofs/T11Byz_robust_reliability.tex:9",
+      "proof_location": "appendices/proofs/T11Byz_robust_reliability.tex:11",
       "assumptions_used": [],
       "typed_obligations": [
         "Reliability sub-scores lie in [0,1].",
@@ -1935,19 +1937,20 @@
       "scope_note": "Scoped flagship theorem for finite two-state boundary ambiguity classes; it is a lower bound only and does not claim global minimax optimality.",
       "status": "active",
       "statement_location": "appendices/proofs/Tminimax_finite_ambiguity.tex:1",
-      "proof_location": "appendices/proofs/Tminimax_finite_ambiguity.tex:11",
+      "proof_location": "appendices/proofs/Tminimax_finite_ambiguity.tex:18",
       "assumptions_used": [],
       "typed_obligations": [
-        "The distribution class is finite two-state boundary problems.",
+        "The distribution class is nonempty and consists of finite two-state boundary problems.",
         "Observation laws satisfy the stated TV bound.",
-        "Safe-action sets are disjoint."
+        "Safe-action sets are disjoint.",
+        "Loss is worst-latent-state mandatory-release risk."
       ],
       "assumption_locations": [],
       "unresolved_assumptions": [],
       "dependencies": [
         "T10"
       ],
-      "weakest_step": "This is a scoped lower bound over a finite ambiguity class; no matching ORIUS upper bound is asserted as global optimality.",
+      "weakest_step": "This is a scoped lower bound over a nonempty finite ambiguity class under worst-state loss; no matching ORIUS upper bound is asserted as global optimality.",
       "rigor_rating": "paper_rigorous",
       "code_correspondence": "matches",
       "code_correspondence_detail": "The minimax helper delegates to the two-state boundary lower-bound calculator and exposes optional ORIUS coverage upper bounds separately.",
@@ -1987,9 +1990,10 @@
       "scope_note": "Defended sensor-necessity theorem under adapter semantics: if an omitted latent coordinate changes safe-action sets to disjoint cores, observation-only mandatory release cannot certify safety without sensing, expansion, fallback, or denial.",
       "status": "active",
       "statement_location": "appendices/proofs/Tsensor_sensor_necessity.tex:1",
-      "proof_location": "appendices/proofs/Tsensor_sensor_necessity.tex:9",
+      "proof_location": "appendices/proofs/Tsensor_sensor_necessity.tex:15",
       "assumptions_used": [],
       "typed_obligations": [
+        "Adapter observation map is invariant to the omitted latent coordinate.",
         "Safe-action map depends on the omitted latent coordinate.",
         "Two states differing only in that coordinate have disjoint safe-action sets.",
         "Policy class is observation-only mandatory release."
@@ -2045,7 +2049,7 @@
       "scope_note": "Defended as the implemented Bonferroni/union-bound trajectory certificate and nothing stronger.",
       "status": "active",
       "statement_location": "appendices/proofs/TPAC_trajectory_certificate.tex:1",
-      "proof_location": "appendices/proofs/TPAC_trajectory_certificate.tex:14",
+      "proof_location": "appendices/proofs/TPAC_trajectory_certificate.tex:16",
       "assumptions_used": [
         "A1",
         "A4",
@@ -2053,7 +2057,8 @@
         "A9"
       ],
       "typed_obligations": [
-        "Bonferroni/union-bound aggregation over the horizon."
+        "Bonferroni/union-bound aggregation over the finite horizon.",
+        "No temporal independence, Ville, or supermartingale condition is claimed."
       ],
       "assumption_locations": [
         {

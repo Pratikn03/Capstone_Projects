@@ -210,8 +210,8 @@ class TestTheoremRegister:
         assert "T10_T11_ObservationAmbiguitySandwich" in THEOREM_REGISTER
 
     def test_register_points_to_current_witnesses(self) -> None:
-        assert THEOREM_REGISTER["T9"]["code_witness"] == "compute_universal_impossibility_bound"
-        assert THEOREM_REGISTER["T10"]["code_witness"] == "compute_stylized_frontier_lower_bound"
+        assert THEOREM_REGISTER["T9"]["code_witness"] == "find_mandatory_release_counterexample"
+        assert THEOREM_REGISTER["T10"]["code_witness"] == "two_state_lower_bound"
         assert THEOREM_REGISTER["T11"]["code_witness"] == "evaluate_structural_transfer"
         assert (
             THEOREM_REGISTER["T10_T11_ObservationAmbiguitySandwich"]["code_witness"]
@@ -224,7 +224,7 @@ class TestTheoremRegister:
         assert THEOREM_REGISTER["T11"]["type"] == "transfer_theorem"
         assert (
             THEOREM_REGISTER["T10_T11_ObservationAmbiguitySandwich"]["type"]
-            == "supporting_optimality_corollary"
+            == "supporting_ambiguity_sandwich_corollary"
         )
 
     def test_observation_ambiguity_witness_is_imported_on_the_register_surface(self) -> None:
@@ -475,8 +475,8 @@ class TestGrandUnification:
         assert "T_minimax" in THEOREM_REGISTER
         assert "T_sensor_converse" in THEOREM_REGISTER
         assert "T_trajectory_PAC" in THEOREM_REGISTER
-        assert THEOREM_REGISTER["T_minimax"]["type"] == "minimax_optimality"
-        assert THEOREM_REGISTER["T_sensor_converse"]["type"] == "converse_bound"
+        assert THEOREM_REGISTER["T_minimax"]["type"] == "scoped_minimax_lower_bound"
+        assert THEOREM_REGISTER["T_sensor_converse"]["type"] == "sensor_necessity"
         assert THEOREM_REGISTER["T_trajectory_PAC"]["type"] == "pac_trajectory"
 
     def test_depth_theorem_dependency_graph_matches_bounded_posture(self) -> None:

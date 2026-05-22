@@ -9,19 +9,18 @@
 \maketitle
 
 \begin{abstract}
-ORIUS treats degraded observation as a universal action-semantics hazard for Physical
-AI: a controller may act legally on the observed state while becoming unsafe on the
-true state. We present ORIUS, Observation--Reality Integrity for Universal Safety, as a
-typed runtime layer that detects degraded telemetry, calibrates the
-observation-consistent state set, constrains the admissible action set, repairs or
-replaces unsafe candidate actions, and emits auditable certificates before actuation.
-The paper is universal-first rather than battery-origin. It combines one runtime kernel,
-one benchmark schema, one governance surface, one theorem bridge, and three defended
-program rows spanning battery energy storage, nuPlan-bounded autonomous-vehicle replay,
-and healthcare monitoring. The evidence posture is explicit: battery is the witness row,
-while autonomous vehicles and healthcare monitoring are defended bounded rows. The
-resulting claim is architectural universality under one runtime contract and one governed
-three-domain evidence ladder, not flat empirical closure across every conceivable domain.
+Physical AI systems often act on telemetry rather than on the true physical state.
+When observation is delayed, stale, dropped, or drifted, an action can be admissible for
+the observed state while violating the true-state safety envelope. We call this failure
+mode the Observation--Action Safety Gap (OASG). ORIUS, Observation--Reality Integrity
+for Universal Safety, is a typed runtime layer that detects degraded telemetry,
+constructs an observation-consistent state set, tightens admissible actions, repairs or
+replaces unsafe candidates, and emits a certificate before release. The same kernel is
+instantiated in three domains: battery energy storage, bounded nuPlan autonomous-vehicle
+replay, and retrospective healthcare monitoring. Battery is the primary validation
+domain, while AV and healthcare provide bounded cross-domain evidence. The claim is
+therefore deliberately scoped: ORIUS establishes a reusable runtime safety contract for
+Physical AI under degraded observation, not deployment closure for every domain.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -36,6 +35,8 @@ prediction, cyber-physical systems, benchmark governance, certificates
 \input{sections/ieee_contracts_governance.tex}
 \input{sections/ieee_theory_bridge.tex}
 \input{sections/ieee_battery_witness.tex}
+\input{sections/ieee_results_table.tex}
+\input{sections/ieee_ablation_table.tex}
 \input{sections/ieee_domain_instantiations.tex}
 \input{sections/ieee_cross_domain_synthesis.tex}
 \input{sections/ieee_limitations_boundary.tex}

@@ -140,9 +140,9 @@ CORE_SOURCES: tuple[SourceRow, ...] = (
         "arXiv",
         "https://arxiv.org/abs/0902.0582",
         "primary_preprint",
-        "mixing_processes",
+        "ambiguity_witnesses",
         "T9",
-        "Strong-mixing concentration lineage for separated-window arguments.",
+        "Historical weak-dependence source retained only as background; active T9 is an empty-safe-core theorem.",
         "curated_primary_anchor",
         "read_anchor",
     ),
@@ -282,7 +282,7 @@ CORE_SOURCES: tuple[SourceRow, ...] = (
 
 
 def _theorem_for_family(topic_family: str) -> str:
-    if topic_family == "mixing_processes":
+    if topic_family in {"mixing_processes", "ambiguity_witnesses"}:
         return "T9"
     if topic_family in {"lower_bounds", "conformal_shift"}:
         return "T10"
@@ -292,7 +292,8 @@ def _theorem_for_family(topic_family: str) -> str:
 def _claim_for_family(topic_family: str) -> str:
     return {
         "lower_bounds": "T10 boundary-indistinguishability lower-bound lineage.",
-        "mixing_processes": "T9 separated-window and degraded-observation persistence lineage.",
+        "mixing_processes": "Historical weak-dependence background; not an active T9 proof dependency.",
+        "ambiguity_witnesses": "T9 empty-safe-core mandatory-release witness lineage.",
         "runtime_assurance": "Runtime-assurance comparator and safety-monitor positioning.",
         "safety_filters": "Safe-action, shield, and admissibility comparator.",
         "conformal_shift": "Reliability and calibration boundary for risk envelopes.",
@@ -446,46 +447,46 @@ def _proof_dependency_rows(source_rows: list[dict[str, str]]) -> list[dict[str, 
     return [
         {
             "theorem_id": "T9",
-            "proof_step": "persistent_degraded_observation",
-            "required_assumption": "A10b,A11",
-            "topic_family": "mixing_processes",
+            "proof_step": "empty_common_safe_core",
+            "required_assumption": "typed obligations: total mandatory policy; nonempty ambiguity class; empty common safe core",
+            "topic_family": "runtime_assurance",
             "source_ids": refs("mixing_processes", "runtime_assurance"),
-            "code_anchor": "src/orius/dc3s/theoretical_guarantees.py:compute_universal_impossibility_bound",
+            "code_anchor": "src/orius/universal_theory/ambiguity.py:find_mandatory_release_counterexample",
             "artifact_anchor": "reports/publication/theorem_promotion_evidence/T9_*",
-            "discharge_status": "blocked_until_three_domain_mixing_bridge",
-            "blocker": "witness constant and geometric/phi-mixing bridge must be discharged per domain",
+            "discharge_status": "blocked_until_three_domain_empty_safe_core_witness",
+            "blocker": "nonempty ambiguity class and empty common safe-core witness must be discharged per domain",
         },
         {
             "theorem_id": "T9",
-            "proof_step": "linear_violation_scaling",
-            "required_assumption": "A11",
+            "proof_step": "mandatory_release_counterexample",
+            "required_assumption": "typed obligations: total observation-only mandatory release",
             "topic_family": "lower_bounds",
             "source_ids": refs("lower_bounds", "safety_filters"),
-            "code_anchor": "src/orius/dc3s/theoretical_guarantees.py:compute_universal_impossibility_bound",
+            "code_anchor": "src/orius/universal_theory/ambiguity.py:compute_common_safe_core",
             "artifact_anchor": "reports/publication/theorem_promotion_evidence/T9_*",
-            "discharge_status": "blocked_until_positive_witness_constant",
-            "blocker": "positive witness constant must be artifact-backed in Battery, AV, Healthcare",
+            "discharge_status": "blocked_until_positive_empty_core_witness",
+            "blocker": "positive empty-safe-core witness rate must be artifact-backed in Battery, AV, Healthcare",
         },
         {
             "theorem_id": "T10",
             "proof_step": "le_cam_boundary_testing",
-            "required_assumption": "A13",
+            "required_assumption": "typed obligations: TV radius and disjoint safe-action sets",
             "topic_family": "lower_bounds",
             "source_ids": refs("lower_bounds"),
-            "code_anchor": "src/orius/dc3s/theoretical_guarantees.py:compute_stylized_frontier_lower_bound",
+            "code_anchor": "src/orius/universal_theory/boundary_indistinguishability.py:two_state_lower_bound",
             "artifact_anchor": "reports/publication/theorem_promotion_evidence/T10_*",
-            "discharge_status": "blocked_until_tv_bridge",
-            "blocker": "TV bridge must be demonstrated for each domain boundary-testing subproblem",
+            "discharge_status": "blocked_until_boundary_tv_radius",
+            "blocker": "TV radius must be demonstrated for each domain boundary-testing subproblem",
         },
         {
             "theorem_id": "T10",
             "proof_step": "unsafe_side_boundary_mass",
-            "required_assumption": "A13,p_t_positive",
+            "required_assumption": "typed obligations: nontrivial boundary pair",
             "topic_family": "conformal_shift",
             "source_ids": refs(
                 "conformal_shift", "av_validation", "battery_validation", "healthcare_validation"
             ),
-            "code_anchor": "src/orius/dc3s/theoretical_guarantees.py:compute_stylized_frontier_lower_bound",
+            "code_anchor": "src/orius/universal_theory/boundary_indistinguishability.py:evaluate_boundary_policy_risk",
             "artifact_anchor": "reports/publication/theorem_promotion_evidence/T10_*",
             "discharge_status": "blocked_until_boundary_mass_artifacts",
             "blocker": "unsafe-side boundary mass sequence p_t must be measured or bounded in all domains",

@@ -21,10 +21,10 @@ We first state the necessity result for an arbitrary CPS.
 \label{thm:no-free-safety-general}
 Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS
 satisfying Assumption~A2 with $g(w_t) > 0$ under degraded quality.
-For any quality-ignorant controller
-$\pi : \mathcal{X} \to \mathcal{U}$ (one whose action depends on
-$\hat{x}_t$ but not on $w_t$), there exists an admissible
-degraded-observation sequence $\{\xi_t\}_{t=1}^T$ and a time index
+For any fixed-margin quality-ignorant mandatory-release controller
+$\pi : \mathcal{X} \to \mathcal{U}$ whose admissible observation gap can exceed
+its fixed margin at a boundary-sensitive release step, there exists an
+admissible degraded-observation sequence $\{\xi_t\}_{t=1}^T$ and a time index
 $t^\star$ such that
 \[
   \phi_{\mathrm{obs}}(\pi(\hat{x}_{t^\star})) = 1
@@ -64,8 +64,9 @@ inflation module.
 
 \begin{lemma}[Admissible fault sequence existence]
 \label{lem:admissible-fault}
-For any quality-ignorant controller $\pi$ operating on the battery
-plant with dropout rate $d > 0$, there exists a fault sequence
+For any fixed-margin quality-ignorant controller $\pi$ operating on the battery
+plant with dropout rate $d > 0$ and an admissible gap larger than its fixed
+margin at a boundary-sensitive step, there exists a fault sequence
 $\{\xi_t\}_{t=1}^T$ satisfying Assumption~A2 such that:
 \begin{enumerate}
   \item Each $\xi_t$ is realisable under the dropout/drift model.
@@ -125,9 +126,11 @@ constraints.  The construction proceeds in three phases:
 
 \begin{theorem}[Observation Necessity / No Free Safety]
 \label{thm:no-free-safety}
-Under Assumption~A2, for any quality-ignorant controller $\pi$ and
-any dropout rate $d > 0$, there exists an admissible fault sequence
-such that $\pi$ incurs at least one true-state violation:
+Under Assumptions~A2 and~A11, for any fixed-margin quality-ignorant
+mandatory-release controller $\pi$ and any dropout rate $d > 0$ whose
+admissible observation gap exceeds $m^\pi+\eta$ at a boundary-sensitive release
+step, there exists an admissible fault sequence such that $\pi$ incurs at least
+one true-state violation:
 \[
   \exists\,t^* \in \{1, \ldots, T\} : \quad
   \phi_{\text{obs}}(\pi(\hat{x}_{t^*})) = 1 \;\;\text{and}\;\;
@@ -136,8 +139,9 @@ such that $\pi$ incurs at least one true-state violation:
 \end{theorem}
 
 \begin{proof}
-By Lemma~\ref{lem:admissible-fault}, there exists a fault sequence
-with a concentrated fault window in which $|\xi_t| > \delta_{\text{bnd}}$.
+By Lemma~\ref{lem:admissible-fault} and the theorem's gap hypothesis, there
+exists a fault sequence with a concentrated fault window in which
+$|\xi_t| > \delta_{\text{bnd}}+m^\pi$ at the boundary-sensitive step.
 
 By Lemma~\ref{lem:no-margin}, the controller's margin $m^{\pi}$ does
 not increase during the fault window.
@@ -229,24 +233,22 @@ $\Omega(T)$, exceeding any $o(T)$ bound.
     game-theoretic closure remains open.
 \end{enumerate}
 
-\section{Universal Impossibility (T9)}
+\section{Impossibility of Mandatory Release (T9)}
 \label{sec:t9-ch19}
 
-T4 establishes necessity for one adversarial sequence.
-The universality program's T9 statement is the universal
-extension: under an i.i.d.\ fault process with rate $d > 0$, any
-quality-ignorant controller incurs $\mathbb{E}[V_T] \ge c \cdot d \cdot T$
-expected violations, where $c > 0$ depends only on constraint geometry.
+T4 establishes necessity for one battery witness sequence.  The active
+universality program's T9 statement is no longer the historical
+\(\Omega(dT)\) claim.  It is the empty-safe-core impossibility theorem: for an
+observation \(o\), if the ambiguity class \(B(o)=\{x:h(x)=o\}\) is nonempty and
+its common safe core \(K(o)=\cap_{x\in B(o)}C(x)\) is empty, then no total
+observation-only mandatory-release controller can certify safety for every
+latent state in that class.
 
-This makes explicit what T4 implies informally: quality-aware inflation is not
-merely a design convenience on this witness class; it is a structural
-requirement at the $\Omega(T)$ level once persistent degraded observation is
-introduced.
-T9's proof uses Borel-Cantelli on disjoint fault windows, not a single
-adversarial sequence.  In the broader universality program, the constant $c$
-is interpreted as a domain-dependent sensitivity to degraded observation, with
-battery providing the reference proof witness and the remaining rows supplying
-tiered supporting evidence rather than equal theorem surfaces.
+This makes explicit what T4 implies structurally: quality-aware uncertainty
+expansion, fallback, or denial is not merely a design convenience on the
+witness class; it is the way ORIUS leaves the mandatory-release lower-bound
+class.  Any future rate theorem over repeated fault windows must be promoted as
+a separate result with its own mixing assumptions and artifacts.
 
 \section{Chapter Summary}
 

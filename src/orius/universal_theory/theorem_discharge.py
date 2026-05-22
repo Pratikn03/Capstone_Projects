@@ -1,9 +1,10 @@
-"""Executable T9/T10 assumption-discharge estimators.
+"""Executable T9/T10 domain-evidence estimators.
 
-These helpers compute empirical evidence for the draft universal extension
-theorems.  They are evidence gates, not proof generators: a domain artifact can
-pass only when the observed trace data discharges the numerical assumptions
-declared by the theorem promotion package.
+These helpers compute empirical evidence for the scoped T9/T10 theorem rows.
+They are evidence gates, not proof generators: the theorem kernels are the
+empty-safe-core mandatory-release theorem (T9) and the two-state TV lower bound
+(T10), while these artifacts show that Battery, AV, and Healthcare traces
+instantiate the required boundary/ambiguity witnesses.
 """
 
 from __future__ import annotations
@@ -287,7 +288,13 @@ def compute_t9_discharge_from_rows(
     thresholds: DischargeThresholds | None = None,
     artifact_exists: bool = True,
 ) -> dict[str, Any]:
-    """Compute the empirical T9 assumption-discharge payload."""
+    """Compute empirical T9 empty-safe-core witness evidence.
+
+    The active T9 theorem no longer depends on a separated-window mixing proof.
+    The mixing proxy remains in the payload as a diagnostic compatibility field,
+    but promotion readiness is governed by the nonempty degraded-boundary witness
+    used as the domain evidence for an empty common safe core.
+    """
     cfg = thresholds or DischargeThresholds()
     total_rows = 0
     usable_rows = 0
@@ -340,9 +347,7 @@ def compute_t9_discharge_from_rows(
     if boundary_rate <= cfg.min_positive_rate:
         blockers.append("boundary_reachability: no reachable boundary/unsafe-side mass")
     if witness_constant <= cfg.min_positive_rate:
-        blockers.append("witness_constant: no positive reliability-degradation witness")
-    if not finite_mixing:
-        blockers.append("mixing_bridge: no finite bounded-lag geometric/phi-mixing proxy")
+        blockers.append("empty_safe_core_witness: no positive degraded-boundary witness")
 
     ready = not blockers
     return {
@@ -356,6 +361,7 @@ def compute_t9_discharge_from_rows(
         "degradation_rate": degradation_rate,
         "boundary_reachability_rate": boundary_rate,
         "witness_constant": witness_constant,
+        "empty_safe_core_witness_rate": witness_constant,
         "witness_positive_count": int(witness_count),
         "mixing_proxy": {
             **mixing_proxy,
@@ -367,21 +373,24 @@ def compute_t9_discharge_from_rows(
         "witness_constant_status": "witness_constant_discharged"
         if witness_constant > cfg.min_positive_rate
         else "missing_positive_witness_constant",
+        "empty_safe_core_status": "empty_safe_core_witness_discharged"
+        if witness_constant > cfg.min_positive_rate
+        else "missing_empty_safe_core_witness",
         "degradation_rate_status": "degradation_persistence_discharged"
         if degradation_rate > cfg.min_positive_rate
         else "missing_degradation_persistence",
         "boundary_reachability_status": "boundary_reachability_discharged"
         if boundary_rate > cfg.min_positive_rate
         else "missing_boundary_reachability",
-        "mixing_bridge_status": "geometric_phi_mixing_proxy_discharged"
+        "mixing_bridge_status": "diagnostic_only_not_t9_assumption"
         if finite_mixing
-        else "missing_statistical_phi_mixing_estimate",
+        else "diagnostic_only_mixing_proxy_not_estimated",
         "constants_status": "domain_witness_constants_discharged"
         if ready
         else "missing_domain_witness_constants",
-        "assumptions_status": "A10b_A11_empirically_discharged_for_domain"
+        "assumptions_status": "empty_safe_core_obligations_discharged_for_domain"
         if ready
-        else "A10b_A11_not_discharged_for_domain",
+        else "empty_safe_core_obligations_not_discharged_for_domain",
         "promotion_ready": ready,
         "blocker": "" if ready else _blocker(blockers),
     }
@@ -396,7 +405,7 @@ def compute_t10_discharge_from_rows(
     artifact_exists: bool = True,
     auxiliary_unsafe_rows: Iterable[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Compute the empirical T10 assumption-discharge payload."""
+    """Compute empirical T10 two-state boundary-pair evidence."""
     cfg = thresholds or DischargeThresholds()
     total_rows = 0
     auxiliary_total_rows = 0
@@ -456,8 +465,8 @@ def compute_t10_discharge_from_rows(
     safe_mass = float(safe_count / usable_rows) if usable_rows else 0.0
     boundary_mass = float(boundary_count / usable_rows) if usable_rows else 0.0
     tv_estimate = _empirical_tv(unsafe_observations, safe_observations, cfg.tv_histogram_bins)
-    tv_bound = min(1.0, mean_reliability + cfg.tv_bridge_epsilon)
-    tv_passed = bool(tv_estimate is not None and tv_estimate <= tv_bound)
+    tv_radius = min(1.0, mean_reliability + cfg.tv_bridge_epsilon)
+    tv_passed = bool(tv_estimate is not None and tv_estimate <= tv_radius)
     le_cam_lower_bound = (
         float(0.5 * unsafe_mass * max(0.0, 1.0 - min(float(tv_estimate), 1.0)))
         if tv_estimate is not None
@@ -479,7 +488,7 @@ def compute_t10_discharge_from_rows(
         blockers.append("boundary_testing_subproblem: no boundary-testing mass")
     if not tv_passed:
         observed = "missing" if tv_estimate is None else f"{tv_estimate:.6f}"
-        blockers.append(f"tv_bridge: empirical_tv={observed} exceeds reliability bound {tv_bound:.6f}")
+        blockers.append(f"boundary_tv_radius: empirical_tv={observed} exceeds declared radius {tv_radius:.6f}")
     if tv_estimate is None:
         blockers.append("le_cam_inputs: missing paired safe/unsafe observation laws")
 
@@ -501,15 +510,26 @@ def compute_t10_discharge_from_rows(
         "boundary_mass": boundary_mass,
         "tv_bridge": {
             "estimate": tv_estimate,
-            "bound": tv_bound,
+            "bound": tv_radius,
             "epsilon": cfg.tv_bridge_epsilon,
+            "passed": tv_passed,
+        },
+        "boundary_tv_radius": {
+            "estimate": tv_estimate,
+            "radius": tv_radius,
+            "slack": cfg.tv_bridge_epsilon,
             "passed": tv_passed,
         },
         "le_cam_lower_bound": le_cam_lower_bound,
         "applicability_status": "boundary_testing_empirical_discharge"
         if ready
         else "blocked_boundary_testing_discharge",
-        "tv_bridge_status": "tv_bridge_discharged" if tv_passed else "missing_domain_pair_observation_laws",
+        "tv_bridge_status": "boundary_tv_radius_discharged"
+        if tv_passed
+        else "missing_domain_pair_observation_laws",
+        "boundary_tv_radius_status": "boundary_tv_radius_discharged"
+        if tv_passed
+        else "missing_domain_pair_observation_laws",
         "unsafe_boundary_mass_status": "unsafe_boundary_mass_discharged"
         if unsafe_mass > cfg.min_positive_rate
         else "missing_positive_p_t_artifact",
@@ -522,9 +542,9 @@ def compute_t10_discharge_from_rows(
         "constants_status": "domain_boundary_constants_discharged"
         if ready
         else "boundary_mass_supplied_explicitly_not_universal",
-        "assumptions_status": "A13_empirically_discharged_for_domain"
+        "assumptions_status": "boundary_pair_tv_and_disjoint_safe_sets_discharged"
         if ready
-        else "A13_not_three_domain_discharged",
+        else "boundary_pair_tv_not_three_domain_discharged",
         "promotion_ready": ready,
         "blocker": "" if ready else _blocker(blockers),
     }

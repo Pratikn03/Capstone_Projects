@@ -299,26 +299,49 @@ def build_claim_evidence() -> None:
     status_col = next((c for c in df.columns if "status" in c.lower()), None)
     type_col = next((c for c in df.columns if "type" in c.lower()), None)
 
+    def _evidence_kind(value: object) -> str:
+        raw = str(value).strip()
+        if not raw or raw == "nan":
+            return "none"
+        suffix = Path(raw).suffix.lower()
+        if suffix in {".py", ".lean", ".tex"}:
+            return "code"
+        if suffix in {".csv", ".json", ".md", ".txt"}:
+            return "artifact"
+        if "row:" in raw:
+            return "row"
+        return "evidence"
+
+    def _short_text(value: object, limit: int = 62) -> str:
+        raw = str(value).replace("_", " ").strip()
+        if not raw or raw == "nan":
+            return "not applicable"
+        if len(raw) <= limit:
+            return raw
+        return raw[: limit - 3].rstrip() + "..."
+
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        r"\small",
-        r"\caption{Claim--Evidence Matrix: all 22 thesis claims with locked artifact pointers."
-        r"  Status \emph{locked} means the artifact file exists and contains real numerical data.}",
+        r"\scriptsize",
+        r"\caption{Claim--evidence matrix summary. This compact PDF view uses"
+        r" evidence handles; full paths and hashes remain in the canonical CSV.}",
         r"\label{tab:claim_evidence}",
-        r"\begin{tabular}{lp{5cm}p{5cm}ll}",
+        r"\begin{tabularx}{\textwidth}{@{}p{0.15\textwidth}X p{0.14\textwidth}p{0.13\textwidth}@{}}",
         r"\toprule",
-        r"ID & Claim & Evidence Path & Type & Status \\",
+        r"ID & Claim & Evidence & Status \\",
         r"\midrule",
     ]
-    for _, row in df.iterrows():
+    for idx, (_, row) in enumerate(df.iterrows(), start=1):
         cid = str(row[id_col])[:20].replace("_", r"\_")
-        text = str(row[text_col])[:55].replace("_", r"\_") + "..." if text_col else "not appl."
-        ev = str(row[ev_col])[:55].replace("_", r"\_").replace("/", r"/\-") if ev_col else "not appl."
-        status = str(row[status_col]).replace("_", r"\_") if status_col else "not appl."
-        etype = str(row[type_col])[:18].replace("_", r"\_") if type_col else "not appl."
-        lines.append(f"\\texttt{{{cid}}} & {text} & \\texttt{{{ev}}} & {etype} & {status} \\\\")
-    lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+        text = _short_text(row[text_col] if text_col else "not applicable").replace("_", r"\_")
+        ev_kind = _evidence_kind(row[ev_col]) if ev_col else "none"
+        ev_type = str(row[type_col]).split(":", 1)[0] if type_col else ev_kind
+        ev = f"E{idx:02d} {ev_kind}"
+        status = _short_text(row[status_col] if status_col else "not applicable", 18).replace("_", r"\_")
+        ev_display = f"{ev} ({ev_type.replace('_', ' ')[:10]})"
+        lines.append(f"\\texttt{{{cid}}} & {text} & {ev_display} & {status} \\\\")
+    lines += [r"\bottomrule", r"\end{tabularx}", r"\end{table}"]
     (OUT / "tbl_claim_evidence.tex").write_text("\n".join(lines))
     print("  ✓ tbl_claim_evidence.tex")
 
@@ -334,10 +357,10 @@ def build_multi_agent() -> None:
 
     df = pd.read_csv(src)
     protocol_map = {
-        "independent": "Independent (non-compositional)",
-        "centralized": "Centralized (ORIUS-coordinated)",
-        "distributed": "Distributed Negotiation",
-        "oracle": "Oracle (lower bound)",
+        "independent": "Independent",
+        "centralized": "ORIUS coordinated",
+        "distributed": "Distributed",
+        "oracle": "Oracle",
     }
     if "protocol" in df.columns:
         df["protocol"] = df["protocol"].map(lambda x: protocol_map.get(x, x))
@@ -345,14 +368,12 @@ def build_multi_agent() -> None:
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        r"\caption{Multi-Agent Fleet Coordination: joint safety violations and useful work"
-        r" under shared transformer capacity constraint (limit = 80\,MW, two batteries"
-        r" at 60\,MW each $= 120$\,MW proposed).  Independent protocol violates;"
-        r" ORIUS-coordinated eliminates violations.}",
+        r"\small",
+        r"\caption{Multi-agent coordination under a shared 80\,MW transformer limit. ORIUS eliminates joint violations without reducing useful work.}",
         r"\label{tab:multi_agent}",
-        r"\begin{tabular}{lrrrr}",
+        r"\begin{tabular}{@{}lrrrr@{}}",
         r"\toprule",
-        r"Protocol & Joint Violations & Local Violations & Useful Work (MWh) & Margin Quality \\",
+        r"Protocol & Joint viol. & Local viol. & Work (MWh) & Margin \\",
         r"\midrule",
     ]
     for _, row in df.iterrows():

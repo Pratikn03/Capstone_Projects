@@ -1,27 +1,25 @@
 \begin{table}[htbp]
 \centering
-\small
-\caption{Ablation study: DC$^3$S violation-rate reduction vs.\ baselines under telemetry faults. Two-gate verification: relative reduction $\ge10$\% \emph{and} Wilcoxon signed-rank $p < 0.01$.}
+\footnotesize
+\caption{Ablation study: DC$^3$S violation-rate reduction under telemetry faults. The gate requires both material effect ($\ge10$\% relative reduction) and statistical evidence ($p<0.01$); rows marked ``stat only'' improve significantly but miss the material-effect threshold.}
 \label{tab:TBL02_ABLATIONS}
-\setlength{\tabcolsep}{3pt}
+\setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.05}
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{llrrrrrrc}
+\begin{tabularx}{\textwidth}{llrrrrX}
 \toprule
-Scope & Fault & $n$ & Base Rate & DC$^3$S Rate & Rel.\ Red.\ (\%) & $W$ stat & $p$-value & Pass \\
+Scope & Fault / baseline & $n$ & Base & DC$^3$S & Rel.\ red.\ (\%) & Gate \\
 \midrule
-primary & all & 160 & 0.250 & 0.231 & +7.7 & 0.0 & $<$0.001 & $\times$ \\
+primary & all & 160 & 0.250 & 0.231 & +7.7 & stat only; p=$<$0.001 \\
 \midrule
-secondary & delay\_jitter & 40 & 0.253 & 0.230 & +9.3 & 0.0 & $<$0.001 & $\times$ \\
-secondary & dropout & 40 & 0.250 & 0.226 & +9.7 & 0.0 & $<$0.001 & $\times$ \\
-secondary & out\_of\_order & 40 & 0.252 & 0.230 & +8.9 & 0.0 & $<$0.001 & $\times$ \\
-secondary & spikes & 40 & 0.250 & 0.231 & +7.5 & 0.0 & $<$0.001 & $\times$ \\
+secondary & delay+jitter & 40 & 0.253 & 0.230 & +9.3 & stat only; p=$<$0.001 \\
+secondary & dropout & 40 & 0.250 & 0.226 & +9.7 & stat only; p=$<$0.001 \\
+secondary & out-of-order & 40 & 0.252 & 0.230 & +8.9 & stat only; p=$<$0.001 \\
+secondary & spikes & 40 & 0.250 & 0.231 & +7.5 & stat only; p=$<$0.001 \\
 \midrule
-sec.\ scenario & all (vs.\ deterministic\_lp) & 10 & 0.350 & 0.300 & +14.3 & 0.0 & 0.002 & \checkmark \\
-sec.\ scenario & all (vs.\ robust\_fixed\_interval) & 10 & 0.250 & 0.300 & -20.1 & 0.0 & 0.002 & $\times$ \\
-sec.\ scenario & all (vs.\ deterministic\_lp) & 10 & 0.350 & 0.300 & +14.3 & 0.0 & 0.002 & \checkmark \\
-sec.\ scenario & all (vs.\ robust\_fixed\_interval) & 10 & 0.252 & 0.300 & -18.9 & 0.0 & 0.002 & $\times$ \\
+sec.\ scenario & drift combo vs.\ deterministic LP & 10 & 0.350 & 0.300 & +14.3 & pass; p=0.002 \\
+sec.\ scenario & drift combo vs.\ robust fixed & 10 & 0.250 & 0.300 & -20.1 & worse; p=0.002 \\
+sec.\ scenario & dropout vs.\ deterministic LP & 10 & 0.350 & 0.300 & +14.3 & pass; p=0.002 \\
+sec.\ scenario & dropout vs.\ robust fixed & 10 & 0.252 & 0.300 & -18.9 & worse; p=0.002 \\
 \bottomrule
-\end{tabular}
-}
+\end{tabularx}
 \end{table}

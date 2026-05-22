@@ -189,7 +189,7 @@ def test_builder_discovers_domain_discharge_evidence_files(tmp_path: Path) -> No
                 "boundary_reachability_rate": 0.1,
                 "mixing_proxy": {"finite_mixing_proxy": True},
                 "constants_status": "witness_constant_discharged",
-                "assumptions_status": "A10b_A11_discharged",
+                "assumptions_status": "empty_safe_core_obligations_discharged_for_domain",
                 "promotion_ready": True,
             }
         ),

@@ -27,10 +27,55 @@ def test_strict_readiness_fails_without_production_secrets(monkeypatch):
     assert any("ORIUS_CERTIFICATE_SIGNING_KEY" in finding for finding in findings)
 
 
-def test_strict_readiness_accepts_auth_and_signing_config(monkeypatch):
+def test_strict_readiness_requires_profile_flags_and_device_keys(monkeypatch):
+    monkeypatch.setenv("ORIUS_ENV", "production")
+    monkeypatch.setenv("ORIUS_API_KEYS", json.dumps({"prod-key": ["read", "write", "admin"]}))
+    monkeypatch.setenv("ORIUS_CERTIFICATE_KEYS", json.dumps({"cert-2026-01": "x" * 40}))
+    monkeypatch.setenv("ORIUS_CERTIFICATE_ACTIVE_KEY_ID", "cert-2026-01")
+    monkeypatch.delenv("ORIUS_REQUIRE_CERT_SIGNATURE", raising=False)
+    monkeypatch.delenv("ORIUS_REQUIRE_DEVICE_SIGNATURE", raising=False)
+    monkeypatch.delenv("ORIUS_DEVICE_KEYS", raising=False)
+    monkeypatch.delenv("ORIUS_REQUIRE_ARTIFACT_MANIFEST", raising=False)
+    monkeypatch.delenv("ORIUS_REQUIRE_MODEL_HASH", raising=False)
+    _clear_auth_cache()
+
+    findings, _warnings = validate(strict=True)
+
+    assert any("ORIUS_REQUIRE_CERT_SIGNATURE=1" in finding for finding in findings)
+    assert any("ORIUS_REQUIRE_DEVICE_SIGNATURE=1" in finding for finding in findings)
+    assert any("configured ORIUS_DEVICE_KEYS" in finding for finding in findings)
+    assert any("ORIUS_REQUIRE_ARTIFACT_MANIFEST=1" in finding for finding in findings)
+    assert any("ORIUS_REQUIRE_MODEL_HASH=1" in finding for finding in findings)
+
+
+def test_strict_readiness_requires_active_certificate_key_id_for_rotation(monkeypatch):
     monkeypatch.setenv("ORIUS_ENV", "production")
     monkeypatch.setenv("ORIUS_API_KEYS", json.dumps({"prod-key": ["read", "write", "admin"]}))
     monkeypatch.setenv("ORIUS_CERTIFICATE_SIGNING_KEY", "x" * 40)
+    monkeypatch.delenv("ORIUS_CERTIFICATE_ACTIVE_KEY_ID", raising=False)
+    monkeypatch.delenv("ORIUS_CERTIFICATE_KEY_ID", raising=False)
+    monkeypatch.setenv("ORIUS_REQUIRE_CERT_SIGNATURE", "1")
+    monkeypatch.setenv("ORIUS_REQUIRE_DEVICE_SIGNATURE", "1")
+    monkeypatch.setenv("ORIUS_DEVICE_KEYS", json.dumps({"device-1": {"key-1": "y" * 40}}))
+    monkeypatch.setenv("ORIUS_REQUIRE_ARTIFACT_MANIFEST", "1")
+    monkeypatch.setenv("ORIUS_REQUIRE_MODEL_HASH", "1")
+    _clear_auth_cache()
+
+    findings, _warnings = validate(strict=True)
+
+    assert any("ORIUS_CERTIFICATE_ACTIVE_KEY_ID" in finding for finding in findings)
+
+
+def test_strict_readiness_accepts_auth_signing_and_device_identity_config(monkeypatch):
+    monkeypatch.setenv("ORIUS_ENV", "production")
+    monkeypatch.setenv("ORIUS_API_KEYS", json.dumps({"prod-key": ["read", "write", "admin"]}))
+    monkeypatch.setenv("ORIUS_CERTIFICATE_KEYS", json.dumps({"cert-2026-01": "x" * 40}))
+    monkeypatch.setenv("ORIUS_CERTIFICATE_ACTIVE_KEY_ID", "cert-2026-01")
+    monkeypatch.setenv("ORIUS_DEVICE_KEYS", json.dumps({"device-1": {"key-1": "y" * 40}}))
+    monkeypatch.setenv("ORIUS_REQUIRE_CERT_SIGNATURE", "1")
+    monkeypatch.setenv("ORIUS_REQUIRE_DEVICE_SIGNATURE", "1")
+    monkeypatch.setenv("ORIUS_REQUIRE_ARTIFACT_MANIFEST", "1")
+    monkeypatch.setenv("ORIUS_REQUIRE_MODEL_HASH", "1")
     _clear_auth_cache()
 
     findings, _warnings = validate(strict=True)

@@ -3,47 +3,60 @@
 
 The key test of a universal safety layer is not whether every domain shares the same
 dynamics or controller. It is whether the same runtime contract survives domain change
-without losing semantic meaning. ORIUS evaluates that question across the defended
-Battery, AV, and Healthcare rows.
+without losing semantic meaning. ORIUS evaluates that question across Battery, AV, and
+Healthcare under explicit evidence boundaries.
 
 \begin{table*}[t]
 \centering
-\caption{Defended ORIUS domain rows under a shared runtime contract.}
+\caption{ORIUS domain instantiations under a shared runtime contract.}
 \label{tab:ieee-domain-rows}
 \small
 \begin{tabularx}{\textwidth}{@{}p{0.14\textwidth}p{0.19\textwidth}p{0.16\textwidth}p{0.15\textwidth}X@{}}
 \toprule
 \textbf{Domain} & \textbf{Degraded-observation hazard} & \textbf{Safety object} & \textbf{Current tier} & \textbf{Exact closure boundary}\\
 \midrule
-Battery energy storage & Dispatch legal on observed state but unsafe on true state of charge or reserve surface & State-of-charge and dispatch envelope preservation & Witness row & Deepest closure surface in the current stack.\\
-Autonomous vehicles & Action proposed on stale or optimistic headway / collision state & TTC and entry-barrier preservation under repair & Defended all-zip grouped nuPlan row & Bounded to completed all-zip grouped nuPlan replay artifacts under the current TTC plus predictive-entry-barrier contract.\\
-Healthcare monitoring & Clinical alerting or intervention released on degraded vital telemetry & Vital-alert envelope and bounded intervention discipline & Defended bounded MIMIC row & Bounded to retrospective monitoring and alert-release semantics; no live clinical deployment claim.\\
+Battery energy storage & Dispatch legal on observed state but unsafe on true state of charge or reserve surface & State-of-charge and dispatch envelope preservation & Primary validation domain & Deepest closure surface in the current stack.\\
+Autonomous vehicles & Action proposed on stale or optimistic headway / collision state & TTC and entry-barrier preservation under repair & Bounded nuPlan replay domain & Bounded to completed all-zip grouped nuPlan replay artifacts under the current TTC plus predictive-entry-barrier contract.\\
+Healthcare monitoring & Clinical alerting or intervention released on degraded vital telemetry & Vital-alert envelope and bounded intervention discipline & Bounded MIMIC monitoring domain & Bounded to retrospective monitoring and alert-release semantics; no live clinical deployment claim.\\
 \bottomrule
 \end{tabularx}
 \end{table*}
 
 \subsection{Autonomous vehicles}
 The AV row is defended under a bounded safety object: time-to-collision and predictive
-entry-barrier preservation when the perception or state-estimation surface degrades. The
-current evidence lane uses completed all-zip grouped nuPlan replay artifacts, not a full road-deployment
-claim. The value of the row is that ORIUS is not merely filtering a scalar dispatch
-command. It repairs an action inside a tightly constrained interaction envelope while
-preserving bounded fallback semantics. The row is defended, but only for the current
-TTC plus predictive-entry-barrier contract rather than advertised as full
-autonomous-driving field closure.
+entry-barrier preservation when the perception or state-estimation surface degrades.
+
+\paragraph{AV results ($n = 1{,}531{,}104$ nuPlan steps).}
+The nominal controller (no runtime layer) produces a baseline TSVR of
+$\mathbf{28.93\%}$ --- more than one-quarter of AV steps involve an action that
+is legal on the perceived state but unsafe on the true physical state.
+With ORIUS, TSVR falls to $\mathbf{0.016\%}$, a $99.94\%$ relative reduction.
+Certificate-valid release rate is $99.99\%$; runtime latency p95 is $0.74$\,ms.
+Compared to the always-brake degenerate fail-safe ($69{,}226$ useful-work units),
+ORIUS delivers $116{,}192$ units while keeping excess TSVR over that fail-safe
+at $\approx 0$.  The fallback activation rate of $17.4\%$ confirms that the
+T6/T7 temporal certificate and brake-hold contract are actively governing the
+AV release surface.  The evidence is bounded to the TTC plus predictive-entry-barrier
+contract and does not claim full autonomous-driving field closure.
 
 
 \subsection{Healthcare monitoring}
 Healthcare matters because degraded observation can suppress intervention rather than
-only create excessive actuation. ORIUS still fits that setting because the runtime layer
-is defined over admissible decisions, fallback policies, and certificate semantics, not
-only over physical force commands. The defended healthcare row is bounded to
-retrospective MIMIC-backed monitoring and alerting contracts. It does not claim
-prospective clinical deployment or clinical decision-support approval, but it shows
-that the runtime grammar is not limited to mechanical control loops.
+only create excessive actuation.  ORIUS still fits this setting because the runtime layer
+is defined over admissible decisions, fallback policies, and certificate semantics.
+
+\paragraph{Healthcare results ($n = 137{,}262$ MIMIC steps).}
+The nominal monitoring controller produces a baseline TSVR of $\mathbf{19.45\%}$;
+with ORIUS this falls to $\mathbf{0.000\%}$, complete elimination of true-state
+violations.  Certificate-valid release rate is $100.0\%$; latency p95 is $0.70$\,ms.
+Compared to the always-alert degenerate fail-safe (zero useful monitoring work),
+ORIUS retains $142{,}767$ units of clinically useful output while maintaining zero
+excess TSVR, a non-vacuous utility-preserving safety result.  The healthcare evidence
+is bounded to retrospective MIMIC monitoring semantics; it does not claim prospective
+clinical deployment or clinical-decision-support approval.
 
 \subsection{Future additional domains}
 The active branch does not defend named additional domains beyond Battery, AV, and
 Healthcare. Future extensions remain part of the architectural argument, but they are
-not part of the current empirical claim surface until they clear the same replay,
-runtime, governance, and bounded-prose obligations as the active three-domain lane.
+not part of the current empirical claim surface until they satisfy the same replay,
+runtime, governance, and bounded-prose obligations as the active three-domain program.

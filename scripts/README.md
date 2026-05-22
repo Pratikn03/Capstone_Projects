@@ -36,6 +36,15 @@ The theorem-promotion package is the current proof-strength authority:
 make theorem-promotion-verify
 ```
 
+The strict 10/10 theorem-defensibility release gate additionally checks that
+all active theorem rows have matching code correspondence, no unresolved
+assumptions, complete flagship result cards, and a Lean formal core with no
+executable `sorry`, `admit`, or `axiom` tokens:
+
+```bash
+make theorem-defensibility-10
+```
+
 `active_theorem_audit.*` remains historical traceability, not the current
 promotion authority.
 

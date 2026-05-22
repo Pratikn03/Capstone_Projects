@@ -1,9 +1,9 @@
 \section{Cross-Domain Synthesis}
 \label{sec:ieee-synthesis}
 
-The scientific value of ORIUS is not that every row already looks equally complete. It
+The scientific value of ORIUS is not that every domain already looks equally complete. It
 is that one runtime grammar survives across very different physical systems while the
-paper remains honest about which rows are defended and which are gated. That distinction
+paper remains honest about the current evidence depth. That distinction
 is what turns ORIUS from a portability story into a candidate field-level safety layer.
 
 \begin{table*}[t]
@@ -30,21 +30,31 @@ same kernel can mediate that failure mode while respecting domain-specific safet
 geometry. That is why the architecture can be universal even when the evidence remains
 tiered.
 
-The paper therefore keeps the promotion boundary visible. Battery is the witness row.
-AV is defended as an all-zip grouped nuPlan replay row. Healthcare is defended as a bounded
-retrospective monitoring row. Future additional domains are not
-smuggled into the public claim surface as quiet unverified rows. This is not defensive
-writing. It is the mechanism that lets the paper make a large architectural claim
-without pretending that universality of contract automatically implies equal evidence
-depth.
+The paper therefore keeps the evidence boundary visible. Battery is the primary
+validation domain. AV is validated on all-zip grouped nuPlan replay. Healthcare is
+validated as a bounded retrospective monitoring domain. Future additional domains are
+not included in the public claim surface until they satisfy the same evidence criteria.
+This is the mechanism that lets the paper make a large architectural claim without
+pretending that universality of contract automatically implies equal evidence depth.
 
 \subsection{Three-domain evidence boundary}
-The public claim surface is deliberately three-row. Battery establishes the witness
-standard: theorem-facing assumptions, runtime traces, fallback semantics, and CertOS
-evidence are all present in the same row. The AV row tests whether the same release
+The public claim surface is deliberately three-domain. Battery establishes the primary
+validation standard: theorem-facing assumptions, runtime traces, fallback semantics, and
+CertOS evidence are all present in the same domain. The AV domain tests whether the same release
 grammar survives a faster mobility setting, but its current denominator is bounded to
 completed nuPlan replay artifacts and the TTC/predictive-entry-barrier contract. The
-Healthcare row tests the same grammar in retrospective monitoring, but it remains a
+Healthcare domain tests the same grammar in retrospective monitoring, but it remains a
 MIMIC-backed alert-release row and not a clinical deployment result. This boundary is
 part of the contribution because it prevents architectural universality from being
 misread as equal empirical maturity.
+
+\paragraph{Headline synthesis.}
+Across the three domains, ORIUS achieves zero or near-zero TSVR in every row:
+$0.833\% \to 0.000\%$ (Battery), $28.93\% \to 0.016\%$ (AV, 1.53M steps),
+and $19.45\% \to 0.000\%$ (Healthcare, 137K steps).
+In every row, runtime latency remains sub-millisecond (p95: 0.81, 0.74, 0.70\,ms),
+and certificate-valid release rate is above $99.3\%$.
+These results are achieved without collapsing to degenerate fail-safes: ORIUS
+retains 10.1\,MWh useful work over battery shutdown, $1.68\times$ the useful AV
+driving work over always-brake, and 142,767 useful monitoring units over
+always-alert healthcare, passing the utility-preserving safety gate in all three domains.

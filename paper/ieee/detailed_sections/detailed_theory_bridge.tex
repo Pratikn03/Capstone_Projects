@@ -23,7 +23,7 @@ theorems while preserving the full audit surface used by the repository.
 Observation-aware safety gap & T1 & Degraded observation can make observed-state safety disagree with true-state safety.\\
 Observation necessity & T4 & Observation-only or quality-ignorant mandatory release cannot guarantee safety on the defended ambiguity witness class.\\
 ORIUS covered release guarantee & T2, T3 & Covered uncertainty sets plus repaired release yield one-step safety and an explicit risk-envelope corollary.\\
-Typed transfer and covered optimality & T11; T10/T11 corollary & The typed ORIUS contract transfers to defended domains, with certificate/fallback discipline (T5--T8) and the covered Bayes lower/upper safety sandwich as scoped flagship or flagship-derived surfaces.\\
+Typed transfer and ambiguity sandwich & T11; T10/T11 corollary & The typed ORIUS contract transfers to defended domains, with certificate/fallback discipline (T5--T8) and the covered lower/upper safety sandwich stated only under its scoped ambiguity class.\\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -273,17 +273,22 @@ Total blackout         & 0.00 & 28.8 & 10.00 \\
 \end{table}
 
 \begin{theorem}[T4: Observation Necessity / No Free Safety]\label{thm:T4}
-Under A2 and A4, for any non-trivial fault rate $d > 0$, there exists no
-controller that simultaneously achieves $\TSVR = 0$ and zero intervention rate
-(IR~$= 0$) across all episodes.
+Under A1, A2, A4, and the boundary-reachability witness, let $\pi$ be a
+fixed-margin quality-ignorant mandatory-release controller with margin
+$m^\pi$.  If an admissible degraded-observation gap exceeds that fixed margin
+at a boundary-sensitive release step, then there exists an admissible fault
+sequence on which $\pi$ incurs a true-state violation.  Equivalently, on this
+witness class, mandatory non-intervention cannot certify $\TSVR=0$.
 \end{theorem}
 
 \begin{proof}[Proof sketch (constructive witness)]
 Construct a degraded-observation episode where the deterministic LP drives SoC to
 $\SOC_{\max} - \epsilon$ while the telemetry reads $\SOC_{\max} - \epsilon - \xi$
-with $\xi > 0$.  Any controller that does not intervene will commit a dispatch that
-pushes the true SoC above $\SOC_{\max}$.  Hence, maintaining $\TSVR = 0$ requires
-IR~$> 0$.
+with $\xi>m^\pi+\epsilon$.  A fixed-margin mandatory controller that does not
+intervene treats the observed state as feasible while the same released dispatch
+pushes the true SoC above $\SOC_{\max}$.  The result is scoped to this
+fixed-margin, boundary-sensitive witness; adaptive margins, abstention,
+fallback, and fail-closed denial are outside the lower-bound class.
 \end{proof}
 
 \subsection{Certificate and Temporal Theorems (T5--T8)}
@@ -339,15 +344,17 @@ boundary-indistinguishability problem. Their status is governed by the
 promotion matrix and result-card artifacts, not prose alone.
 
 \begin{proposition}[T9: Impossibility of Quality-Ignorant Mandatory Release]\label{thm:T9}
-For an observation $o$, define $B(o)=\{x:h(x)=o\}$ and
-$K(o)=\cap_{x\in B(o)}C(x)$.  If $K(o)=\varnothing$, then no
-observation-only mandatory-release controller $\pi(o)$ can guarantee
-true-state safety for all $x\in B(o)$.
+Let $\Pi_{\mathrm{obs}}$ be total observation-only mandatory-release
+controllers with no abstention action.  For an observation $o$, define
+$B(o)=\{x:h(x)=o\}$ and $K(o)=\cap_{x\in B(o)}C(x)$.  If
+$B(o)\ne\emptyset$ and $K(o)=\varnothing$, then no
+$\pi\in\Pi_{\mathrm{obs}}$ can guarantee true-state safety for all
+$x\in B(o)$.
 \end{proposition}
 
 \begin{proof}
-A mandatory-release controller chooses a single action $a=\pi(o)$.  Since the
-common safe core is empty, no single action lies in every $C(x)$ for
+A total mandatory-release controller chooses a single action $a=\pi(o)$ for the
+nonempty ambiguity class.  Since the common safe core is empty, no single action lies in every $C(x)$ for
 $x\in B(o)$, so there exists $x^\dagger\in B(o)$ with $a\notin C(x^\dagger)$;
 if the latent state realizes as $x^\dagger$, the released action is unsafe.
 The result is a structural impossibility for the mandatory-release policy
@@ -372,12 +379,16 @@ controller satisfies
 \end{proposition}
 
 \begin{proof}
-Because the safe-action sets are disjoint, a single released action $\pi(O)$
-must fail to lie in $C(x_i)$ for at least one $i\in\{0,1\}$ on any observation
-realization.  Le~Cam's two-point inequality bounds the minimum sum of error
-probabilities for any test between $P_0$ and $P_1$ from below by
-$1 - d_{\mathrm{TV}}(P_0,P_1) \ge 1 - \epsilon$; taking the supremum over the
-two latent labels yields the half of that lower bound stated above.
+For a deterministic release rule, define
+$S_i=\{o:\pi(o)\in C(x_i)\}$.  Disjoint safe-action sets imply
+$S_0\cap S_1=\emptyset$.  The average release success probability is
+$\frac12(P_0(S_0)+P_1(S_1))$.  Since $S_1\subseteq S_0^c$, the test that
+decides $x_0$ on $S_0$ and $x_1$ otherwise succeeds with probability at least
+that release-success value.  The best testing success is
+$(1+d_{\mathrm{TV}}(P_0,P_1))/2\le(1+\epsilon)/2$, so the average release loss
+is at least $(1-\epsilon)/2$.  The maximum of the two state-conditioned risks is
+at least that average.  Randomized controllers follow by conditioning on the
+internal seed and averaging.
 \end{proof}
 
 \paragraph{Scope: TV distance is not the reliability weight.}
@@ -415,7 +426,7 @@ Then:
 \end{equation}
 \end{theorem}
 
-\begin{corollary}[Covered Observation-Ambiguity Optimality]
+\begin{corollary}[Covered Observation-Ambiguity Safety Sandwich]
 \label{cor:T10_T11_observation_ambiguity_sandwich}
 For an observation $o$, let
 $B(o)=\{x:h(x)=o\}$ be its ambiguity class and
@@ -488,10 +499,10 @@ corollaries.  The T-identifiers serve as traceability anchors:
   \item \textbf{Operationalization} (scoped T5--T8): certificate horizon, expiration,
         fallback, and graceful degradation make release time-bounded and
         fail-closed.
-  \item \textbf{Transfer and optimality} (T11 plus the T10/T11 ambiguity
+  \item \textbf{Transfer and scoped ambiguity} (T11 plus the T10/T11 ambiguity
         corollary): typed obligations transfer the argument across defended
-        domains, while the Bayes lower/upper sandwich states the covered
-        ambiguity optimality claim.
+        domains, while the lower/upper sandwich states only the covered
+        ambiguity comparison.
 \end{itemize}
 
 The generated theorem-promotion matrix confirms that T9 and T10 are promoted

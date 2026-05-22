@@ -46,6 +46,8 @@ The promoted ML center is grouped calibration and runtime safety under degraded 
 - `reports/publication/three_domain_negative_controls.csv`
 - `reports/publication/three_domain_utility_safety_dominance.csv`
 - `reports/publication/utility_preserving_safety_scorecard.csv`
+- `reports/publication/utility_preserving_safety_claim_table.csv`
+- `reports/publication/utility_preserving_safety_ablation_surfaces.csv`
 - `reports/publication/utility_preserving_safety_scorecard.md`
 - `reports/publication/security_governance_ablation_matrix.csv`
 - `reports/publication/orius_failure_modes_falsification_table.csv`
@@ -83,6 +85,16 @@ The current theorem-promotion authority is:
 - `reports/publication/theorem_promotion_matrix.json`
 - `reports/publication/theorem_result_cards/*.json`
 - `scripts/validate_theorem_promotion.py`
+
+The strict theorem-defensibility release gate is:
+
+- `reports/publication/theorem_defensibility_10.json`
+- `scripts/validate_theorem_defensibility_10.py`
+- `make theorem-defensibility-10`
+
+It requires all active theorem rows to have matching code correspondence, no
+draft or unresolved-assumption rows, complete flagship result cards, and a Lean
+formal core that builds without executable `sorry`, `admit`, or `axiom` tokens.
 
 The older `active_theorem_audit.*` files remain useful for historical
 traceability and registry drift, but they are not the current proof-strength

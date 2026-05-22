@@ -66,6 +66,21 @@ release grammar.
   \input{reports/publication/runtime_release_contract_witnesses.tex}%
 }{}
 
+\paragraph{Utility and ablation checks.}
+The runtime table alone would be incomplete because a controller can appear safe
+by braking, alerting, or denying release too often.  The utility-preserving table
+therefore separates two claims: where comparable compact evidence exists, ORIUS
+is safer than predictor-only control; against shutdown/fallback-only references,
+ORIUS preserves useful work without material excess TSVR.
+
+\IfFileExists{reports/publication/utility_preserving_safety_claim_table.tex}{%
+  \input{reports/publication/utility_preserving_safety_claim_table.tex}%
+}{}
+
+\IfFileExists{reports/publication/utility_preserving_safety_ablation_surfaces.tex}{%
+  \input{reports/publication/utility_preserving_safety_ablation_surfaces.tex}%
+}{}
+
 \subsection{Analysis}
 
 \paragraph{Battery witness row.}

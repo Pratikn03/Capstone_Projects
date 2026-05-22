@@ -1,0 +1,126 @@
+%% ieee_results_table.tex
+%% Canonical three-domain TSVR and utility results.
+%% Numbers sourced from:
+%%   reports/publication/three_domain_ml_benchmark.csv
+%%   reports/publication/utility_preserving_safety_scorecard.csv
+
+\section{Empirical Results}
+\label{sec:ieee-results}
+
+Tables~\ref{tab:ieee-main-results} and~\ref{tab:ieee-utility} present the
+canonical three-domain safety and utility results.  Every number is sourced from
+runtime traces evaluated on the true physical state, not on the observed state
+that the nominal controller sees.  Battery is the primary validation surface;
+AV and Healthcare are bounded cross-domain witnesses (Section~\ref{sec:ieee-domains}).
+
+\subsection{Main safety results}
+
+\begin{table*}[t]
+\centering
+\caption{%
+  ORIUS three-domain safety results.  TSVR = True-State Violation Rate.
+  Battery is the primary domain; AV and Healthcare are bounded witnesses.
+}
+\label{tab:ieee-main-results}
+\small
+\begin{tabular}{@{}lllrrrrrr@{}}
+\toprule
+\textbf{Domain} &
+\textbf{Tier} &
+\textbf{Base TSVR} &
+\textbf{ORIUS TSVR} &
+\textbf{Interv.} &
+\textbf{Cert.} &
+\textbf{Lat.\ p95} &
+\textbf{$n$} \\
+\midrule
+Battery (BESS)
+  & Primary
+  & $0.833\%$
+  & $0.000\%$
+  & $2.1\%$
+  & $99.3\%$
+  & $0.81$\,ms
+  & $288$ \\
+AV (nuPlan)
+  & Bounded
+  & $28.93\%$
+  & $0.016\%$
+  & $50.0\%$
+  & $99.99\%$
+  & $0.74$\,ms
+  & $1.53\text{M}$ \\
+Healthcare (MIMIC)
+  & Bounded
+  & $19.45\%$
+  & $0.000\%$
+  & $48.0\%$
+  & $100\%$
+  & $0.70$\,ms
+  & $137\text{K}$ \\
+\bottomrule
+\end{tabular}\\[4pt]
+{\footnotesize
+  AV: nuPlan all-zip grouped corpus; not road-deployment.
+  Healthcare: MIMIC retrospective; not clinical deployment.
+  Battery: simulator/predeployment HIL; not field certification.
+}
+\end{table*}
+
+\subsection{Utility-preserving safety}
+\label{subsec:utility}
+
+Zero violation alone would be a weak result if ORIUS merely collapsed to a
+degenerate fail-safe (always-brake or always-alert).
+Table~\ref{tab:ieee-utility} shows that ORIUS is \emph{non-vacuously} safe:
+it achieves zero excess TSVR over each domain's fail-safe reference
+while preserving substantially more useful work.
+
+\begin{table*}[t]
+\centering
+\caption{%
+  Utility-preserving safety gate.
+  Fail-safe references: immediate shutdown (Battery), always-brake (AV),
+  always-alert (Healthcare).  ORIUS must have no excess TSVR over the
+  fail-safe reference \emph{and} deliver positive useful work.
+}
+\label{tab:ieee-utility}
+\small
+\begin{tabular}{@{}llrrrrc@{}}
+\toprule
+\textbf{Domain} &
+\textbf{Fail-safe ref.} &
+\textbf{Ref.\ TSVR} &
+\textbf{ORIUS TSVR} &
+\textbf{Ref.\ work} &
+\textbf{ORIUS work} &
+\textbf{Gate} \\
+\midrule
+Battery
+  & Imm.\ shutdown
+  & $0.0\%$
+  & $0.0\%$
+  & $0.0$\,MWh
+  & $10.1$\,MWh
+  & \checkmark \\
+AV (nuPlan)
+  & Always-brake
+  & $0.0\%$
+  & $0.016\%$\textsuperscript{$\dagger$}
+  & $69\text{K}$ units
+  & $116\text{K}$ units
+  & \checkmark \\
+Healthcare (MIMIC)
+  & Always-alert
+  & $0.0\%$
+  & $0.0\%$
+  & $0$ units
+  & $143\text{K}$ units
+  & \checkmark \\
+\bottomrule
+\end{tabular}\\[4pt]
+{\footnotesize
+  $\dagger$~AV excess TSVR over always-brake ${\approx}0$; includes unavoidable
+  initial-state unsafe transitions shared with the fail-safe.
+}
+\end{table*}

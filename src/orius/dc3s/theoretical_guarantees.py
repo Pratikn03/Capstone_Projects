@@ -608,7 +608,11 @@ def compute_universal_impossibility_bound(
     *,
     usable_horizon_fraction: float = 1.0,
 ) -> dict:
-    r"""Executable witness for T9's Omega(dT)-style impossibility scaling."""
+    r"""Legacy rate witness kept out of the active T9 theorem surface.
+
+    Active T9 is the empty-safe-core mandatory-release impossibility theorem.
+    This helper is retained only for historical sensitivity diagnostics.
+    """
     if horizon <= 0:
         raise ValueError("horizon must be positive")
     if not (0.0 <= fault_rate <= 1.0):
@@ -1155,47 +1159,46 @@ THEOREM_REGISTER = {
         "parent_law": None,
     },
     "T8": {
-        "name": "Graceful Degradation Dominance",
+        "name": "Graceful Degradation Dominance with Useful Work",
         "statement": (
-            "For paired graceful and uncontrolled violation sequences generated "
-            "under the same admissible fault trace, stepwise dominance of the "
-            "graceful sequence implies cumulative-count dominance. The active "
-            "surface is this sequence-level comparison only."
+            "For paired graceful and uncontrolled policies generated under the "
+            "same admissible fault trace, stepwise safety dominance plus a declared "
+            "useful-work lower bound gives safety-work preorder dominance."
         ),
         "type": "dominance",
-        "code_witness": "evaluate_graceful_degradation_dominance",
-        "module": "orius.universal_theory.battery_instantiation",
-        "dependencies": ["shared_fault_trace", "paired_violation_sequence", "violation_count"],
+        "code_witness": "graceful_dominance_with_useful_work",
+        "module": "orius.benchmarks.graceful_degradation",
+        "dependencies": ["shared_fault_trace", "paired_violation_sequence", "useful_work_threshold"],
         "parent_law": None,
     },
     "T9": {
-        "name": "Universal Impossibility Under Persistent Degradation",
+        "name": "Impossibility of Quality-Ignorant Mandatory Release",
         "statement": (
-            "E[V_T] >= c * d * T_eff under persistent degraded observation, "
-            "with c supplied by a witness sensitivity argument."
+            "If a nonempty observation ambiguity class has empty common safe core, "
+            "no total observation-only mandatory-release controller can certify "
+            "true-state safety for every latent state in that class."
         ),
         "type": "impossibility",
-        "code_witness": "compute_universal_impossibility_bound",
-        "module": "orius.dc3s.theoretical_guarantees",
+        "code_witness": "find_mandatory_release_counterexample",
+        "module": "orius.universal_theory.ambiguity",
         "dependencies": [
-            "t4_witness_window",
-            "persistent_fault_rate",
-            "phi_mixing_assumption",
-            "azuma_windowing",
+            "total_observation_only_release",
+            "nonempty_ambiguity_class",
+            "empty_common_safe_core",
         ],
         "parent_law": None,
     },
     "T10": {
-        "name": "Stylized Reliability-Risk Frontier",
+        "name": "Boundary-Indistinguishability Lower Bound",
         "statement": (
-            "E[V_T(pi)] >= (1/2) * sum_t p_t * (1 - w_t), "
-            "and under p_t >= alpha/2 this gives (alpha/4)(1-w_bar)T.  "
-            "Scoped boundary-indistinguishability lower bound under explicit boundary-mass assumptions."
+            "For two boundary states with TV-close observation laws and disjoint "
+            "safe-action sets, every observation-only mandatory-release controller "
+            "has worst-state release risk at least (1 - epsilon) / 2."
         ),
         "type": "lower_bound",
-        "code_witness": "compute_stylized_frontier_lower_bound",
-        "module": "orius.dc3s.theoretical_guarantees",
-        "dependencies": ["boundary_mass_sequence", "le_cam_two_point", "unsafe_side_mapping_assumption"],
+        "code_witness": "two_state_lower_bound",
+        "module": "orius.universal_theory.boundary_indistinguishability",
+        "dependencies": ["two_state_boundary_pair", "tv_bound", "disjoint_safe_sets"],
         "parent_law": None,
     },
     "T11": {
@@ -1217,7 +1220,7 @@ THEOREM_REGISTER = {
         "parent_law": None,
     },
     "T10_T11_ObservationAmbiguitySandwich": {
-        "name": "Covered Observation-Ambiguity Optimality",
+        "name": "Covered Observation-Ambiguity Safety Sandwich",
         "statement": (
             "For each observation ambiguity class B(o), every observation-only "
             "controller has violation risk at least min_a P[a notin C(X)|O=o]. "
@@ -1226,7 +1229,7 @@ THEOREM_REGISTER = {
             "probability is zero; under probabilistic coverage it is bounded "
             "by the coverage miss probability."
         ),
-        "type": "supporting_optimality_corollary",
+        "type": "supporting_ambiguity_sandwich_corollary",
         "code_witness": "build_observation_ambiguity_contract_summary",
         "module": "orius.universal_theory.observation_ambiguity",
         "dependencies": ["T10", "T11", "common_safe_core", "coverage_obligation"],
@@ -1262,27 +1265,32 @@ THEOREM_REGISTER = {
         "parent_law": None,
     },
     "T_minimax": {
-        "name": "Tight OASG Minimax Tradeoff",
+        "name": "Finite Ambiguity-Class Minimax Lower Bound",
         "statement": (
-            "Stylized lower-envelope witness E[V_T] >= (alpha / K) * sum(1 - w_t) for K = 2, "
-            "paired with the executable T3-style upper envelope."
+            "For the finite class of two-state boundary problems with TV radius "
+            "epsilon and disjoint safe-action sets, every observation-only "
+            "mandatory-release controller has worst-state risk at least "
+            "(1 - epsilon) / 2. No matching global ORIUS upper bound or "
+            "unrestricted optimality claim is asserted."
         ),
-        "type": "minimax_optimality",
-        "code_witness": "compute_tight_impossibility_bound",
-        "module": "orius.dc3s.theoretical_guarantees",
-        "dependencies": ["stylized_l1_lower_envelope", "stylized_l2_capacity_bridge", "t3_upper_envelope"],
+        "type": "scoped_minimax_lower_bound",
+        "code_witness": "finite_ambiguity_minimax_lower_bound",
+        "module": "orius.universal_theory.minimax_boundary",
+        "dependencies": ["T10", "two_state_boundary_problem", "mandatory_release_loss"],
         "parent_law": None,
     },
     "T_sensor_converse": {
-        "name": "Information-Theoretic Sensor Quality Converse",
+        "name": "Sensor Necessity Under Adapter Semantics",
         "statement": (
-            "Stylized inverse threshold w_bar >= 1 - epsilon/alpha derived from the "
-            "T3 upper envelope plus the L2/L3 proxy bridge."
+            "If an omitted latent coordinate leaves two states observation-identical "
+            "while their safe-action sets are disjoint, no observation-only "
+            "mandatory-release policy can certify safety without additional sensing, "
+            "uncertainty expansion, fallback, or denial of release."
         ),
-        "type": "converse_bound",
-        "code_witness": "sensor_quality_converse",
-        "module": "orius.dc3s.theoretical_guarantees",
-        "dependencies": ["t3_upper_envelope", "stylized_l2_capacity_bridge", "stylized_l3_threshold"],
+        "type": "sensor_necessity",
+        "code_witness": "critical_sensor_test",
+        "module": "orius.universal_theory.sensor_necessity",
+        "dependencies": ["T9", "adapter_observation_invariance", "empty_common_safe_core"],
         "parent_law": None,
     },
     "T_trajectory_PAC": {
