@@ -199,13 +199,13 @@ def _build_torch_model(bundle: dict[str, Any]):
     return model
 
 
-def _maybe_scale_X(X: np.ndarray, bundle: dict[str, Any]) -> np.ndarray:
+def _maybe_scale_features(X: np.ndarray, bundle: dict[str, Any]) -> np.ndarray:
     """Apply the saved feature scaler when present."""
     scaler = StandardScaler.from_dict(bundle.get("x_scaler"))
     return scaler.transform(X) if scaler is not None else X
 
 
-def _maybe_impute_X(X: np.ndarray, bundle: dict[str, Any]) -> np.ndarray:
+def _maybe_impute_features(X: np.ndarray, bundle: dict[str, Any]) -> np.ndarray:
     """Apply saved train-split feature fill values when present."""
     fill_values = bundle.get("feature_fill_values")
     arr = np.asarray(X, dtype=np.float32)
@@ -255,7 +255,7 @@ def predict_next_24h(
 
     if model_type == "gbm":
         X = np.asarray(df[feat_cols].apply(pd.to_numeric, errors="coerce"), dtype=np.float32)
-        X = _maybe_impute_X(X, model_bundle)
+        X = _maybe_impute_features(X, model_bundle)
         if len(X) < horizon:
             raise ValueError("Not enough rows in features_df for GBM horizon")
         ensemble_models = model_bundle.get("ensemble_models")
@@ -267,10 +267,10 @@ def predict_next_24h(
     elif model_type in {"lstm", "tcn", "nbeats", "tft", "patchtst"}:
         lookback = int(model_bundle.get("lookback", 168))
         X = np.asarray(df[feat_cols].apply(pd.to_numeric, errors="coerce"), dtype=np.float32)
-        X = _maybe_impute_X(X, model_bundle)
+        X = _maybe_impute_features(X, model_bundle)
         if len(X) < lookback:
             raise ValueError("Not enough rows in features_df for sequence lookback")
-        X = _maybe_scale_X(X, model_bundle)
+        X = _maybe_scale_features(X, model_bundle)
         model = _build_torch_model(model_bundle)
         quantile_levels = _normalize_quantile_levels(model_bundle.get("quantile_levels"))
         with _torch.no_grad():

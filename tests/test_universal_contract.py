@@ -96,7 +96,7 @@ class TestCompliantAdapter:
 # ── Broken adapters for invariant violation tests ──────────────────────────────
 
 
-class InvariantBroken_3_ReliabilityRange:
+class InvariantBrokenReliabilityRange:
     """Returns w_t > 1 — violates Invariant 3."""
 
     def observe(self, raw):
@@ -113,7 +113,7 @@ class InvariantBroken_3_ReliabilityRange:
         return np.zeros(1)
 
 
-class InvariantBroken_4_CalibrationConsistency:
+class InvariantBrokenCalibrationConsistency:
     """Returns a constant-width set regardless of w_t — violates Invariant 4.
 
     The correct behaviour is that width decreases as w_t decreases.
@@ -140,7 +140,7 @@ class InvariantBroken_4_CalibrationConsistency:
         return np.zeros(1)
 
 
-class InvariantBroken_5_ZeroReliabilityEmpty:
+class InvariantBrokenZeroReliabilityEmpty:
     """At w_t=0, returns a non-empty set — violates Invariant 5.
 
     Passes Invariant 4 (correct width change at w=1 vs w=0.5)
@@ -165,7 +165,7 @@ class InvariantBroken_5_ZeroReliabilityEmpty:
         return np.zeros(1)
 
 
-class InvariantBroken_2_TightenedSubset:
+class InvariantBrokenTightenedSubset:
     """At w_t=0.5, the set expands below the nominal lower bound — violates Invariant 2.
 
     Passes Invariant 4 (width changes correctly, monotone in the right direction)
@@ -198,7 +198,7 @@ class InvariantBroken_2_TightenedSubset:
         return np.zeros(1)
 
 
-class InvariantBroken_1_RepairMembership:
+class InvariantBrokenRepairMembership:
     """repair() returns an action outside the tightened set — violates Invariant 1."""
 
     def observe(self, raw):
@@ -225,35 +225,35 @@ class InvariantBroken_1_RepairMembership:
 
 class TestInvariant3:
     def test_reliability_out_of_range_raises(self):
-        verifier = ContractVerifier(InvariantBroken_3_ReliabilityRange(), alpha=0.05)
+        verifier = ContractVerifier(InvariantBrokenReliabilityRange(), alpha=0.05)
         with pytest.raises(ContractViolation, match="Invariant 3"):
             verifier.check(np.array([0.0]), q_t=0.1)
 
 
 class TestInvariant4:
     def test_calibration_inconsistency_raises(self):
-        verifier = ContractVerifier(InvariantBroken_4_CalibrationConsistency(), alpha=0.05)
+        verifier = ContractVerifier(InvariantBrokenCalibrationConsistency(), alpha=0.05)
         with pytest.raises(ContractViolation, match="Invariant 4"):
             verifier.check(np.array([0.0]), q_t=0.1)
 
 
 class TestInvariant5:
     def test_zero_reliability_nonempty_raises(self):
-        verifier = ContractVerifier(InvariantBroken_5_ZeroReliabilityEmpty(), alpha=0.05)
+        verifier = ContractVerifier(InvariantBrokenZeroReliabilityEmpty(), alpha=0.05)
         with pytest.raises(ContractViolation, match="Invariant 5"):
             verifier.check(np.array([0.0]), q_t=0.1)
 
 
 class TestInvariant2:
     def test_tightened_exceeds_nominal_raises(self):
-        verifier = ContractVerifier(InvariantBroken_2_TightenedSubset(), alpha=0.05)
+        verifier = ContractVerifier(InvariantBrokenTightenedSubset(), alpha=0.05)
         with pytest.raises(ContractViolation, match="Invariant 2"):
             verifier.check(np.array([0.0]), q_t=0.1)
 
 
 class TestInvariant1:
     def test_repair_outside_safe_set_raises(self):
-        verifier = ContractVerifier(InvariantBroken_1_RepairMembership(), alpha=0.05)
+        verifier = ContractVerifier(InvariantBrokenRepairMembership(), alpha=0.05)
         with pytest.raises(ContractViolation, match="Invariant 1"):
             verifier.check(np.array([0.0]), q_t=0.1)
 
@@ -273,6 +273,6 @@ class TestContractVerifierEdgeCases:
 
     def test_tolerance_parameter_does_not_suppress_large_violations(self):
         """A large invariant violation (10x) should not be masked by the default tol."""
-        verifier = ContractVerifier(InvariantBroken_1_RepairMembership(), alpha=0.05)
+        verifier = ContractVerifier(InvariantBrokenRepairMembership(), alpha=0.05)
         with pytest.raises(ContractViolation):
             verifier.check(np.array([0.0]), q_t=0.1, tol=1e-6)
