@@ -1,0 +1,24 @@
+risk_id,scope,symbol_or_pattern,current_surface,classification,required_action,blocks_current_audit,blocks_schema_implementation,notes
+NRR-001,duplicate_private_helper,_write_csv,scripts,deferred_refactor,Keep for now; use domain-qualified helper names only when touching owner scripts,no,no,Private helpers are file-local and not public schema.
+NRR-002,duplicate_private_helper,_read_csv,scripts,deferred_refactor,Keep for now; use domain-qualified helper names only when touching owner scripts,no,no,Private helpers are file-local and not public schema.
+NRR-003,duplicate_private_helper,_write_json,scripts,deferred_refactor,Keep for now; use domain-qualified helper names only when touching owner scripts,no,no,Private helpers are file-local and not public schema.
+NRR-004,duplicate_private_helper,_read_json,scripts,deferred_refactor,Keep for now; use domain-qualified helper names only when touching owner scripts,no,no,Private helpers are file-local and not public schema.
+NRR-005,duplicate_private_helper,_load_json,scripts,deferred_refactor,Keep for now; use domain-qualified helper names only when touching owner scripts,no,no,Private helpers are file-local and not public schema.
+NRR-006,duplicate_private_helper,_sha256,scripts,deferred_refactor,Keep for now; use domain-qualified helper names only when touching owner scripts,no,no,Generic hash helper is acceptable until a touched script needs clearer tracing.
+NRR-007,duplicate_private_helper,_safe_float,scripts,deferred_refactor,Keep for now; use domain-qualified helper names only when touching owner scripts,no,no,Generic coercion helper is acceptable until owner scripts are refactored.
+NRR-008,duplicate_private_helper,_run,scripts,deferred_refactor,Keep for now; use command-specific helper names only when touching owner scripts,no,no,Generic local command runner is acceptable while private.
+NRR-009,duplicate_private_helper,_f,scripts and src,deferred_refactor,Keep for now; rename opportunistically where it is not mathematical closure notation,no,no,Some uses are local lambdas or closures; no public artifact impact.
+NRR-010,standard_interface,observe,src,accepted_exception,None,no,no,Protocol method for runtime/bench adapters.
+NRR-011,standard_interface,step,src,accepted_exception,None,no,no,Standard environment/runtime method.
+NRR-012,standard_interface,to_dict,src,accepted_exception,None,no,no,Standard serialization method.
+NRR-013,standard_interface,forward,src,accepted_exception,None,no,no,Standard neural-network method.
+NRR-014,standard_interface,build_uncertainty_set,src,accepted_exception,None,no,no,Shared adapter capability name; duplicate use is intentional.
+NRR-015,standard_interface,name,src,accepted_exception,None,no,no,Common property/interface name; duplicate use is not a schema defect.
+NRR-016,theorem_notation,"H_t H_X T K_factor lipschitz_L X Y",tests scripts src,accepted_exception,None,no,no,Names preserve theorem notation or sklearn-style matrix notation.
+NRR-017,metrics_schema,challenger_metrics,reports and training outputs,implemented,Model-quality gate now promotes challenger/incumbent records to canonical model rows,no,no,Scientific metrics are unchanged; canonical visibility is additive.
+NRR-018,domain_dataset_vocabulary,"DE battery energy OPSD",configs reports scripts,implemented,Registry and gate output now use domain=battery and dataset=DE_OPSD,no,no,DE and OPSD aliases remain compatible.
+NRR-019,domain_dataset_vocabulary,"AV vehicle Waymo nuPlan nuplan_allzip_grouped",configs reports scripts,implemented,Registry and gate output now use domain=vehicle and dataset=AV_NUPLAN_ALLZIP_GROUPED,no,no,AV and provider/dataset aliases remain compatible.
+NRR-020,model_identity,"baseline_gbm gbm gbm_lightgbm quantile_gbm",metrics reports artifacts,implemented,Gate rows now split overloaded model keys into model_family estimator role target dataset run_id and selected_for_release,no,no,Existing model keys remain compatibility aliases.
+NRR-021,cli_flags,"--out --out-dir --output-pdf --publication-dir --reports-dir --metrics-json",scripts,implemented,Same-line argparse --out and --out-dir flags now accept --output and --output-dir aliases,no,no,Existing public flags remain valid.
+NRR-022,training_window_units,"lookback_hours lookback_steps horizon_hours horizon",configs and training resolvers,implemented,Canonical configs now expose lookback_steps and horizon_steps with physical-time aliases preserved,no,no,Resolver aliases are preserved and step names are explicit.
+NRR-023,generated_run_ids,timestamp-heavy generated names,reports/runs and artifacts/runs,deferred_refactor,Adopt canonical run-id format for future runs only,no,no,Existing run directories are evidence artifacts and should not be renamed.

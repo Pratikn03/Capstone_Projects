@@ -1,0 +1,113 @@
+{
+  "class_count": 557,
+  "config_file_count": 35,
+  "exception_count": 100,
+  "function_count": 6205,
+  "issue_count": 0,
+  "issues_by_category": {},
+  "issues_by_severity": {},
+  "parameter_count": 9375,
+  "python_file_count": 830,
+  "risk_count": 0,
+  "unclassified_risk_count": 0,
+  "classified_risk_count": 23,
+  "legacy_detected_risk_count": 14,
+  "requires_implementation_count": 0,
+  "requires_schema_implementation_count": 0,
+  "requires_compat_aliases_count": 0,
+  "implemented_count": 6,
+  "accepted_exception_count": 7,
+  "deferred_refactor_count": 10,
+  "resolved_by_contract_count": 1,
+  "risks_by_category": {},
+  "classified_risks_by_classification": {
+    "accepted_exception": 7,
+    "deferred_refactor": 10,
+    "implemented": 6
+  },
+  "legacy_detected_risks_by_category": {
+    "duplicate_function_name": 14
+  },
+  "top_duplicate_function_names": [
+    [
+      "__init__",
+      76
+    ],
+    [
+      "_write_csv",
+      27
+    ],
+    [
+      "_read_csv",
+      21
+    ],
+    [
+      "_sha256",
+      18
+    ],
+    [
+      "observe",
+      18
+    ],
+    [
+      "_run",
+      16
+    ],
+    [
+      "_load_json",
+      16
+    ],
+    [
+      "_f",
+      16
+    ],
+    [
+      "to_dict",
+      15
+    ],
+    [
+      "step",
+      15
+    ],
+    [
+      "__post_init__",
+      15
+    ],
+    [
+      "_safe_float",
+      14
+    ],
+    [
+      "_read_json",
+      14
+    ],
+    [
+      "build_uncertainty_set",
+      14
+    ],
+    [
+      "_write_json",
+      12
+    ],
+    [
+      "name",
+      12
+    ],
+    [
+      "update",
+      11
+    ],
+    [
+      "validate",
+      11
+    ],
+    [
+      "reset",
+      11
+    ],
+    [
+      "forward",
+      11
+    ]
+  ]
+}

@@ -1,0 +1,90 @@
+category,path,symbol,rationale
+notation_parameter,scripts/build_healthcare_runtime_artifacts.py,_trace_row(validity_horizon_H_t),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,scripts/run_transfer_study.py,_predict_gbm(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,scripts/shap_importance.py,plot_shap_summary(X_explain),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/anomaly/isolation_forest.py,fit_iforest(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/anomaly/isolation_forest.py,predict_iforest(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/certificate.py,make_certificate(validity_horizon_H_t),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/coverage_theorem.py,hoeffding_violation_bound(T),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/half_life.py,time_to_expiration(H_t),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/half_life.py,verify_horizon_safety(H_t),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/quality.py,w_t_as_capacity_proxy(H_X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/supporting_results.py,verify_zero_violation_regime(T),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/supporting_results.py,verify_perfect_telemetry_collapse(T),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/theoretical_guarantees.py,compute_adaptive_regret_bound(T),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/theoretical_guarantees.py,assert_sublinear_regret(T),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/theoretical_guarantees.py,simulate_adaptive_tracking(T),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/theoretical_guarantees.py,compute_tight_impossibility_bound(K_factor),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/theoretical_guarantees.py,verify_minimax_gap(K_factor),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/theoretical_guarantees.py,verify_complete_characterization(K_factor),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/theoretical_guarantees.py,prove_byzantine_bound(W),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/theoretical_guarantees.py,verify_stale_decay_sufficiency(T_phys),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/theoretical_guarantees.py,stale_decay_episode_risk(T),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/theoretical_guarantees.py,complete_oasg_characterization(lipschitz_L),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/dc3s/theoretical_guarantees.py,complete_oasg_characterization(K_factor),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/datasets.py,__init__(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/evaluate.py,time_series_cv_score(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/evaluate.py,multi_horizon_cv_score(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/evaluate.py,evaluate_model_cv(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/ml_gbm.py,train_gbm(X_train),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/ml_gbm.py,predict_gbm(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/predict.py,_maybe_scale_features(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/predict.py,_maybe_impute_features(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,tune_gbm_params(X_train),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,tune_gbm_params(X_val),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,_drop_invalid_target_rows(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,_fit_feature_fill_values(X_train),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,_apply_feature_fill_values(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,_prediction_latency_summary(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,train_lstm_model(X_train),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,train_lstm_model(X_val),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,train_tcn_model(X_train),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,train_tcn_model(X_val),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,train_nbeats_model(X_train),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,train_nbeats_model(X_val),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,train_tft_model(X_train),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,train_tft_model(X_val),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,train_patchtst_model(X_train),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,train_patchtst_model(X_val),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,collect_seq_output_bundle(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,_sequence_prediction_latency_summary(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,_sequence_model_quality_fields(X_train_s),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,_sequence_model_quality_fields(X_test_s),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,collect_seq_preds(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/forecasting/train.py,evaluate_seq_model(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal/reliability_safety_frontier.py,compute_frontier(T),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal/reliability_safety_frontier.py,minimum_reliability_for_target(T),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal/reliability_safety_frontier.py,achieved_violation_rate(T),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal/reliability_safety_frontier.py,is_dc3s_optimal(T),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal/reliability_safety_frontier.py,frontier_summary(T),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/capacity_estimation.py,ksg_mutual_information(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/capacity_estimation.py,ksg_mutual_information(Y),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/orius_law.py,rate_distortion_safety_law(H_entropy),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/orius_law.py,capacity_bridge(H_X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/orius_law.py,critical_capacity(H_X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/orius_law.py,achievability_converse_sandwich(K_factor),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/orius_law.py,orius_grand_unification(H_X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/orius_law.py,orius_grand_unification(K_factor),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/orius_law.py,capacity_bridge_proof(H_X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/orius_law.py,capacity_bridge_verify(H_X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/orius_law.py,fano_binary_corollary(H_binary),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/risk_bounds.py,pac_trajectory_safety_certificate(H),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/universal_theory/risk_bounds.py,pac_trajectory_safety_certificate(lipschitz_L),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/utils/scaler.py,fit(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/utils/scaler.py,transform(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,src/orius/utils/scaler.py,inverse_transform(X),matches theorem/math or sklearn matrix notation; document as naming exception
+theorem_test_filename,tests/test_T10_boundary_lower_bound.py,test_T10_boundary_lower_bound.py,filename preserves theorem identifier used in paper/formal artifacts
+theorem_test_filename,tests/test_T11Byz_robust_oqe.py,test_T11Byz_robust_oqe.py,filename preserves theorem identifier used in paper/formal artifacts
+theorem_test_filename,tests/test_T5_certificate_validity.py,test_T5_certificate_validity.py,filename preserves theorem identifier used in paper/formal artifacts
+theorem_test_filename,tests/test_T8_graceful_dominance.py,test_T8_graceful_dominance.py,filename preserves theorem identifier used in paper/formal artifacts
+theorem_test_filename,tests/test_T9_mandatory_release_impossibility.py,test_T9_mandatory_release_impossibility.py,filename preserves theorem identifier used in paper/formal artifacts
+theorem_test_filename,tests/test_TPAC_trajectory_certificate.py,test_TPAC_trajectory_certificate.py,filename preserves theorem identifier used in paper/formal artifacts
+theorem_test_filename,tests/test_Tminimax_finite_ambiguity.py,test_Tminimax_finite_ambiguity.py,filename preserves theorem identifier used in paper/formal artifacts
+theorem_test_filename,tests/test_Tsensor_necessity.py,test_Tsensor_necessity.py,filename preserves theorem identifier used in paper/formal artifacts
+theorem_test_filename,tests/test_Tstale_uncertainty_growth.py,test_Tstale_uncertainty_growth.py,filename preserves theorem identifier used in paper/formal artifacts
+notation_parameter,tests/test_certos.py,_make_cert_chain(H_t),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,tests/test_coverage_boost.py,predict(X),matches theorem/math or sklearn matrix notation; document as naming exception
+compatibility_function,tests/test_modbus_tcp_driver.py,isError,test double mimics external pymodbus API naming
+compatibility_function,tests/test_modbus_tcp_driver.py,isError,test double mimics external pymodbus API naming
+notation_parameter,tests/test_predict.py,predict(X),matches theorem/math or sklearn matrix notation; document as naming exception
+notation_parameter,tests/test_robust_dispatch.py,_raise(_),matches theorem/math or sklearn matrix notation; document as naming exception

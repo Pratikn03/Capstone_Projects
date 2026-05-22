@@ -1,0 +1,13 @@
+priority,scope,current,proposed,action,risk,blocks_100_quality
+DONE,naming policy,No explicit naming contract for public artifacts/CLIs/reports,reports/audit/naming_contract.md,Completed audit-only contract before any public path/schema rename,low,no
+DONE,candidate metrics,retained incumbent target hides challenger_metrics under nested key,top-level candidate/incumbent model rows plus source metadata,Model-quality gate now surfaces challenger_metrics as candidate rows,medium,no
+DONE,domain vocabulary,DE / battery / energy / OPSD mixed,"domain=battery, dataset=DE_OPSD",Registry and gate output now expose canonical domain/dataset fields while keeping aliases,medium,no
+DONE,AV vocabulary,AV / vehicle / Waymo / nuPlan / nuplan_allzip_grouped mixed,"domain=vehicle, dataset=AV_NUPLAN_ALLZIP_GROUPED",Registry and gate output now expose canonical vehicle dataset fields while keeping aliases,medium,no
+DONE,model identity,baseline_gbm / gbm / gbm_lightgbm / quantile_gbm encode different dimensions,"model_family, estimator, role, target, dataset, run_id",Gate rows now expose canonical model identity fields while preserving artifact aliases,medium,no
+DONE,CLI output flags,--out / --out-dir / --output-pdf / --publication-dir / --reports-dir / --metrics-json,"--output for files, --output-dir for directories, domain-specific aliases kept",Added non-breaking --output/--output-dir aliases to same-line argparse output flags,high,no
+DONE,training params,lookback_hours/lookback_steps/horizon_hours/horizon mixed,lookback_steps/horizon_steps for sequence models; *_hours only for physical time,Canonical configs now expose step aliases while preserving physical-time fields,medium,no
+P2,theorem notation,"H_t, H_X, T, K_factor, lipschitz_L in code",documented notation exceptions,Do not mechanically rename; document mapping to paper notation,low,no
+DONE,private forecasting helpers,legacy X-suffixed forecasting helper names,_maybe_scale_features / _maybe_impute_features,Completed local rename and call-site update,low,no
+DONE,test helper classes,InvariantBroken_* with numeric underscores,CapWords InvariantBroken* classes,Completed local rename and call-site update,low,no
+DONE,stale marker cleanup,legacy domain-validation stale marker,removed stale marker from active tree,Completed cleanup,low,no
+P3,generated run IDs,timestamp-heavy names mix profile/domain/device,<domain>_<purpose>_<device>_<utc>,Adopt for future runs only,low,no
