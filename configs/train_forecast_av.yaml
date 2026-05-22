@@ -7,6 +7,7 @@ dataset:
 
 task:
   horizon_hours: 0.1  # 6 min at 0.1s steps
+  horizon_steps: 1  # Explicit sequence forecast horizon for DL models.
   lookback_hours: 1.0
   lookback_steps: 24  # Explicit sequence window for DL models.
   quantiles: [0.1, 0.5, 0.9]

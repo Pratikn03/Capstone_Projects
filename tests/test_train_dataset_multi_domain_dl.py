@@ -31,6 +31,24 @@ def test_multi_domain_configs_enable_full_dl_stack() -> None:
     assert healthcare_cfg["task"]["targets"] == ["hr_bpm", "spo2_pct", "respiratory_rate"]
 
 
+def test_canonical_training_configs_expose_step_aliases_and_dataset_names() -> None:
+    expected = {
+        "DE": ("battery", "DE_OPSD", 168, 24),
+        "AV": ("vehicle", "AV_NUPLAN_ALLZIP_GROUPED", 24, 1),
+        "HEALTHCARE": ("healthcare", "MIMIC3_VITALS", 24, 1),
+    }
+
+    for dataset_key, (domain, dataset, lookback_steps, horizon_steps) in expected.items():
+        registry_cfg = td.DATASET_REGISTRY[dataset_key]
+        task_cfg = td._load_training_cfg(registry_cfg)["task"]
+        assert registry_cfg.runtime_domain == domain
+        assert registry_cfg.canonical_dataset == dataset
+        assert int(task_cfg["lookback_steps"]) == lookback_steps
+        assert int(task_cfg["horizon_steps"]) == horizon_steps
+        assert forecasting_train._resolve_task_lookback(task_cfg) == lookback_steps
+        assert forecasting_train._resolve_task_horizon(task_cfg) == horizon_steps
+
+
 def test_sequence_lookback_resolution_prefers_steps_and_never_returns_zero() -> None:
     assert forecasting_train._resolve_task_lookback({"lookback_hours": 0.1}) == 1
     assert forecasting_train._resolve_task_lookback({"lookback_hours": 0.1, "lookback_steps": 24}) == 24

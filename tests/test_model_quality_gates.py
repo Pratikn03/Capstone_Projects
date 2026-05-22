@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import scripts.build_model_quality_gate as builder
@@ -133,20 +135,72 @@ def test_model_quality_gate_blocks_missing_train_latency_and_tuning(tmp_path: Pa
     assert "hyperparameter tuning" in blockers
 
 
-def test_model_quality_gate_skips_non_model_metadata_rows(tmp_path: Path) -> None:
+def test_model_quality_gate_exposes_canonical_domain_dataset_and_model_identity(tmp_path: Path) -> None:
+    metrics_path = tmp_path / "reports" / "orius_av" / "nuplan_allzip_grouped" / "week2_metrics.json"
+    out_path = tmp_path / "model_quality_gate.json"
+    _write_json(metrics_path, _strong_metrics())
+
+    result = builder.build_model_quality_gate(metrics_paths=[metrics_path], out_path=out_path)
+
+    row = result["models"][0]
+    assert row["domain"] == "vehicle"
+    assert row["dataset"] == "AV_NUPLAN_ALLZIP_GROUPED"
+    assert row["dataset_alias"] == "AV"
+    assert row["model_family"] == "gbm"
+    assert row["estimator"] == "lightgbm"
+    assert row["role"] == "release"
+    assert row["run_id"] == "unit-test"
+    assert row["selected_for_release"] is True
+    assert row["source_model_key"] == "gbm"
+
+
+def test_model_quality_gate_surfaces_challenger_metrics_as_candidate_rows(tmp_path: Path) -> None:
     metrics_path = tmp_path / "week2_metrics.json"
     out_path = tmp_path / "model_quality_gate.json"
     payload = _strong_metrics()
-    payload["targets"]["load_mw"]["challenger_metrics"] = {"rmse": 999.0}
-    payload["targets"]["load_mw"]["retention_decision"] = "keep_incumbent"
+    payload["targets"]["load_mw"]["challenger_metrics"] = {
+        "n_features": 12,
+        "gbm": {**payload["targets"]["load_mw"]["gbm"], "r2": -0.5},
+        "metadata_note": "not a model row",
+    }
+    payload["targets"]["load_mw"]["retention_decision"] = "retained_incumbent"
     payload["targets"]["load_mw"]["retention_reason"] = "unit-test metadata"
     _write_json(metrics_path, payload)
 
     result = builder.build_model_quality_gate(metrics_paths=[metrics_path], out_path=out_path)
 
     assert result["pass"] is True
-    assert result["summary"]["model_count"] == 1
-    assert [row["model"] for row in result["models"]] == ["gbm"]
+    assert result["summary"]["model_count"] == 2
+    rows = {(row["model"], row["role"]): row for row in result["models"]}
+    assert rows[("gbm", "incumbent")]["selected_for_release"] is True
+    assert rows[("gbm", "challenger")]["selected_for_release"] is False
+    assert rows[("gbm", "challenger")]["release_model"] is False
+    assert rows[("gbm", "challenger")]["metric_source"] == "challenger_metrics"
+    assert "underfit risk" in "\n".join(result["candidate_findings"])
+
+
+def test_model_quality_gate_cli_accepts_output_alias(tmp_path: Path) -> None:
+    metrics_path = tmp_path / "week2_metrics.json"
+    out_path = tmp_path / "model_quality_gate.json"
+    _write_json(metrics_path, _strong_metrics())
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(Path(builder.__file__).resolve()),
+            "--metrics",
+            str(metrics_path),
+            "--output",
+            str(out_path),
+        ],
+        cwd=Path(builder.__file__).resolve().parents[1],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert out_path.exists()
 
 
 def test_model_quality_gate_accepts_fixed_deep_architecture_without_tuning(tmp_path: Path) -> None:

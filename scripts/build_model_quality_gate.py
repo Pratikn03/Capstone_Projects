@@ -23,7 +23,7 @@ PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
 DEFAULT_OUT = PUBLICATION_DIR / "model_quality_gate.json"
 CANONICAL_METRICS = (
     REPO_ROOT / "reports" / "week2_metrics.json",
-    REPO_ROOT / "reports" / "av" / "week2_metrics.json",
+    REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped" / "week2_metrics.json",
     REPO_ROOT / "reports" / "healthcare" / "week2_metrics.json",
 )
 DEFAULT_CONFIGS = (
@@ -39,6 +39,43 @@ MODEL_CONFIG_KEY = {
     "nbeats": "dl_nbeats",
     "tft": "dl_tft",
     "patchtst": "dl_patchtst",
+}
+CANONICAL_DATASET_BY_ALIAS = {
+    "DE": {"domain": "battery", "dataset": "DE_OPSD", "dataset_alias": "DE"},
+    "OPSD": {"domain": "battery", "dataset": "DE_OPSD", "dataset_alias": "DE"},
+    "DE_OPSD": {"domain": "battery", "dataset": "DE_OPSD", "dataset_alias": "DE"},
+    "BATTERY": {"domain": "battery", "dataset": "DE_OPSD", "dataset_alias": "DE"},
+    "ENERGY": {"domain": "battery", "dataset": "DE_OPSD", "dataset_alias": "DE"},
+    "AV": {"domain": "vehicle", "dataset": "AV_NUPLAN_ALLZIP_GROUPED", "dataset_alias": "AV"},
+    "VEHICLE": {"domain": "vehicle", "dataset": "AV_NUPLAN_ALLZIP_GROUPED", "dataset_alias": "AV"},
+    "WAYMO": {"domain": "vehicle", "dataset": "AV_NUPLAN_ALLZIP_GROUPED", "dataset_alias": "AV"},
+    "NUPLAN": {"domain": "vehicle", "dataset": "AV_NUPLAN_ALLZIP_GROUPED", "dataset_alias": "AV"},
+    "NUPLAN_ALLZIP_GROUPED": {
+        "domain": "vehicle",
+        "dataset": "AV_NUPLAN_ALLZIP_GROUPED",
+        "dataset_alias": "AV",
+    },
+    "AV_NUPLAN_ALLZIP_GROUPED": {
+        "domain": "vehicle",
+        "dataset": "AV_NUPLAN_ALLZIP_GROUPED",
+        "dataset_alias": "AV",
+    },
+    "HEALTHCARE": {"domain": "healthcare", "dataset": "MIMIC3_VITALS", "dataset_alias": "HEALTHCARE"},
+    "MIMIC": {"domain": "healthcare", "dataset": "MIMIC3_VITALS", "dataset_alias": "HEALTHCARE"},
+    "MIMIC3": {"domain": "healthcare", "dataset": "MIMIC3_VITALS", "dataset_alias": "HEALTHCARE"},
+    "MIMIC3_VITALS": {
+        "domain": "healthcare",
+        "dataset": "MIMIC3_VITALS",
+        "dataset_alias": "HEALTHCARE",
+    },
+}
+MODEL_IDENTITY = {
+    "gbm": {"model_family": "gbm", "estimator": "lightgbm"},
+    "lstm": {"model_family": "lstm", "estimator": "pytorch"},
+    "tcn": {"model_family": "tcn", "estimator": "pytorch"},
+    "nbeats": {"model_family": "nbeats", "estimator": "pytorch"},
+    "tft": {"model_family": "tft", "estimator": "pytorch"},
+    "patchtst": {"model_family": "patchtst", "estimator": "pytorch"},
 }
 DEFAULT_POLICY = {
     "min_r2": 0.0,
@@ -295,6 +332,19 @@ def _metrics_dataset_key(metrics_path: Path, payload: dict[str, Any]) -> str | N
     return None
 
 
+def _canonical_dataset_identity(metrics_path: Path, payload: dict[str, Any]) -> dict[str, str | None]:
+    alias = _metrics_dataset_key(metrics_path, payload)
+    if alias is None:
+        return {"domain": None, "dataset": None, "dataset_alias": None}
+    normalized = str(alias).strip().upper()
+    return dict(
+        CANONICAL_DATASET_BY_ALIAS.get(
+            normalized,
+            {"domain": None, "dataset": normalized, "dataset_alias": normalized},
+        )
+    )
+
+
 def _configs_for_metrics(
     metrics_path: Path,
     payload: dict[str, Any],
@@ -305,6 +355,53 @@ def _configs_for_metrics(
         return configs
     matched = [config for config in configs if _config_dataset_key(config) == key]
     return matched or configs
+
+
+def _iter_model_entries(
+    target_payload: dict[str, Any],
+) -> list[tuple[str, dict[str, Any], dict[str, Any], str]]:
+    entries: list[tuple[str, dict[str, Any], dict[str, Any], str]] = []
+    for model_key, model_payload in sorted(target_payload.items()):
+        if model_key not in MODEL_CONFIG_KEY or not isinstance(model_payload, dict):
+            continue
+        entries.append((str(model_key), model_payload, target_payload, "top_level"))
+
+    challenger_payload = target_payload.get("challenger_metrics")
+    if isinstance(challenger_payload, dict):
+        challenger_target_payload = dict(target_payload)
+        if challenger_payload.get("n_features") is not None:
+            challenger_target_payload["n_features"] = challenger_payload["n_features"]
+        for model_key, model_payload in sorted(challenger_payload.items()):
+            if model_key not in MODEL_CONFIG_KEY or not isinstance(model_payload, dict):
+                continue
+            entries.append((str(model_key), model_payload, challenger_target_payload, "challenger_metrics"))
+    return entries
+
+
+def _model_identity(model_key: str, model_payload: dict[str, Any]) -> dict[str, str]:
+    identity = dict(MODEL_IDENTITY.get(model_key, {"model_family": model_key, "estimator": model_key}))
+    if model_key == "gbm":
+        raw_model = str(model_payload.get("model") or "").strip().lower()
+        if raw_model.startswith("gbm_") and len(raw_model) > 4:
+            identity["estimator"] = raw_model[4:]
+        elif raw_model and raw_model != "gbm":
+            identity["estimator"] = raw_model
+    return identity
+
+
+def _row_role(
+    *,
+    metric_source: str,
+    selected_for_release: bool,
+    retention_decision: str | None,
+) -> str:
+    if metric_source == "challenger_metrics":
+        return "challenger"
+    if retention_decision == "retained_incumbent":
+        return "incumbent"
+    if selected_for_release:
+        return "release"
+    return "candidate"
 
 
 def _merge_policy_overrides(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -507,15 +604,15 @@ def _model_rows_for_metrics(
     policy: dict[str, Any],
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
+    dataset_identity = _canonical_dataset_identity(metrics_path, payload)
+    run_id = payload.get("manifest_id") or payload.get("run_id")
     targets = payload.get("targets") if isinstance(payload.get("targets"), dict) else {}
     for target, target_payload in sorted(targets.items()):
         if not isinstance(target_payload, dict):
             continue
-        for model_key, model_payload in sorted(target_payload.items()):
-            if model_key not in MODEL_CONFIG_KEY:
-                continue
-            if not isinstance(model_payload, dict):
-                continue
+        retention_decision = target_payload.get("retention_decision")
+        retention_reason = target_payload.get("retention_reason")
+        for model_key, model_payload, row_target_payload, metric_source in _iter_model_entries(target_payload):
             row_policy = _policy_for_model_row(
                 base_policy=policy,
                 configs=configs,
@@ -527,7 +624,7 @@ def _model_rows_for_metrics(
             assessments = (
                 ("generalization", _assess_generalization(model_payload, row_policy)),
                 ("underfit", _assess_underfit(model_payload, row_policy)),
-                ("architecture", _assess_architecture(model_key, target_payload, model_payload)),
+                ("architecture", _assess_architecture(model_key, row_target_payload, model_payload)),
                 ("hyperparameter_tuning", _assess_tuning(model_key, model_payload, configs, row_policy)),
                 ("calibration", _assess_calibration(model_payload, row_policy)),
                 ("latency", _assess_latency(model_payload, row_policy)),
@@ -542,12 +639,27 @@ def _model_rows_for_metrics(
             if not isinstance(release_keys, list):
                 release_keys = ["gbm"]
             is_release_model = model_key in {str(key).strip() for key in release_keys}
+            selected_for_release = bool(is_release_model and metric_source == "top_level")
+            role = _row_role(
+                metric_source=metric_source,
+                selected_for_release=selected_for_release,
+                retention_decision=str(retention_decision) if retention_decision is not None else None,
+            )
             rows.append(
                 {
                     "metrics_path": str(metrics_path),
+                    **dataset_identity,
                     "target": str(target),
                     "model": str(model_key),
-                    "release_model": bool(is_release_model),
+                    **_model_identity(model_key, model_payload),
+                    "role": role,
+                    "run_id": str(run_id) if run_id is not None else None,
+                    "selected_for_release": selected_for_release,
+                    "source_model_key": str(model_key),
+                    "metric_source": metric_source,
+                    "retention_decision": str(retention_decision) if retention_decision is not None else None,
+                    "retention_reason": str(retention_reason) if retention_reason is not None else None,
+                    "release_model": selected_for_release,
                     "status": "pass" if not blockers else "block",
                     "blockers": blockers,
                     "gates": gates,
@@ -589,17 +701,17 @@ def build_model_quality_gate(
             )
         )
     block_candidate_models = bool(merged_policy.get("block_candidate_models", False))
-    release_rows = [row for row in rows if bool(row.get("release_model"))]
+    release_rows = [row for row in rows if bool(row.get("selected_for_release"))]
     release_blockers = [
-        f"{row['metrics_path']}:{row['target']}:{row['model']} - {blocker}"
+        f"{row['metrics_path']}:{row['target']}:{row['model']}:{row.get('role')} - {blocker}"
         for row in rows
-        if bool(row.get("release_model")) or block_candidate_models
+        if bool(row.get("selected_for_release")) or block_candidate_models
         for blocker in row["blockers"]
     ]
     candidate_findings = [
-        f"{row['metrics_path']}:{row['target']}:{row['model']} - {blocker}"
+        f"{row['metrics_path']}:{row['target']}:{row['model']}:{row.get('role')} - {blocker}"
         for row in rows
-        if not bool(row.get("release_model"))
+        if not bool(row.get("selected_for_release"))
         for blocker in row["blockers"]
     ]
     result = {
@@ -615,7 +727,7 @@ def build_model_quality_gate(
             "release_model_count": len(release_rows),
             "blocking_release_model_count": sum(1 for row in release_rows if row["status"] != "pass"),
             "candidate_blocking_model_count": sum(
-                1 for row in rows if not bool(row.get("release_model")) and row["status"] != "pass"
+                1 for row in rows if not bool(row.get("selected_for_release")) and row["status"] != "pass"
             ),
         },
         "blockers": release_blockers,
@@ -631,7 +743,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--metrics", type=Path, action="append", default=[])
     parser.add_argument("--config", type=Path, action="append", default=[])
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--out", "--output", dest="out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
     result = build_model_quality_gate(
         metrics_paths=[path.resolve() for path in args.metrics] if args.metrics else None,

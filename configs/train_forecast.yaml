@@ -6,7 +6,9 @@ dataset:
 
 task:
   horizon_hours: 24
+  horizon_steps: 24
   lookback_hours: 168
+  lookback_steps: 168
   quantiles: [0.1, 0.5, 0.9]
   targets: [load_mw, wind_mw, solar_mw, price_eur_mwh]
 
