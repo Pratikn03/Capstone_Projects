@@ -1,0 +1,93 @@
+name: ORIUS reproduction audit
+on:
+  push:
+    branches: ['audit/orius-reproduce-20260907']
+    paths: ['.github/workflows/orius-reproduction-audit.yml', 'audit_reproduction/**']
+permissions:
+  contents: read
+concurrency:
+  group: orius-reproduction-audit
+  cancel-in-progress: false
+jobs:
+  reproduce:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      MPLBACKEND: Agg
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      ORIUS_ENV: test
+      PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+    steps:
+      - name: Checkout maintained source without deployment credentials
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          lfs: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Inventory exact source and available artifacts
+        run: |
+          mkdir -p audit_output
+          git rev-parse HEAD | tee audit_output/audit_commit.txt
+          git ls-tree -r --long HEAD > audit_output/tracked_files.txt
+          python - <<'PY' | tee audit_output/inventory.json
+          import json,pathlib,importlib.util,os
+          p=pathlib.Path('.')
+          out={'research_base':'31de1c97ac96fa4e12a8f6c437318033bde7cf72','source_paths':{},'models':[],'data':[],'runners':[],'tests':[]}
+          for k in ['src/orius','services','tests','configs','models','artifacts','data','reports']:
+              q=p/k
+              out['source_paths'][k]={'exists':q.exists(),'files':sum(1 for x in q.rglob('*') if x.is_file()) if q.exists() else 0}
+          for q in p.rglob('*'):
+              if not q.is_file() or '.git' in q.parts: continue
+              s=str(q)
+              if q.suffix in ['.pkl','.joblib','.pt','.pth','.onnx','.parquet']:
+                  out['models'].append({'path':s,'bytes':q.stat().st_size})
+              if s.startswith('scripts/') and any(v in s for v in ['dc3s','cpsbench','certos','release']):out['runners'].append(s)
+              if s.startswith('tests/') and any(v in s for v in ['dc3s','certos','cpsbench','release']):out['tests'].append(s)
+              if s.startswith('data/') and q.suffix in ['.csv','.json','.parquet']:out['data'].append({'path':s,'bytes':q.stat().st_size})
+          print(json.dumps(out,indent=2))
+          PY
+          df -h . | tee audit_output/disk.txt
+      - name: Install published pinned dependencies (CPU torch)
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          python -m pip install --upgrade pip > audit_output/pip_upgrade.log 2>&1
+          timeout 240 python -m pip install 'torch==2.8.0' --index-url https://download.pytorch.org/whl/cpu 2>&1 | tee audit_output/torch_install.log
+          timeout 420 python -m pip install -e . pytest pytest-cov 2>&1 | tee audit_output/pinned_install.log
+      - name: Record environment and attempt complete maintained test collection
+        if: always()
+        continue-on-error: true
+        run: |
+          python -m pip freeze > audit_output/environment.txt
+          python -m pip check 2>&1 | tee audit_output/pip_check.log
+          timeout 120 python -m pytest tests/ --collect-only -q --no-cov > audit_output/collection.log 2>&1
+          tail -100 audit_output/collection.log
+      - name: Run original battery and CertOS tests without mocks added by audit
+        if: always()
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import subprocess,pathlib,json,time
+          root=pathlib.Path('.')
+          files=sorted(str(p) for p in root.glob('tests/test_*.py') if any(v in p.name for v in ['dc3s','certos','cpsbench','battery_adapter','shift_aware_uncertainty','runtime_release']))
+          print('SELECTED_ORIGINAL_TEST_FILES',json.dumps(files),flush=True)
+          start=time.time()
+          cmd=['python','-m','pytest',*files,'--no-cov','-q','--tb=short','--junitxml=audit_output/original_tests.xml']
+          with open('audit_output/original_tests.log','w') as f:
+              try:r=subprocess.run(cmd,stdout=f,stderr=subprocess.STDOUT,timeout=420); rc=r.returncode
+              except subprocess.TimeoutExpired:rc=124
+          print('ORIGINAL_TEST_RESULT',json.dumps({'files':files,'exit_code':rc,'elapsed_seconds':time.time()-start}),flush=True)
+          print(pathlib.Path('audit_output/original_tests.log').read_text()[-22000:])
+          PY
+      - name: Publish compact audit logs (no model or customer-data upload)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orius-reproduction-audit
+          path: audit_output/
+          retention-days: 1
+          if-no-files-found: error
