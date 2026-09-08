@@ -1,0 +1,103 @@
+name: ORIUS complete execution audit
+on:
+  push:
+    branches: ['audit/orius-reproduce-20260907']
+    paths: ['.github/workflows/orius-complete-execution.yml', 'analysis_tools/original_pipeline_audit.py']
+permissions:
+  contents: read
+jobs:
+  original-suite:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      ORIUS_ENV: test
+      MPLBACKEND: Agg
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          lfs: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install exact maintained project requirements
+        run: |
+          mkdir -p audit_output
+          python -m pip install --upgrade pip
+          python -m pip install 'torch==2.8.0' --index-url https://download.pytorch.org/whl/cpu > audit_output/torch_install.log 2>&1
+          python -m pip install -e . pytest pytest-cov > audit_output/install.log 2>&1
+          python -m pip check | tee audit_output/pip_check.log
+          python -m pip freeze > audit_output/environment.txt
+      - name: Execute all original test files in a deterministic shard
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          python - <<'PY'
+          import pathlib,subprocess,json,os,time
+          shard=int(os.environ['SHARD']); allfiles=sorted(str(p) for p in pathlib.Path('tests').rglob('test*.py'));files=allfiles[shard::4]
+          pathlib.Path('audit_output/test_files.json').write_text(json.dumps({'shard':shard,'all_file_count':len(allfiles),'files':files},indent=2))
+          cmd=['python','-m','pytest',*files,'--no-cov','-q','--tb=short','--junitxml=audit_output/full_suite.xml']
+          start=time.time()
+          with open('audit_output/full_suite.log','w') as f:
+              try:r=subprocess.run(cmd,stdout=f,stderr=subprocess.STDOUT,timeout=600);rc=r.returncode
+              except subprocess.TimeoutExpired:rc=124
+          result={'shard':shard,'returncode':rc,'elapsed_seconds':time.time()-start,'file_count':len(files)}
+          pathlib.Path('audit_output/outcome.json').write_text(json.dumps(result,indent=2))
+          print('SUITE_OUTCOME',json.dumps(result));print(pathlib.Path('audit_output/full_suite.log').read_text()[-22000:])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orius-original-suite-${{ matrix.shard }}
+          path: audit_output/
+          retention-days: 1
+  public-data-pipeline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      ORIUS_ENV: test
+      MPLBACKEND: Agg
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          lfs: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install maintained pinned software and real solver/database
+        run: |
+          mkdir -p audit_output
+          python -m pip install --upgrade pip
+          python -m pip install 'torch==2.8.0' --index-url https://download.pytorch.org/whl/cpu > audit_output/torch_install.log 2>&1
+          python -m pip install -e . pytest pytest-cov > audit_output/install.log 2>&1
+          python -m pip check | tee audit_output/pip_check.log
+          python -m pip freeze > audit_output/environment.txt
+      - name: Execute original training, original API, actual persistence, and original kernel
+        run: |
+          set -o pipefail
+          timeout 900 python analysis_tools/original_pipeline_audit.py 2>&1 | tee audit_output/driver.log
+      - name: Record source differences
+        if: always()
+        run: |
+          git status --short > audit_output/git_status.txt
+          git diff -- src services > audit_output/scientific_source_diff.patch
+          git rev-parse HEAD > audit_output/audit_commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orius-public-data-pipeline
+          path: audit_output/
+          retention-days: 1
