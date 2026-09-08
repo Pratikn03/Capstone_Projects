@@ -1,16 +1,13 @@
 """Additional native execution; preserves failures and never labels nameplate limits certified."""
 from __future__ import annotations
-import copy, hashlib, json, os, sys, traceback
-from pathlib import Path
+import copy, json, os, traceback
 from collections import Counter
 import original_pipeline_audit as A
-import numpy as np
 import pandas as pd
 import yaml
 
 
 def data_contract_profiles():
-    # Evaluate the SAME held-out records under both contracts. No successful-row filtering.
     frame=pd.read_parquet(A.OUT/'public_hourly.parquet');split=json.loads((A.OUT/'splits.json').read_text())
     d=A.runtime_workspace();os.chdir(d)
     from fastapi.testclient import TestClient
@@ -29,7 +26,7 @@ def data_contract_profiles():
             opt=yaml.safe_load((d/'configs/optimization.yaml').read_text());opt['battery']['min_soc_mwh']=lo*.01024;opt['battery']['max_soc_mwh']=hi*.01024;opt['robust']['min_soc_mwh']=lo*.01024
             (d/'configs/optimization.yaml').write_text(yaml.safe_dump(opt));(d/'configs/optimize.yaml').write_text(yaml.safe_dump(opt))
             dc=yaml.safe_load((d/'configs/dc3s.yaml').read_text());dc['dc3s']['audit']['duckdb_path']=str(d/(profile+'.duckdb'));(d/'configs/dc3s.yaml').write_text(yaml.safe_dump(dc))
-            rows=[];gov=CertOSRuntime();previous=None
+            rows=[];gov=CertOSRuntime()
             for j,ix in enumerate(split['test'][:48]):
                 row=frame.iloc[ix];frame.iloc[:ix+1].to_parquet(d/'features.parquet',index=False);energy=float(row.soc_reported*.01024)
                 opt['battery']['initial_soc_mwh']=energy;opt['robust']['initial_soc_mwh']=energy
@@ -77,15 +74,18 @@ def native_cpsbench():
             rows+=out['main_rows']
         except Exception as e:rows.append({'scenario':scenario,'seed':seed,'error':repr(e),'traceback':traceback.format_exc()})
     A.save('cpsbench_summary.json',rows)
-    return {'scenario_seed_pairs':12,'rows':len(rows),'errors':[r for r in rows if 'error' in r],'source':'original CPSBench run_single with original configuration and its built-in synthetic episode generator','historical_CQR_artifacts_present':False,'fallback_interval_behavior':'unchanged original loader behavior; this is not historical calibrated checkpoint reproduction'}
+    return {'scenario_seed_pairs':12,'rows':len(rows),'errors':[r for r in rows if 'error' in r],'source':'original CPSBench run_single with original configuration and its built-in synthetic episode generator','historical_CQR_artifacts_present':False,'fallback_interval_behavior':'unchanged original loader behavior; not historical calibrated checkpoint reproduction'}
 
 
 def source_unit_trace():
-    # Static data-flow evidence plus independent arithmetic; not a production patch.
     from orius.universal_theory.battery_instantiation import certificate_validity_horizon
     constraints={'min_soc_mwh':.001024,'max_soc_mwh':.009216,'time_step_hours':1.,'charge_efficiency':.95,'discharge_efficiency':.95}
     same={'safe_action':{'charge_mw':0.,'discharge_mw':0.},'constraints':constraints,'sigma_d':.000001,'max_steps':24}
-    a=certificate_validity_horizon(interval_lower_mwh:.0001,interval_upper_mwh:.00012,**same)
+    a=certificate_validity_horizon(interval_lower_mwh=.0001,interval_upper_mwh=.00012,**same)
+    b=certificate_validity_horizon(interval_lower_mwh=.0049,interval_upper_mwh=.0051,**same)
+    result={'power_interval_misinterpreted_as_energy':a,'declared_energy_interval':b,'classification':'dimensional data-flow diagnostic, not validated state uncertainty','router_source':'services/api/routers/dc3s.py passes load lower/upper MW directly as interval_lower_mwh/upper_mwh'}
+    A.save('dimensional_diagnostic.json',result)
+    return result
 
 
 if __name__=='__main__':
@@ -95,4 +95,5 @@ if __name__=='__main__':
     A.phase('public_training',A.public_training)
     A.phase('native_service_profiles',data_contract_profiles)
     A.phase('native_cpsbench',native_cpsbench)
+    A.phase('dimensional_diagnostic',source_unit_trace)
     A.save('execution_completion.json',{'attempted_original_api':True,'maintained_function_bodies_patched':False,'history_checkpoints_reconstructed':False,'independent_reference_state':False,'physical_or_customer_validation':False,'independent_review':False})
