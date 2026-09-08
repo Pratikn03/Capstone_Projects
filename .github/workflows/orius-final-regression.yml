@@ -1,0 +1,76 @@
+name: ORIUS final full-suite regression audit
+on:
+  push:
+    branches: ['audit/orius-reproduce-20260907']
+    paths: ['.github/workflows/orius-final-regression.yml']
+permissions:
+  contents: read
+jobs:
+  full-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      ORIUS_ENV: test
+      MPLBACKEND: Agg
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          lfs: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install original pinned dependencies
+        run: |
+          mkdir -p audit_output
+          python -m pip install 'torch==2.8.0' --index-url https://download.pytorch.org/whl/cpu > audit_output/torch.log 2>&1
+          python -m pip install -e . pytest pytest-cov > audit_output/install.log 2>&1
+          python -m pip check > audit_output/pip_check.txt
+          python -m pip freeze > audit_output/environment.txt
+      - name: Apply the previously verified source patch and explicit analytic fixture contract
+        run: |
+          python analysis_tools/apply_reviewable_hardening.py
+          python - <<'PY'
+          import pathlib,difflib
+          changes=[]
+          for name in ['tests/test_dc3s_enqueue_iot.py','tests/test_iot_loop_smoke.py']:
+              p=pathlib.Path(name);old=p.read_text();needle='"current_soc_mwh": 1.0,'
+              assert needle in old
+              new=old.replace(needle,needle+'\n        "state_error_bound_mwh": 0.0,  # Analytic fixture, not measured accuracy.\n        "transition_error_bound_mwh": 0.0,')
+              p.write_text(new);changes.append(''.join(difflib.unified_diff(old.splitlines(True),new.splitlines(True),fromfile='a/'+name,tofile='b/'+name)))
+          pathlib.Path('audit_output/fixture_update.patch').write_text(''.join(changes))
+          PY
+      - name: Execute every original test file without exclusions
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          python - <<'PY'
+          import pathlib,subprocess,json,os,time
+          shard=int(os.environ['SHARD']);allfiles=sorted(str(p) for p in pathlib.Path('tests').rglob('test*.py'));files=allfiles[shard::4]
+          pathlib.Path('audit_output/test_files.json').write_text(json.dumps({'shard':shard,'all_file_count':len(allfiles),'files':files},indent=2))
+          cmd=['python','-m','pytest',*files,'--no-cov','-q','--tb=short','--junitxml=audit_output/full_suite.xml'];start=time.time()
+          with open('audit_output/full_suite.log','w') as f:
+              try:r=subprocess.run(cmd,stdout=f,stderr=subprocess.STDOUT,timeout=600);rc=r.returncode
+              except subprocess.TimeoutExpired:rc=124
+          pathlib.Path('audit_output/outcome.json').write_text(json.dumps({'shard':shard,'returncode':rc,'elapsed_seconds':time.time()-start,'scope':'all original tests; two explicit analytic fixture declarations changed; source patch present'},indent=2))
+          print(pathlib.Path('audit_output/full_suite.log').read_text()[-12000:])
+          PY
+      - name: Preserve source delta
+        if: always()
+        run: |
+          git diff -- src services tests > audit_output/source_delta.patch
+          git rev-parse HEAD > audit_output/commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orius-final-full-suite-${{ matrix.shard }}
+          path: audit_output/
+          retention-days: 1
