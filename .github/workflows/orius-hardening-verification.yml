@@ -1,0 +1,95 @@
+name: ORIUS reviewable hardening verification
+on:
+  push:
+    branches: ['audit/orius-reproduce-20260907']
+    paths: ['.github/workflows/orius-hardening-verification.yml', 'analysis_tools/apply_reviewable_hardening.py', 'analysis_tools/verify_hardened_services.py', 'analysis_tools/release_contract.py', 'analysis_tools/test_release_contract.py']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      ORIUS_ENV: test
+      MPLBACKEND: Agg
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          lfs: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned original software
+        run: |
+          mkdir -p audit_output/hardening
+          python -m pip install 'torch==2.8.0' --index-url https://download.pytorch.org/whl/cpu > audit_output/torch_install.log 2>&1
+          python -m pip install -e . pytest pytest-cov > audit_output/install.log 2>&1
+          python -m pip check > audit_output/pip_check.txt
+          python -m pip freeze > audit_output/environment.txt
+      - name: Verify regression tests fail on the unchanged source
+        run: |
+          set +e
+          python -m pytest analysis_tools/test_release_contract.py --no-cov -q --tb=short --junitxml=audit_output/hardening/red.xml > audit_output/hardening/red.log 2>&1
+          rc=$?
+          echo "$rc" > audit_output/hardening/red_exit.txt
+          test "$rc" -eq 1
+      - name: Apply explicit reviewable patch only in runner checkout
+        run: python analysis_tools/apply_reviewable_hardening.py
+      - name: Run new regression tests and unchanged legacy runtime tests
+        run: |
+          python - <<'PY'
+          import pathlib,subprocess,json
+          files=sorted(str(p) for p in pathlib.Path('tests').glob('test_*.py') if any(x in p.name for x in ['dc3s','certos','cpsbench','battery_adapter','shift_aware_uncertainty','runtime_release']))
+          files+=['analysis_tools/test_release_contract.py']
+          with open('audit_output/hardening/legacy_before_fixture_update.log','w') as f:
+              r=subprocess.run(['python','-m','pytest',*files,'--no-cov','-q','--tb=short','--junitxml=audit_output/hardening/legacy_before_fixture_update.xml'],stdout=f,stderr=subprocess.STDOUT,timeout=480)
+          pathlib.Path('audit_output/hardening/legacy_before_fixture_update.json').write_text(json.dumps({'returncode':r.returncode,'test_files':files},indent=2))
+          print(pathlib.Path('audit_output/hardening/legacy_before_fixture_update.log').read_text()[-8000:])
+          PY
+      - name: Make the legacy enqueue fixture declare its analytic zero-error contract
+        run: |
+          python - <<'PY'
+          import pathlib,json,difflib
+          changes=[]
+          for name in ['tests/test_dc3s_enqueue_iot.py','tests/test_iot_loop_smoke.py']:
+              p=pathlib.Path(name);old=p.read_text();needle='"current_soc_mwh": 1.0,'
+              if needle in old:
+                  new=old.replace(needle,needle+'\n        "state_error_bound_mwh": 0.0,  # Analytic test fixture, not measured lab accuracy.\n        "transition_error_bound_mwh": 0.0,')
+                  p.write_text(new)
+                  changes.append(''.join(difflib.unified_diff(old.splitlines(True),new.splitlines(True),fromfile='a/'+name,tofile='b/'+name)))
+          pathlib.Path('audit_output/hardening/legacy_fixture_update.patch').write_text(''.join(changes))
+          PY
+      - name: Verify the corrected contract and compatible runtime tests
+        run: |
+          python - <<'PY'
+          import pathlib,subprocess,json
+          files=sorted(str(p) for p in pathlib.Path('tests').glob('test_*.py') if any(x in p.name for x in ['dc3s','certos','cpsbench','battery_adapter','shift_aware_uncertainty','runtime_release']))
+          files+=['analysis_tools/test_release_contract.py','tests/test_iot_loop_smoke.py']
+          with open('audit_output/hardening/green.log','w') as f:
+              r=subprocess.run(['python','-m','pytest',*files,'--no-cov','-q','--tb=short','--junitxml=audit_output/hardening/green.xml'],stdout=f,stderr=subprocess.STDOUT,timeout=480)
+          pathlib.Path('audit_output/hardening/green_outcome.json').write_text(json.dumps({'returncode':r.returncode,'test_files':files},indent=2))
+          print(pathlib.Path('audit_output/hardening/green.log').read_text()[-8000:])
+          PY
+      - name: Execute patched service on public data and separately labeled analytic contracts
+        run: |
+          set -o pipefail
+          timeout 360 python analysis_tools/verify_hardened_services.py 2>&1 | tee audit_output/hardening_execution.log
+      - name: Preserve complete patch and precise source identity
+        if: always()
+        run: |
+          git diff -- src services tests > audit_output/final_source_and_fixture.patch
+          cp -r analysis_tools audit_output/analysis_tools
+          cp src/orius/dc3s/release_contract.py audit_output/hardening/release_contract.py
+          git status --short > audit_output/git_status.txt
+          git rev-parse HEAD > audit_output/commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orius-hardening-verification
+          path: audit_output/
+          retention-days: 1
