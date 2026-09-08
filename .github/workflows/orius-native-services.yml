@@ -1,0 +1,52 @@
+name: ORIUS native services and contract audit
+on:
+  push:
+    branches: ['audit/orius-reproduce-20260907']
+    paths: ['.github/workflows/orius-native-services.yml', 'analysis_tools/execute_native_services.py']
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      ORIUS_ENV: test
+      MPLBACKEND: Agg
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          lfs: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile audit driver before executing
+        run: python -m py_compile analysis_tools/execute_native_services.py analysis_tools/original_pipeline_audit.py
+      - name: Install maintained software
+        run: |
+          mkdir -p audit_output
+          python -m pip install 'torch==2.8.0' --index-url https://download.pytorch.org/whl/cpu > audit_output/torch_install.log 2>&1
+          python -m pip install -e . pytest pytest-cov > audit_output/install.log 2>&1
+          python -m pip check > audit_output/pip_check.txt
+          python -m pip freeze > audit_output/environment.txt
+      - name: Execute the original services and native benchmark
+        run: |
+          set -o pipefail
+          timeout 720 python analysis_tools/execute_native_services.py 2>&1 | tee audit_output/native.log
+      - name: Preserve exact audit scripts and source delta
+        if: always()
+        run: |
+          cp -r analysis_tools audit_output/analysis_tools
+          git diff -- src services > audit_output/scientific_source_diff.patch
+          git status --short > audit_output/git_status.txt
+          git rev-parse HEAD > audit_output/commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orius-native-services
+          path: audit_output/
+          retention-days: 1
