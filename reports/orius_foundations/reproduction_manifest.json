@@ -1,5 +1,5 @@
 {
-  "reproduction_timestamp": "2026-10-13T22:44:52Z",
+  "reproduction_timestamp": "2026-10-13T23:55:15Z",
   "status": "ALL_VERIFICATIONS_PASSED",
   "target_research_score": 10.0,
   "theorems_verified": [
@@ -9,9 +9,10 @@
     "Theorem D",
     "Theorem E",
     "Theorem F",
-    "Theorem G"
+    "Theorem G",
+    "Theorem H"
   ],
-  "lean4_verification": "0 sorry, clean build (Theorems A-G)",
+  "lean4_verification": "0 sorry, clean build (Theorems A-H)",
   "artifacts": {
     "docs/research/orius_foundations/research_charter.md": {
       "sha256": "c57375958c227031c0a7b2bd6aba3631478ad2fb1f9e7937168a09efd6961dac",
@@ -46,8 +47,8 @@
       "bytes": 5265
     },
     "formal/Orius/TheoremsAE.lean": {
-      "sha256": "30d7bba253d47bc62037cac5718b149259c493a417016c843c8fbeb742500c6e",
-      "bytes": 7359
+      "sha256": "5626aedaf39ac8ddc96683232d1bb651ea3bc0cb9c0769e548b3fa9b6bb1fa60",
+      "bytes": 9591
     },
     "src/kga/__init__.py": {
       "sha256": "f243abc0e336f9f0a0c1031f5b9f3a6db61b5e268dde94308baae9512b84a09b",
@@ -66,16 +67,16 @@
       "bytes": 1786
     },
     "src/orius/kbound/__init__.py": {
-      "sha256": "6d80e28da4146a11f5b39de63370f66a8d2794531c23bd64fd9741ed3bb9f0d6",
-      "bytes": 6091
+      "sha256": "42ca78aee5b2d908a3dd54acbd3d9f7b635e761e52e080a703f7353b6c22676b",
+      "bytes": 6079
     },
     "src/orius/kbound/mind.py": {
       "sha256": "daf3d25063836ed0d7e1a7e8aedb942331d657cdc7792341711c782a45ecdff9",
       "bytes": 13410
     },
     "src/orius/kbound/crash_free_governor.py": {
-      "sha256": "3425c1f99ad16f9ce660531fe6ce1f5c24c19187d919d4800d2f9c3746d0f086",
-      "bytes": 17538
+      "sha256": "8e009c0520d788307f48a53f58108003445181b836a473fba6ca4a9b9a40501d",
+      "bytes": 19915
     },
     "src/orius/universal_theory/dynamical_theorems.py": {
       "sha256": "47d3965eb7822d13be176b5f9b0cd238683bee33c64674b16ea6bcd6d6e0c73b",
@@ -102,8 +103,8 @@
       "bytes": 45226
     },
     "experiments/orius_foundations/six_domain_crash_free_validation.py": {
-      "sha256": "f93e5217f312583a759b6633a4d9e442442e5df87487822245ff5feddc2d1917",
-      "bytes": 37739
+      "sha256": "e46d53110f49f249c94bc37920fccdbdd7704a323ae9b38d266501d67c5606e9",
+      "bytes": 40562
     },
     "artifacts/models/physical_ai_shield_universal.onnx": {
       "sha256": "2c8cf590b336511ffb85b2d3381c02e000f19647c53e277622a4a1e30c2c5c89",
@@ -122,36 +123,36 @@
       "bytes": 1038
     },
     "reports/orius_foundations/baselines_comparison.json": {
-      "sha256": "4cbd0c1a24344a45d7e2a7f215d4132e0248c75a293812e72acd25e4810d5b0e",
-      "bytes": 1649
+      "sha256": "ba3dcb1404ffd6ebbd8884d8f52765362a44bea7d2495b71586f3ef6a243b3a5",
+      "bytes": 1644
     },
     "reports/orius_foundations/reliability_controls_results.json": {
-      "sha256": "ea3fb341a9232eaee5647abe7ad5745d2f177f9a36df1b4cfdfd034e1e6b7042",
-      "bytes": 1650
+      "sha256": "7dd22a80577844248d9b2dd9c4ee102322a42d8865c4c8fa27bf22b4f340618e",
+      "bytes": 1649
     },
     "reports/orius_foundations/cross_domain_synthesis.json": {
-      "sha256": "24af3c84911300e265fe56e7cb2e52faa2085be85b6f1bef6c313af145db68e9",
-      "bytes": 862
+      "sha256": "59db31c287914dcf6ed8508987012a2dc16a582c4c3b6bfc2d23f7a011def27c",
+      "bytes": 864
     },
     "reports/orius_foundations/cross_domain_synthesis.csv": {
-      "sha256": "d1b19154ee5fadfa1e984b9f0e59fb633f09fd68530d63fd4178bc7716b0db57",
-      "bytes": 364
+      "sha256": "ef84ce9803bef5b3b439ceef58e400dc2bb67f417125d89ce46be97e286bb781",
+      "bytes": 366
     },
     "reports/orius_foundations/crucible_and_swarm_results.json": {
-      "sha256": "49921f92466ffc5a32fa9cd198cad0644c6a3c5b5e463995420df4c4388323ee",
-      "bytes": 5556
+      "sha256": "3e1117e948471e48def047a845a9dd15f9f8dbd52743c7cd6376ae262b30952a",
+      "bytes": 5557
     },
     "reports/orius_foundations/six_domain_crash_free_report.json": {
-      "sha256": "615203022abe9e8be62ffcabd1b927d9c6bf2e690a58e196bd71a390f8e92181",
-      "bytes": 13626
+      "sha256": "0e70113218e9f384d36ddccb3f78c980a84de8cd5788df9f53559b434f6fb9fa",
+      "bytes": 16059
     },
     "reports/orius_foundations/six_domain_crash_free_results.csv": {
-      "sha256": "aea2070dd07a6f1f812ae9b6f523e1695af2e994355a364f7c74f544abfa007f",
-      "bytes": 47263
+      "sha256": "7e7462ef200d5c6a91983408ac5af6f3e60dcc0ebebc365091865140bd382925",
+      "bytes": 56198
     },
     "reports/orius_foundations/six_domain_crash_free_summary.csv": {
-      "sha256": "54711199b309aa5b7157f238b4b58f29ae3bba650a7bedb00f58b30427ddb920",
-      "bytes": 2487
+      "sha256": "2f0643a5858551a0353432fa872f4bbe42153245d959c0afa583bb26c35fd714",
+      "bytes": 2997
     },
     "reports/orius_foundations/multi_region_cqr_summary.json": {
       "sha256": "880eaa7ad5fc2f54b46518b8a1504cb430a76d9da2f679426a997b6b2e5d0ada",
@@ -210,8 +211,8 @@
       "bytes": 195488
     },
     "reports/orius_foundations/SIX_DOMAIN_CRASH_FREE_SCORECARD.png": {
-      "sha256": "e2565fee1f0039a9b0c7a67eec0e5aae5c44bd6171c3fa15d6a2010c49b01be5",
-      "bytes": 277387
+      "sha256": "61a331fb7c768dac8e1b7e41149c0ab339e9f7201d12151aeeb459a26a452ecb",
+      "bytes": 282140
     },
     "reports/orius_foundations/TERMINAL_SAFE_STOP_PHASE_PORTRAIT.png": {
       "sha256": "227a4f3cf66e563fe9919b6614c3e7e140f025683228c6e8d70f43e225916632",
@@ -246,48 +247,52 @@
       "bytes": 444
     },
     "reports/orius_foundations/master_session_descriptor.json": {
-      "sha256": "ef47ce08aa826407f1ea911ba08e84d0383135e98db8b795ac1915b26be95e30",
-      "bytes": 1037
+      "sha256": "0848566f616fe510c72bf34bcaa0da7447ea8240a0eeae8ec283f24a0ed83f04",
+      "bytes": 1036
     },
     "paper/orius_foundations/main.tex": {
-      "sha256": "58011c7121eff1ae8db95152baed8b3e6b8d0ec58a321dc147b831aed68ed12c",
-      "bytes": 26184
+      "sha256": "441159aa25175151a96fa0b15a0b7d6f854be1a4e0b65d0a65f3cecac0354f39",
+      "bytes": 27738
     },
     "paper/orius_foundations/main.pdf": {
-      "sha256": "68a339155a27b58046270c09729e8a2a065d9b7b555ba6782afd37eb74566cbc",
-      "bytes": 1643166
+      "sha256": "d244fb2470302c02a0f833c4e53c26345895119aa4c6358d32aa7d071205ebf0",
+      "bytes": 1665123
     },
     "paper/monograph/ch14_large_scale_benchmarks.tex": {
-      "sha256": "598d725e9bbf059c1a2cc11d3289c9f877b2009ed05745b7228572ce28d7d274",
-      "bytes": 13734
+      "sha256": "d2a6c8d324753d6b5c8b2e007ecb158e0bcd344ecbc97e0c0a9a4689a757c240",
+      "bytes": 14930
     },
     "paper/orius_monograph_complete.tex": {
       "sha256": "4c09d9ab42a19f61bfe7a25b3dbee032ed833f899b724699cc02235ca5ceeddd",
       "bytes": 1901
     },
     "paper/orius_monograph_complete.pdf": {
-      "sha256": "07224c58a4215cb55184aa0e24c2dbded87678e8875c4013d893e8bc9cf7e2cb",
-      "bytes": 3518154
+      "sha256": "e2dccb7d2c9bedf4c21d176a26df20dfa9dc82a8c60764f87caaf0bfc8158598",
+      "bytes": 3524766
     },
     "orius_book.pdf": {
-      "sha256": "07224c58a4215cb55184aa0e24c2dbded87678e8875c4013d893e8bc9cf7e2cb",
-      "bytes": 3518154
+      "sha256": "e2dccb7d2c9bedf4c21d176a26df20dfa9dc82a8c60764f87caaf0bfc8158598",
+      "bytes": 3524766
     },
     "paper/paper.pdf": {
-      "sha256": "07224c58a4215cb55184aa0e24c2dbded87678e8875c4013d893e8bc9cf7e2cb",
-      "bytes": 3518154
+      "sha256": "e2dccb7d2c9bedf4c21d176a26df20dfa9dc82a8c60764f87caaf0bfc8158598",
+      "bytes": 3524766
     },
     "paper/review/orius_review_dossier.pdf": {
-      "sha256": "b6b7690b19d0bedbdb4548c19e733f3a1f50f71091b9278a139c6c804436a62d",
-      "bytes": 186774
+      "sha256": "72a2dba4ee3d93f5d63fdb99df609411e7a110a0a40ffe12870c36749a5e2921",
+      "bytes": 187419
     },
     "paper/ieee/orius_ieee_main.pdf": {
-      "sha256": "152983eb02fb13d9cf8f93a82c722762be8ac10d3c387af65c3d297748c2e6db",
-      "bytes": 511314
+      "sha256": "5af478b95c700acc72bf4e60369e548ee118356bd55e941919411ffd44528892",
+      "bytes": 512650
     },
     "paper/ieee/orius_ieee_detailed_main.pdf": {
-      "sha256": "7e9f1148f53f4b06b7bcf5e42cef2a359e2d18f5e86f8639970030c3fb948b59",
+      "sha256": "2d535bbfe33fd8c52c363957b70e5084c2fcbb4aeb61e1dd9428b7a94b8a94f2",
       "bytes": 1841012
+    },
+    "data/finance/processed/financial_l2_markets_orius.csv": {
+      "sha256": "4bc34eac3749bf8fed1fd12807e804b7c24e448aef12b6b88284dffc5641ea59",
+      "bytes": 137616
     }
   }
 }

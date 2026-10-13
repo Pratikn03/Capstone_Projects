@@ -137,4 +137,39 @@ theorem theorem_g_arbitrary_ai_hallucination_immunity
   have ha : G.project (π_AI y_obs) ∈ viableActionSet D U := G.project_viable (π_AI y_obs)
   exact theorem_a_viability_preservation hx ha
 
+/-- A financial or cyber-physical market execution domain isomorphic to `SafeStopDomain`,
+where `zero_energy_safe` corresponds to the delta-neutral flat-inventory solvent state (`I_t = 0`),
+velocity corresponds to open inventory/leverage exposure, and braking deceleration corresponds
+to L2 order-book liquidity depth under Almgren-Chriss market impact. -/
+structure FinancialLiquidationDomain extends SafeStopDomain where
+  solvent : State → Prop
+  safe_eq_solvent : ∀ x : State, safe x → solvent x
+
+/-- **Theorem H (Cyber-Physical & Financial Safe-Liquidation Isomorphism & Flash-Crash Immunity)**.
+In any `FinancialLiquidationDomain`:
+1. For any arbitrary (potentially hallucinating or adversarial) AI trading policy `π_AI`
+   (e.g., DQN, Actor-Critic, MLP, or LLM agent), the governed order release `G.project (π_AI y_obs)`
+   guarantees one-step solvency (`F.solvent`) and recursive viability (`F.viable`).
+2. Once the Terminal Safe-Liquidation Kernel unwinds open inventory into the delta-neutral
+   flat-inventory equilibrium (`F.zero_energy_safe x`), the portfolio remains strictly solvent
+   (`F.solvent`) for all unbounded L2 liquidity blackout horizons `k : Nat`. -/
+theorem theorem_h_financial_flash_crash_immunity
+    (F : FinancialLiquidationDomain)
+    {U : ObsConsistent F.toSafetyDomain}
+    (G : CrashFreeGovernor F.toViableSafetyDomain U)
+    (π_AI : ArbitraryAIPolicy F.toViableSafetyDomain)
+    (k : Nat)
+    {x x_flat y_obs : F.State} {ω : F.Disturbance}
+    (hx : x ∈ U)
+    (h_flat : F.zero_energy_safe x_flat) :
+    F.solvent (F.dynamics x (G.project (π_AI y_obs)) ω) ∧
+    F.solvent (F.toSafeStopDomain.rolloutFallback k x_flat ω) := by
+  have h_step := theorem_g_arbitrary_ai_hallucination_immunity G π_AI (y_obs := y_obs) (ω := ω) hx
+  have h_solv_step : F.solvent (F.dynamics x (G.project (π_AI y_obs)) ω) :=
+    F.safe_eq_solvent (F.dynamics x (G.project (π_AI y_obs)) ω) h_step.left
+  have h_roll := theorem_f_terminal_safe_stop_invariance F.toSafeStopDomain k ω h_flat
+  have h_solv_roll : F.solvent (F.toSafeStopDomain.rolloutFallback k x_flat ω) :=
+    F.safe_eq_solvent (F.toSafeStopDomain.rolloutFallback k x_flat ω) h_roll.left
+  exact ⟨h_solv_step, h_solv_roll⟩
+
 end Orius

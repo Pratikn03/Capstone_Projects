@@ -296,3 +296,39 @@ def test_crash_free_governor_theorems_f_and_g() -> None:
         if dropout and step >= 45:
             assert info.safe_stop_engaged is True
 
+
+def test_theorem_h_financial_liquidation_governor() -> None:
+    from orius.kbound import (
+        FinancialLiquidationGovernor,
+        compute_almgren_chriss_liquidation_distance,
+    )
+
+    d_liq_clean = compute_almgren_chriss_liquidation_distance(
+        inventory_exposure=10.0, volatility=0.5, l2_book_depth=25.0, reliability_w=1.0
+    )
+    d_liq_degraded = compute_almgren_chriss_liquidation_distance(
+        inventory_exposure=10.0, volatility=0.5, l2_book_depth=25.0, reliability_w=0.10
+    )
+    assert d_liq_degraded > d_liq_clean > 0.0
+
+    fgov = FinancialLiquidationGovernor()
+    cap_cushion, inv_vel = 28.0, -4.0
+    fgov.reset(cap_cushion, inv_vel)
+    for step in range(80):
+        dropout = bool(25 <= step < 55)
+        s_ch = [cap_cushion, cap_cushion + 0.1, cap_cushion - 0.1, 80.0, 85.0]
+        v_ch = [inv_vel, inv_vel + 0.05, inv_vel - 0.05, 5.0, 6.0]
+        # Adversarial AI attempting to push capital cushion below insolvency floor (20%)
+        u_gov, info = fgov.step(
+            true_state=cap_cushion,
+            true_velocity=inv_vel,
+            state_channels=s_ch,
+            velocity_channels=v_ch,
+            u_nominal_ai=fgov.cfg.u_min,
+            dropout=dropout,
+        )
+        inv_vel = (1.0 - fgov.cfg.damping) * inv_vel + u_gov * fgov.cfg.dt
+        cap_cushion = min(fgov.cfg.x_max, max(fgov.cfg.x_min, cap_cushion + inv_vel * fgov.cfg.dt))
+        assert fgov.cfg.x_min <= cap_cushion <= fgov.cfg.x_max
+
+

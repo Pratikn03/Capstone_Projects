@@ -425,6 +425,62 @@ class CrashFreePhysicalAIGovernor:
         return u_gov, res
 
 
+def compute_almgren_chriss_liquidation_distance(
+    inventory_exposure: float,
+    volatility: float,
+    l2_book_depth: float,
+    reliability_w: float = 1.0,
+    impact_gamma: float = 1.0,
+) -> float:
+    """Compute the Theorem H financial liquidation impact distance d_liq(I_t, sigma_t, w_t).
+
+    By Theorem H's isomorphism between second-order physical kinematics and L2 limit-order-book
+    execution under Almgren-Chriss market impact:
+      - Open inventory |I_t| corresponds to physical velocity |v_t|
+      - Effective L2 depth L_depth(w_t) / impact_gamma corresponds to braking deceleration a_brake
+      - Quadratic permanent/temporary market impact gamma * I_t^2 / (2 * L_depth(w_t))
+        is isomorphic to the physical stopping distance v_t^2 / (2 * a_brake).
+    """
+    w_eff = float(np.clip(reliability_w, 0.05, 1.0))
+    tau_eff = 0.20 + 0.45 * (1.0 - w_eff)
+    inv_abs = abs(float(inventory_exposure))
+    vol = max(0.0, float(volatility))
+    depth_eff = max(1e-3, float(l2_book_depth) * w_eff)
+    slippage_term = inv_abs * vol * math.sqrt(tau_eff)
+    impact_term = (float(impact_gamma) * (inv_abs * inv_abs)) / (2.0 * depth_eff)
+    return float(slippage_term + impact_term)
+
+
+class FinancialLiquidationGovernor(CrashFreePhysicalAIGovernor):
+    """Theorem H Flash-Crash & Solvency Governor for L2 Limit-Order-Book AI Execution.
+
+    Maps net portfolio equity / margin cushion [x_min, x_max] and inventory exposure v_t
+    through the same Anytime-Valid E-Process + Byzantine MoM OQE + Terminal Safe-Liquidation
+    Kernel (unwinding inventory to the absorbing delta-neutral flat harbour I_t = 0).
+    """
+
+    def __init__(
+        self,
+        config: Optional[DomainPhysicsConfig] = None,
+        alpha: float = 0.05,
+    ) -> None:
+        if config is None:
+            config = DomainPhysicsConfig(
+                domain_name="financial_l2_markets",
+                state_unit="Capital Cushion (%)",
+                x_min=20.0,
+                x_max=100.0,
+                u_min=-12.0,
+                u_max=12.0,
+                dt=0.20,
+                max_brake_decel=12.0,
+                process_noise_bound=0.15,
+                obs_noise_std=0.35,
+                damping=0.08,
+            )
+        super().__init__(config=config, alpha=alpha)
+
+
 __all__ = [
     "EProcessStatus",
     "AnytimeEProcessGate",
@@ -433,4 +489,7 @@ __all__ = [
     "DomainPhysicsConfig",
     "GovernorStepResult",
     "CrashFreePhysicalAIGovernor",
+    "compute_almgren_chriss_liquidation_distance",
+    "FinancialLiquidationGovernor",
 ]
+

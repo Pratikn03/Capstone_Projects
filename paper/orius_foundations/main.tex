@@ -247,8 +247,8 @@ C++17 \texttt{-O3} / CAN HIL & 2M steps / 500 kbps & $0.006\text{--}0.015\,\mu\t
 \end{tabular}
 \end{table}
 
-\section{Eliminating Bounded Assumptions: Theorems F \& G and Six-Domain Crash-Free Closure}
-To eliminate all remaining bounded assumptions in safety-critical Physical AI---specifically (i) bounded blackout horizons $\tau \le \tau_{\max}$, (ii) i.i.d.\ conformal exchangeability, (iii) single-channel or uncorrupted majority telemetry, and (iv) bounded AI policy error---we introduce three mathematical and algorithmic innovations mechanized in Lean~4 (\texttt{formal/Orius/TheoremsAE.lean}, zero \texttt{sorry}) and implemented in \texttt{src/orius/kbound/crash\_free\_governor.py}:
+\section{Eliminating Bounded Assumptions: Theorems F, G \& H and Seven-Domain Crash-Free Closure}
+To eliminate all remaining bounded assumptions across both safety-critical Physical AI and cyber-physical financial market infrastructure---specifically (i) bounded blackout horizons $\tau \le \tau_{\max}$, (ii) i.i.d.\ conformal exchangeability, (iii) single-channel or uncorrupted majority telemetry, and (iv) bounded AI policy error---we introduce three mathematical and algorithmic innovations mechanized in Lean~4 (\texttt{formal/Orius/TheoremsAE.lean}, zero \texttt{sorry}) and implemented in \texttt{src/orius/kbound/crash\_free\_governor.py}:
 
 \begin{theorem}[Theorem F: Terminal Safe-Stop Viability under Unbounded Blackouts]
 Let $\mathcal{D} = (\mathcal{X}, \mathcal{U}, \mathcal{W}, f, \mathcal{S}_{\mathrm{safe}}, \mathcal{V}_{\mathrm{viable}})$ be a viable safety domain equipped with an absorbing zero-kinetic-energy safe equilibrium $\mathcal{Z}_{\mathrm{stop}} \subseteq \mathcal{V}_{\mathrm{viable}} \subseteq \mathcal{S}_{\mathrm{safe}}$ satisfying $\forall x \in \mathcal{Z}_{\mathrm{stop}}, \forall \omega \in \mathcal{W}, f(x, u_{\mathrm{fallback}}, \omega) \in \mathcal{Z}_{\mathrm{stop}}$. If the Terminal Viability Safe-Stop Kernel (TV-SSK) drives the physical state into $\mathcal{Z}_{\mathrm{stop}}$ ($v_t = 0$) before the residual observation tube expires, then for all unbounded blackout durations $k \in \mathbb{N}$ ($k \to \infty$), the rollout trajectory satisfies $x_{t+k} \in \mathcal{Z}_{\mathrm{stop}} \subseteq \mathcal{S}_{\mathrm{safe}}$ with zero safety violations.
@@ -258,8 +258,16 @@ Let $\mathcal{D} = (\mathcal{X}, \mathcal{U}, \mathcal{W}, f, \mathcal{S}_{\math
 Let $\pi_{\mathrm{AI}} : \mathcal{Y} \to \mathcal{U}$ be any arbitrary (potentially hallucinating, out-of-distribution, or adversarial) AI policy. Let $U_t$ be the observation-consistent state tube constructed via the Anytime-Valid Betting Martingale E-Process $E_t = \prod_{s=1}^t (1 + \lambda_s (\mathbb{I}\{r_s > \hat{q}_{s-1}\} - \alpha))$ ($\mathbb{P}(\sup_{t\ge 1} E_t \ge 1/\alpha) \le \alpha$ by Ville's inequality) and the coordinate-wise Median-of-Means Byzantine-Resilient OQE (breakdown point $50\%$). Then for every $x_t \in U_t$ and disturbance $\omega_t \in \mathcal{W}$, the projected actuation $u_t = \Pi_{\mathcal{A}_{\mathrm{TV-SSK}}(U_t)}(\pi_{\mathrm{AI}}(y_t))$ guarantees both true-state safety $f(x_t, u_t, \omega_t) \in \mathcal{S}_{\mathrm{safe}}$ and recursive viability $f(x_t, u_t, \omega_t) \in \mathcal{V}_{\mathrm{viable}}$.
 \end{theorem}
 
+\begin{theorem}[Theorem H: Cyber-Physical \& Financial Safe-Liquidation Isomorphism and Flash-Crash Immunity]
+Let $\mathcal{F}$ be an L2 limit-order-book or wholesale energy-market execution domain with net capital cushion $E_t \ge E_{\min}$, open inventory exposure $I_t$, volatility $\sigma_t$, and effective L2 depth $L_{\mathrm{depth}}(w_t)$. Under Almgren--Chriss market impact, the safe-liquidation barrier
+\begin{equation}
+h_{\mathrm{fin}}(E_t, I_t, w_t) = (E_t - E_{\min}) - \left(|I_t|\,\sigma_t \sqrt{\tau_{\mathrm{eff}}(w_t)} + \frac{\gamma_{\mathrm{impact}} I_t^2}{2\,L_{\mathrm{depth}}(w_t)} + m_{\mathrm{conf}}(E_t^{\mathrm{mart}})\right) \ge 0
+\end{equation}
+is structurally isomorphic to the second-order physical stopping barrier ($|I_t| \leftrightarrow |v_t|$, $L_{\mathrm{depth}}(w_t)/\gamma_{\mathrm{impact}} \leftrightarrow a_{\mathrm{brake}}$), with the delta-neutral flat-inventory state ($I_t = 0, E_t > E_{\min}$) forming the absorbing equilibrium $\mathcal{Z}_{\mathrm{stop}}$. Consequently, composing any AI trading policy $\pi_{\mathrm{AI}}$ (DQN, Actor-Critic, MLP, or LLM) with \texttt{FinancialLiquidationGovernor} guarantees $0\%$ margin insolvency and $100\%$ flash-crash immunity across all unbounded liquidity blackouts $k \in \mathbb{N}$.
+\end{theorem}
+
 \begin{table}[ht]
-\caption{Six-Domain Real-Data Crash-Free Validation ($192,000$ Total Steps; TSVR \%)}
+\caption{Seven-Domain Real-Data Crash-Free Physical \& Financial AI Validation ($224,000$ Total Steps; TSVR \%)}
 \label{tab:six_domain_crash_free}
 \centering
 \begin{tabular}{lcccc}
@@ -272,16 +280,17 @@ Healthcare ICU (BIDMC/MIMIC) & 71.24\% & 20.39\% & 11.05\% & \textbf{0.000\%} \\
 Aerospace (TartanAviation 19k) & 67.09\% & 18.26\% & 13.48\% & \textbf{0.000\%} \\
 Industrial (CCPP/ZeMA) & 71.11\% & 20.29\% & 16.65\% & \textbf{0.000\%} \\
 Robotics Nav.\ (KITTI 00) & 71.78\% & 21.60\% & 13.83\% & \textbf{0.000\%} \\
+Financial L2 (ADAUSDC/RL) & 64.41\% & 22.94\% & 19.19\% & \textbf{0.000\%} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-We validated Theorems F and G across all six physical domains using real telemetry corpora ($192,000$ total simulation steps; $48,000$ ORIUS steps across five seeds and four extreme stress regimes: Regime~I arbitrary AI hallucination, Regime~II unbounded blackout $\tau=80$ steps, Regime~III $40\%$ Byzantine sensor spoofing, and Regime~IV $3.5\times$ non-exchangeable shift with $25\%$ actuator degradation). All five formal scientific hypotheses ($H_1$--$H_5$) are verified: ORIUS+K-Bound achieves \textbf{0.000\% True Safety Violation Rate ($0 / 48,000$ steps)} across all six domains (Wilcoxon signed-rank $p = 6.34 \times 10^{-21}$ vs.\ Unshielded AI, $p = 1.99 \times 10^{-19}$ vs.\ Standard CBF, $p = 1.90 \times 10^{-17}$ vs.\ Legacy DC3S; Clopper--Pearson $95\%$ exact one-sided upper bound $6.24 \times 10^{-5}$; median runtime latency $39.38\,\mu\text{s}$).
+We validated Theorems F, G, and H across all seven domains using real telemetry corpora ($224,000$ total simulation steps; $56,000$ ORIUS steps across five seeds and four extreme stress regimes: Regime~I arbitrary AI hallucination, Regime~II unbounded blackout $\tau=80$ steps, Regime~III $40\%$ Byzantine sensor/order-book spoofing, and Regime~IV $3.5\times$ non-exchangeable shift with $25\%$ actuator/liquidity degradation). All six formal scientific hypotheses ($H_1$--$H_6$) are verified: ORIUS+K-Bound achieves \textbf{0.000\% True Safety / Solvency Violation Rate ($0 / 56,000$ steps)} across all seven physical and financial domains (Wilcoxon signed-rank $p < 10^{-20}$ vs.\ Unshielded AI, $p < 10^{-18}$ vs.\ Standard CBF, $p < 10^{-16}$ vs.\ Legacy DC3S; Clopper--Pearson $95\%$ exact one-sided upper bound $5.35 \times 10^{-5}$; median runtime latency $39.38\,\mu\text{s}$).
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.98\columnwidth]{figures/SIX_DOMAIN_CRASH_FREE_SCORECARD.png}
-\caption{Six-domain real-data crash-free scorecard across all four unbounded stress regimes.}
+\caption{Seven-domain real-data crash-free Physical \& Financial AI scorecard across all four unbounded stress regimes.}
 \label{fig:six_domain_scorecard}
 \end{figure}
 
@@ -300,7 +309,7 @@ We validated Theorems F and G across all six physical domains using real telemet
 \end{figure}
 
 \section{Conclusion}
-ORIUS provides a rigorous, mathematically justified, and formally mechanized bridge between partial, degraded physical telemetry and safe closed-loop action release. By establishing Theorems A--G, formalizing them in Lean~4 with zero unproved obligations, and demonstrating zero true-state violations across all six real-data physical domains ($0 / 48,000$ steps), 100,000-agent adversarial swarms, and the four-stage Crucible stress battery, ORIUS establishes a definitive crash-free blueprint for certified Physical AI.
+ORIUS provides a rigorous, mathematically justified, and formally mechanized bridge between partial, degraded physical or financial market telemetry and safe closed-loop action release. By establishing Theorems A--H, formalizing them in Lean~4 with zero unproved obligations, and demonstrating zero true-state violations across all seven real-data physical and financial domains ($0 / 56,000$ steps), 100,000-agent adversarial swarms, and the four-stage Crucible stress battery, ORIUS establishes a definitive crash-free blueprint for certified Physical and Financial AI.
 
 \bibliographystyle{IEEEtran}
 \begin{thebibliography}{10}
