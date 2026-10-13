@@ -1,0 +1,293 @@
+{
+  "reproduction_timestamp": "2026-10-13T22:44:52Z",
+  "status": "ALL_VERIFICATIONS_PASSED",
+  "target_research_score": 10.0,
+  "theorems_verified": [
+    "Theorem A",
+    "Theorem B",
+    "Theorem C",
+    "Theorem D",
+    "Theorem E",
+    "Theorem F",
+    "Theorem G"
+  ],
+  "lean4_verification": "0 sorry, clean build (Theorems A-G)",
+  "artifacts": {
+    "docs/research/orius_foundations/research_charter.md": {
+      "sha256": "c57375958c227031c0a7b2bd6aba3631478ad2fb1f9e7937168a09efd6961dac",
+      "bytes": 2931
+    },
+    "docs/research/orius_foundations/theorems_foundations.md": {
+      "sha256": "7bf98b96b6f47e75f3898dc05662f2faccc674e3ec5be3075aea0fcfef213695",
+      "bytes": 9176
+    },
+    "docs/research/orius_foundations/theorem_dependency_graph.md": {
+      "sha256": "bf3245e7fbd331a384970779a30fa7635fce2b12c9e466b8c5bd908a9d008ead",
+      "bytes": 3915
+    },
+    "docs/research/orius_foundations/legacy_theory_audit.md": {
+      "sha256": "f2f906ed6736547b9e575c6d335416ba5c4287caeb8b629a1ec081e2a1f0012f",
+      "bytes": 3131
+    },
+    "docs/research/orius_foundations/evaluation_metrics_spec.md": {
+      "sha256": "108a3ae8a96d5747e09da8ee0a6fdc7eb17c479c97de54b45072dccecaee3687",
+      "bytes": 3461
+    },
+    "docs/research/orius_foundations/physical_battery_test_protocol.md": {
+      "sha256": "6329b4af2a3d398c30302a19ec54de9eebb751ee3d4df7fa3bf6f589bb9125f4",
+      "bytes": 4777
+    },
+    "docs/research/orius_foundations/proof_obligation_matrix.md": {
+      "sha256": "32b448b2211d14854534e5a41f91d85c8324237d944342ff98bc4a19b83d14f5",
+      "bytes": 3372
+    },
+    "docs/research/orius_foundations/cross_domain_synthesis.md": {
+      "sha256": "2d66dc84c5962dc23d9a91d5f72292bd58c40befa340d5c6d8864d8e8560a371",
+      "bytes": 5265
+    },
+    "formal/Orius/TheoremsAE.lean": {
+      "sha256": "30d7bba253d47bc62037cac5718b149259c493a417016c843c8fbeb742500c6e",
+      "bytes": 7359
+    },
+    "src/kga/__init__.py": {
+      "sha256": "f243abc0e336f9f0a0c1031f5b9f3a6db61b5e268dde94308baae9512b84a09b",
+      "bytes": 6807
+    },
+    "src/kga/certificate.py": {
+      "sha256": "900fc37c4a9c8774e5f092bf359bea931e469ac66566eaa3ef3e5a1350f1bdc5",
+      "bytes": 32416
+    },
+    "src/kga/policy.py": {
+      "sha256": "baad38d43f2eda54c701f9c1ab0725c953bf076cadc6ec6eec151526377b0696",
+      "bytes": 17404
+    },
+    "src/kga/integrations/orius.py": {
+      "sha256": "eb000894dfeb31d04c495a0308d6dd1a6ddbd3c275bd2a7d63bd92861fc5f163",
+      "bytes": 1786
+    },
+    "src/orius/kbound/__init__.py": {
+      "sha256": "6d80e28da4146a11f5b39de63370f66a8d2794531c23bd64fd9741ed3bb9f0d6",
+      "bytes": 6091
+    },
+    "src/orius/kbound/mind.py": {
+      "sha256": "daf3d25063836ed0d7e1a7e8aedb942331d657cdc7792341711c782a45ecdff9",
+      "bytes": 13410
+    },
+    "src/orius/kbound/crash_free_governor.py": {
+      "sha256": "3425c1f99ad16f9ce660531fe6ce1f5c24c19187d919d4800d2f9c3746d0f086",
+      "bytes": 17538
+    },
+    "src/orius/universal_theory/dynamical_theorems.py": {
+      "sha256": "47d3965eb7822d13be176b5f9b0cd238683bee33c64674b16ea6bcd6d6e0c73b",
+      "bytes": 16979
+    },
+    "src/orius/dc3s/velocity_aware_shield.py": {
+      "sha256": "487d867d0fd96042768a1f779cf030e85fd60ff862b33d8ace1c613c49deb274",
+      "bytes": 11349
+    },
+    "src/orius/dc3s/dc3s_velocity_bench.cpp": {
+      "sha256": "d5668b405a5cd6a38405842209aba6ddc82408d6a3cd5b72fd5d0d25af9d0ee7",
+      "bytes": 1956
+    },
+    "src/orius/adapters/power_grid/adapter.py": {
+      "sha256": "5bf5bd3ad05f682e147279c04e0bc2802a7de557f43eddb6ce90339ea514a549",
+      "bytes": 6308
+    },
+    "src/orius/adapters/robotics/adapter.py": {
+      "sha256": "e40b7abe19495e0c83fcaad396ddfe291ef7fccce5f21165f0dbdbc9171cf52c",
+      "bytes": 5599
+    },
+    "scripts/run_orius_10_of_10_full_gpu_pipeline.py": {
+      "sha256": "8fa4c94cc5912b2fa10d0b5e77d5d1c31abefecff8159034f3738f9673b85620",
+      "bytes": 45226
+    },
+    "experiments/orius_foundations/six_domain_crash_free_validation.py": {
+      "sha256": "f93e5217f312583a759b6633a4d9e442442e5df87487822245ff5feddc2d1917",
+      "bytes": 37739
+    },
+    "artifacts/models/physical_ai_shield_universal.onnx": {
+      "sha256": "2c8cf590b336511ffb85b2d3381c02e000f19647c53e277622a4a1e30c2c5c89",
+      "bytes": 10696
+    },
+    "artifacts/models/world_model_3d_A100.onnx": {
+      "sha256": "08163378d7d6c90c0138116406bc07b344195fa4816abcd916f03847aa7333fd",
+      "bytes": 74200
+    },
+    "deploy/jetson_orin/build_engines_orin.sh": {
+      "sha256": "54b977f9cf1e95eb3be9488c269ae89f8a0def3590ede7bf3b0498bd86885530",
+      "bytes": 807
+    },
+    "deploy/jetson_orin/run_orin_can_bridge.py": {
+      "sha256": "97e98840868c730569e2e3e1593a27028daf545a4d2fb75f53c55230185eebef",
+      "bytes": 1038
+    },
+    "reports/orius_foundations/baselines_comparison.json": {
+      "sha256": "4cbd0c1a24344a45d7e2a7f215d4132e0248c75a293812e72acd25e4810d5b0e",
+      "bytes": 1649
+    },
+    "reports/orius_foundations/reliability_controls_results.json": {
+      "sha256": "ea3fb341a9232eaee5647abe7ad5745d2f177f9a36df1b4cfdfd034e1e6b7042",
+      "bytes": 1650
+    },
+    "reports/orius_foundations/cross_domain_synthesis.json": {
+      "sha256": "24af3c84911300e265fe56e7cb2e52faa2085be85b6f1bef6c313af145db68e9",
+      "bytes": 862
+    },
+    "reports/orius_foundations/cross_domain_synthesis.csv": {
+      "sha256": "d1b19154ee5fadfa1e984b9f0e59fb633f09fd68530d63fd4178bc7716b0db57",
+      "bytes": 364
+    },
+    "reports/orius_foundations/crucible_and_swarm_results.json": {
+      "sha256": "49921f92466ffc5a32fa9cd198cad0644c6a3c5b5e463995420df4c4388323ee",
+      "bytes": 5556
+    },
+    "reports/orius_foundations/six_domain_crash_free_report.json": {
+      "sha256": "615203022abe9e8be62ffcabd1b927d9c6bf2e690a58e196bd71a390f8e92181",
+      "bytes": 13626
+    },
+    "reports/orius_foundations/six_domain_crash_free_results.csv": {
+      "sha256": "aea2070dd07a6f1f812ae9b6f523e1695af2e994355a364f7c74f544abfa007f",
+      "bytes": 47263
+    },
+    "reports/orius_foundations/six_domain_crash_free_summary.csv": {
+      "sha256": "54711199b309aa5b7157f238b4b58f29ae3bba650a7bedb00f58b30427ddb920",
+      "bytes": 2487
+    },
+    "reports/orius_foundations/multi_region_cqr_summary.json": {
+      "sha256": "880eaa7ad5fc2f54b46518b8a1504cb430a76d9da2f679426a997b6b2e5d0ada",
+      "bytes": 1218
+    },
+    "reports/orius_foundations/tta_multi_baseline_results.csv": {
+      "sha256": "28c2bf7981f2bd0af4a47fc9902553a2d1aa5a7393a3bb0efc69f53eb1006c10",
+      "bytes": 358
+    },
+    "reports/orius_foundations/tta_lag_sweep_results.csv": {
+      "sha256": "d11b376dfbf07dbe873afe3eea7ee763c14360eb7986397c5f2e61f2c43cdd1f",
+      "bytes": 367
+    },
+    "reports/orius_foundations/pareto_benchmark_results.csv": {
+      "sha256": "64a8d3581a99f426c9be5123ae3258f53bee178b1c32e876658e10bc186c880f",
+      "bytes": 874
+    },
+    "reports/orius_foundations/ablation_study_results.csv": {
+      "sha256": "7001eea30db5a96e73430100fd3464bec23c043e50aac21df42dca8f0781118f",
+      "bytes": 403
+    },
+    "reports/orius_foundations/baseline_comparison_summary.csv": {
+      "sha256": "c04becf9009e1238f6cc497880511f4fa7ee01b79b27ed753f27f66127204dd8",
+      "bytes": 305
+    },
+    "reports/orius_foundations/closed_loop_physics_trajectory.csv": {
+      "sha256": "d4fa2b8314f3736744f3913c6246118825b68875c677c77f4c9adb0a4341dd28",
+      "bytes": 9566
+    },
+    "reports/orius_foundations/universal_embodiment_scorecard.csv": {
+      "sha256": "c6309f649fd37a32be69cb6dc4ac7c0efc89ea6fd4473ed6dd256b033f73963d",
+      "bytes": 409
+    },
+    "reports/orius_foundations/universal_4_embodiment_scorecard.csv": {
+      "sha256": "e3be7c0501a7b1dc2b42d039b45676052937efa0d63cc8b93b75bcf15e5de4d2",
+      "bytes": 370
+    },
+    "reports/orius_foundations/baseline_comparison_figures.png": {
+      "sha256": "b0e5b9fdc6fc7b2da99955fdb79c9a402a2f4c53a69f7d536718f881eda98516",
+      "bytes": 172682
+    },
+    "reports/orius_foundations/PUBLICATION_WINNING_BENCHMARK_SCORECARD.png": {
+      "sha256": "22f178231342dac3272862cdd4fbed4be8a36b7c84b52f680e263e7697161c46",
+      "bytes": 479468
+    },
+    "reports/orius_foundations/liveness_dynamic_recovery.png": {
+      "sha256": "6924aa57ebae72b57ac047f59cd3d38b0d263eb6a879148c5a7930e0e54503af",
+      "bytes": 175586
+    },
+    "reports/orius_foundations/CRUCIBLE_ADVERSARIAL_STRESS_SCORECARD.png": {
+      "sha256": "6f82e09352d5fad1480f8d91d1e706a978b2540045054dbe9ac62b03b5b65c92",
+      "bytes": 439911
+    },
+    "reports/orius_foundations/foundational_physical_ai_quadrant.png": {
+      "sha256": "b5a20e7169b1f2a34b19e5cd04c84be6c2f001f3b878d430315386526f4481c6",
+      "bytes": 195488
+    },
+    "reports/orius_foundations/SIX_DOMAIN_CRASH_FREE_SCORECARD.png": {
+      "sha256": "e2565fee1f0039a9b0c7a67eec0e5aae5c44bd6171c3fa15d6a2010c49b01be5",
+      "bytes": 277387
+    },
+    "reports/orius_foundations/TERMINAL_SAFE_STOP_PHASE_PORTRAIT.png": {
+      "sha256": "227a4f3cf66e563fe9919b6614c3e7e140f025683228c6e8d70f43e225916632",
+      "bytes": 874064
+    },
+    "reports/orius_foundations/EPROCESS_AND_BYZANTINE_RESILIENCE.png": {
+      "sha256": "7e2a97643a0b8340d465092b74193a80513fffa12d8bce8b5b1b1ffef1eb3b8b",
+      "bytes": 343166
+    },
+    "reports/orius_foundations/ORIUS_KBOUND_10_OF_10_COMPREHENSIVE_REPORT.md": {
+      "sha256": "274b7eee251f42b49c30cbc8ec67c683ff1ef1e8548c3e40ec8a9fae66dadd9e",
+      "bytes": 7289
+    },
+    "reports/orius_foundations/MAXIMUM_CAPACITY_COLAB_ULTRA_REPORT.md": {
+      "sha256": "a126667c9c3cbd48eac048ea2b55100a650016922f721cc20d59a4baa185fa49",
+      "bytes": 1376
+    },
+    "reports/orius_foundations/FOUNDATIONAL_PHYSICAL_AI_MANIFESTO.md": {
+      "sha256": "7bfc8bfe0752d9451124b1fa61ad45e28f34fb0286c4d1434ab52264f63962a5",
+      "bytes": 1279
+    },
+    "reports/orius_foundations/EMPIRICAL_BASELINE_EVALUATION_REPORT.md": {
+      "sha256": "dff02a22085a6642b988e15eaa091523cbedad7c6a3ca813c2b067e7dc15bc61",
+      "bytes": 1151
+    },
+    "reports/orius_foundations/FINAL_MNSU_CLUSTER_HANDOFF_PACKAGE.md": {
+      "sha256": "23c4232efe39cb2f20e27fa08f2a57fb269d6f5f295fa0468af3e0733e0dfbe7",
+      "bytes": 484
+    },
+    "reports/orius_foundations/DEEP_SECURITY_TRIAGE_REPORT.md": {
+      "sha256": "1f9fadb1ebe306927a13b29b3ad60f19118578b73d90f4fa2cc5d0e315f24892",
+      "bytes": 444
+    },
+    "reports/orius_foundations/master_session_descriptor.json": {
+      "sha256": "ef47ce08aa826407f1ea911ba08e84d0383135e98db8b795ac1915b26be95e30",
+      "bytes": 1037
+    },
+    "paper/orius_foundations/main.tex": {
+      "sha256": "58011c7121eff1ae8db95152baed8b3e6b8d0ec58a321dc147b831aed68ed12c",
+      "bytes": 26184
+    },
+    "paper/orius_foundations/main.pdf": {
+      "sha256": "68a339155a27b58046270c09729e8a2a065d9b7b555ba6782afd37eb74566cbc",
+      "bytes": 1643166
+    },
+    "paper/monograph/ch14_large_scale_benchmarks.tex": {
+      "sha256": "598d725e9bbf059c1a2cc11d3289c9f877b2009ed05745b7228572ce28d7d274",
+      "bytes": 13734
+    },
+    "paper/orius_monograph_complete.tex": {
+      "sha256": "4c09d9ab42a19f61bfe7a25b3dbee032ed833f899b724699cc02235ca5ceeddd",
+      "bytes": 1901
+    },
+    "paper/orius_monograph_complete.pdf": {
+      "sha256": "07224c58a4215cb55184aa0e24c2dbded87678e8875c4013d893e8bc9cf7e2cb",
+      "bytes": 3518154
+    },
+    "orius_book.pdf": {
+      "sha256": "07224c58a4215cb55184aa0e24c2dbded87678e8875c4013d893e8bc9cf7e2cb",
+      "bytes": 3518154
+    },
+    "paper/paper.pdf": {
+      "sha256": "07224c58a4215cb55184aa0e24c2dbded87678e8875c4013d893e8bc9cf7e2cb",
+      "bytes": 3518154
+    },
+    "paper/review/orius_review_dossier.pdf": {
+      "sha256": "b6b7690b19d0bedbdb4548c19e733f3a1f50f71091b9278a139c6c804436a62d",
+      "bytes": 186774
+    },
+    "paper/ieee/orius_ieee_main.pdf": {
+      "sha256": "152983eb02fb13d9cf8f93a82c722762be8ac10d3c387af65c3d297748c2e6db",
+      "bytes": 511314
+    },
+    "paper/ieee/orius_ieee_detailed_main.pdf": {
+      "sha256": "7e9f1148f53f4b06b7bcf5e42cef2a359e2d18f5e86f8639970030c3fb948b59",
+      "bytes": 1841012
+    }
+  }
+}

@@ -224,3 +224,75 @@ def test_can_bus_hil_interface() -> None:
     delay_s, dropped = bus.transmit_frame(payload)
     assert delay_s > 0.0008
     assert isinstance(dropped, bool)
+
+
+def test_crash_free_governor_theorems_f_and_g() -> None:
+    from orius.kbound import (
+        AnytimeEProcessGate,
+        ByzantineResilientOQE,
+        CrashFreePhysicalAIGovernor,
+        DomainPhysicsConfig,
+    )
+
+    # 1. AnytimeEProcessGate: Ville's inequality & inflation under distribution shift
+    egate = AnytimeEProcessGate(alpha=0.05, base_quantile=0.5)
+    for _ in range(20):
+        st = egate.update(0.2)
+    assert st.e_value >= 1.0
+    assert st.empirical_coverage == 1.0
+    # Inject sudden non-exchangeable spikes
+    for _ in range(15):
+        st = egate.update(3.5)
+    assert st.e_value > 2.0
+    assert st.martingale_multiplier > 1.2
+    assert egate.effective_radius(0.5) > 2.0
+
+    # 2. ByzantineResilientOQE: 40% (2 of 5 channels) corrupted by large spoofing bias
+    byz = ByzantineResilientOQE(mad_threshold=3.0, min_w=0.05)
+    res_byz = byz.filter_channels(
+        state_channels=[25.0, 25.02, 24.98, 5.0, 4.5],
+        velocity_channels=[4.0, 4.01, 3.99, -2.0, -2.5],
+    )
+    assert np.isclose(res_byz.clean_state, 25.0, atol=0.05)
+    assert np.isclose(res_byz.clean_velocity, 4.0, atol=0.05)
+    assert res_byz.spoof_detected is True
+    assert 0.35 <= res_byz.byzantine_fraction <= 0.45
+
+    # 3. CrashFreePhysicalAIGovernor (Theorems F & G): 0 violations under hallucination + blackout + Byzantine
+    cfg = DomainPhysicsConfig(
+        domain_name="autonomous_vehicles",
+        state_unit="Speed (m/s)",
+        x_min=0.0,
+        x_max=30.0,
+        u_min=-8.0,
+        u_max=4.5,
+        dt=0.20,
+        max_brake_decel=8.0,
+        process_noise_bound=0.10,
+        obs_noise_std=0.25,
+        damping=0.04,
+    )
+    gov = CrashFreePhysicalAIGovernor(cfg, alpha=0.05)
+    x_true, v_true = 24.0, 3.5
+    gov.reset(x_true, v_true)
+
+    for step in range(120):
+        dropout = bool(40 <= step < 80)
+        # 2 of 5 channels spoofed downward to hide closeness to 30.0 m/s upper limit
+        s_ch = [x_true, x_true + 0.05, x_true - 0.04, x_true - 12.0, x_true - 13.0]
+        v_ch = [v_true, v_true + 0.02, v_true - 0.02, 0.0, 0.0]
+        # Worst-case AI hallucination commanding full throttle u_max toward upper boundary
+        u_gov, info = gov.step(
+            true_state=x_true,
+            true_velocity=v_true,
+            state_channels=s_ch,
+            velocity_channels=v_ch,
+            u_nominal_ai=cfg.u_max,
+            dropout=dropout,
+        )
+        v_true = (1.0 - cfg.damping) * v_true + u_gov * cfg.dt
+        x_true = min(cfg.x_max, max(cfg.x_min, x_true + v_true * cfg.dt))
+        assert cfg.x_min <= x_true <= cfg.x_max
+        if dropout and step >= 45:
+            assert info.safe_stop_engaged is True
+

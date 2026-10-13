@@ -157,6 +157,9 @@ Crucible 3: Triple-Fault Cascade & 520 ms lag + 40\% brake + ice & $+8.01\text{ 
 Crucible 4: 1,000-Trial Monte Carlo & Randomized $v_0, d_0, \tau_{\mathrm{fault}}$ & $+14.23\text{ m}$ (0/1,000 crashes) & Passed\\
 K-Bound Conformal TTA Gate & 0--650 ms lag vs.\ Tent/EATA/SAR & $\le 0.4920$ MSE (\texttt{FREEZE}) & Verified\\
 Native C++17 \texttt{-O3} \& CAN HIL & 2M steps / ISO 11898-2 500 kbps & $0.0056\text{--}0.0152\,\mu\text{s}$ / $+4.17\text{ m}$ & Verified\\
+Theorem F (Lean~4 Mechanized) & Unbounded blackout terminal safe-stop & $\mathcal{Z}_{\mathrm{stop}}$ absorbing invariance (0 \texttt{sorry}) & Proved\\
+Theorem G (Lean~4 Mechanized) & Arbitrary AI policy hallucination & $u_t \in \mathcal{A}_{\mathrm{TV-SSK}}$ invariance (0 \texttt{sorry}) & Proved\\
+6-Domain Real-Data Crash-Free Suite & 192k steps (OPSD/Waymo/BIDMC/ADS-B/CCPP/KITTI) & $0 / 48,000$ ORIUS violations ($0.000\%$ TSVR) & Verified\\
 \bottomrule
 \end{longtable}
 
