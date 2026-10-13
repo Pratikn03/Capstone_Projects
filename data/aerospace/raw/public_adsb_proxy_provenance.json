@@ -1,0 +1,179 @@
+{
+  "access_notes": "This bounded public-flight runtime lane is a support surface only. Provider-approved multi-flight telemetry remains the canonical defended runtime surface.",
+  "canonical_source": false,
+  "checked_locations": [
+    "/Volumes/T9/orius_external_data/aerospace_flight_telemetry/tartanaviation_adsb_19k_clean"
+  ],
+  "dataset_key": "public_adsb_proxy",
+  "domain": "aerospace",
+  "generated_at_utc": "2026-10-13T22:34:47.647746Z",
+  "lane_type": "bounded_public_adsb_runtime",
+  "license_notes": "MIT license on the mirrored ADS-B dataset; bounded proxy-runtime use only.",
+  "notes": [
+    "airspeed_kt is populated from ADS-B groundspeed and should be interpreted as a proxy rather than direct measured airspeed",
+    "bank_angle_deg is derived from heading-rate and speed rather than measured directly",
+    "fuel_remaining_pct is a normalized remaining-flight-progress proxy",
+    "public ADS-B replay is an aerospace support lane and does not satisfy the defended real-flight parity requirement"
+  ],
+  "output_summary": {
+    "columns": [
+      "flight_id",
+      "step",
+      "altitude_m",
+      "airspeed_kt",
+      "bank_angle_deg",
+      "fuel_remaining_pct",
+      "ts_utc",
+      "latitude",
+      "longitude",
+      "heading_deg",
+      "data_age_sec",
+      "speed_source",
+      "bank_proxy_kind",
+      "fuel_proxy_kind",
+      "source_dataset"
+    ],
+    "generated_at_utc": "2026-10-13T22:34:47.641895Z",
+    "processed_output": "/Volumes/T9/gridpulse/data/aerospace/processed/aerospace_public_adsb_runtime.csv",
+    "rows": 10635
+  },
+  "processed_output": "/Volumes/T9/gridpulse/data/aerospace/processed/aerospace_public_adsb_runtime.csv",
+  "provider": "Hugging Face public ADS-B mirror",
+  "proxy_fields": {
+    "airspeed_kt": "populated_from_ground_speed_kts",
+    "bank_angle_deg": "derived_from_heading_rate_and_ground_speed",
+    "fuel_remaining_pct": "derived_from_remaining_flight_progress"
+  },
+  "raw_inventory": {
+    "files": [
+      {
+        "path": "._.cache",
+        "size_bytes": 4096
+      },
+      {
+        "path": "._.gitattributes",
+        "size_bytes": 4096
+      },
+      {
+        "path": "._README.md",
+        "size_bytes": 4096
+      },
+      {
+        "path": "._tartanaviation_adsb_19k_clean.csv",
+        "size_bytes": 4096
+      },
+      {
+        "path": "._tartanaviation_adsb_19k_clean.jsonl",
+        "size_bytes": 4096
+      },
+      {
+        "path": ".cache/._huggingface",
+        "size_bytes": 4096
+      },
+      {
+        "path": ".cache/huggingface/._.gitignore",
+        "size_bytes": 4096
+      },
+      {
+        "path": ".cache/huggingface/._download",
+        "size_bytes": 4096
+      },
+      {
+        "path": ".cache/huggingface/.gitignore",
+        "size_bytes": 1
+      },
+      {
+        "path": ".cache/huggingface/download/._.gitattributes.lock",
+        "size_bytes": 4096
+      },
+      {
+        "path": ".cache/huggingface/download/._.gitattributes.metadata",
+        "size_bytes": 4096
+      },
+      {
+        "path": ".cache/huggingface/download/._README.md.lock",
+        "size_bytes": 4096
+      },
+      {
+        "path": ".cache/huggingface/download/._README.md.metadata",
+        "size_bytes": 4096
+      },
+      {
+        "path": ".cache/huggingface/download/._tartanaviation_adsb_19k_clean.csv.lock",
+        "size_bytes": 4096
+      },
+      {
+        "path": ".cache/huggingface/download/._tartanaviation_adsb_19k_clean.csv.metadata",
+        "size_bytes": 4096
+      },
+      {
+        "path": ".cache/huggingface/download/._tartanaviation_adsb_19k_clean.jsonl.lock",
+        "size_bytes": 4096
+      },
+      {
+        "path": ".cache/huggingface/download/._tartanaviation_adsb_19k_clean.jsonl.metadata",
+        "size_bytes": 4096
+      },
+      {
+        "path": ".cache/huggingface/download/.gitattributes.lock",
+        "size_bytes": 0
+      },
+      {
+        "path": ".cache/huggingface/download/.gitattributes.metadata",
+        "size_bytes": 100
+      },
+      {
+        "path": ".cache/huggingface/download/README.md.lock",
+        "size_bytes": 0
+      },
+      {
+        "path": ".cache/huggingface/download/README.md.metadata",
+        "size_bytes": 101
+      },
+      {
+        "path": ".cache/huggingface/download/tartanaviation_adsb_19k_clean.csv.lock",
+        "size_bytes": 0
+      },
+      {
+        "path": ".cache/huggingface/download/tartanaviation_adsb_19k_clean.csv.metadata",
+        "size_bytes": 101
+      },
+      {
+        "path": ".cache/huggingface/download/tartanaviation_adsb_19k_clean.jsonl.lock",
+        "size_bytes": 0
+      },
+      {
+        "path": ".cache/huggingface/download/tartanaviation_adsb_19k_clean.jsonl.metadata",
+        "size_bytes": 101
+      },
+      {
+        "path": ".gitattributes",
+        "size_bytes": 2461
+      },
+      {
+        "path": "README.md",
+        "size_bytes": 2064
+      },
+      {
+        "path": "tartanaviation_adsb_19k_clean.csv",
+        "size_bytes": 2534355
+      },
+      {
+        "path": "tartanaviation_adsb_19k_clean.jsonl",
+        "size_bytes": 7304972
+      }
+    ],
+    "root": "/Volumes/T9/orius_external_data/aerospace_flight_telemetry/tartanaviation_adsb_19k_clean",
+    "total_bytes": 9909792,
+    "total_files": 29,
+    "truncated": false
+  },
+  "raw_root": "/Volumes/T9/orius_external_data/aerospace_flight_telemetry/tartanaviation_adsb_19k_clean",
+  "source_env": "ORIUS_EXTERNAL_DATA_ROOT",
+  "source_kind": "external",
+  "source_urls": [
+    "https://huggingface.co/datasets/Pathange/tartanaviation-adsb-19k-clean"
+  ],
+  "used_fallback": false,
+  "version": "Pathange/tartanaviation-adsb-19k-clean"
+}
