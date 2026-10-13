@@ -1,0 +1,5 @@
+Domain,Physical Invariant,Interventions,Minimum Margin,Status
+1. Robotics (6-DoF Arm),Table Boundary (z >= 0.05 m),175,-0.700 m,VIOLATED
+2. Mobility (Autonomous Vehicle),Vehicle Spacing (d >= 2.0 m),175,14.95 m,100% VERIFIED
+3. Energy (Grid Battery BESS),"SOC Boundary Tube [10%, 90%]",175,70.0% SOC,100% VERIFIED
+4. Healthcare (ICU Infusion),Hypotension Barrier (MAP >= 65 mmHg),175,100.5 mmHg,100% VERIFIED

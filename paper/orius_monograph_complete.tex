@@ -1,0 +1,45 @@
+\documentclass[11pt,twoside,openright]{book}
+\input{../preamble.tex}
+\graphicspath{{../reports/publication/}{../reports/hil/}{../reports/figures/}{assets/figures/}{../paper/assets/figures/}{../reports/universal_orius_validation/}{../reports/universal_training_audit/}}
+
+\title{\Huge \textbf{Observation--Reality Integrity for Universal Safety (ORIUS)}\\[0.6em]
+\LARGE A Unified Epistemic-Convex Framework for Physical AI and Autonomous Control}
+\author{\textbf{Pratik Niroula} \\[0.5em] \textit{Supervised by: Dr.\ Rajeev Bukralia} \\ Minnesota State University, Mankato}
+\date{October 2026}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+\frontmatter
+\maketitle
+\tableofcontents
+
+\hypersetup{pageanchor=true}
+\mainmatter
+% --- Core Monograph Chapters ---
+\input{monograph/ch01_introduction_and_thesis_claims}
+\input{monograph/ch02_related_work_and_novelty_gap}
+\input{monograph/ch03_formal_problem_formulation}
+\input{monograph/ch04_orius_architecture_dc3s_runtime_layer}
+\input{monograph/ch05_mathematical_foundations_and_safety_guarantees}
+\input{monograph/ch06_benchmark_and_reproducibility_protocol}
+\input{monograph/ch07_witness_domain_implementation}
+\input{monograph/ch08_witness_results_and_failure_analysis}
+\input{monograph/ch09_universal_orius_across_domains}
+\input{monograph/ch10_temporal_certificates_and_graceful_degradation}
+\input{monograph/ch11_compositional_safety}
+\input{monograph/ch12_certos_runtime_assurance}
+\input{monograph/ch13_governance_reproducibility_limitations_and_conclusion}
+\input{monograph/ch14_large_scale_benchmarks}
+
+\appendix
+% --- Formal Proofs & System Registers ---
+\input{monograph/app_aj_assumption_register}
+\input{monograph/app_ak_proofs}
+\input{monograph/app_am_artifact_and_claim_index}
+\input{monograph/app_an_safety_case_bundle_index}
+
+\backmatter
+\nocite{*}
+\bibliographystyle{IEEEtran}
+\bibliography{bibliography/orius_monograph}
+\end{document}

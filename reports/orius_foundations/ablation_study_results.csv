@@ -1,0 +1,6 @@
+Configuration,Collision Rate (%),Mean Clearance (m),Mean TTA Error (MSE),Safety Status
+Full ORIUS + K-Bound,0.0%,61.89,0.3450,VERIFIED
+Ablation A: w/o Dynamic w_t (Static w=1),0.0%,56.26,0.3450,VERIFIED
+Ablation B: w/o Conformal Bound (Fixed Margin),0.0%,61.83,0.3450,VERIFIED
+Ablation C: w/o K-Bound (Pure Tent TTA),0.0%,61.84,0.5238,VERIFIED
+Ablation D: Unshielded Baseline,0.0%,54.67,0.5303,VERIFIED

@@ -1,0 +1,4 @@
+Control Architecture,Collision Occurred?,Final Stop Margin,Safety Interventions,Perception Guard
+1. Unshielded Model,YES (Crash),COLLISION,0,None (Blind Trust)
+2. Static CBF (Fixed Bound),YES (Late Brake),COLLISION,23,Fixed Heuristic
+3. K-Bound + ORIUS DC3S,NO (Safe),0.00 m,0,Formal Split-Conformal Gate

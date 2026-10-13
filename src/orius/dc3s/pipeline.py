@@ -20,6 +20,7 @@ import numpy as np
 
 from ..forecasting.uncertainty.conformal import build_runtime_interval
 from ..forecasting.uncertainty.shift_aware import ShiftAwareConfig, ShiftAwareRuntimeEngine
+from ..kbound.mind import evaluate_kbound_mind
 from .calibration import build_uncertainty_set
 from .certificate import compute_config_hash, make_certificate
 from .drift import PageHinkleyDetector
@@ -52,7 +53,7 @@ def run_dc3s_step(
 
     Returns a dict with keys:
         certificate, safe_action, shield_meta, reliability_w, drift_flag,
-        inflation, uncertainty_set, lower, upper, tightened_soc, meta.
+        inflation, uncertainty_set, lower, upper, tightened_soc, meta, kbound.
     """
     dcfg = dict(cfg or {})
     reliability_cfg = dcfg.get("reliability")
@@ -60,8 +61,9 @@ def run_dc3s_step(
     expected_cadence = float(dcfg.get("expected_cadence_s", 3600))
     assumptions_version = str(dcfg.get("assumptions_version", "dc3s-assumptions-v1"))
     shift_cfg = ShiftAwareConfig.from_mapping(dcfg.get("shift_aware_uncertainty"))
+    kbound_cfg = dict(dcfg.get("kbound") or {})
 
-    # ── Stage 1: Detect (OQE) ────────────────────────────────────────
+    # ── Stage 1: Detect (OQE) + K-Bound Epistemic Mind ───────────────
     w_t, reliability_flags = compute_reliability(
         event=event,
         last_event=last_event,
@@ -69,6 +71,15 @@ def run_dc3s_step(
         reliability_cfg=reliability_cfg,
         adaptive_state=adaptive_state,
         ftit_cfg=ftit_cfg,
+    )
+
+    kbound_eval = evaluate_kbound_mind(
+        reliability_w=float(w_t),
+        delta_hat=float(kbound_cfg.get("delta_hat", 0.045)),
+        calib_residuals=kbound_cfg.get("calib_residuals"),
+        alpha=float(kbound_cfg.get("alpha", 0.05)),
+        w_threshold=float(kbound_cfg.get("w_threshold", 0.65)),
+        residual=residual,
     )
 
     # ── Drift detection ──────────────────────────────────────────────
@@ -87,6 +98,14 @@ def run_dc3s_step(
         cfg=dcfg,
         prev_inflation=prev_inflation,
     )
+    cal_meta["kbound"] = kbound_eval.to_dict()
+    cal_meta["kbound_decision"] = kbound_eval.decision
+    if bool(kbound_cfg.get("couple_inflation", False)) and kbound_eval.inflation_multiplier > 1.0:
+        center_kb = np.asarray(yhat, dtype=float)
+        half_kb = (np.asarray(upper, dtype=float) - np.asarray(lower, dtype=float)) * 0.5 * kbound_eval.inflation_multiplier
+        lower = center_kb - half_kb
+        upper = center_kb + half_kb
+        cal_meta["inflation"] = float(cal_meta.get("inflation", 1.0)) * kbound_eval.inflation_multiplier
     inflation = float(cal_meta.get("inflation", 1.0))
     runtime_interval_decision = None
     if shift_cfg.enabled:
@@ -132,6 +151,7 @@ def run_dc3s_step(
             "w_t": float(w_t),
             "drift_flag": drift_flag,
             "inflation": inflation,
+            "kbound": kbound_eval.to_dict(),
         },
     }
 
@@ -233,6 +253,8 @@ def run_dc3s_step(
         "lower": lower,
         "upper": upper,
         "calibration_meta": cal_meta,
+        "kbound": kbound_eval.to_dict(),
+        "kbound_decision": kbound_eval.decision,
         "runtime_interval_decision": runtime_interval_decision.to_dict()
         if runtime_interval_decision
         else None,

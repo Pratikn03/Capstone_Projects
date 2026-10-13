@@ -80,23 +80,48 @@ from .theoretical_guarantees import (
     simulate_adaptive_tracking,
     simulate_separation_construction,
 )
+from .velocity_aware_shield import (
+    CANBusInterface,
+    KBoundConformalCertificate,
+    ProactiveKBoundGovernor,
+    VelocityAwareShieldResult,
+    VelocityAwareUniversalShield,
+    compute_kbound_conformal_certificate,
+)
 
 
 def __getattr__(name):
-    """Lazy-load DeepOQE symbols (requires torch)."""
+    """Lazy-load DeepOQE and K-Bound Mind symbols."""
     if name in ("DeepOQEConfig", "DeepOQEModel", "DEEP_OQE_FEATURE_NAMES"):
         from .deep_oqe import FEATURE_NAMES as _FN
         from .deep_oqe import DeepOQEConfig, DeepOQEModel
 
         _map = {"DeepOQEConfig": DeepOQEConfig, "DeepOQEModel": DeepOQEModel, "DEEP_OQE_FEATURE_NAMES": _FN}
         return _map[name]
+    if name in ("KBoundMindEvaluation", "UniversalPhysicalAIShield", "evaluate_kbound_mind"):
+        from ..kbound.mind import (
+            KBoundMindEvaluation,
+            UniversalPhysicalAIShield,
+            evaluate_kbound_mind,
+        )
+
+        _kb_map = {
+            "KBoundMindEvaluation": KBoundMindEvaluation,
+            "UniversalPhysicalAIShield": UniversalPhysicalAIShield,
+            "evaluate_kbound_mind": evaluate_kbound_mind,
+        }
+        return _kb_map[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 __all__ = [
     "CERTIFICATE_SCHEMA_VERSION",
+    "CANBusInterface",
     "DEEP_OQE_FEATURE_NAMES",
     "FTIT_FAULT_KEYS",
+    "KBoundConformalCertificate",
+    "KBoundMindEvaluation",
+    "ProactiveKBoundGovernor",
     "THEOREM_REGISTER",
     "AdaptivePageHinkleyDetector",
     "BatteryDomainAdapter",
@@ -109,6 +134,9 @@ __all__ = [
     "RACCertConfig",
     "RACCertModel",
     "TransferContractResult",
+    "UniversalPhysicalAIShield",
+    "VelocityAwareShieldResult",
+    "VelocityAwareUniversalShield",
     "assert_finite_sample_bound",
     "assert_separation",
     "assert_sublinear_regret",
@@ -128,6 +156,7 @@ __all__ = [
     "compute_finite_sample_coverage_bound",
     "compute_half_life_from_horizon",
     "compute_inflation",
+    "compute_kbound_conformal_certificate",
     "compute_model_hash",
     "compute_q_multiplier",
     "compute_reliability",
@@ -139,6 +168,7 @@ __all__ = [
     "derived_inflation_factor",
     "effective_sample_size",
     "evaluate_graceful_degradation_dominance",
+    "evaluate_kbound_mind",
     "evaluate_structural_transfer",
     "forward_tube",
     "get_certificate",

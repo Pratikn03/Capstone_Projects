@@ -1,0 +1,5 @@
+embodiment,constraint,injected_lag_ms,observed_margin,unit,interventions,safe
+Autonomous_Vehicle,> 0.00 m clearance (80m wall),500.0,29.84,m,400,True
+6DoF_Robotic_Manipulator,> 0.000 m Z-height (table floor),480.0,0.279,m,371,True
+Quadrotor_Drone,> 2.00 m altitude floor,550.0,6.97,m,336,True
+Grid_Transformer,> 0.9000 pu voltage collapse floor,520.0,0.9486,pu,362,True

@@ -250,6 +250,18 @@ def execute_universal_step(
         drift_meta=drift_meta,
     )
 
+    from orius.kbound.mind import evaluate_kbound_mind
+
+    kbound_cfg = dict(dcfg.get("kbound") or {})
+    kbound_eval = evaluate_kbound_mind(
+        reliability_w=float(reliability.weight),
+        delta_hat=float(kbound_cfg.get("delta_hat", 0.045)),
+        calib_residuals=kbound_cfg.get("calib_residuals"),
+        alpha=float(kbound_cfg.get("alpha", 0.05)),
+        w_threshold=float(kbound_cfg.get("w_threshold", 0.65)),
+        residual=residual,
+    )
+
     uncertainty, cal_meta = domain_adapter.build_uncertainty_set(
         state=state,
         reliability_w=float(reliability.weight),
@@ -258,6 +270,9 @@ def execute_universal_step(
         drift_flag=reliability.drift_flag,
         prev_meta=None,
     )
+    cal_meta = dict(cal_meta or {})
+    cal_meta["kbound"] = kbound_eval.to_dict()
+    cal_meta["kbound_decision"] = kbound_eval.decision
     state_set = build_observation_consistent_state_set(
         observed_state=state,
         uncertainty=uncertainty,
@@ -311,6 +326,7 @@ def execute_universal_step(
                 float(reliability.weight),
                 alpha=float(dcfg.get("alpha", dcfg.get("miscoverage_alpha", 0.10))),
             ),
+            "kbound": kbound_eval.to_dict(),
         },
     )
     assumption_tags = tuple(
@@ -378,9 +394,11 @@ def execute_universal_step(
             certificate=certificate,
             contract_checks=contract_checks,
         ),
+        "KBound": kbound_eval.to_dict(),
     }
     certificate.extras["semantic_checks"] = dict(contract_checks)
     certificate.extras["risk_bound_scope"] = str(episode_bound.get("scope", "current_step_only"))
+    certificate.extras["kbound"] = kbound_eval.to_dict()
     certificate.theorem_contracts = theorem_contracts
 
     return UniversalStepResult(

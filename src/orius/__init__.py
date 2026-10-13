@@ -11,6 +11,7 @@ import.  They follow semantic versioning within a 0.x release line:
 
     orius.adapters          -- canonical typed adapter entry points
     orius.dc3s              -- DC3S kernel, contracts, calibration, drift
+    orius.kbound            -- K-Bound (KGA) epistemic mind & conformal adaptation gate
     orius.certos            -- certificate runtime + chain verification
     orius.universal_theory  -- T1--T11 theorem-linked runtime helpers
 
@@ -39,7 +40,7 @@ compatibility, not exercised by ``make paper-verify``):
 
 Import discipline
 -----------------
-New code should import from ``orius.adapters.*`` and ``orius.dc3s.*``.
+New code should import from ``orius.adapters.*``, ``orius.dc3s.*``, and ``orius.kbound.*``.
 Direct imports of legacy modules trigger no warnings, but their inclusion in
 publication-facing artifacts is not endorsed; see ``src/orius/legacy/__init__.py``.
 
@@ -48,4 +49,12 @@ See ``src/orius/PUBLIC_API.md`` for the full stability matrix.
 
 __version__ = "0.1.0"
 
-__all__ = ["__version__"]
+__all__ = ["__version__", "kbound"]
+
+
+def __getattr__(name: str):
+    if name == "kbound":
+        from . import kbound as _kb
+
+        return _kb
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
