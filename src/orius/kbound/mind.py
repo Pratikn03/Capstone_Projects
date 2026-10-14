@@ -25,37 +25,85 @@ except ImportError:  # pragma: no cover
     F = None  # type: ignore
 
 from kga.certificate import Certificate, conformal_split, split_conformal_rank_radius
+from kga.evaluation import EvaluationReport, EvaluationSummary, evaluate_actions
+from kga.frontier import (
+    FrontierAssessment,
+    PopulationBenefitInterval,
+    assess_frontier,
+    frontier_action,
+    frontier_sensitivity,
+)
 from kga.policy import Decision, decide
+from kga.population_transfer import (
+    ConditionalPopulationInterval,
+    compose_conditional_population_interval,
+    hoeffding_paired_accuracy_radius,
+)
 
 
 @dataclass(frozen=True)
 class KBoundMindEvaluation:
-    """Result of evaluating the K-Bound epistemic brain on current telemetry."""
+    """Result of evaluating the K-Bound epistemic brain on current telemetry.
+
+    Implements the K-Bound three-way epistemic decision rule (Paper Def. 1, Thm. 2, Prop. 2):
+      - ``ADAPT``   (``lower_bound = delta_hat - epsilon > 0``): positive benefit certified;
+                    commit adapted candidate ``f_a`` and release action within ORIUS tube.
+      - ``FREEZE``  (``upper_bound = delta_hat + epsilon < 0``): negative benefit certified;
+                    actively reject harmful candidate ``f_a``, lock anchor ``f_0``, and tighten barrier.
+      - ``ABSTAIN`` (``0 in [lower_bound, upper_bound]`` or missing telemetry): unresolved
+                    epistemic evidence fibre; retain anchor ``f_0``, log ``ABSTAIN`` (never
+                    mislabeled as certified ``FREEZE``), and inflate ORIUS state tube ``U_t(w_t)``.
+    """
 
     decision: str
     kga_decision: str
+    orius_physical_mode: str
     delta_hat: float
     epsilon_radius: float
+    lower_bound: float
+    upper_bound: float
     net_margin: float
     allow_adaptation: bool
+    is_certified_rejection: bool
+    is_epistemic_abstention: bool
+    matched_evidence_abstain_floor: float
     alpha: float
     n_calibration: int
     reliability_w: float
     epistemic_override_triggered: bool
     inflation_multiplier: float
 
+    @property
+    def kbound_action(self) -> str:
+        return self.kga_decision
+
+    @property
+    def epsilon(self) -> float:
+        return self.epsilon_radius
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "decision": self.decision,
             "kga_decision": self.kga_decision,
+            "kbound_action": self.kga_decision,
+            "orius_physical_mode": self.orius_physical_mode,
             "delta_hat": float(self.delta_hat),
             "epsilon_radius": float(self.epsilon_radius)
             if np.isfinite(self.epsilon_radius)
+            else 1e9,
+            "lower_bound": float(self.lower_bound)
+            if np.isfinite(self.lower_bound)
+            else -1e9,
+            "upper_bound": float(self.upper_bound)
+            if np.isfinite(self.upper_bound)
             else 1e9,
             "net_margin": float(self.net_margin)
             if np.isfinite(self.net_margin)
             else -1e9,
             "allow_adaptation": bool(self.allow_adaptation),
+            "is_certified_rejection": bool(self.is_certified_rejection),
+            "is_epistemic_abstention": bool(self.is_epistemic_abstention),
+            "matched_evidence_abstain_floor": float(self.matched_evidence_abstain_floor),
             "alpha": float(self.alpha),
             "n_calibration": int(self.n_calibration),
             "reliability_w": float(self.reliability_w),
@@ -81,10 +129,11 @@ def evaluate_kbound_mind(
     """Evaluate the K-Bound epistemic gate for a single ORIUS control step.
 
     Uses ``kga.certificate.conformal_split`` to compute the exact finite-sample
-    split-conformal radius ``epsilon`` and applies the K-Bound trichotomy:
-      - ``ADAPT``          if ``delta_hat - epsilon > 0``
-      - ``FREEZE``         if ``delta_hat + epsilon < 0``
-      - ``ABSTAIN/FREEZE`` otherwise
+    split-conformal order-statistic radius ``epsilon = r_(ceil((n+1)(1-alpha)))``
+    and applies the K-Bound trichotomy (Algorithm 1 & Proposition 2):
+      - ``ADAPT``   if ``L = delta_hat - epsilon > 0``
+      - ``FREEZE``  if ``U = delta_hat + epsilon < 0``
+      - ``ABSTAIN`` if ``0 in [L, U]`` or telemetry is unavailable/degraded.
     """
     if calib_residuals is None or len(calib_residuals) == 0:
         residuals_arr = np.asarray(DEFAULT_CALIB_RESIDUALS, dtype=float)
@@ -98,6 +147,31 @@ def evaluate_kbound_mind(
     if residual is not None and np.isfinite(float(residual)):
         effective_delta_hat = float(delta_hat) - 0.01 * min(10.0, abs(float(residual)))
 
+    w_clamped = float(np.clip(reliability_w, 0.0, 1.0))
+
+    # If telemetry is completely lost (w_t <= 0), K-Bound Algorithm 1 Line 3-4:
+    # retain f_0, log the reason, and return ABSTAIN (never a certified FREEZE).
+    if not np.isfinite(effective_delta_hat) or w_clamped <= 0.0:
+        return KBoundMindEvaluation(
+            decision="ABSTAIN/FREEZE",
+            kga_decision=Decision.ABSTAIN.value,
+            orius_physical_mode="ABSTAIN_AND_INFLATE_TUBE",
+            delta_hat=effective_delta_hat if np.isfinite(effective_delta_hat) else 0.0,
+            epsilon_radius=float("inf"),
+            lower_bound=float("-inf"),
+            upper_bound=float("inf"),
+            net_margin=float("-inf"),
+            allow_adaptation=False,
+            is_certified_rejection=False,
+            is_epistemic_abstention=True,
+            matched_evidence_abstain_floor=max(0.0, 1.0 - 2.0 * float(alpha)),
+            alpha=float(alpha),
+            n_calibration=int(len(residuals_arr)),
+            reliability_w=w_clamped,
+            epistemic_override_triggered=True,
+            inflation_multiplier=float(1.0 + max(0.0, float(w_threshold))),
+        )
+
     cert: Certificate = conformal_split(
         delta_hat=effective_delta_hat,
         calib_residuals=residuals_arr,
@@ -105,31 +179,154 @@ def evaluate_kbound_mind(
     )
     kga_dec: Decision = decide(cert)
     radius = float(getattr(cert, "epsilon", 0.15))
-    net_margin = float(effective_delta_hat - radius)
-    allow_adaptation = bool(net_margin > 0.0 and kga_dec == Decision.ADAPT)
+    lower_bound = float(effective_delta_hat - radius)
+    upper_bound = float(effective_delta_hat + radius)
+    net_margin = lower_bound
 
-    decision_label = "ADAPT" if allow_adaptation else "ABSTAIN/FREEZE"
-    w_clamped = float(np.clip(reliability_w, 0.0, 1.0))
-    epistemic_override = bool((not allow_adaptation) and (w_clamped < float(w_threshold)))
+    allow_adaptation = bool(
+        lower_bound > 0.0 and kga_dec == Decision.ADAPT and w_clamped >= float(w_threshold)
+    )
+    # If OQE channel reliability is below threshold, force epistemic ABSTAIN if not FREEZE
+    if not allow_adaptation and kga_dec == Decision.ADAPT:
+        effective_kga_dec = Decision.ABSTAIN
+    else:
+        effective_kga_dec = kga_dec
 
+    is_certified_rejection = bool(effective_kga_dec == Decision.FREEZE)
+    is_epistemic_abstention = bool(effective_kga_dec == Decision.ABSTAIN)
+
+    if allow_adaptation:
+        decision_label = "ADAPT"
+        orius_mode = "ADAPT_AND_RELEASE"
+    elif is_certified_rejection:
+        decision_label = "ABSTAIN/FREEZE"
+        orius_mode = "REJECT_UPDATE_AND_TIGHTEN"
+    else:
+        decision_label = "ABSTAIN/FREEZE"
+        orius_mode = "ABSTAIN_AND_INFLATE_TUBE"
+
+    epistemic_override = bool((not allow_adaptation) and (w_clamped < float(w_threshold) or is_certified_rejection))
     if epistemic_override:
-        inflation_mult = float(1.0 + max(0.0, float(w_threshold) - w_clamped))
+        inflation_mult = float(
+            1.0 + max(0.0, float(w_threshold) - w_clamped) + (0.25 if is_certified_rejection else 0.0)
+        )
     else:
         inflation_mult = 1.0
 
     return KBoundMindEvaluation(
         decision=decision_label,
-        kga_decision=str(kga_dec.value),
+        kga_decision=str(effective_kga_dec.value),
+        orius_physical_mode=orius_mode,
         delta_hat=effective_delta_hat,
         epsilon_radius=radius,
+        lower_bound=lower_bound,
+        upper_bound=upper_bound,
         net_margin=net_margin,
         allow_adaptation=allow_adaptation,
+        is_certified_rejection=is_certified_rejection,
+        is_epistemic_abstention=is_epistemic_abstention,
+        matched_evidence_abstain_floor=max(0.0, 1.0 - 2.0 * float(alpha)),
         alpha=float(alpha),
         n_calibration=int(len(residuals_arr)),
         reliability_w=w_clamped,
         epistemic_override_triggered=epistemic_override,
         inflation_multiplier=inflation_mult,
     )
+
+
+def evaluate_population_frontier_mind(
+    *,
+    M: float,
+    beta: float,
+    disagreement_mass: float = 0.25,
+    reliability_w: float = 1.0,
+    alpha: float = 0.05,
+) -> dict[str, Any]:
+    """Evaluate the K-Bound Population Partial-Identification Frontier (Theorems 1-3).
+
+    Given disagreement-conditional centered-correctness margin ``M in [-0.5, 0.5]``,
+    residual bound ``|gamma| <= beta``, and disagreement probability ``d = mu_T(D)``:
+      - Computes the exact feasible population benefit interval
+        ``Delta(C_beta) = 2 * d * [max(-1/2, M - beta), min(1/2, M + beta)]``.
+      - Evaluates the strict-commitment frontier:
+          * ``M > beta``   -> ``ADAPT``
+          * ``M < -beta``  -> ``FREEZE``
+          * ``|M| <= beta`` -> ``ABSTAIN`` (matched-evidence abstention lower bound ``1 - 2*alpha``).
+      - Reports the exact label-free fibre-wise audit floor ``Gamma_z(C_beta) = beta`` (Theorem 3).
+    """
+    assessment: FrontierAssessment = assess_frontier(M, beta)
+    pop_interval: PopulationBenefitInterval = assessment.population_benefit_interval(
+        mass=disagreement_mass
+    )
+    w_clamped = float(np.clip(reliability_w, 0.0, 1.0))
+    in_closed_band = bool(abs(float(M)) <= float(beta))
+    abstain_floor = max(0.0, 1.0 - 2.0 * float(alpha)) if in_closed_band else 0.0
+
+    if assessment.action == Decision.ADAPT and w_clamped >= 0.65:
+        orius_mode = "ADAPT_AND_RELEASE"
+        tube_inflation = 1.0
+    elif assessment.action == Decision.FREEZE:
+        orius_mode = "REJECT_UPDATE_AND_TIGHTEN"
+        tube_inflation = 1.25 + max(0.0, 1.0 - w_clamped)
+    else:
+        orius_mode = "ABSTAIN_AND_INFLATE_TUBE"
+        tube_inflation = 1.0 + float(beta) + max(0.0, 1.0 - w_clamped)
+
+    return {
+        "margin_M": float(assessment.margin),
+        "residual_budget_beta": float(assessment.residual_budget),
+        "fibre_audit_floor_gamma_z": float(assessment.fibre_audit_floor),
+        "lower_centered_correctness": float(assessment.lower_centered_correctness),
+        "upper_centered_correctness": float(assessment.upper_centered_correctness),
+        "disagreement_mass_d": float(pop_interval.mass),
+        "population_benefit_lower": float(pop_interval.lower),
+        "population_benefit_upper": float(pop_interval.upper),
+        "kga_decision": str(assessment.action.value),
+        "in_closed_unknowable_band": in_closed_band,
+        "matched_evidence_abstain_prob_floor": float(abstain_floor),
+        "orius_physical_mode": orius_mode,
+        "orius_tube_inflation": float(tube_inflation),
+    }
+
+
+def evaluate_compound_population_mind(
+    *,
+    delta_hat: float,
+    epsilon: float,
+    n_eval: int = 200,
+    delta_sampling: float = 0.025,
+    alpha_cell: float = 0.025,
+    alpha_population: float = 0.05,
+    reliability_w: float = 1.0,
+) -> dict[str, Any]:
+    """Evaluate K-Bound Proposition 3 (Cell-to-Population Transfer via Compound Bound).
+
+    Combines empirical cell-benefit radius ``epsilon`` (at level ``alpha_cell``)
+    with the fresh-sample Hoeffding concentration radius
+    ``b(m, delta) = min(2, sqrt(2 * log(2 / delta) / m))`` to produce a
+    population-level decision with false-commit risk ``<= alpha_cell + delta_sampling``.
+    """
+    r_samp = hoeffding_paired_accuracy_radius(n=int(n_eval), delta=float(delta_sampling))
+    composed: ConditionalPopulationInterval = compose_conditional_population_interval(
+        delta_hat=float(delta_hat),
+        epsilon=float(epsilon),
+        r_samp=float(r_samp),
+        alpha_cell=float(alpha_cell),
+        delta_sampling=float(delta_sampling),
+        alpha_population=float(alpha_population),
+    )
+    w_clamped = float(np.clip(reliability_w, 0.0, 1.0))
+    return {
+        "delta_hat": float(composed.delta_hat),
+        "cell_radius_epsilon": float(composed.epsilon),
+        "sampling_radius_b": float(composed.r_samp),
+        "compound_population_radius": float(composed.population_radius),
+        "population_lower": float(composed.interval_lower),
+        "population_upper": float(composed.interval_upper),
+        "kga_decision": str(composed.action.value),
+        "alpha_spent": float(composed.spent_budget),
+        "reliability_w": w_clamped,
+    }
 
 
 from orius.dc3s.quality import compute_reliability

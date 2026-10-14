@@ -4,5 +4,6 @@ import Orius.T2T4T11
 import Orius.T3T8T9
 import Orius.Program
 import Orius.TheoremsAE
+import Orius.KBoundMind
 import Orius.TheoremsFGH
 

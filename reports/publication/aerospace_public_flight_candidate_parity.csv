@@ -1,2 +1,0 @@
-target_tier,domain,status,rows,contract_pass_rate,intervention_rate,canonical_eligibility,exact_limit
-public_flight_93_candidate,aerospace_public_flight,support_lane_only,10635,1.0,0.0,no,Public ADS-B runtime replay is an explicit support lane only; it cannot promote the defended aerospace row without the canonical real-flight runtime surface.

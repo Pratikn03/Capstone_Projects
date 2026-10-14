@@ -172,3 +172,65 @@ def test_all_compiled_pdfs_zero_unresolved_refs_and_zero_placeholders() -> None:
             assert "??" not in txt and "[?]" not in txt, f"Unresolved ref in {rel_path} p.{idx + 1}"
             assert "J. Doe" not in txt and "R. Smith" not in txt, f"Placeholder author in {rel_path} p.{idx + 1}"
 
+
+def test_kbound_epistemic_mind_full_paper_integration() -> None:
+    """Verify 100% of K-Bound (ADAPT, FREEZE, ABSTAIN, Frontier, Compound, Lean 4) is inside ORIUS."""
+    import numpy as np
+
+    from orius.kbound import (
+        ABSTAIN,
+        ADAPT,
+        FREEZE,
+        assess_frontier,
+        evaluate_actions,
+        evaluate_compound_population_mind,
+        evaluate_kbound_mind,
+        evaluate_population_frontier_mind,
+    )
+
+    lean_kb = REPO_ROOT / "formal" / "Orius" / "KBoundMind.lean"
+    assert lean_kb.exists()
+    kb_txt = lean_kb.read_text(encoding="utf-8")
+    assert "sorry" not in kb_txt
+    for thm in (
+        "frontier_positive_sound",
+        "frontier_negative_sound",
+        "frontier_band_zero_witness",
+        "frontier_open_band_opposite_witnesses",
+        "matched_evidence_abstention_lower_bound",
+        "fibre_audit_floor_ge_beta",
+        "cert_false_adapt_sound",
+        "cert_false_freeze_sound",
+        "kbound_orius_epistemic_physical_coupling",
+    ):
+        assert thm in kb_txt, f"Missing Lean 4 K-Bound theorem: {thm}"
+
+    # Population Frontier (Theorems 1-3 & Corollary 1)
+    pop_adapt = evaluate_population_frontier_mind(M=0.22, beta=0.08, disagreement_mass=0.35, reliability_w=0.92)
+    pop_freeze = evaluate_population_frontier_mind(M=-0.24, beta=0.08, disagreement_mass=0.35, reliability_w=0.55)
+    pop_abstain = evaluate_population_frontier_mind(M=0.03, beta=0.08, disagreement_mass=0.35, reliability_w=0.48)
+    assert pop_adapt["kga_decision"] == ADAPT
+    assert pop_freeze["kga_decision"] == FREEZE
+    assert pop_abstain["kga_decision"] == ABSTAIN
+    assert abs(pop_abstain["fibre_audit_floor_gamma_z"] - 0.08) < 1e-9
+    assert abs(pop_abstain["matched_evidence_abstain_prob_floor"] - 0.90) < 1e-9
+    assert assess_frontier(M=0.03, beta=0.08).action == ABSTAIN
+
+    # Empirical KGA Gate (Proposition 2)
+    calib_pool_25 = np.linspace(0.005, 0.030, 25)
+    emp_adapt = evaluate_kbound_mind(reliability_w=0.90, delta_hat=0.085, calib_residuals=calib_pool_25, alpha=0.05)
+    emp_freeze = evaluate_kbound_mind(reliability_w=0.45, delta_hat=-0.095, calib_residuals=calib_pool_25, alpha=0.05)
+    emp_abstain = evaluate_kbound_mind(reliability_w=0.52, delta_hat=0.005, calib_residuals=calib_pool_25, alpha=0.05)
+    assert emp_adapt.kbound_action == ADAPT and emp_adapt.orius_physical_mode == "ADAPT_AND_RELEASE"
+    assert emp_freeze.kbound_action == FREEZE and emp_freeze.is_certified_rejection is True
+    assert emp_abstain.kbound_action == ABSTAIN and emp_abstain.is_epistemic_abstention is True
+
+    # Compound Cell-to-Population Transfer (Proposition 3)
+    comp = evaluate_compound_population_mind(delta_hat=0.14, epsilon=0.03, n_eval=1000)
+    assert comp["kga_decision"] == ADAPT and comp["population_lower"] > 0.0
+
+    # Action Evaluation Summary
+    rep = evaluate_actions(["ADAPT", "FREEZE", "ABSTAIN"], [0.09, -0.08, 0.002])
+    assert rep.summary.false_adapt_rate_all == 0.0
+    assert rep.summary.false_freeze_rate_all == 0.0
+
