@@ -220,16 +220,19 @@ Robotics (ROS 2) & \textbf{0} & \textbf{0.00\%} & 28.0\% & 4.1 \\
 As shown in Table~\ref{tab:cross_domain}, zero true safety violations occurred across all three domains, with worst-case $p_{95}$ latency remaining below $17\,\mu\text{s}$, confirming real-time viability.
 
 \section{Large-Scale Swarm, Proactive K-Bound Gating, and Crucible Verification}
-To evaluate scalability under learned timing attacks and compounding faults, we extended the ORIUS runtime with a \textbf{Velocity-Aware Kinematic Control Barrier Shield} and a \textbf{Proactive K-Bound Anticipatory Governor}. For an agent approaching barrier $x_{\mathrm{barrier}}$ at velocity $v_t$ under transport lag $\tau_{\mathrm{lag}}$, FDIs residual $r_{\mathrm{FDI}}$, and deceleration floor $a_{\mathrm{floor}}$, the forward-invariant stopping barrier is:
+To evaluate scalability under learned timing attacks and compounding faults, we extended the ORIUS runtime with a \textbf{Velocity-Aware Kinematic Control Barrier Shield} and a \textbf{Proactive K-Bound Anticipatory Governor}. For an agent approaching barrier $x_{\mathrm{barrier}}$ at velocity $v_t$ under transport lag $\tau_{\mathrm{lag}}$, FDI residual $r_{\mathrm{FDI}}$, and deceleration floor $a_{\mathrm{floor}}$, the baseline forward-invariant stopping barrier is:
 \begin{equation}
 h(x_t, v_t, w_t) = (x_{\mathrm{barrier}} - x_t) - \left(v_t \tau_{\mathrm{eff}}(w_t) + \frac{v_t^2}{2 a_{\mathrm{floor}}} + d_{\mathrm{margin}}\right) \ge 0,
 \end{equation}
-where $\tau_{\mathrm{eff}}(w_t) = \tau_{\mathrm{lag}} + 0.35(1-w_t) + 0.15$ and $w_t = \operatorname{clip}(\exp(-3.2\max(0, \tau_{\mathrm{lag}}-0.02))\exp(-2.5 r_{\mathrm{FDI}}), 0.05, 1.0)$. When coupled with K-Bound's split-conformal adaptation freeze gate ($\texttt{ABSTAIN/FREEZE}$ when $R_t > \hat{q}_{1-\alpha}$, preventing Tent/EATA/SAR divergence at $100$--$650\,\text{ms}$ lag) and the minimax anticipatory buffer $v_t \tau_{\max}$, the swarm survives active gradient-trained neural latency adversaries (\texttt{AdversaryNet}) injecting up to $1,000\,\text{ms}$ and $3,000\,\text{ms}$ blackouts across $100,000$ parallel GPU agents with \textbf{0.000\% collisions} ($15.74\,\text{m}$ and $55.02\,\text{m}$ worst-case margins in $0.216\,\text{s}$ A100 wall time).
+where $\tau_{\mathrm{eff}}(w_t) = \tau_{\mathrm{lag}} + 0.35(1-w_t) + 0.15$. Under adversarial delay spikes up to $\tau_{\max}$ (\texttt{AdversaryNet}), the observed lag $\tau_{\mathrm{lag}}$ at step $t$ under-reports the in-flight blackout horizon before the next packet arrives; we therefore replace $v_t \tau_{\mathrm{eff}}(w_t) + d_{\mathrm{margin}}$ with the inverse reliability clearance $d_{\mathrm{base}}/w_t$ plus the minimax unannounced blackout buffer $v_t \tau_{\max}$, yielding $h_{\mathrm{proactive}}(x_t,v_t,w_t) = (x_{\mathrm{barrier}}-x_t) - (d_{\mathrm{base}}/w_t + v_t^2/(2a_{\mathrm{floor}}) + v_t\tau_{\max}) \ge 0$. Because $v_t \tau_{\max}$ scales linearly with the certified blackout horizon $\tau_{\max}$, the $\tau_{\max}=3.0\,\text{s}$ regime enforces an earlier pre-braking deceleration envelope and achieves a larger terminal stop margin ($55.02\,\text{m}$) than the nominal zero-spike baseline ($42.10\,\text{m}$) and the $\tau_{\max}=1.0\,\text{s}$ regime ($15.74\,\text{m}$).
+
+In Two-Regime Test-Time Adaptation (TTA), when telemetry is fresh ($\tau_{\mathrm{lag}}=0\,\text{ms}$) under active covariate shift ($\Delta\mu=0.35$), \texttt{K-Bound} outputs \texttt{ADAPT} and achieves an MSE of \textbf{0.0312} vs.\ \textbf{0.1184} for \texttt{Frozen} (\textbf{$-73.65\%$ MSE reduction}). Conversely, when transport lag degrades to $100$--$650\,\text{ms}$, \texttt{K-Bound} outputs \texttt{ABSTAIN/FREEZE} ($R_t > \hat{q}_{1-\alpha}$), preventing the gradient-corruption divergence suffered by \texttt{Tent} ($0.8065$ MSE at $650\,\text{ms}$ vs.\ $0.4920$ for \texttt{K-Bound}). Across $100,000$ parallel GPU agents on PyTorch MPS (\textbf{252.2\,M agents/sec}) and the native C++17 kernel (\textbf{0.0056\,$\mu$s} median latency, \textbf{177.9\,MHz}), the swarm achieves \textbf{0.000\% collisions}.
 
 \begin{table}[ht]
 \caption{10/10 Crucible Stress, 3D Swarm, and Multi-Embodiment Scorecard}
 \label{tab:crucible_swarm}
 \centering
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{llcc}
 \toprule
 \textbf{Verification Stage} & \textbf{Barrier / Fault} & \textbf{Observed Result} & \textbf{Status} \\
@@ -237,39 +240,39 @@ where $\tau_{\mathrm{eff}}(w_t) = \tau_{\mathrm{lag}} + 0.35(1-w_t) + 0.15$ and 
 100k Swarm (1.0s Adv.) & $> 0.0\text{ m}$ ($1000\text{ ms}$) & $+15.74\text{ m}$ (0\% Crash) & Verified \\
 100k Swarm (3.0s Adv.) & $> 0.0\text{ m}$ ($3000\text{ ms}$) & $+55.02\text{ m}$ (0\% Crash) & Verified \\
 3D 10k Swarm ($R_{\mathrm{obs}}\!=\!4\text{m}$) & $> 0.000\text{ m}$ surf. & $+4.679\text{ m}$ (0\% Pen.) & Verified \\
-AV / Arm / Drone / Grid & 480--550 ms lag & $+29.8\text{m}/0.28\text{m}/7.0\text{m}/0.95\text{pu}$ & Verified \\
-Crucible 1: 10k Fuzzing & $w_t \in (0, 1]$ & 0 / 10,000 Faults & Passed \\
-Crucible 2: FDI Spoofing & $-12\text{ m/s}$ ramp bias & $+38.54\text{ m}$ clearance & Immune \\
-Crucible 3: Triple-Fault & Lag+40\% brake+ice & $+8.01\text{ m}$ clearance & Survived \\
-Crucible 4: 1k Monte Carlo & Random $v_0, d_0, \tau$ & $+14.23\text{ m}$ (0/1k Crash) & Passed \\
-C++17 \texttt{-O3} / CAN HIL & 2M steps / 500 kbps & $0.006\text{--}0.015\,\mu\text{s}$ / $+4.17\text{ m}$ & Verified \\
+Two-Regime TTA (0ms Shift) & $\Delta\mu=0.35$, 0 ms lag & $0.0312$ MSE ($-73.7\%$ vs Frozen) & \texttt{ADAPT} \\
+Two-Regime TTA (650ms Lag) & 650 ms stale gradient & $0.4920$ MSE ($-39.0\%$ vs Tent) & \texttt{FREEZE} \\
+Crucible 1--4 Stress Suite & Fuzz / FDI / Triple / MC & 0 / 11,000 Crash ($+8.01\text{ m}$ min) & Passed \\
+C++17 \texttt{-O3} / CAN HIL & 2M steps / 500 kbps & $0.0056\,\mu\text{s}$ / $+4.17\text{ m}$ & Verified \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \section{Eliminating Bounded Assumptions: Theorems F, G \& H and Seven-Domain Crash-Free Closure}
-To eliminate all remaining bounded assumptions across both safety-critical Physical AI and cyber-physical financial market infrastructure---specifically (i) bounded blackout horizons $\tau \le \tau_{\max}$, (ii) i.i.d.\ conformal exchangeability, (iii) single-channel or uncorrupted majority telemetry, and (iv) bounded AI policy error---we introduce three mathematical and algorithmic innovations mechanized in Lean~4 (\texttt{formal/Orius/TheoremsAE.lean}, zero \texttt{sorry}) and implemented in \texttt{src/orius/kbound/crash\_free\_governor.py}:
+To eliminate all remaining bounded assumptions across both safety-critical Physical AI and cyber-physical financial market infrastructure---specifically (i) bounded blackout horizons $\tau \le \tau_{\max}$, (ii) i.i.d.\ conformal exchangeability, (iii) single-channel or uncorrupted majority telemetry, and (iv) bounded AI policy error---we introduce three mathematical and algorithmic innovations mechanized in Lean~4 (\texttt{formal/Orius/TheoremsFGH.lean}, which re-exports and extends \texttt{formal/Orius/TheoremsAE.lean} with zero \texttt{sorry} axioms) and implemented in \texttt{src/orius/universal\_framework/crash\_free\_governor.py}:
 
-\begin{theorem}[Theorem F: Terminal Safe-Stop Viability under Unbounded Blackouts]
-Let $\mathcal{D} = (\mathcal{X}, \mathcal{U}, \mathcal{W}, f, \mathcal{S}_{\mathrm{safe}}, \mathcal{V}_{\mathrm{viable}})$ be a viable safety domain equipped with an absorbing zero-kinetic-energy safe equilibrium $\mathcal{Z}_{\mathrm{stop}} \subseteq \mathcal{V}_{\mathrm{viable}} \subseteq \mathcal{S}_{\mathrm{safe}}$ satisfying $\forall x \in \mathcal{Z}_{\mathrm{stop}}, \forall \omega \in \mathcal{W}, f(x, u_{\mathrm{fallback}}, \omega) \in \mathcal{Z}_{\mathrm{stop}}$. If the Terminal Viability Safe-Stop Kernel (TV-SSK) drives the physical state into $\mathcal{Z}_{\mathrm{stop}}$ ($v_t = 0$) before the residual observation tube expires, then for all unbounded blackout durations $k \in \mathbb{N}$ ($k \to \infty$), the rollout trajectory satisfies $x_{t+k} \in \mathcal{Z}_{\mathrm{stop}} \subseteq \mathcal{S}_{\mathrm{safe}}$ with zero safety violations.
+\begin{theorem}[Theorem F: Terminal Safe-Stop Viability under Unbounded Blackouts (\texttt{theorem\_f\_terminal\_safe\_stop\_contraction})]
+Let $\mathcal{D} = (\mathcal{X}, \mathcal{U}, \mathcal{W}, f, \mathcal{S}_{\mathrm{safe}}, \mathcal{V}_{\mathrm{viable}})$ be a viable safety domain equipped with an absorbing zero-kinetic-energy safe equilibrium $\mathcal{Z}_{\mathrm{stop}} \subseteq \mathcal{V}_{\mathrm{viable}} \subseteq \mathcal{S}_{\mathrm{safe}}$ satisfying $\forall x \in \mathcal{Z}_{\mathrm{stop}}, \forall \omega \in \mathcal{W}, f(x, u_{\mathrm{fallback}}, \omega) \in \mathcal{Z}_{\mathrm{stop}}$. Under strictly positive braking margin $\delta_{\mathrm{brake}}>0$, the Terminal Viability Safe-Stop Kernel (TV-SSK) contracts any positive barrier deficit $V_k=\max(0,-h(x_k))$ monotonically into $\mathcal{Z}_{\mathrm{stop}}$ ($v_t = 0$) in at most $K^* \le \lceil V_0/\delta_{\mathrm{brake}}\rceil$ steps and maintains $x_{t+k} \in \mathcal{Z}_{\mathrm{stop}} \subseteq \mathcal{S}_{\mathrm{safe}}$ across all unbounded blackout durations $k \in \mathbb{N}$ ($k \to \infty$) with zero safety violations.
 \end{theorem}
 
-\begin{theorem}[Theorem G: Universal Crash-Free Immunity to Arbitrary AI Policy Hallucinations]
-Let $\pi_{\mathrm{AI}} : \mathcal{Y} \to \mathcal{U}$ be any arbitrary (potentially hallucinating, out-of-distribution, or adversarial) AI policy. Let $U_t$ be the observation-consistent state tube constructed via the Anytime-Valid Betting Martingale E-Process $E_t = \prod_{s=1}^t (1 + \lambda_s (\mathbb{I}\{r_s > \hat{q}_{s-1}\} - \alpha))$ ($\mathbb{P}(\sup_{t\ge 1} E_t \ge 1/\alpha) \le \alpha$ by Ville's inequality) and the coordinate-wise Median-of-Means Byzantine-Resilient OQE (breakdown point $50\%$). Then for every $x_t \in U_t$ and disturbance $\omega_t \in \mathcal{W}$, the projected actuation $u_t = \Pi_{\mathcal{A}_{\mathrm{TV-SSK}}(U_t)}(\pi_{\mathrm{AI}}(y_t))$ guarantees both true-state safety $f(x_t, u_t, \omega_t) \in \mathcal{S}_{\mathrm{safe}}$ and recursive viability $f(x_t, u_t, \omega_t) \in \mathcal{V}_{\mathrm{viable}}$.
+\begin{theorem}[Theorem G: Anytime-Valid Martingale Shift Detection and Deterministic Kinematic Projection (\texttt{theorem\_g\_ville\_bounded\_false\_alarm\_step})]
+Let $\pi_{\mathrm{AI}} : \mathcal{Y} \to \mathcal{U}$ be any arbitrary (potentially hallucinating, out-of-distribution, or adversarial) AI policy. Theorem~G separates probabilistic shift detection from deterministic physical invariance: (1) under $f < m/2$ Byzantine-corrupted sensor channels, trimmed-median aggregation bounds observation error within the honest channel envelope (\texttt{theorem\_g\_byzantine\_trimmed\_mean\_bound}), while the Anytime-Valid Betting Martingale $E_t = \prod_{s=1}^t (1 + \lambda_s (\mathbb{I}\{r_s > \hat{q}_{s-1}\} - \alpha))$ detects covariate shift with false-alarm probability $\mathbb{P}(\sup_{t\ge 1} E_t \ge 1/\alpha) \le \alpha$ by Ville's inequality and inflates the epistemic state tube $U_t$; and (2) conditioned on $x_t \in U_t$, the worst-case kinematic projection $u_t = \Pi_{\mathcal{A}_{\mathrm{TV-SSK}}(U_t)}(\pi_{\mathrm{AI}}(y_t))$ deterministically guarantees $f(x_t, u_t, \omega_t) \in \mathcal{V}_{\mathrm{viable}} \subseteq \mathcal{S}_{\mathrm{safe}}$ across all steps.
 \end{theorem}
 
-\begin{theorem}[Theorem H: Cyber-Physical \& Financial Safe-Liquidation Isomorphism and Flash-Crash Immunity]
-Let $\mathcal{F}$ be an L2 limit-order-book or wholesale energy-market execution domain with net capital cushion $E_t \ge E_{\min}$, open inventory exposure $I_t$, volatility $\sigma_t$, and effective L2 depth $L_{\mathrm{depth}}(w_t)$. Under Almgren--Chriss market impact, the safe-liquidation barrier
+\begin{theorem}[Theorem H: Cyber-Physical \& Financial Safe-Liquidation Isomorphism under Liquidity Floor Viability (\texttt{theorem\_h\_liquidity\_floor\_safe\_liquidation})]
+Let $\mathcal{F}$ be an L2 limit-order-book or wholesale energy-market execution domain with net capital cushion $E_t \ge E_{\min}$, open inventory exposure $I_t$, volatility $\sigma_t$, and effective L2 depth satisfying the explicit liquidity viability floor $L_{\mathrm{depth}}(w_t) \ge L_{\min} > 0$. Under Almgren--Chriss market impact, the safe-liquidation barrier
 \begin{equation}
-h_{\mathrm{fin}}(E_t, I_t, w_t) = (E_t - E_{\min}) - \left(|I_t|\,\sigma_t \sqrt{\tau_{\mathrm{eff}}(w_t)} + \frac{\gamma_{\mathrm{impact}} I_t^2}{2\,L_{\mathrm{depth}}(w_t)} + m_{\mathrm{conf}}(E_t^{\mathrm{mart}})\right) \ge 0
+h_{\mathrm{fin}}(E_t, I_t, w_t) = (E_t - E_{\min}) - \left(|I_t|\,\sigma_t \sqrt{\tau_{\mathrm{eff}}(w_t)} + \frac{\gamma_{\mathrm{impact}} I_t^2}{2\,\max(L_{\mathrm{depth}}(w_t), L_{\min})} + m_{\mathrm{conf}}(E_t^{\mathrm{mart}})\right) \ge 0
 \end{equation}
-is structurally isomorphic to the second-order physical stopping barrier ($|I_t| \leftrightarrow |v_t|$, $L_{\mathrm{depth}}(w_t)/\gamma_{\mathrm{impact}} \leftrightarrow a_{\mathrm{brake}}$), with the delta-neutral flat-inventory state ($I_t = 0, E_t > E_{\min}$) forming the absorbing equilibrium $\mathcal{Z}_{\mathrm{stop}}$. Consequently, composing any AI trading policy $\pi_{\mathrm{AI}}$ (DQN, Actor-Critic, MLP, or LLM) with \texttt{FinancialLiquidationGovernor} guarantees $0\%$ margin insolvency and $100\%$ flash-crash immunity across all unbounded liquidity blackouts $k \in \mathbb{N}$.
+is strictly bounded away from division-by-zero singularity and structurally isomorphic to the second-order physical stopping barrier ($|I_t| \leftrightarrow |v_t|$, $L_{\mathrm{depth}}(w_t)/\gamma_{\mathrm{impact}} \leftrightarrow a_{\mathrm{brake}}$), with the delta-neutral flat-inventory state ($I_t = 0, E_t > E_{\min}$) forming $\mathcal{Z}_{\mathrm{stop}}$ reachable in $\le \lceil |I_0|/\Delta I_{\max}(L_{\min})\rceil$ steps with $0\%$ margin insolvency.
 \end{theorem}
 
 \begin{table}[ht]
 \caption{Seven-Domain Real-Data Crash-Free Physical \& Financial AI Validation ($224,000$ Total Steps; TSVR \%)}
 \label{tab:six_domain_crash_free}
 \centering
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Real-Data Domain} & \textbf{Unshielded AI} & \textbf{Std.\ CBF} & \textbf{Legacy DC3S} & \textbf{ORIUS+K-Bound (Ours)} \\
@@ -282,14 +285,15 @@ Industrial (CCPP/ZeMA) & 71.11\% & 20.29\% & 16.65\% & \textbf{0.000\%} \\
 Robotics Nav.\ (KITTI 00) & 71.78\% & 21.60\% & 13.83\% & \textbf{0.000\%} \\
 Financial L2 (ADAUSDC/RL) & 64.41\% & 22.94\% & 19.19\% & \textbf{0.000\%} \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
-We validated Theorems F, G, and H across all seven domains using real telemetry corpora ($224,000$ total simulation steps; $56,000$ ORIUS steps across five seeds and four extreme stress regimes: Regime~I arbitrary AI hallucination, Regime~II unbounded blackout $\tau=80$ steps, Regime~III $40\%$ Byzantine sensor/order-book spoofing, and Regime~IV $3.5\times$ non-exchangeable shift with $25\%$ actuator/liquidity degradation). All six formal scientific hypotheses ($H_1$--$H_6$) are verified: ORIUS+K-Bound achieves \textbf{0.000\% True Safety / Solvency Violation Rate ($0 / 56,000$ steps)} across all seven physical and financial domains (Wilcoxon signed-rank $p < 10^{-20}$ vs.\ Unshielded AI, $p < 10^{-18}$ vs.\ Standard CBF, $p < 10^{-16}$ vs.\ Legacy DC3S; Clopper--Pearson $95\%$ exact one-sided upper bound $5.35 \times 10^{-5}$; median runtime latency $39.38\,\mu\text{s}$).
+We validated Theorems F, G, and H across all seven domains using real telemetry corpora ($224,000$ total simulation steps; $56,000$ ORIUS steps across five seeds and four extreme stress regimes). ORIUS+K-Bound achieves \textbf{0.000\% True Safety / Solvency Violation Rate ($0 / 56,000$ steps)} across all seven domains (Wilcoxon signed-rank $p < 10^{-20}$ vs.\ Unshielded AI, $p < 10^{-18}$ vs.\ Standard CBF, $p < 10^{-16}$ vs.\ Legacy DC3S; Clopper--Pearson $95\%$ exact one-sided upper bound $5.35 \times 10^{-5}$).
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.98\columnwidth]{figures/SIX_DOMAIN_CRASH_FREE_SCORECARD.png}
+\includegraphics[width=0.98\columnwidth]{figures/SEVEN_DOMAIN_CRASH_FREE_SCORECARD.png}
 \caption{Seven-domain real-data crash-free Physical \& Financial AI scorecard across all four unbounded stress regimes.}
 \label{fig:six_domain_scorecard}
 \end{figure}
@@ -308,8 +312,44 @@ We validated Theorems F, G, and H across all seven domains using real telemetry 
 \label{fig:eprocess_byzantine}
 \end{figure}
 
+\section{Closed-Loop Robot and Electro-Thermal Battery Bench Verification}
+To close the hardware-in-the-loop (HIL) validation gap, we executed two reactive physical-plant test suites with full SHA-256 hash-chained \texttt{CertOS} runtime audit ledgers (Table~\ref{tab:hil_closure}, Fig.~\ref{fig:hil_money_plot}):
+\begin{enumerate}
+    \item \textbf{Test Suite A (Closed-Loop Mobile Robot Obstacle Stopping, 200 Episodes):} A non-holonomic unicycle robot ($v_0=2.2\,\text{m/s}$, $a_{\mathrm{brake}}=3.5\,\text{m/s}^2$, actuator lag $\tau_{\mathrm{act}}=45\,\text{ms}$) approaches a hard obstacle at $x_{\mathrm{obs}}=12.0\,\text{m}$ across four 50-episode regimes: \texttt{R-1} Nominal, \texttt{R-2} 30\% LiDAR dropout + $250\,\text{ms}$ delay, \texttt{R-3} $4.0\,\text{s}$ total mid-braking blackout, and \texttt{R-4} 1-of-3 Byzantine range spoofing ($+8.0\,\text{m}$ bias). Unshielded AI and Static-Tube CBF suffer $100\%$ collisions under \texttt{R-2}--\texttt{R-4}, whereas \textbf{ORIUS + K-Bound} achieves \textbf{0/200 collisions (0.00\%)} with worst-case clearances of $+0.860\,\text{m}$ (\texttt{R-1}), $+0.926\,\text{m}$ (\texttt{R-2}), $+4.937\,\text{m}$ (\texttt{R-3}), and $+0.908\,\text{m}$ (\texttt{R-4}).
+    \item \textbf{Test Suite B (Electro-Thermal Battery BMS \& Programmable Load Bench, 4,800 Steps):} A $100\,\text{Ah}$ $\text{LiFePO}_4$ pack coupled to a programmable current load/charger ($I \in [-150, +150]\,\text{A}$) operates under \texttt{B-1} 24-hour \texttt{drift\_combo} fault injection, \texttt{B-2} 96-step SHA-256 \texttt{CertOS} lifecycle audit, and \texttt{B-3} two-cell compositional bus sharing ($50\,\text{A}$ feeder limit). Unshielded BMS policies incur $96.88\%$ SoC/voltage violations and $69.4\,\text{A}$ feeder overloads, whereas \textbf{ORIUS + K-Bound} achieves \textbf{0/4,800 violations (0.000\%)}, $+2.067\%$ minimum SoC margin, $332.11\,\text{Ah}$ useful throughput, $49.3\,\text{A}$ peak feeder current ($0$ bus overloads), and $100\%$ SHA-256 certificate chain integrity.
+\end{enumerate}
+
+\begin{table}[ht]
+\caption{Closed-Loop Robot (Suite A) and Battery Bench (Suite B) HIL Verification}
+\label{tab:hil_closure}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccc}
+\toprule
+\textbf{Suite / Scenario} & \textbf{Controller} & \textbf{Violations} & \textbf{Min Safety Margin} & \textbf{CertOS / Utility} \\
+\midrule
+Suite A: \texttt{R-2} (Dropout+250ms) & Static-Tube CBF & 50/50 (100\%) & $-2.927\text{ m}$ & Collision \\
+Suite A: \texttt{R-2} (Dropout+250ms) & \textbf{ORIUS+K-Bound} & \textbf{0/50 (0.0\%)} & \textbf{+0.926 m} & \textbf{100\% Valid} \\
+Suite A: \texttt{R-3} (4.0s Blackout) & \textbf{ORIUS+K-Bound} & \textbf{0/50 (0.0\%)} & \textbf{+4.937 m} & \textbf{$\mathcal{Z}_{\mathrm{stop}}$ Hold} \\
+Suite A: \texttt{R-4} (1-of-3 Spoof) & \textbf{ORIUS+K-Bound} & \textbf{0/50 (0.0\%)} & \textbf{+0.908 m} & \textbf{100\% Valid} \\
+\midrule
+Suite B: \texttt{B-1/2} (BMS Faults) & Unshielded BMS & 4650/4800 (96.9\%) & $-46.99\%$ SoC & Over-discharge \\
+Suite B: \texttt{B-1/2} (BMS Faults) & \textbf{ORIUS+K-Bound} & \textbf{0/4800 (0.0\%)} & \textbf{+2.067\% SoC} & \textbf{332.1 Ah / 100\%} \\
+Suite B: \texttt{B-3} (50A 2-Cell Bus) & \textbf{ORIUS+K-Bound} & \textbf{0/96 (0.0\%)} & \textbf{49.3 A ($\le$50 A)} & \textbf{Compositional} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.98\columnwidth]{figures/HARDWARE_CLOSED_LOOP_MONEY_PLOT.png}
+\caption{Closed-loop mobile robot obstacle stopping (Suite A, panels a--b) and electro-thermal battery BMS programmable-load bench verification (Suite B, panels c--d).}
+\label{fig:hil_money_plot}
+\end{figure}
+
 \section{Conclusion}
-ORIUS provides a rigorous, mathematically justified, and formally mechanized bridge between partial, degraded physical or financial market telemetry and safe closed-loop action release. By establishing Theorems A--H, formalizing them in Lean~4 with zero unproved obligations, and demonstrating zero true-state violations across all seven real-data physical and financial domains ($0 / 56,000$ steps), 100,000-agent adversarial swarms, and the four-stage Crucible stress battery, ORIUS establishes a definitive crash-free blueprint for certified Physical and Financial AI.
+ORIUS provides a rigorous, mathematically justified, and formally mechanized bridge between partial, degraded physical or financial market telemetry and safe closed-loop action release. By establishing Theorems A--H, formalizing them in Lean~4 (\texttt{formal/Orius/TheoremsFGH.lean}) with zero unproved obligations, and demonstrating zero true-state violations across all seven real-data physical and financial domains ($0 / 56,000$ steps), 100,000-agent adversarial swarms, the four-stage Crucible stress battery, and closed-loop mobile robot and battery bench verification, ORIUS establishes a definitive crash-free blueprint for certified Physical and Financial AI.
 
 \bibliographystyle{IEEEtran}
 \begin{thebibliography}{10}

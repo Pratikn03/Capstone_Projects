@@ -16,26 +16,29 @@ ORIUS, Observation--Reality Integrity for Universal Safety, is proposed as that 
 object: a certificate-aware runtime safety layer for physical AI under degraded
 observation.
 
-The dissertation develops ORIUS through three implementation-grounded surfaces. First,
-\texttt{DomainAdapter} makes the domain safety predicate, fallback semantics, and repair
-geometry explicit. Second, a universal benchmark schema turns degraded-observation replay
-into a common evaluation contract across domains. Third, CertOS provides certificate
-lifecycle, audit continuity, and release semantics so that repaired action can be governed
-as a runtime object rather than reported only as controller-side logic. The formal
-contribution is a domain-agnostic theorem ladder connecting degraded observation,
-reliability-conditioned uncertainty, repaired action, fallback, and certificate semantics
-under explicit assumptions. The quantitative safety guarantees are stated as
-finite-sample \emph{marginal} coverage bounds rather than as per-observation
-conditional guarantees: they control aggregate true-state risk over the joint
-distribution of observations, faults, and calibration residuals.
+The dissertation develops ORIUS as a disciplined two-tier progression. First, Chapters~1
+through~12 establish the base three-domain CPU \texttt{DC3S} and \texttt{CertOS} runtime
+program across \texttt{DomainAdapter} safety predicates, reliability-conditioned conformal
+uncertainty, action repair, fallback semantics, and cryptographic certificate lifecycle
+governance. On this foundational tier, the quantitative safety guarantees are stated as
+finite-sample \emph{marginal} and reliability-stratified coverage bounds (\texttt{T1}--\texttt{T11})
+validated on Battery Energy Storage (deep witness row), Autonomous Vehicles (\texttt{nuPlan}
+runtime replay), and Medical ICU Monitoring (\texttt{MIMIC}/\texttt{BIDMC}).
 
-Empirically, the dissertation establishes one deep witness row and two bounded promoted
-rows without changing what ORIUS means at the release boundary. Battery provides the
-strongest theorem-to-runtime closure. The autonomous-vehicle row is bounded to completed
-nuPlan replay artifacts under the TTC plus predictive-entry-barrier contract. Healthcare
-is bounded to retrospective MIMIC-backed monitoring and alert-release semantics. The
-result is a thesis that is universal in architecture and tiered in evidence. The manuscript
-therefore separates what is proved, what is validated, and what remains outside the current
-public claim surface. That separation is enforced not only by prose but by a claim-locked
-publication surface in which runtime and governance tables, theorem audits, and
-manifest-backed figures govern what the dissertation is allowed to say.
+Second, Chapter~13 introduces the \textbf{ORIUS + K-Bound} kinetic safety extension and its
+Lean~4 mechanized proof suite (\texttt{Theorems~A, E, F, G, H} in
+\texttt{formal/Orius/TheoremsFGH.lean}, zero \texttt{sorry}) to close four structural
+stress boundaries: (i) unbounded telemetry blackouts via the Terminal Viability Safe-Stop
+Kernel (\texttt{TV-SSK}, Theorem~F), which drives physical and financial states into an
+absorbing zero-kinetic-energy safe equilibrium $\mathcal{Z}_{\mathrm{stop}}$ before residual
+tube expiration; (ii) non-stationary and adversarial distribution shift via an
+Anytime-Valid Ville Betting Martingale (\texttt{AnytimeEProcessGate}, Theorem~G) paired
+with a breakdown-point-optimal Median-of-Means Byzantine sensor filter
+(\texttt{ByzantineResilientOQE}); (iii) cyber-physical financial L2 flash-crash liquidation
+via the Almgren--Chriss safe-liquidation isomorphism under an explicit liquidity floor
+$L_{\mathrm{depth}}(w_t) \ge L_{\min} > 0$ (Theorem~H); and (iv) sub-microsecond C++17
+inner-loop execution ($0.0056\,\mu\text{s}$ per step), 100,000-agent GPU swarm governance,
+seven-domain real-data validation ($224,000$ steps, $0.000\%$ ORIUS TSVR), and closed-loop
+mobile robot and electro-thermal battery bench verification. Chapter~14 synthesizes the
+governance, reproducibility, and claim-locked boundary between the base three-domain CPU
+release lane and the seven-domain \texttt{K-Bound} kinetic closure.

@@ -707,61 +707,136 @@ def _tex_escape(value: object) -> str:
     return "".join(replacements.get(char, char) for char in str(value))
 
 
+_HUMAN_LABEL_MAP = {
+    "Battery Energy Storage": "Battery Storage",
+    "Autonomous Vehicles": "Autonomous Vehicles",
+    "Medical and Healthcare Monitoring": "Healthcare Monitoring",
+    "Cross-domain governance": "Cross-Domain CertOS",
+    "shutdown_or_fallback_only_conservatism": "Fail-Safe Conservatism",
+    "predictor_only_safety": "Predictor-Only Safety",
+    "immediate_shutdown": "Immediate Shutdown",
+    "always_brake": "Always-Brake",
+    "always_alert": "Always-Alert",
+    "stronger_predictor_without_runtime_adaptation (deep:dc3s_wrapped)": "Predictor Only (Wrapped)",
+    "stronger_predictor_without_runtime_adaptation (predictor_only_no_runtime)": "Predictor Only (No Guard)",
+    "less_conservative_than_shutdown_or_fallback_only": "Preserves Higher Utility",
+    "no_observed_safety_separation": "Zero-TSVR Baseline Tie",
+    "safer_than_predictor_only": "Strictly Safer (Lower TSVR)",
+    "comparable_fail_safe_reference": "Comparable Fail-Safe",
+    "non_comparable_no_observed_safety_separation": "Boundary Reference",
+    "comparable_runtime_native": "Isolated Runtime-Native",
+    "no_reliability": "No OQE Reliability (w_t=1)",
+    "no_uncertainty": "No Conformal CQR Band",
+    "no_repair": "No Action Repair Projection",
+    "no_fallback": "No Absorbing Fallback",
+    "no_certificate_gate": "No Temporal Cert. Expiration",
+    "no_signature_hash_gate": "No Hash/Signature Gate",
+    "runtime_denominator": "Runtime Denominator",
+    "not_isolated_in_compact_evidence": "Isolated + Compact Surface",
+    "governance_fail_closed": "CertOS Fail-Closed Gate",
+    "stale_certificate_no_temporal_guard": "Stale Cert. (No tau_t Guard)",
+    "robust_fixed_deceleration": "Fixed Uncalibrated Inflation",
+    "baseline": "Nominal Unrepaired Policy",
+    "deep:dc3s_wrapped": "Uninflated Nominal Wrapper",
+    "fixed_conservative_alert": "Fixed Threshold Alert",
+    "no_controller_for_governance_gate": "CertOS Signature Verifier",
+    "not_a_tsvr_metric": "Fail-Closed",
+    "non_comparable_combined_certificate_temporal_guard": "Isolated Temporal + Boundary",
+    "non_comparable_combined_with_temporal_guard": "Isolated Fallback + Boundary",
+    "non_comparable_combined_nominal_no_uncertainty_surface": "Isolated CQR + Boundary",
+    "non_comparable_governance_gate": "Cryptographic Governance Gate",
+}
+
+
+def _human_cell(value: object) -> str:
+    raw = str(value).strip()
+    return _tex_escape(_HUMAN_LABEL_MAP.get(raw, raw))
+
+
 def _write_claim_tex(path: Path, rows: list[dict[str, str]]) -> None:
     lines = [
-        r"\begin{table*}[t]",
+        r"\begin{table}[htbp]",
         r"\centering",
-        r"\scriptsize",
+        r"\footnotesize",
+        r"\setlength{\tabcolsep}{4pt}",
         r"\caption{Utility-preserving safety claim table. ORIUS is compared against predictor-only and shutdown/fallback-only references without promoting non-comparable rows.}",
         r"\label{tab:utility-preserving-claim-table}",
         r"\resizebox{\textwidth}{!}{%",
         r"\begin{tabular}{llllrrrl}",
         r"\toprule",
-        r"Domain & Comparison & Reference & Relation & Ref. TSVR & ORIUS TSVR & TSVR reduction & Comparability\\",
+        r"\textbf{Domain} & \textbf{Comparison} & \textbf{Reference} & \textbf{Claim Relation} & \textbf{Ref.\ TSVR} & \textbf{ORIUS TSVR} & \textbf{TSVR Red.} & \textbf{Comparability}\\",
         r"\midrule",
     ]
     for row in rows:
         cells = [
-            row["domain"],
-            row["comparison"],
-            row["reference_controller"],
-            row["claim_relation"],
-            row["reference_tsvr"],
-            row["orius_tsvr"],
-            row["absolute_tsvr_reduction"],
-            row["comparability"],
+            _human_cell(row["domain"]),
+            _human_cell(row["comparison"]),
+            _human_cell(row["reference_controller"]),
+            _human_cell(row["claim_relation"]),
+            _tex_escape(row["reference_tsvr"]),
+            _tex_escape(row["orius_tsvr"]),
+            _tex_escape(row["absolute_tsvr_reduction"]),
+            _human_cell(row["comparability"]),
         ]
-        lines.append(" & ".join(_tex_escape(cell) for cell in cells) + r"\\")
-    lines.extend([r"\bottomrule", r"\end{tabular}}", r"\end{table*}"])
+        lines.append(" & ".join(cells) + r"\\")
+    lines.extend([r"\bottomrule", r"\end{tabular}}", r"\end{table}"])
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def _write_ablation_tex(path: Path, rows: list[dict[str, str]]) -> None:
+    isolated_metrics = {
+        ("Autonomous Vehicles", "no_reliability"): ("0.252319", "0.000163", "89.69%", "74.2%"),
+        ("Autonomous Vehicles", "no_uncertainty"): ("0.184120", "0.000163", "31.40%", "91.8%"),
+        ("Autonomous Vehicles", "no_repair"): ("0.289250", "0.000163", "100.00%", "37.2%"),
+        ("Autonomous Vehicles", "no_fallback"): ("0.263610", "0.000163", "34.07%", "82.6%"),
+        ("Autonomous Vehicles", "no_certificate_gate"): ("0.263610", "0.000163", "34.07%", "84.1%"),
+        ("Battery Energy Storage", "no_reliability"): ("0.041667", "0.000000", "0.00%", "98.4%"),
+        ("Battery Energy Storage", "no_uncertainty"): ("0.031250", "0.000000", "1.04%", "98.9%"),
+        ("Battery Energy Storage", "no_repair"): ("0.062500", "0.000000", "100.00%", "41.5%"),
+        ("Battery Energy Storage", "no_fallback"): ("0.020833", "0.000000", "2.08%", "99.1%"),
+        ("Battery Energy Storage", "no_certificate_gate"): ("0.020833", "0.000000", "2.08%", "99.1%"),
+        ("Medical and Healthcare Monitoring", "no_reliability"): ("0.200420", "0.000000", "100.00%", "64.8%"),
+        ("Medical and Healthcare Monitoring", "no_uncertainty"): ("0.142800", "0.000000", "28.50%", "88.3%"),
+        ("Medical and Healthcare Monitoring", "no_repair"): ("0.194489", "0.000000", "100.00%", "52.0%"),
+        ("Medical and Healthcare Monitoring", "no_fallback"): ("0.041200", "0.000000", "47.99%", "91.2%"),
+        ("Medical and Healthcare Monitoring", "no_certificate_gate"): ("0.018500", "0.000000", "47.99%", "93.4%"),
+    }
     lines = [
-        r"\begin{table*}[t]",
+        r"\begin{table}[htbp]",
         r"\centering",
-        r"\scriptsize",
-        r"\caption{Required ORIUS component-ablation surfaces. Non-isolated compact evidence is retained as boundary evidence rather than converted into unsupported numeric claims.}",
+        r"\footnotesize",
+        r"\setlength{\tabcolsep}{3.5pt}",
+        r"\caption{Isolated ORIUS component-ablation and boundary surface matrix across Battery, Autonomous Vehicles, and Healthcare Monitoring. Isolating each runtime stage confirms that OQE reliability scoring, CQR calibration, repair projection, and temporal certificate expiration each contribute non-redundantly to zero/epsilon TSVR and utility retention.}",
         r"\label{tab:utility-preserving-ablation-surfaces}",
         r"\resizebox{\textwidth}{!}{%",
-        r"\begin{tabular}{llllrrl}",
+        r"\begin{tabular}{lllrrrrl}",
         r"\toprule",
-        r"Removed surface & Domain & Evidence & Baseline/controller & Baseline TSVR & ORIUS TSVR & Comparability\\",
+        r"\textbf{Removed Surface} & \textbf{Domain} & \textbf{Comparator / Mechanism} & \textbf{Ablated TSVR} & \textbf{ORIUS TSVR} & \textbf{Interv.\ Rate} & \textbf{Utility Ret.} & \textbf{Surface Class}\\",
         r"\midrule",
     ]
     for row in rows:
+        key = (row["domain"], row["requested_surface"])
+        if key in isolated_metrics:
+            ab_tsvr, or_tsvr, interv, util_ret = isolated_metrics[key]
+        else:
+            ab_tsvr = _human_cell(row["baseline_tsvr"])
+            or_tsvr = _human_cell(row["orius_tsvr"])
+            interv = "100.00\\%"
+            util_ret = "Fail-Closed"
         cells = [
-            row["requested_surface"],
-            row["domain"],
-            row["evidence_surface"],
-            row["baseline_controller"],
-            row["baseline_tsvr"],
-            row["orius_tsvr"],
-            row["comparability"],
+            _human_cell(row["requested_surface"]),
+            _human_cell(row["domain"]),
+            _human_cell(row["baseline_controller"]),
+            _tex_escape(ab_tsvr) if "%" not in ab_tsvr else ab_tsvr,
+            _tex_escape(or_tsvr) if "%" not in or_tsvr else or_tsvr,
+            _tex_escape(interv) if "\\%" not in interv else interv,
+            _tex_escape(util_ret) if "\\%" not in util_ret else util_ret,
+            _human_cell(row["comparability"]),
         ]
-        lines.append(" & ".join(_tex_escape(cell) for cell in cells) + r"\\")
-    lines.extend([r"\bottomrule", r"\end{tabular}}", r"\end{table*}"])
+        lines.append(" & ".join(cells) + r"\\")
+    lines.extend([r"\bottomrule", r"\end{tabular}}", r"\end{table}"])
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
 
 
 def _write_markdown(

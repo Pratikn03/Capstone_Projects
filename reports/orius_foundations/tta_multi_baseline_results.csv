@@ -1,7 +1,8 @@
-lag_ms,frozen_mse,tent_mse,eata_mse,sar_mse,kbound_mse,kbound_action
-0,0.0,0.0,0.0,0.0,0.0,ADAPT
-100,0.0117,0.0128,0.0122,0.0121,0.0117,ADAPT
-250,0.0729,0.0908,0.0813,0.0785,0.0729,ABSTAIN/FREEZE
-400,0.1866,0.2597,0.2209,0.2097,0.1866,ABSTAIN/FREEZE
-520,0.3154,0.4761,0.3908,0.3662,0.3154,ABSTAIN/FREEZE
-650,0.4928,0.8067,0.6401,0.5921,0.4928,ABSTAIN/FREEZE
+regime,lag_ms,frozen_mse,tent_mse,eata_mse,sar_mse,kbound_mse,kbound_action
+Regime A: Active Covariate Shift (0 ms Lag),0,0.1184,0.0348,0.0315,0.0312,0.0312,ADAPT
+Regime B: Nominal Stationary (0 ms Lag),0,0.0156,0.0159,0.0154,0.0153,0.0152,ADAPT
+Regime B: Degraded Transport Lag,100,0.0117,0.0128,0.0122,0.0121,0.0117,ADAPT
+Regime B: Degraded Transport Lag,250,0.0729,0.0908,0.0813,0.0785,0.0729,ABSTAIN/FREEZE
+Regime B: Degraded Transport Lag,400,0.1866,0.2597,0.2209,0.2097,0.1866,ABSTAIN/FREEZE
+Regime B: Degraded Transport Lag,520,0.3154,0.4761,0.3908,0.3662,0.3154,ABSTAIN/FREEZE
+Regime B: Degraded Transport Lag,650,0.4928,0.8067,0.6401,0.5921,0.4928,ABSTAIN/FREEZE

@@ -1,19 +1,20 @@
 \begin{table*}[t]
 \centering
-\caption{Validation boundary for the current ORIUS evidence package.}
+\caption{Validation boundary across the base ORIUS CPU evidence package (Chapters~1--12) and the ORIUS + K-Bound physical safety extension (Chapter~13).}
 \label{tab:validation-boundary}
 \footnotesize
-\renewcommand{\arraystretch}{1.12}
-\begin{tabularx}{\textwidth}{p{0.17\textwidth} p{0.48\textwidth} X}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{p{0.21\textwidth} p{0.47\textwidth} X}
 \toprule
 \textbf{Evidence tier} & \textbf{Status and allowed claim} & \textbf{Not allowed}\\
 \midrule
-Battery runtime & Completed locked witness runtime; theorem-grade witness plus bounded software/HIL-style evidence & Physical field deployment or certified grid operation\\
-nuPlan AV replay & Completed all-zip grouped runtime replay/surrogate; bounded AV runtime-denominator evidence & Road deployment or full autonomous-driving closure\\
-CARLA closed loop & Not completed in this PDF; future controllable stress-test tier & Completed simulator closure\\
-Healthcare MIMIC runtime & Completed retrospective monitoring row; bounded alert-release monitoring evidence & Live clinical deployment or clinical decision-support approval\\
-eICU/source holdout & Not staged/completed in this PDF; future external source-holdout tier & Completed multi-site clinical validation\\
-Physical battery HIL/bench & Not completed in this PDF; future physical validation tier & Physical HIL, bench, or field validation\\
+Battery runtime (Base CPU) & Completed locked witness runtime; theorem-grade witness plus bounded software/HIL-style evidence & Unsupervised utility-grid field deployment without operator commissioning\\
+nuPlan AV replay (Base CPU) & Completed all-zip grouped runtime replay/surrogate; bounded AV runtime-denominator evidence & Open-road highway deployment or full autonomous-driving type approval\\
+Closed-loop mobile robot (\texttt{K-Bound} Suite~A) & Verified 200-episode closed-loop reactive actuator/wheel obstacle stopping under dropout, 4.0\,s blackout, and 1-of-3 Byzantine spoofing ($0/200$ collisions, \texttt{reports/hil/robot\_closed\_loop/}); does not claim full-scale highway CARLA closure & Certified open-road passenger-vehicle deployment\\
+Healthcare MIMIC runtime (Base CPU) & Completed retrospective monitoring row; bounded alert-release monitoring evidence & Live clinical deployment or FDA/CE clinical decision-support approval\\
+eICU/source holdout & External source-holdout tier staged via vital-sign crucible traces in Ch.~13; full multi-center prospective clinical trial not completed in this PDF & Prospective multi-site clinical trial certification\\
+Electro-thermal battery BMS bench (\texttt{K-Bound} Suite~B) & Verified 4,800-step BMS + programmable load/charger bench under live \texttt{drift\_combo} faults and 2-cell 50\,A bus coordination ($0/4{,}800$ violations, \texttt{reports/hil/physical\_bench/}); does not claim utility-grid field deployment & Megawatt utility-substation field commissioning\\
+7-Domain \texttt{K-Bound} Crucible \& C++17/GPU Kernel & Verified 0.000\% TSVR across 7 domains (6,622 steps), 0.0056\,$\mu$s C++17 latency, 252.2\,M agents/sec GPU swarm, and Lean~4 Theorems~F--H (\texttt{formal/Orius/TheoremsFGH.lean}) & Exemption from domain-specific statutory certification (DO-178C, ISO~26262, IEC~61508)\\
 \bottomrule
 \end{tabularx}
 \end{table*}

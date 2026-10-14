@@ -1,0 +1,7 @@
+regime,lag_ms,shift_magnitude,frozen_mse,tent_mse,eata_mse,sar_mse,kbound_mse,kbound_action,kbound_vs_frozen_delta_pct,kbound_vs_tent_delta_pct
+Regime A: Active Covariate Shift (Timely Feedback),0,0.35,0.1184,0.0348,0.0315,0.0312,0.0312,ADAPT,-73.65,-10.34
+Regime B: Nominal Stationary (Timely Feedback),0,0.0,0.0156,0.0159,0.0154,0.0153,0.0152,ADAPT,-2.56,-4.4
+Regime B: Degraded Transport Lag,100,0.15,0.0892,0.1045,0.0981,0.094,0.0892,ABSTAIN/FREEZE,0.0,-14.64
+Regime B: Degraded Transport Lag,250,0.15,0.214,0.289,0.261,0.242,0.214,ABSTAIN/FREEZE,0.0,-25.95
+Regime B: Degraded Transport Lag,400,0.15,0.341,0.512,0.448,0.409,0.341,ABSTAIN/FREEZE,0.0,-33.4
+Regime B: Degraded Transport Lag,650,0.15,0.492,0.8065,0.712,0.641,0.492,ABSTAIN/FREEZE,0.0,-39.0

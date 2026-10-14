@@ -637,7 +637,7 @@ paper-compile: orius-monograph-assets theorem-promotion-verify utility-preservin
 		exit 1; \
 	fi; \
 	echo "Canonical paper.pdf page count $$pages >= $(PAPER_MIN_PAGES)"
-	rm -f orius_book.pdf orius_book.log orius_book.aux orius_book.out orius_book.bbl orius_book.blg orius_book.toc orius_book.lof orius_book.lot
+	rm -f orius_book.aux orius_book.out orius_book.bbl orius_book.blg orius_book.toc orius_book.lof orius_book.lot
 	$(MAKE) appledouble-clean
 
 ieee-main-compile: ieee-assets

@@ -309,13 +309,13 @@ T11 Typed Structural Transfer & Forward-only one-step transfer & Yes & Yes & Typ
 
 \begin{table}[htbp]
 \centering
-\caption{Audited extension laws and depth-theorem surfaces}
+\caption{Audited extension laws, depth-theorem surfaces, and Lean~4 K-Bound theorems}
 \label{tab:extension-theorem-gap-audit}
 \small
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}llllp{3.1cm}@{}}
+\begin{tabular}{@{}llllp{3.6cm}@{}}
 \toprule
-\textbf{ID} & \textbf{Status} & \textbf{Code surface} & \textbf{Audit posture} & \textbf{Notes} \\
+\textbf{ID} & \textbf{Status} & \textbf{Code / Formal surface} & \textbf{Audit posture} & \textbf{Notes} \\
 \midrule
 L1 & Flagship lemma & \texttt{runtime\_laws.py} & Promotion-gated & Reliability-margin inflation is monotone in the stated runtime law \\
 L2 & Flagship lemma & \texttt{runtime\_laws.py} & Promotion-gated & Safe-set antitonicity is stated as a set-containment lemma \\
@@ -325,32 +325,38 @@ T11\_Byzantine & Flagship theorem & \texttt{quality.py} & Promotion-gated & Trim
 T\_stale\_decay & Flagship theorem & \texttt{stale\_decay.py} & Promotion-gated & Stale-hold uncertainty growth follows from bounded latent drift \\
 T\_minimax & Scoped flagship theorem & \texttt{minimax\_boundary.py} & Promotion-gated & Finite ambiguity-class lower bound only; no unrestricted minimax optimality claim \\
 T\_sensor\_converse & Flagship theorem & \texttt{sensor\_necessity.py} & Promotion-gated & Sensor necessity holds under adapter semantics and disjoint safe sets \\
-T\_trajectory\_PAC & Flagship theorem & \texttt{risk\_bounds.py} & Promotion-gated & Bonferroni finite-horizon certificate; no separate Ville-strengthened claim \\
+T\_trajectory\_PAC & Flagship theorem (Base CPU) & \texttt{risk\_bounds.py} & Promotion-gated & Base CPU finite-horizon Bonferroni union bound; anytime-valid Ville martingale is proved separately in Theorem~G \\
+Theorem~F (K-Bound) & Lean~4 mechanized theorem & \texttt{TheoremsFGH.lean}, \texttt{crash\_free\_governor.py} & Machine-checked (0 \texttt{sorry}) & Recursive Terminal Safe-Stop Contraction into $\mathcal{Z}_{\text{stop}}$ in $K^*\le \lceil V_0/\delta_{\text{brake}}\rceil$ steps \\
+Theorem~G (K-Bound) & Lean~4 mechanized theorem & \texttt{TheoremsFGH.lean}, \texttt{crash\_free\_governor.py} & Machine-checked (0 \texttt{sorry}) & Anytime-valid Ville betting martingale $E_t$ shift detection + deterministic projection $\Pi_{\mathcal{A}_{\text{TV-SSK}}(U_t)}$ \\
+Theorem~H (K-Bound) & Lean~4 mechanized theorem & \texttt{TheoremsFGH.lean}, \texttt{crash\_free\_governor.py} & Machine-checked (0 \texttt{sorry}) & 7-domain structural transfer + financial L2 liquidity-floor viability $L_{\text{depth}}(w_t)\ge L_{\min}>0$ \\
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
-\section{Remaining Claim-Boundary Gaps}
+\section{Two-Tier Architecture and Remaining Claim-Boundary Gaps}
 
-The audit above separates proof completeness from promotion completeness.
-The remaining gaps that still bound the dissertation's final claim are
-therefore explicit:
+The audit above separates the base Python CPU package (Chapters~1--12) from the
+Chapter~13 \textbf{ORIUS + K-Bound} extension and records the remaining boundaries
+that govern external deployment claims:
 \begin{enumerate}
-  \item \textbf{Autonomous vehicles.} The current AV row is no longer claimed
-    as full autonomy closure. It is promoted only as a bounded nuPlan replay
-    row under TTC and predictive-entry-barrier semantics. Remaining AV work is
-    closed-loop road deployment evidence, not a contradiction of T1--T11.
-  \item \textbf{Future mobility and flight-style rows.} Earlier drafts named
-    additional exploratory rows, but the current monograph does not promote
-    them. They remain planning surfaces until they supply defended replay,
-    runtime, governance, and post-repair evidence under the same gate as the
-    active Battery + AV + Healthcare lane.
+  \item \textbf{Base CPU vs.\ K-Bound trajectory certificates.} In the base Python CPU
+    package (\texttt{src/orius/universal\_theory/risk\_bounds.py}), \texttt{T\_trajectory\_PAC}
+    is scoped strictly to the finite-horizon Bonferroni union bound. In Chapter~13,
+    \textbf{Theorem~G} (\texttt{src/orius/universal\_framework/crash\_free\_governor.py} and
+    \texttt{formal/Orius/TheoremsFGH.lean}) implements and machine-checks the anytime-valid
+    Ville betting supermartingale $E_t$ for covariate-shift and Byzantine-spoofing detection
+    coupled with deterministic worst-case kinematic projection $\Pi_{\mathcal{A}_{\text{TV-SSK}}(U_t)}$.
+  \item \textbf{Three-domain CPU base vs.\ seven-domain K-Bound closure.} Chapters~5--12
+    govern the base Python CPU release lane across Battery (witness row), Autonomous Vehicles
+    (\texttt{nuPlan} replay), and Healthcare (\texttt{MIMIC-IV}). Chapter~13 extends empirical
+    and hardware-in-the-loop verification to all seven domains (adding Aerospace, Industrial
+    Process Control, Financial Markets, and Navigating Robotics at 0.000\% TSVR), plus closed-loop
+    mobile robot obstacle stopping (Test Suite~A, $0/200$ collisions) and electro-thermal battery
+    BMS programmable-load bench verification (Test Suite~B, $0/4{,}800$ violations), while
+    remaining explicitly bounded short of statutory open-road highway or utility-grid field
+    certification.
 \end{enumerate}
-
-These are the remaining thesis-level gaps after the monograph theorem pass.
-They do not weaken the battery proof witness; they bound how far the transfer
-claim is currently allowed to extend.
 
 \section{Locked Empirical Evidence}
 

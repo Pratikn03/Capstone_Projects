@@ -1753,7 +1753,8 @@ def build_publication_uncertainty_artifacts(ctx: ReportContext) -> None:
     ax.grid(alpha=0.3)
     fig.tight_layout()
     fig.savefig(fig_cov_tradeoff, dpi=220)
-    fig.savefig(fig_cov_alias, dpi=220)
+    if not fig_cov_alias.exists():
+        fig.savefig(fig_cov_alias, dpi=220)
     plt.close(fig)
 
     # Region compare table from locked DE/US metrics snapshots.

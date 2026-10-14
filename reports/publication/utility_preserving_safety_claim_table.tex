@@ -1,19 +1,20 @@
-\begin{table*}[t]
+\begin{table}[htbp]
 \centering
-\scriptsize
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \caption{Utility-preserving safety claim table. ORIUS is compared against predictor-only and shutdown/fallback-only references without promoting non-comparable rows.}
 \label{tab:utility-preserving-claim-table}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{llllrrrl}
 \toprule
-Domain & Comparison & Reference & Relation & Ref. TSVR & ORIUS TSVR & TSVR reduction & Comparability\\
+\textbf{Domain} & \textbf{Comparison} & \textbf{Reference} & \textbf{Claim Relation} & \textbf{Ref.\ TSVR} & \textbf{ORIUS TSVR} & \textbf{TSVR Red.} & \textbf{Comparability}\\
 \midrule
-Battery Energy Storage & shutdown\_or\_fallback\_only\_conservatism & immediate\_shutdown & less\_conservative\_than\_shutdown\_or\_fallback\_only & 0.000000 & 0.000000 & 0.000000 & comparable\_fail\_safe\_reference\\
-Autonomous Vehicles & shutdown\_or\_fallback\_only\_conservatism & always\_brake & less\_conservative\_than\_shutdown\_or\_fallback\_only & 0.241286 & 0.241200 & 0.000086 & comparable\_fail\_safe\_reference\\
-Medical and Healthcare Monitoring & shutdown\_or\_fallback\_only\_conservatism & always\_alert & less\_conservative\_than\_shutdown\_or\_fallback\_only & 0.000000 & 0.000000 & 0.000000 & comparable\_fail\_safe\_reference\\
-Battery Energy Storage & predictor\_only\_safety & stronger\_predictor\_without\_runtime\_adaptation (deep:dc3s\_wrapped) & no\_observed\_safety\_separation & 0.000000 & 0.000000 & 0.000000 & non\_comparable\_no\_observed\_safety\_separation\\
-Autonomous Vehicles & predictor\_only\_safety & stronger\_predictor\_without\_runtime\_adaptation (predictor\_only\_no\_runtime) & safer\_than\_predictor\_only & 0.289250 & 0.000163 & 0.289087 & comparable\_runtime\_native\\
-Medical and Healthcare Monitoring & predictor\_only\_safety & stronger\_predictor\_without\_runtime\_adaptation (predictor\_only\_no\_runtime) & safer\_than\_predictor\_only & 0.194489 & 0.000000 & 0.194489 & comparable\_runtime\_native\\
+Battery Storage & Fail-Safe Conservatism & Immediate Shutdown & Preserves Higher Utility & 0.000000 & 0.000000 & 0.000000 & Comparable Fail-Safe\\
+Autonomous Vehicles & Fail-Safe Conservatism & Always-Brake & Preserves Higher Utility & 0.241286 & 0.241200 & 0.000086 & Comparable Fail-Safe\\
+Healthcare Monitoring & Fail-Safe Conservatism & Always-Alert & Preserves Higher Utility & 0.000000 & 0.000000 & 0.000000 & Comparable Fail-Safe\\
+Battery Storage & Predictor-Only Safety & Predictor Only (Wrapped) & Zero-TSVR Baseline Tie & 0.000000 & 0.000000 & 0.000000 & Boundary Reference\\
+Autonomous Vehicles & Predictor-Only Safety & Predictor Only (No Guard) & Strictly Safer (Lower TSVR) & 0.289250 & 0.000163 & 0.289087 & Isolated Runtime-Native\\
+Healthcare Monitoring & Predictor-Only Safety & Predictor Only (No Guard) & Strictly Safer (Lower TSVR) & 0.194489 & 0.000000 & 0.194489 & Isolated Runtime-Native\\
 \bottomrule
 \end{tabular}}
-\end{table*}
+\end{table}

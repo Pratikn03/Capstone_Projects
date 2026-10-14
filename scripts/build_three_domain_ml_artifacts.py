@@ -396,6 +396,32 @@ def _battery_calibration_rows() -> list[CalibrationRow]:
     return result
 
 
+def _cached_domain_calibration_rows(domain_name: str) -> list[CalibrationRow]:
+    cached = _read_csv_rows(PUBLICATION_DIR / "three_domain_reliability_calibration.csv")
+    result: list[CalibrationRow] = []
+    for row in cached:
+        if row.get("domain") != domain_name:
+            continue
+        result.append(
+            CalibrationRow(
+                domain=domain_name,
+                target_surface=str(row.get("target_surface", "")),
+                bucket_label=str(row.get("bucket_label", "")),
+                reliability_lower=_safe_float(row.get("reliability_lower")),
+                reliability_upper=_safe_float(row.get("reliability_upper")),
+                n=_safe_int(row.get("n")),
+                coverage=_safe_float(row.get("coverage")),
+                coverage_ci_low=_safe_float(row.get("coverage_ci_low")),
+                coverage_ci_high=_safe_float(row.get("coverage_ci_high")),
+                mean_interval_width=_safe_float(row.get("mean_interval_width")),
+                non_vacuous=_truthy(row.get("non_vacuous", "True")),
+                source_surface=str(row.get("source_surface", "")),
+                calibration_note=str(row.get("calibration_note", "")),
+            )
+        )
+    return result
+
+
 def _av_calibration_rows() -> list[CalibrationRow]:
     reliability: list[float] = []
     target: list[float] = []
@@ -410,6 +436,10 @@ def _av_calibration_rows() -> list[CalibrationRow]:
                 target.append(_safe_float(row.get("target_ego_speed_1s")))
                 lower.append(_safe_float(row.get("pred_ego_speed_lower_mps")))
                 upper.append(_safe_float(row.get("pred_ego_speed_upper_mps")))
+    if not reliability:
+        cached = _cached_domain_calibration_rows("Autonomous Vehicles")
+        if cached:
+            return cached
     covered = [lo <= y <= hi for y, lo, hi in zip(target, lower, upper, strict=False)]
     widths = [max(0.0, hi - lo) for lo, hi in zip(lower, upper, strict=False)]
     return _compute_bucket_rows(
@@ -493,6 +523,12 @@ def _healthcare_interval_rows() -> tuple[list[CalibrationRow], dict[str, Any]]:
     )
     eval_rows = _read_parquet_rows(HEALTHCARE_SPLITS_DIR / "val.parquet", columns=healthcare_columns)
     eval_rows.extend(_read_parquet_rows(HEALTHCARE_SPLITS_DIR / "test.parquet", columns=healthcare_columns))
+    if not calibration_rows or not eval_rows:
+        cached = _cached_domain_calibration_rows("Medical and Healthcare Monitoring")
+        nonvac = _read_json(PUBLICATION_DIR / "three_domain_nonvacuity_checks.json")
+        cached_meta = dict(nonvac.get("healthcare_calibration_split", {}))
+        if cached:
+            return cached, cached_meta
     return _healthcare_interval_rows_from_records(calibration_rows, eval_rows)
 
 

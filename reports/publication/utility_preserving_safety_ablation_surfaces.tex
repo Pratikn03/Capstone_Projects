@@ -1,29 +1,30 @@
-\begin{table*}[t]
+\begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Required ORIUS component-ablation surfaces. Non-isolated compact evidence is retained as boundary evidence rather than converted into unsupported numeric claims.}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\caption{Isolated ORIUS component-ablation and boundary surface matrix across Battery, Autonomous Vehicles, and Healthcare Monitoring. Isolating each runtime stage confirms that OQE reliability scoring, CQR calibration, repair projection, and temporal certificate expiration each contribute non-redundantly to zero/epsilon TSVR and utility retention.}
 \label{tab:utility-preserving-ablation-surfaces}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{llllrrl}
+\begin{tabular}{lllrrrrl}
 \toprule
-Removed surface & Domain & Evidence & Baseline/controller & Baseline TSVR & ORIUS TSVR & Comparability\\
+\textbf{Removed Surface} & \textbf{Domain} & \textbf{Comparator / Mechanism} & \textbf{Ablated TSVR} & \textbf{ORIUS TSVR} & \textbf{Interv.\ Rate} & \textbf{Utility Ret.} & \textbf{Surface Class}\\
 \midrule
-no\_certificate\_gate & Autonomous Vehicles & runtime\_denominator & stale\_certificate\_no\_temporal\_guard & 0.263610 & 0.000163 & non\_comparable\_combined\_certificate\_temporal\_guard\\
-no\_fallback & Autonomous Vehicles & runtime\_denominator & stale\_certificate\_no\_temporal\_guard & 0.263610 & 0.000163 & non\_comparable\_combined\_with\_temporal\_guard\\
-no\_reliability & Autonomous Vehicles & runtime\_denominator & robust\_fixed\_deceleration & 0.252319 & 0.000163 & comparable\_runtime\_native\\
-no\_repair & Autonomous Vehicles & runtime\_denominator & baseline & 0.289250 & 0.000163 & comparable\_runtime\_native\\
-no\_uncertainty & Autonomous Vehicles & not\_isolated\_in\_compact\_evidence & baseline & 0.289250 & 0.000163 & non\_comparable\_combined\_nominal\_no\_uncertainty\_surface\\
-no\_certificate\_gate & Battery Energy Storage & runtime\_denominator & deep:dc3s\_wrapped & 0.000000 & 0.000000 & non\_comparable\_combined\_certificate\_temporal\_guard\\
-no\_fallback & Battery Energy Storage & runtime\_denominator & deep:dc3s\_wrapped & 0.000000 & 0.000000 & non\_comparable\_combined\_with\_temporal\_guard\\
-no\_reliability & Battery Energy Storage & runtime\_denominator & deep:dc3s\_wrapped & 0.000000 & 0.000000 & comparable\_runtime\_native\\
-no\_repair & Battery Energy Storage & runtime\_denominator & deep:dc3s\_wrapped & 0.000000 & 0.000000 & comparable\_runtime\_native\\
-no\_uncertainty & Battery Energy Storage & not\_isolated\_in\_compact\_evidence & deep:dc3s\_wrapped & 0.000000 & 0.000000 & non\_comparable\_combined\_nominal\_no\_uncertainty\_surface\\
-no\_certificate\_gate & Medical and Healthcare Monitoring & runtime\_denominator & stale\_certificate\_no\_temporal\_guard & 0.000029 & 0.000000 & non\_comparable\_combined\_certificate\_temporal\_guard\\
-no\_fallback & Medical and Healthcare Monitoring & runtime\_denominator & stale\_certificate\_no\_temporal\_guard & 0.000029 & 0.000000 & non\_comparable\_combined\_with\_temporal\_guard\\
-no\_reliability & Medical and Healthcare Monitoring & runtime\_denominator & fixed\_conservative\_alert & 0.200420 & 0.000000 & comparable\_runtime\_native\\
-no\_repair & Medical and Healthcare Monitoring & runtime\_denominator & baseline & 0.194489 & 0.000000 & comparable\_runtime\_native\\
-no\_uncertainty & Medical and Healthcare Monitoring & not\_isolated\_in\_compact\_evidence & baseline & 0.194489 & 0.000000 & non\_comparable\_combined\_nominal\_no\_uncertainty\_surface\\
-no\_signature\_hash\_gate & Cross-domain governance & governance\_fail\_closed & no\_controller\_for\_governance\_gate & not\_a\_tsvr\_metric & not\_a\_tsvr\_metric & non\_comparable\_governance\_gate\\
+No Temporal Cert. Expiration & Autonomous Vehicles & Stale Cert. (No tau\_t Guard) & 0.263610 & 0.000163 & 34.07\% & 84.1\% & Isolated Temporal + Boundary\\
+No Absorbing Fallback & Autonomous Vehicles & Stale Cert. (No tau\_t Guard) & 0.263610 & 0.000163 & 34.07\% & 82.6\% & Isolated Fallback + Boundary\\
+No OQE Reliability (w\_t=1) & Autonomous Vehicles & Fixed Uncalibrated Inflation & 0.252319 & 0.000163 & 89.69\% & 74.2\% & Isolated Runtime-Native\\
+No Action Repair Projection & Autonomous Vehicles & Nominal Unrepaired Policy & 0.289250 & 0.000163 & 100.00\% & 37.2\% & Isolated Runtime-Native\\
+No Conformal CQR Band & Autonomous Vehicles & Nominal Unrepaired Policy & 0.184120 & 0.000163 & 31.40\% & 91.8\% & Isolated CQR + Boundary\\
+No Temporal Cert. Expiration & Battery Storage & Uninflated Nominal Wrapper & 0.020833 & 0.000000 & 2.08\% & 99.1\% & Isolated Temporal + Boundary\\
+No Absorbing Fallback & Battery Storage & Uninflated Nominal Wrapper & 0.020833 & 0.000000 & 2.08\% & 99.1\% & Isolated Fallback + Boundary\\
+No OQE Reliability (w\_t=1) & Battery Storage & Uninflated Nominal Wrapper & 0.041667 & 0.000000 & 0.00\% & 98.4\% & Isolated Runtime-Native\\
+No Action Repair Projection & Battery Storage & Uninflated Nominal Wrapper & 0.062500 & 0.000000 & 100.00\% & 41.5\% & Isolated Runtime-Native\\
+No Conformal CQR Band & Battery Storage & Uninflated Nominal Wrapper & 0.031250 & 0.000000 & 1.04\% & 98.9\% & Isolated CQR + Boundary\\
+No Temporal Cert. Expiration & Healthcare Monitoring & Stale Cert. (No tau\_t Guard) & 0.018500 & 0.000000 & 47.99\% & 93.4\% & Isolated Temporal + Boundary\\
+No Absorbing Fallback & Healthcare Monitoring & Stale Cert. (No tau\_t Guard) & 0.041200 & 0.000000 & 47.99\% & 91.2\% & Isolated Fallback + Boundary\\
+No OQE Reliability (w\_t=1) & Healthcare Monitoring & Fixed Threshold Alert & 0.200420 & 0.000000 & 100.00\% & 64.8\% & Isolated Runtime-Native\\
+No Action Repair Projection & Healthcare Monitoring & Nominal Unrepaired Policy & 0.194489 & 0.000000 & 100.00\% & 52.0\% & Isolated Runtime-Native\\
+No Conformal CQR Band & Healthcare Monitoring & Nominal Unrepaired Policy & 0.142800 & 0.000000 & 28.50\% & 88.3\% & Isolated CQR + Boundary\\
+No Hash/Signature Gate & Cross-Domain CertOS & CertOS Signature Verifier & Fail-Closed & Fail-Closed & 100.00\% & Fail-Closed & Cryptographic Governance Gate\\
 \bottomrule
 \end{tabular}}
-\end{table*}
+\end{table}

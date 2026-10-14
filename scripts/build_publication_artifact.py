@@ -359,7 +359,8 @@ def _build_cqr_group_coverage(out_dir: Path) -> dict[str, Any]:
     fig.tight_layout()
     fig.savefig(fig_primary, dpi=220)
     fig.savefig(fig_tradeoff, dpi=220)
-    fig.savefig(fig_alias, dpi=220)
+    if not fig_alias.exists():
+        fig.savefig(fig_alias, dpi=220)
     plt.close(fig)
 
     summary_path = out_dir / "cqr_calibration_summary.json"

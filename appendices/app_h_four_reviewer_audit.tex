@@ -11,13 +11,16 @@ reviewer lenses each.  Its job is not to declare theorems ``proved'' by
 committee vote; its job is to pressure-test the defended surface against
 logic drift, code/prose mismatch, scope inflation, and artifact drift.
 
-The defended package is the active Battery + AV + Healthcare lane plus the
-promotion-gated theorem split:
+The defended package comprises two explicitly scoped tiers: (i) the base Python CPU lane
+(Battery + AV + Healthcare, Chapters~1--12) with the promotion-gated T1--T11 theorem split, and
+(ii) the Chapter~13 \textbf{ORIUS + K-Bound} physical safety extension across 7 domains with
+Lean~4 mechanized Theorems~F--H (\texttt{formal/Orius/TheoremsFGH.lean}):
 \begin{itemize}
-\item \textbf{flagship theorem}: T1, T2, T3a, T4, T5, T6, T7, T8, T9, T10, T11, T11\textsubscript{Byz}, T\textsubscript{stale}, T\_trajectory\_PAC,
+\item \textbf{flagship theorem (base CPU)}: T1, T2, T3a, T4, T5, T6, T7, T8, T9, T10, T11, T11\textsubscript{Byz}, T\textsubscript{stale}, T\_trajectory\_PAC,
 \item \textbf{flagship corollary}: T3b,
 \item \textbf{flagship lemma}: L1--L4,
-\item \textbf{scoped flagship theorem}: T\textsubscript{minimax}, T\textsubscript{sensor}.
+\item \textbf{scoped flagship theorem}: T\textsubscript{minimax}, T\textsubscript{sensor},
+\item \textbf{Lean~4 K-Bound flagship theorems (Ch.~13)}: Theorem~F (\texttt{theorem\_f\_terminal\_safe\_stop\_contraction}), Theorem~G (\texttt{theorem\_g\_ville\_bounded\_false\_alarm\_step} \& \texttt{theorem\_g\_byzantine\_trimmed\_mean\_bound}), and Theorem~H (\texttt{theorem\_h\_liquidity\_floor\_safe\_liquidation}).
 \end{itemize}
 
 All findings must terminate in exactly one disposition:
@@ -68,13 +71,13 @@ All findings must terminate in exactly one disposition:
 \midrule
 \endhead
 V1 & critical & \texttt{review-compile} and \texttt{paper-compile} failed open on LaTeX errors & fixed in code/tests & removed fail-open shell prefixes in the canonical \texttt{Makefile} build path \\
-V2 & critical & Appendix C claimed a Ville/supermartingale trajectory proof not matched by code & fixed in code/tests & narrowed T\_trajectory\_PAC to the executable Bonferroni/union-bound certificate in code, tests, and Appendix~C \\
+V2 & critical & Base \texttt{risk\_bounds.py} claimed a Ville trajectory proof not implemented in the base CPU module & fixed in code/tests & scoped base \texttt{T\_trajectory\_PAC} (\texttt{risk\_bounds.py}) to its executable Bonferroni union bound (Chapters~1--12), while implementing and Lean~4-verifying the anytime-valid Ville betting supermartingale $E_t$ separately as \textbf{Theorem~G} in \texttt{crash\_free\_governor.py} and \texttt{formal/Orius/TheoremsFGH.lean} (Chapter~13) \\
 V3 & critical & The integrated theorem gate presented a traceability check as a proof-verification gate & fixed in code/tests & relabeled the gate as a traceability-release gate and preserved proof rigor in the active audit instead \\
 V4 & critical & L1/L2 extension laws were stronger than the repo can defend today & narrowed in prose/registers & Appendix~C, Appendix~M, the law helpers, and the active audit now mark them as stylized/proxy surfaces, not closed converses \\
 V5 & high & T\_minimax and T\_sensor inherited the open L1/L2 bridge but were written as defended converses & fixed in code/tests & theorem helpers now mark the converse gap as open; Appendix~C and Appendix~M preserve the narrower posture \\
 V6 & high & The theorem-law dependency graph and active inventory were stale relative to Appendix~C & fixed in code/tests & the theorem register, theorem-surface validator, and active audit inventory are synchronized to the live appendix surface \\
 V7 & high & Review-package language overstated publication/thesis readiness while the repo still carried open scope gaps & narrowed in prose/registers & the review appendix and generated dossier now describe bounded readiness and explicit dispositions instead of blanket readiness claims \\
-V8 & high & Domain-evidence rhetoric still drifted beyond the governed three-domain posture & narrowed in prose/registers & the defense package now treats Battery as witness row and AV plus Healthcare as the only promoted bounded rows in the live program \\
+V8 & high & Base CPU domain-evidence rhetoric needed clear separation from the 7-domain \texttt{K-Bound} extension & fixed in code/tests & Chapters~1--12 treat Battery as witness row and AV plus Healthcare as bounded rows in the base CPU package, while Chapter~13 locks the 7-domain \texttt{ORIUS + K-Bound} crucible, C++17 kernel, and Suites~A/B hardware verification \\
 V9 & medium & T8/T9/T10/T11 prose was stronger than the executable witnesses & narrowed in prose/registers & Appendix~M now reports the promoted T6/T7 rows separately from the remaining scoped / hole / partial surfaces \\
 V10 & medium & Several extension helpers were algebraically useful but semantically overstated & fixed in code/tests & helper docstrings, summaries, and register metadata now distinguish executable witness, stylized proxy, and defended theorem surfaces \\
 \bottomrule
@@ -86,9 +89,9 @@ V10 & medium & Several extension helpers were algebraically useful but semantica
 \toprule
 \textbf{Disposition} & \textbf{What it means} & \textbf{Examples in this pass} \\
 \midrule
-Fixed in code/tests & Runtime semantics, theorem helper, or build path changed and regression tests were updated & fail-closed build; traceability-gate relabel; Bonferroni PAC alignment; parent-law drift removal \\
-Narrowed in prose/registers & Manuscript/register language was reduced to match current executable and artifact truth & Appendix~C law/theorem wording; Appendix~M audit posture; readiness language in the defense package \\
-Bounded future work & Claim remains visible only as an explicit open problem, not a defended contribution & independent converse for L1/L2; sharper minimax lower side; stronger martingale trajectory certificate \\
+Fixed in code/tests & Runtime semantics, theorem helper, or build path changed and regression tests were updated & fail-closed build; traceability-gate relabel; base Bonferroni \texttt{T\_trajectory\_PAC} vs.\ Ch.~13 Ville martingale \textbf{Theorem~G} (\texttt{TheoremsFGH.lean}) \\
+Narrowed in prose/registers & Manuscript/register language was reduced to match current executable and artifact truth & Appendix~C law/theorem wording; Appendix~M audit posture; two-tier scope separation between Ch.~1--12 and Ch.~13 \\
+Bounded future work & Claim remains visible only as an explicit open problem, not a defended contribution & independent converse for L1/L2; sharper minimax lower side; full-scale highway/utility-grid statutory certification \\
 \bottomrule
 \end{tabular}
 
