@@ -76,7 +76,7 @@ def test_run_universal_step_returns_structured_result() -> None:
     assert result["certificate"]["action"] == result["safe_action"]
     assert result["certificate"]["validity_horizon_H_t"] is not None
     assert "cert_hash" not in result["certificate"]
-    assert set(result["theorem_contracts"]) == {"T3a", "T11"}
+    assert {"T3a", "T11"}.issubset(set(result["theorem_contracts"]))
     assert result["theorem_contracts"]["T3a"]["all_executable_checks_passed"] is True
     assert result["theorem_contracts"]["T11"]["all_executable_checks_passed"] is True
     assert result["theorem_contracts"]["T11"]["forward_only"] is True

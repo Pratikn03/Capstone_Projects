@@ -189,7 +189,7 @@ def _artifacts_ok(paths: list[str]) -> bool:
 def _tex_escape(value: object) -> str:
     text = str(value)
     replacements = {
-        "_": r"\_",
+        "_": r"\_\allowbreak ",
         "%": r"\%",
         "&": r"\&",
         "#": r"\#",

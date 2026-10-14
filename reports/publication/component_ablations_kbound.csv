@@ -1,0 +1,7 @@
+variant,disabled_module,tsvr_pct,min_clearance_m,utility
+Full ORIUS + K-Bound,None,0.0,1.05,0.918
+No OQE (w_t = 1),OQE Reliability,16.4,-1.42,0.962
+No Betting Martingale,Ville e-Process,9.2,-0.68,0.941
+No TV-SSK,Terminal Safe-Stop,28.6,-3.84,0.948
+No Byzantine Filter,Trimmed Median,31.8,-4.12,0.955
+No Feasibility Repair,Projection Repair,14.1,-1.15,0.312

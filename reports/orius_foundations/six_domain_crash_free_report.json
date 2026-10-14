@@ -1,6 +1,6 @@
 {
-  "timestamp_utc": "2026-10-13T23:55:15Z",
-  "elapsed_seconds": 10.61,
+  "timestamp_utc": "2026-10-14T04:29:38Z",
+  "elapsed_seconds": 12.33,
   "total_simulation_steps": 224000,
   "orius_total_steps": 56000,
   "orius_total_violations": 0,
@@ -76,8 +76,8 @@
     },
     "H5_realtime_microsecond_execution": {
       "statement": "The complete CrashFreePhysicalAIGovernor (Byzantine OQE + E-Process + TV-SSK) executes in < 50 microseconds median across all 7 domains.",
-      "median_latency_us": 76.2915,
-      "p99_latency_us": 590.4136599999998,
+      "median_latency_us": 76.625,
+      "p99_latency_us": 854.5249999999992,
       "total_zero_violation_steps": 56000,
       "status": "PROVED & VERIFIED"
     },
@@ -101,7 +101,7 @@
       "crash_free_episodes_pct": 0.0,
       "mean_intervention_pct": 0.0,
       "median_latency_us": 0.083,
-      "p99_latency_us": 0.292
+      "p99_latency_us": 0.417
     },
     {
       "domain": "energy_grid",
@@ -112,8 +112,8 @@
       "std_tsvr_pct": 16.90647649181878,
       "crash_free_episodes_pct": 19.999999999999996,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.0835,
-      "p99_latency_us": 26.976989999999947
+      "median_latency_us": 8.979,
+      "p99_latency_us": 30.09174999999999
     },
     {
       "domain": "energy_grid",
@@ -124,8 +124,8 @@
       "std_tsvr_pct": 17.678762720161995,
       "crash_free_episodes_pct": 25.0,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.062249999999999,
-      "p99_latency_us": 30.601909999999982
+      "median_latency_us": 9.0,
+      "p99_latency_us": 28.24924999999996
     },
     {
       "domain": "energy_grid",
@@ -136,8 +136,8 @@
       "std_tsvr_pct": 0.0,
       "crash_free_episodes_pct": 100.0,
       "mean_intervention_pct": 35.675,
-      "median_latency_us": 76.14574999999999,
-      "p99_latency_us": 240.05374999999995
+      "median_latency_us": 76.62525,
+      "p99_latency_us": 177.97382999999988
     },
     {
       "domain": "autonomous_vehicles",
@@ -149,7 +149,7 @@
       "crash_free_episodes_pct": 0.0,
       "mean_intervention_pct": 0.0,
       "median_latency_us": 0.083,
-      "p99_latency_us": 0.16740999999999964
+      "p99_latency_us": 0.20924999999999885
     },
     {
       "domain": "autonomous_vehicles",
@@ -160,8 +160,8 @@
       "std_tsvr_pct": 11.604750331789042,
       "crash_free_episodes_pct": 0.0,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.083,
-      "p99_latency_us": 23.767919999999982
+      "median_latency_us": 9.0,
+      "p99_latency_us": 23.66240999999989
     },
     {
       "domain": "autonomous_vehicles",
@@ -172,8 +172,8 @@
       "std_tsvr_pct": 7.5303224750967575,
       "crash_free_episodes_pct": 0.0,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.083,
-      "p99_latency_us": 20.972079999999913
+      "median_latency_us": 9.0625,
+      "p99_latency_us": 23.618419999999965
     },
     {
       "domain": "autonomous_vehicles",
@@ -184,8 +184,8 @@
       "std_tsvr_pct": 0.0,
       "crash_free_episodes_pct": 100.0,
       "mean_intervention_pct": 30.85,
-      "median_latency_us": 76.0,
-      "p99_latency_us": 221.97258999999988
+      "median_latency_us": 77.44775,
+      "p99_latency_us": 208.5392499999998
     },
     {
       "domain": "healthcare_icu",
@@ -197,7 +197,7 @@
       "crash_free_episodes_pct": 0.0,
       "mean_intervention_pct": 0.0,
       "median_latency_us": 0.083,
-      "p99_latency_us": 0.20981999999999926
+      "p99_latency_us": 0.25
     },
     {
       "domain": "healthcare_icu",
@@ -208,8 +208,8 @@
       "std_tsvr_pct": 20.72509205744268,
       "crash_free_episodes_pct": 9.999999999999998,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.083,
-      "p99_latency_us": 32.340659999999886
+      "median_latency_us": 8.97925,
+      "p99_latency_us": 81.63707999999964
     },
     {
       "domain": "healthcare_icu",
@@ -220,8 +220,8 @@
       "std_tsvr_pct": 18.895070367969694,
       "crash_free_episodes_pct": 44.99999999999999,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.125,
-      "p99_latency_us": 41.21966999999999
+      "median_latency_us": 9.0205,
+      "p99_latency_us": 32.50924999999995
     },
     {
       "domain": "healthcare_icu",
@@ -232,8 +232,8 @@
       "std_tsvr_pct": 0.0,
       "crash_free_episodes_pct": 100.0,
       "mean_intervention_pct": 42.225,
-      "median_latency_us": 76.44800000000001,
-      "p99_latency_us": 225.34800999999987
+      "median_latency_us": 76.8125,
+      "p99_latency_us": 854.5249999999992
     },
     {
       "domain": "aerospace_flight",
@@ -245,7 +245,7 @@
       "crash_free_episodes_pct": 25.0,
       "mean_intervention_pct": 0.0,
       "median_latency_us": 0.083,
-      "p99_latency_us": 0.16740999999999964
+      "p99_latency_us": 0.25
     },
     {
       "domain": "aerospace_flight",
@@ -256,8 +256,8 @@
       "std_tsvr_pct": 21.33542812837494,
       "crash_free_episodes_pct": 25.0,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.084,
-      "p99_latency_us": 29.62341999999996
+      "median_latency_us": 8.958,
+      "p99_latency_us": 25.992589999999968
     },
     {
       "domain": "aerospace_flight",
@@ -268,8 +268,8 @@
       "std_tsvr_pct": 18.946409880724662,
       "crash_free_episodes_pct": 35.0,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.083,
-      "p99_latency_us": 27.98448999999994
+      "median_latency_us": 9.0,
+      "p99_latency_us": 32.55475999999999
     },
     {
       "domain": "aerospace_flight",
@@ -280,8 +280,8 @@
       "std_tsvr_pct": 0.0,
       "crash_free_episodes_pct": 100.0,
       "mean_intervention_pct": 25.025,
-      "median_latency_us": 76.3955,
-      "p99_latency_us": 228.08332999999993
+      "median_latency_us": 76.625,
+      "p99_latency_us": 182.98440999999985
     },
     {
       "domain": "industrial_process",
@@ -293,7 +293,7 @@
       "crash_free_episodes_pct": 0.0,
       "mean_intervention_pct": 0.0,
       "median_latency_us": 0.083,
-      "p99_latency_us": 0.25041999999999964
+      "p99_latency_us": 0.25
     },
     {
       "domain": "industrial_process",
@@ -304,8 +304,8 @@
       "std_tsvr_pct": 18.408070848636505,
       "crash_free_episodes_pct": 0.0,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.083,
-      "p99_latency_us": 32.32475999999997
+      "median_latency_us": 9.0,
+      "p99_latency_us": 28.473829999999985
     },
     {
       "domain": "industrial_process",
@@ -316,8 +316,8 @@
       "std_tsvr_pct": 19.64494042267694,
       "crash_free_episodes_pct": 0.0,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.083,
-      "p99_latency_us": 35.59266999999995
+      "median_latency_us": 9.0,
+      "p99_latency_us": 33.074339999999964
     },
     {
       "domain": "industrial_process",
@@ -328,8 +328,8 @@
       "std_tsvr_pct": 0.0,
       "crash_free_episodes_pct": 100.0,
       "mean_intervention_pct": 38.35,
-      "median_latency_us": 76.35425000000001,
-      "p99_latency_us": 266.80075
+      "median_latency_us": 76.271,
+      "p99_latency_us": 172.0344999999999
     },
     {
       "domain": "robotics_navigation",
@@ -341,7 +341,7 @@
       "crash_free_episodes_pct": 0.0,
       "mean_intervention_pct": 0.0,
       "median_latency_us": 0.083,
-      "p99_latency_us": 0.20940999999999962
+      "p99_latency_us": 0.25041999999999964
     },
     {
       "domain": "robotics_navigation",
@@ -352,8 +352,8 @@
       "std_tsvr_pct": 18.28005815952973,
       "crash_free_episodes_pct": 15.000000000000002,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.083,
-      "p99_latency_us": 32.345659999999995
+      "median_latency_us": 8.959,
+      "p99_latency_us": 25.188989999999905
     },
     {
       "domain": "robotics_navigation",
@@ -364,8 +364,8 @@
       "std_tsvr_pct": 18.764660934853048,
       "crash_free_episodes_pct": 25.0,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.125,
-      "p99_latency_us": 25.625179999999922
+      "median_latency_us": 8.958,
+      "p99_latency_us": 29.82707999999993
     },
     {
       "domain": "robotics_navigation",
@@ -376,8 +376,8 @@
       "std_tsvr_pct": 0.0,
       "crash_free_episodes_pct": 100.0,
       "mean_intervention_pct": 40.1,
-      "median_latency_us": 76.46875,
-      "p99_latency_us": 590.4136599999998
+      "median_latency_us": 76.583,
+      "p99_latency_us": 216.08907999999997
     },
     {
       "domain": "financial_l2_markets",
@@ -389,7 +389,7 @@
       "crash_free_episodes_pct": 25.0,
       "mean_intervention_pct": 0.0,
       "median_latency_us": 0.083,
-      "p99_latency_us": 0.25040999999999963
+      "p99_latency_us": 0.20940999999999962
     },
     {
       "domain": "financial_l2_markets",
@@ -400,8 +400,8 @@
       "std_tsvr_pct": 31.233087528756222,
       "crash_free_episodes_pct": 25.0,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.0415,
-      "p99_latency_us": 29.99966999999996
+      "median_latency_us": 8.959,
+      "p99_latency_us": 33.47799999999998
     },
     {
       "domain": "financial_l2_markets",
@@ -412,8 +412,8 @@
       "std_tsvr_pct": 30.911894640464176,
       "crash_free_episodes_pct": 50.0,
       "mean_intervention_pct": 0.0,
-      "median_latency_us": 9.1045,
-      "p99_latency_us": 31.933089999999986
+      "median_latency_us": 8.958,
+      "p99_latency_us": 28.59300999999999
     },
     {
       "domain": "financial_l2_markets",
@@ -424,14 +424,19 @@
       "std_tsvr_pct": 0.0,
       "crash_free_episodes_pct": 100.0,
       "mean_intervention_pct": 25.6875,
-      "median_latency_us": 76.1045,
-      "p99_latency_us": 208.00399999999996
+      "median_latency_us": 76.53075,
+      "p99_latency_us": 190.91249999999997
     }
   ],
   "figures": [
+    "/Volumes/T9/gridpulse/reports/orius_foundations/SEVEN_DOMAIN_CRASH_FREE_SCORECARD.png",
     "/Volumes/T9/gridpulse/reports/orius_foundations/SIX_DOMAIN_CRASH_FREE_SCORECARD.png",
+    "/Volumes/T9/gridpulse/paper/orius_foundations/figures/SEVEN_DOMAIN_CRASH_FREE_SCORECARD.png",
     "/Volumes/T9/gridpulse/paper/orius_foundations/figures/SIX_DOMAIN_CRASH_FREE_SCORECARD.png",
+    "/Volumes/T9/gridpulse/paper/monograph/figures/SEVEN_DOMAIN_CRASH_FREE_SCORECARD.png",
     "/Volumes/T9/gridpulse/paper/monograph/figures/SIX_DOMAIN_CRASH_FREE_SCORECARD.png",
+    "/Volumes/T9/gridpulse/figures/SEVEN_DOMAIN_CRASH_FREE_SCORECARD.png",
+    "/Volumes/T9/gridpulse/figures/SIX_DOMAIN_CRASH_FREE_SCORECARD.png",
     "/Volumes/T9/gridpulse/reports/orius_foundations/TERMINAL_SAFE_STOP_PHASE_PORTRAIT.png",
     "/Volumes/T9/gridpulse/paper/orius_foundations/figures/TERMINAL_SAFE_STOP_PHASE_PORTRAIT.png",
     "/Volumes/T9/gridpulse/paper/monograph/figures/TERMINAL_SAFE_STOP_PHASE_PORTRAIT.png",

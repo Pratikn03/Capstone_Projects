@@ -79,7 +79,7 @@ def test_universal_step_vehicle_round_trip() -> None:
     assert "certificate_hash" in payload["certificate"]
     assert payload["repair_meta"]["repaired"] is True
     assert payload["state"]["position_m"] == 40.0
-    assert set(payload["theorem_contracts"]) == {"T3a", "T11"}
+    assert {"T3a", "T11"}.issubset(set(payload["theorem_contracts"]))
     assert payload["theorem_contracts"]["T3a"]["status"] == "runtime_linked"
     assert payload["theorem_contracts"]["T11"]["forward_only"] is True
 

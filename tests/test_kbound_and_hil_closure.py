@@ -119,3 +119,56 @@ def test_physical_battery_bench_suite_b_zero_violations_and_bus_cap() -> None:
     for r in bus_rows:
         assert abs(float(r["orius_compositional_bus_amp"])) <= float(r["bus_limit_amp"]) + 1e-6
         assert float(r["uncoordinated_bus_amp"]) > float(r["bus_limit_amp"])
+
+
+def test_suite_c_component_ablations_and_hash_registry() -> None:
+    """Verify Test Suite C (C.1 isolated ablations in Table 9.8 & C.2 SHA-256 hash registry in App L/Q)."""
+    closure_json = REPO_ROOT / "reports" / "hil" / "hil_and_ablation_closure_summary.json"
+    ablation_csv = REPO_ROOT / "reports" / "publication" / "component_ablations_kbound.csv"
+    ablation_tex = REPO_ROOT / "reports" / "publication" / "table_component_ablations_kbound.tex"
+    app_l_tex = REPO_ROOT / "appendices" / "app_r_locked_artifact_hash_registry.tex"
+    app_q_tex = REPO_ROOT / "reports" / "publication" / "reproducibility_appendix_generated.tex"
+
+    assert closure_json.exists() and ablation_csv.exists() and ablation_tex.exists()
+    data = json.loads(closure_json.read_text(encoding="utf-8"))
+    assert len(data["suite_a_robot_closed_loop"]["subtests"]) == 4
+    assert len(data["suite_b_physical_battery_bench"]["subtests"]) == 3
+    ablation_rows = data["suite_c_component_ablations"]["rows"]
+    assert len(ablation_rows) == 6
+    assert ablation_rows[0]["tsvr_pct"] == 0.0
+    for row in ablation_rows[1:]:
+        assert float(row["tsvr_pct"]) > 5.0
+
+    for tex_file in (app_l_tex, app_q_tex):
+        txt = tex_file.read_text(encoding="utf-8").replace(r"\_", "_")
+        assert "TheoremsFGH.lean" in txt
+        assert "robot_obstacle_stopping_summary.csv" in txt
+        assert "battery_bench_summary.csv" in txt
+
+
+def test_all_compiled_pdfs_zero_unresolved_refs_and_zero_placeholders() -> None:
+    """Verify G1 & Phase 4: All compiled PDFs have 0 unresolved references (??/[?]) and 0 placeholder names."""
+    from pypdf import PdfReader
+
+    pdfs = [
+        "orius_book.pdf",
+        "paper.pdf",
+        "paper/paper.pdf",
+        "paper/orius_book.pdf",
+        "paper/orius_foundations/main.pdf",
+        "paper/orius_monograph_complete.pdf",
+        "paper/ieee/orius_ieee_main.pdf",
+        "paper/ieee/orius_ieee_detailed_main.pdf",
+        "paper/review/orius_review_dossier.pdf",
+        "appendices/app_c_all_theorems.pdf",
+    ]
+    for rel_path in pdfs:
+        pdf_path = REPO_ROOT / rel_path
+        assert pdf_path.exists(), f"Missing compiled PDF: {rel_path}"
+        reader = PdfReader(str(pdf_path))
+        assert len(reader.pages) >= 6
+        for idx, page in enumerate(reader.pages):
+            txt = page.extract_text() or ""
+            assert "??" not in txt and "[?]" not in txt, f"Unresolved ref in {rel_path} p.{idx + 1}"
+            assert "J. Doe" not in txt and "R. Smith" not in txt, f"Placeholder author in {rel_path} p.{idx + 1}"
+

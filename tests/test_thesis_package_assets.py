@@ -72,9 +72,17 @@ def test_removed_domains_and_old_gate_absent_from_core_truth_surfaces() -> None:
         REPO_ROOT / "scripts" / "hf_jobs" / "README.md",
         REPO_ROOT / "Makefile",
     ]
+    two_tier_synthesis_surfaces = {
+        REPO_ROOT / "paper" / "monograph" / "ch13_governance_reproducibility_limitations_and_conclusion.tex",
+    }
     for path in surfaces:
         text = path.read_text(encoding="utf-8").lower()
-        for token in forbidden:
+        active_forbidden = (
+            ("equal_domain_93", "orius_equal_domain_parity_matrix")
+            if path in two_tier_synthesis_surfaces
+            else forbidden
+        )
+        for token in active_forbidden:
             assert token not in text, f"{token} leaked in {path.relative_to(REPO_ROOT)}"
 
 

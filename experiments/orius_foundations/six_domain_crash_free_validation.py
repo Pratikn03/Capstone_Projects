@@ -644,7 +644,7 @@ def generate_publication_figures(
     ax0.set_xticks(x)
     ax0.set_xticklabels(domain_labels, fontsize=8.5)
     ax0.set_ylabel("True Safety Violation Rate — TSVR (%) [Lower is Better]")
-    ax0.set_title("(a) 6-Domain Real-Data Safety Violations Across All Stress Regimes")
+    ax0.set_title("(a) 7-Domain Real-Data Safety Violations Across All Stress Regimes")
     ax0.grid(axis="y", linestyle="--", alpha=0.4)
     ax0.legend(loc="upper right", fontsize=8.5)
 
@@ -670,16 +670,19 @@ def generate_publication_figures(
 
     ax1.set_xticks(xr)
     ax1.set_xticklabels(regime_labels, fontsize=8.5)
-    ax1.set_ylabel("Mean TSVR Across All 6 Domains (%)")
-    ax1.set_title("(b) Complete Closure of Bounded Failure Modes (Theorems F & G)")
+    ax1.set_ylabel("Mean TSVR Across All 7 Domains (%)")
+    ax1.set_title("(b) Complete Closure of Bounded Failure Modes (Theorems F, G & H)")
     ax1.grid(axis="y", linestyle="--", alpha=0.4)
     ax1.legend(loc="upper right", fontsize=8.5)
 
     fig.tight_layout()
-    for target_dir in (OUT_DIR, PAPER_FIG_DIR, MONO_FIG_DIR):
-        p = target_dir / "SIX_DOMAIN_CRASH_FREE_SCORECARD.png"
-        fig.savefig(p, dpi=300, bbox_inches="tight")
-        saved_paths.append(str(p))
+    root_fig_dir = REPO_ROOT / "figures"
+    root_fig_dir.mkdir(parents=True, exist_ok=True)
+    for target_dir in (OUT_DIR, PAPER_FIG_DIR, MONO_FIG_DIR, root_fig_dir):
+        for fname in ("SEVEN_DOMAIN_CRASH_FREE_SCORECARD.png", "SIX_DOMAIN_CRASH_FREE_SCORECARD.png"):
+            p = target_dir / fname
+            fig.savefig(p, dpi=300, bbox_inches="tight")
+            saved_paths.append(str(p))
     plt.close(fig)
 
     # Figure 2: TERMINAL_SAFE_STOP_PHASE_PORTRAIT.png (Unbounded Blackout Trajectory Comparison)

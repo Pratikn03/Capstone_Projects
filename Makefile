@@ -620,6 +620,7 @@ paper-compile: orius-monograph-assets theorem-promotion-verify utility-preservin
 	test -f orius_book.pdf
 	test -f orius_book.log
 	cp orius_book.pdf paper/paper.pdf
+	cp orius_book.pdf paper/orius_book.pdf
 	cp orius_book.log paper/paper.log
 	cp orius_book.pdf paper.pdf
 	test -f paper.pdf

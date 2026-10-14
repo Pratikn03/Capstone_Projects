@@ -1,10 +1,10 @@
 # Table/Result Integrity Audit
 
-- Generated: `2026-10-14T03:03:51.102551+00:00`
+- Generated: `2026-10-14T05:04:09.553387+00:00`
 - Passes: `True`
 - Blocking findings: `0`
-- Warning findings: `289`
-- Scanned: `{'csv': 286, 'json': 194, 'tex': 88, 'duckdb': 0}`
+- Warning findings: `287`
+- Scanned: `{'csv': 282, 'json': 193, 'tex': 88, 'duckdb': 0}`
 
 ## Top Warnings
 - `paper/assets/tables/tbl02_ablations.csv` `true_soc_violation_rate_wilcoxon_stat`: all_zero_metric_review (9 numeric values are all zero.)

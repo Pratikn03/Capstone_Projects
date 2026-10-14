@@ -25,11 +25,11 @@ T10/T11 sandwich & Observation-only mandatory release has a Bayes ambiguity-risk
 T5 & A certificate is valid for a finite horizon when the reachable tube remains inside the safe set and no invalidating event occurs. & A1--A5 plus reachable-tube containment & Temporal-theorem code, horizon artifact, and result card.\\
 T8 & ORIUS weakly dominates blind persistence in true-state violations while retaining a stated fraction of useful work under the same fault trace. & A1--A7 plus paired-trace comparability & Graceful-degradation module, policy comparison artifact, and result card.\\
 T9/T10 & Empty common safe core implies mandatory-release impossibility; two indistinguishable boundary states imply the TV lower bound. & Mandatory release, disjoint safe sets, two-state boundary model & Ambiguity and boundary-lower-bound modules plus result cards.\\
-T11Byz/Tstale & Robust reliability aggregation is valid for $b<n/2$ trimmed channels; stale uncertainty grows under bounded drift. & Honest-channel interval bound; bounded latent drift & Robust reliability and stale-uncertainty modules plus result cards.\\
-L1--L4/minimax/sensor & Runtime monotonicity lemmas, scoped finite ambiguity minimax, and sensor necessity under adapter semantics. & Narrow runtime-law assumptions and finite ambiguity class & Runtime-law, minimax, and sensor-necessity modules plus result cards.\\
-Theorem~F (\texttt{TheoremsFGH.lean}) & Recursive Terminal Safe-Stop Contraction: under indefinite telemetry blackout ($w_t=0$), fallback $\pi_{\text{stop}}$ contracts positive barrier violation monotonically into $\mathcal{Z}_{\text{stop}}$ in $K^*\le \lceil V_0/\delta_{\text{brake}}\rceil$ steps. & A1, A4, A8 plus positive braking slack $\delta_{\text{brake}}>0$ & Lean~4 proof \texttt{theorem\_f\_terminal\_safe\_stop\_contraction} in \texttt{formal/Orius/TheoremsFGH.lean} and \texttt{crash\_free\_governor.py}.\\
-Theorem~G (\texttt{TheoremsFGH.lean}) & Anytime-Valid Martingale Detection \& Kinematic Immunity: trimmed-median aggregation filters $f<m/2$ Byzantine channels, Ville supermartingale $E_t$ bounds false-alarm probability $\le\alpha$, and worst-case projection $\Pi_{\mathcal{A}_{\text{TV-SSK}}(U_t)}$ guarantees deterministic zero violations on $x_t\in U_t$. & A1--A7, Byzantine bound $f<m/2$, and $x_t\in U_t$ & Lean~4 proofs \texttt{theorem\_g\_ville\_bounded\_false\_alarm\_step} and \texttt{theorem\_g\_byzantine\_trimmed\_mean\_bound} in \texttt{formal/Orius/TheoremsFGH.lean}.\\
-Theorem~H (\texttt{TheoremsFGH.lean}) & 7-Domain Structural Transfer \& Liquidity Floor Viability: under $L_{\text{depth}}(w_t)\ge L_{\min}>0$, the financial L2 barrier is non-singular and reaches flat inventory $I_t=0\in\mathcal{Z}_{\text{stop}}$ before drawdown breach. & T11 obligations plus liquidity floor $L_{\text{depth}}\ge L_{\min}>0$ & Lean~4 proof \texttt{theorem\_h\_liquidity\_floor\_safe\_liquidation} in \texttt{formal/Orius/TheoremsFGH.lean} and 7-domain crucible.\\
+T11Byz/\allowbreak Tstale & Robust reliability aggregation is valid for $b<n/2$ trimmed channels; stale uncertainty grows under bounded drift. & Honest-channel interval bound; bounded latent drift & Robust reliability and stale-uncertainty modules plus result cards.\\
+L1--L4/\allowbreak minimax/\allowbreak sensor & Runtime monotonicity lemmas, scoped finite ambiguity minimax, and sensor necessity under adapter semantics. & Narrow runtime-law assumptions and finite ambiguity class & Runtime-law, minimax, and sensor-necessity modules plus result cards.\\
+Theorem~F (\texttt{Theorems\allowbreak FGH.lean}) & Recursive Terminal Safe-Stop Contraction: under indefinite telemetry blackout ($w_t=0$), fallback $\pi_{\text{stop}}$ contracts positive barrier violation monotonically into $\mathcal{Z}_{\text{stop}}$ in $K^*\le \lceil V_0/\delta_{\text{brake}}\rceil$ steps. & A1, A4, A8 plus positive braking slack $\delta_{\text{brake}}>0$ & Lean~4 proof \texttt{theorem\_\allowbreak f\_\allowbreak terminal\_\allowbreak safe\_\allowbreak stop\_\allowbreak contraction} in \texttt{formal/\allowbreak Orius/\allowbreak TheoremsFGH.lean} and \texttt{crash\_\allowbreak free\_\allowbreak governor.py}.\\
+Theorem~G (\texttt{Theorems\allowbreak FGH.lean}) & Anytime-Valid Martingale Detection \& Kinematic Immunity: trimmed-median aggregation filters $f<m/2$ Byzantine channels, Ville supermartingale $E_t$ bounds false-alarm probability $\le\alpha$, and worst-case projection $\Pi_{\mathcal{A}_{\text{TV-SSK}}(U_t)}$ guarantees deterministic zero violations on $x_t\in U_t$. & A1--A7, Byzantine bound $f<m/2$, and $x_t\in U_t$ & Lean~4 proofs \texttt{theorem\_\allowbreak g\_\allowbreak ville\_\allowbreak bounded\_\allowbreak false\_\allowbreak alarm\_\allowbreak step} and \texttt{theorem\_\allowbreak g\_\allowbreak byzantine\_\allowbreak trimmed\_\allowbreak mean\_\allowbreak bound} in \texttt{formal/\allowbreak Orius/\allowbreak TheoremsFGH.lean}.\\
+Theorem~H (\texttt{Theorems\allowbreak FGH.lean}) & 7-Domain Structural Transfer \& Liquidity Floor Viability: under $L_{\text{depth}}(w_t)\ge L_{\min}>0$, the financial L2 barrier is non-singular and reaches flat inventory $I_t=0\in\mathcal{Z}_{\text{stop}}$ before drawdown breach. & T11 obligations plus liquidity floor $L_{\text{depth}}\ge L_{\min}>0$ & Lean~4 proof \texttt{theorem\_\allowbreak h\_\allowbreak liquidity\_\allowbreak floor\_\allowbreak safe\_\allowbreak liquidation} in \texttt{formal/\allowbreak Orius/\allowbreak TheoremsFGH.lean} and 7-domain crucible.\\
 \bottomrule
 \end{longtable}
 
@@ -104,19 +104,19 @@ by $\mathbb{P}(X_t^\star\notin\mathcal{X}_t)\le\alpha$.  Hence
 $\operatorname{TSVR}_{\mathrm{ORIUS}}\le\alpha$, and exact coverage gives zero
 one-step true-state violation probability.
 
-\paragraph{Lean~4 mechanization of K-Bound Theorems~F, G, and H (\texttt{formal/Orius/TheoremsFGH.lean}).}
+\paragraph{Lean~4 mechanization of K-Bound Theorems~F, G, and H (\texttt{formal/\allowbreak Orius/\allowbreak TheoremsFGH.lean}).}
 Chapter~13 extends the base theorem ladder with three machine-checked theorems in
-\texttt{formal/Orius/TheoremsFGH.lean} (which re-exports and extends the core declarations
-in \texttt{formal/Orius/TheoremsAE.lean} with zero \texttt{sorry} axioms). Theorem~F
-(\texttt{theorem\_f\_terminal\_safe\_stop\_contraction}) proves by induction on step $k$ that
+\texttt{formal/\allowbreak Orius/\allowbreak TheoremsFGH.lean} (which re-exports and extends the core declarations
+in \texttt{formal/\allowbreak Orius/\allowbreak TheoremsAE.lean} with zero \texttt{sorry} axioms). Theorem~F
+(\texttt{theorem\_\allowbreak f\_\allowbreak terminal\_\allowbreak safe\_\allowbreak stop\_\allowbreak contraction}) proves by induction on step $k$ that
 a positive braking margin $\delta_{\text{brake}}>0$ drives the barrier deficit $V_k=\max(0,-h(x_k))$
 to zero in at most $\lceil V_0/\delta_{\text{brake}}\rceil$ steps and maintains $V_k=0$ inside
 $\mathcal{Z}_{\text{stop}}$ for all subsequent steps during an indefinite blackout. Theorem~G
-(\texttt{theorem\_g\_ville\_bounded\_false\_alarm\_step} and \texttt{theorem\_g\_byzantine\_trimmed\_mean\_bound})
+(\texttt{theorem\_\allowbreak g\_\allowbreak ville\_\allowbreak bounded\_\allowbreak false\_\allowbreak alarm\_\allowbreak step} and \texttt{theorem\_\allowbreak g\_\allowbreak byzantine\_\allowbreak trimmed\_\allowbreak mean\_\allowbreak bound})
 separates the probabilistic anytime-valid Ville betting martingale $E_t$ (which detects covariate shift
 with false-alarm probability $\le\alpha$) from the deterministic worst-case kinematic projection
 $\Pi_{\mathcal{A}_{\text{TV-SSK}}(U_t)}$ (which enforces $h(f(x,u_{\text{safe}}))\ge (1-\gamma)h(x)$
-for all $x\in U_t$). Theorem~H (\texttt{theorem\_h\_liquidity\_floor\_safe\_liquidation}) proves
+for all $x\in U_t$). Theorem~H (\texttt{theorem\_\allowbreak h\_\allowbreak liquidity\_\allowbreak floor\_\allowbreak safe\_\allowbreak liquidation}) proves
 that under the explicit liquidity floor $L_{\text{depth}}(w_t)\ge L_{\min}>0$, the financial L2
 drawdown barrier is bounded away from division-by-zero singularity and permits orderly liquidation
 to $I_t=0\in\mathcal{Z}_{\text{stop}}$ before breaching $DD_{\max}$.

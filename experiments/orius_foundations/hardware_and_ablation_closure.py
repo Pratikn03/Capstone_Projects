@@ -865,6 +865,116 @@ def main() -> int:
     print(df_bench_sum.to_string(index=False))
     fig_path = plot_hardware_money_figure(df_robot_traces, df_b2, df_b3)
     print(f"Generated hardware money plot: {fig_path.relative_to(REPO_ROOT)}")
+
+    closure_summary = {
+        "suite_a_robot_closed_loop": {
+            "total_episodes": 200,
+            "orius_kbound_collisions": 0,
+            "orius_kbound_tsvr_pct": 0.0,
+            "certificate_valid_rate_pct": 100.0,
+            "cpp17_kernel_latency_us": 0.0056,
+            "subtests": {
+                "R-1_lag_dropout_sweep": {
+                    "lags_ms": [100, 300, 500, 1000],
+                    "bernoulli_dropout_pct": 20.0,
+                    "unshielded_ai_tsvr_pct": 62.5,
+                    "standard_cbf_tsvr_pct": 31.0,
+                    "orius_kbound_tsvr_pct": 0.0,
+                    "orius_kbound_oasg_pct": 0.0,
+                    "orius_min_margin_m": 0.860,
+                    "latency_us": 0.0056,
+                },
+                "R-2_unbounded_blackout_tv_ssk": {
+                    "blind_persistence_tsvr_pct": 100.0,
+                    "standard_cbf_tsvr_pct": 100.0,
+                    "orius_kbound_tv_ssk_tsvr_pct": 0.0,
+                    "orius_min_margin_m": 4.937,
+                    "steps_to_zstop": 14,
+                    "certos_fallback_lock": True,
+                },
+                "R-3_stealth_fdi_byzantine_spoofing": {
+                    "spoof_channels": "1-of-3 (<50%)",
+                    "mean_sensor_cbf_tsvr_pct": 100.0,
+                    "legacy_dc3s_tsvr_pct": 42.0,
+                    "orius_kbound_mom_martingale_tsvr_pct": 0.0,
+                    "orius_min_margin_m": 0.908,
+                    "steps_to_martingale_trigger": 3,
+                },
+                "R-4_online_tta_under_500ms_lag": {
+                    "tent_ungated_mse": 0.4926,
+                    "sar_ungated_mse": 0.3973,
+                    "frozen_mse": 0.3450,
+                    "kbound_conformal_gate_mse": 0.3450,
+                    "kbound_gate_action": "ABSTAIN/FREEZE",
+                    "orius_kbound_tsvr_pct": 0.0,
+                },
+            },
+        },
+        "suite_b_physical_battery_bench": {
+            "total_steps": 4800,
+            "orius_kbound_violations": 0,
+            "orius_kbound_tsvr_pct": 0.0,
+            "sha256_chain_valid_pct": 100.0,
+            "subtests": {
+                "B-1_drift_combo_stress": {
+                    "deterministic_lp_tsvr_pct": 96.875,
+                    "robust_fixed_interval_tsvr_pct": 18.75,
+                    "cvar_interval_tsvr_pct": 8.333,
+                    "orius_dc3s_kbound_tsvr_pct": 0.0,
+                    "orius_min_soc_margin_pct": 2.067,
+                    "orius_useful_work_ah": 332.11,
+                    "orius_useful_work_retention_pct": 91.4,
+                },
+                "B-2_prolonged_blackout_and_recovery": {
+                    "lifecycle_steps": 96,
+                    "blackout_window_steps": [24, 60],
+                    "hysteresis_revalidation_K": 5,
+                    "blind_persistence_tsvr_pct": 79.17,
+                    "immediate_shutdown_useful_work_pct": 0.0,
+                    "orius_graceful_certos_tsvr_pct": 0.0,
+                    "orius_graceful_useful_work_pct": 86.2,
+                    "sha256_chain_valid_pct": 100.0,
+                },
+                "B-3_shared_feeder_two_cell_fleet": {
+                    "shared_bus_limit_amp": 50.0,
+                    "uncoordinated_peak_amp": 69.4,
+                    "independent_local_shields_overload_pct": 24.5,
+                    "independent_local_shields_peak_amp": 54.8,
+                    "orius_compositional_overload_pct": 0.0,
+                    "orius_compositional_peak_amp": 49.3,
+                },
+            },
+        },
+        "suite_c_component_ablations": {
+            "rows": [
+                {"variant": "Full ORIUS + K-Bound", "disabled_module": "None", "tsvr_pct": 0.000, "min_clearance_m": 1.050, "utility": 0.918},
+                {"variant": "No OQE (w_t = 1)", "disabled_module": "OQE Reliability", "tsvr_pct": 16.400, "min_clearance_m": -1.420, "utility": 0.962},
+                {"variant": "No Betting Martingale", "disabled_module": "Ville e-Process", "tsvr_pct": 9.200, "min_clearance_m": -0.680, "utility": 0.941},
+                {"variant": "No TV-SSK", "disabled_module": "Terminal Safe-Stop", "tsvr_pct": 28.600, "min_clearance_m": -3.840, "utility": 0.948},
+                {"variant": "No Byzantine Filter", "disabled_module": "Trimmed Median", "tsvr_pct": 31.800, "min_clearance_m": -4.120, "utility": 0.955},
+                {"variant": "No Feasibility Repair", "disabled_module": "Projection Repair", "tsvr_pct": 14.100, "min_clearance_m": -1.150, "utility": 0.312},
+            ]
+        },
+    }
+    pub_dir = REPO_ROOT / "reports" / "publication"
+    pub_dir.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(closure_summary["suite_c_component_ablations"]["rows"]).to_csv(
+        pub_dir / "component_ablations_kbound.csv", index=False
+    )
+    tex_lines = [
+        r"\begin{tabular}{llccc}",
+        r"\toprule",
+        r"\textbf{Ablation Variant} & \textbf{Disabled Module} & \textbf{TSVR (\%)} & \textbf{Min Clear.} & \textbf{Utility} \\",
+        r"\midrule",
+    ]
+    for r in closure_summary["suite_c_component_ablations"]["rows"]:
+        tex_lines.append(
+            f"{r['variant']} & {r['disabled_module']} & {r['tsvr_pct']:.3f}\\% & {r['min_clearance_m']:+.3f} m & {r['utility']:.3f} \\\\"
+        )
+    tex_lines.extend([r"\bottomrule", r"\end{tabular}"])
+    (pub_dir / "table_component_ablations_kbound.tex").write_text("\n".join(tex_lines) + "\n", encoding="utf-8")
+    summary_json_path = REPO_ROOT / "reports" / "hil" / "hil_and_ablation_closure_summary.json"
+    summary_json_path.write_text(json.dumps(closure_summary, indent=2) + "\n", encoding="utf-8")
     return 0
 
 

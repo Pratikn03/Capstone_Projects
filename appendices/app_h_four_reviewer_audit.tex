@@ -20,7 +20,7 @@ Lean~4 mechanized Theorems~F--H (\texttt{formal/Orius/TheoremsFGH.lean}):
 \item \textbf{flagship corollary}: T3b,
 \item \textbf{flagship lemma}: L1--L4,
 \item \textbf{scoped flagship theorem}: T\textsubscript{minimax}, T\textsubscript{sensor},
-\item \textbf{Lean~4 K-Bound flagship theorems (Ch.~13)}: Theorem~F (\texttt{theorem\_f\_terminal\_safe\_stop\_contraction}), Theorem~G (\texttt{theorem\_g\_ville\_bounded\_false\_alarm\_step} \& \texttt{theorem\_g\_byzantine\_trimmed\_mean\_bound}), and Theorem~H (\texttt{theorem\_h\_liquidity\_floor\_safe\_liquidation}).
+\item \textbf{Lean~4 K-Bound flagship theorems (Ch.~13)}: Theorem~F (\texttt{theorem\_\allowbreak f\_\allowbreak terminal\_\allowbreak safe\_\allowbreak stop\_\allowbreak contraction}), Theorem~G (\texttt{theorem\_\allowbreak g\_\allowbreak ville\_\allowbreak bounded\_\allowbreak false\_\allowbreak alarm\_\allowbreak step} \& \texttt{theorem\_\allowbreak g\_\allowbreak byzantine\_\allowbreak trimmed\_\allowbreak mean\_\allowbreak bound}), and Theorem~H (\texttt{theorem\_\allowbreak h\_\allowbreak liquidity\_\allowbreak floor\_\allowbreak safe\_\allowbreak liquidation}).
 \end{itemize}
 
 All findings must terminate in exactly one disposition:
@@ -71,7 +71,7 @@ All findings must terminate in exactly one disposition:
 \midrule
 \endhead
 V1 & critical & \texttt{review-compile} and \texttt{paper-compile} failed open on LaTeX errors & fixed in code/tests & removed fail-open shell prefixes in the canonical \texttt{Makefile} build path \\
-V2 & critical & Base \texttt{risk\_bounds.py} claimed a Ville trajectory proof not implemented in the base CPU module & fixed in code/tests & scoped base \texttt{T\_trajectory\_PAC} (\texttt{risk\_bounds.py}) to its executable Bonferroni union bound (Chapters~1--12), while implementing and Lean~4-verifying the anytime-valid Ville betting supermartingale $E_t$ separately as \textbf{Theorem~G} in \texttt{crash\_free\_governor.py} and \texttt{formal/Orius/TheoremsFGH.lean} (Chapter~13) \\
+V2 & critical & Base \texttt{risk\_bounds.py} claimed a Ville trajectory proof not implemented in the base CPU module & fixed in code/tests & scoped base \texttt{T\_\allowbreak trajectory\_\allowbreak PAC} (\texttt{risk\_\allowbreak bounds.py}) to its executable Bonferroni union bound (Chapters~1--12), while implementing and Lean~4-verifying the anytime-valid Ville betting supermartingale $E_t$ separately as \textbf{Theorem~G} in \texttt{crash\_\allowbreak free\_\allowbreak governor.py} and \texttt{formal/\allowbreak Orius/\allowbreak TheoremsFGH.lean} (Chapter~13) \\
 V3 & critical & The integrated theorem gate presented a traceability check as a proof-verification gate & fixed in code/tests & relabeled the gate as a traceability-release gate and preserved proof rigor in the active audit instead \\
 V4 & critical & L1/L2 extension laws were stronger than the repo can defend today & narrowed in prose/registers & Appendix~C, Appendix~M, the law helpers, and the active audit now mark them as stylized/proxy surfaces, not closed converses \\
 V5 & high & T\_minimax and T\_sensor inherited the open L1/L2 bridge but were written as defended converses & fixed in code/tests & theorem helpers now mark the converse gap as open; Appendix~C and Appendix~M preserve the narrower posture \\

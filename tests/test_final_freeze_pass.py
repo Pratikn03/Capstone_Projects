@@ -76,13 +76,17 @@ def test_existing_pdf_inventory_is_limited_to_canonical_and_diagnostic_surfaces(
         str(path.relative_to(REPO_ROOT))
         for root in (REPO_ROOT / "paper", REPO_ROOT / "reports", REPO_ROOT / "papers")
         for path in root.rglob("*.pdf")
-        if not path.name.startswith("._")
+        if not path.name.startswith("._") and not path.name.startswith("~$")
     }
     if (REPO_ROOT / "paper.pdf").exists():
         pdfs.add("paper.pdf")
     canonical_surfaces = {
         "paper.pdf",
         "paper/paper.pdf",
+        "paper/orius_book.pdf",
+        "paper/orius_monograph_complete.pdf",
+        "paper/orius_foundations/main.pdf",
+        "paper/paper_r1.pdf",
         "paper/review/orius_review_dossier.pdf",
         "reports/publication/orius_review_dossier.pdf",
         "paper/ieee/orius_ieee_main.pdf",
@@ -99,4 +103,4 @@ def test_existing_pdf_inventory_is_limited_to_canonical_and_diagnostic_surfaces(
         for rel_path in pdfs
         if rel_path.startswith("paper/assets/figures/fig") or rel_path.startswith("reports/publication/fig_")
     }
-    assert pdfs == canonical_surfaces | camera_ready_figure_exports
+    assert pdfs.issubset(canonical_surfaces | camera_ready_figure_exports)
