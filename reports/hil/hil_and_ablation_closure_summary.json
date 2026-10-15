@@ -1,0 +1,134 @@
+{
+  "suite_a_robot_closed_loop": {
+    "total_episodes": 200,
+    "orius_kbound_collisions": 0,
+    "orius_kbound_tsvr_pct": 0.0,
+    "certificate_valid_rate_pct": 100.0,
+    "cpp17_kernel_latency_us": 0.0056,
+    "subtests": {
+      "R-1_lag_dropout_sweep": {
+        "lags_ms": [
+          100,
+          300,
+          500,
+          1000
+        ],
+        "bernoulli_dropout_pct": 20.0,
+        "unshielded_ai_tsvr_pct": 62.5,
+        "standard_cbf_tsvr_pct": 31.0,
+        "orius_kbound_tsvr_pct": 0.0,
+        "orius_kbound_oasg_pct": 0.0,
+        "orius_min_margin_m": 0.86,
+        "latency_us": 0.0056
+      },
+      "R-2_unbounded_blackout_tv_ssk": {
+        "blind_persistence_tsvr_pct": 100.0,
+        "standard_cbf_tsvr_pct": 100.0,
+        "orius_kbound_tv_ssk_tsvr_pct": 0.0,
+        "orius_min_margin_m": 4.937,
+        "steps_to_zstop": 14,
+        "certos_fallback_lock": true
+      },
+      "R-3_stealth_fdi_byzantine_spoofing": {
+        "spoof_channels": "1-of-3 (<50%)",
+        "mean_sensor_cbf_tsvr_pct": 100.0,
+        "legacy_dc3s_tsvr_pct": 42.0,
+        "orius_kbound_mom_martingale_tsvr_pct": 0.0,
+        "orius_min_margin_m": 0.908,
+        "steps_to_martingale_trigger": 3
+      },
+      "R-4_online_tta_under_500ms_lag": {
+        "tent_ungated_mse": 0.4926,
+        "sar_ungated_mse": 0.3973,
+        "frozen_mse": 0.345,
+        "kbound_conformal_gate_mse": 0.345,
+        "kbound_gate_action": "ABSTAIN/FREEZE",
+        "orius_kbound_tsvr_pct": 0.0
+      }
+    }
+  },
+  "suite_b_physical_battery_bench": {
+    "total_steps": 4800,
+    "orius_kbound_violations": 0,
+    "orius_kbound_tsvr_pct": 0.0,
+    "sha256_chain_valid_pct": 100.0,
+    "subtests": {
+      "B-1_drift_combo_stress": {
+        "deterministic_lp_tsvr_pct": 96.875,
+        "robust_fixed_interval_tsvr_pct": 18.75,
+        "cvar_interval_tsvr_pct": 8.333,
+        "orius_dc3s_kbound_tsvr_pct": 0.0,
+        "orius_min_soc_margin_pct": 2.067,
+        "orius_useful_work_ah": 332.11,
+        "orius_useful_work_retention_pct": 91.4
+      },
+      "B-2_prolonged_blackout_and_recovery": {
+        "lifecycle_steps": 96,
+        "blackout_window_steps": [
+          24,
+          60
+        ],
+        "hysteresis_revalidation_K": 5,
+        "blind_persistence_tsvr_pct": 79.17,
+        "immediate_shutdown_useful_work_pct": 0.0,
+        "orius_graceful_certos_tsvr_pct": 0.0,
+        "orius_graceful_useful_work_pct": 86.2,
+        "sha256_chain_valid_pct": 100.0
+      },
+      "B-3_shared_feeder_two_cell_fleet": {
+        "shared_bus_limit_amp": 50.0,
+        "uncoordinated_peak_amp": 69.4,
+        "independent_local_shields_overload_pct": 24.5,
+        "independent_local_shields_peak_amp": 54.8,
+        "orius_compositional_overload_pct": 0.0,
+        "orius_compositional_peak_amp": 49.3
+      }
+    }
+  },
+  "suite_c_component_ablations": {
+    "rows": [
+      {
+        "variant": "Full ORIUS + K-Bound",
+        "disabled_module": "None",
+        "tsvr_pct": 0.0,
+        "min_clearance_m": 1.05,
+        "utility": 0.918
+      },
+      {
+        "variant": "No OQE (w_t = 1)",
+        "disabled_module": "OQE Reliability",
+        "tsvr_pct": 16.4,
+        "min_clearance_m": -1.42,
+        "utility": 0.962
+      },
+      {
+        "variant": "No Betting Martingale",
+        "disabled_module": "Ville e-Process",
+        "tsvr_pct": 9.2,
+        "min_clearance_m": -0.68,
+        "utility": 0.941
+      },
+      {
+        "variant": "No TV-SSK",
+        "disabled_module": "Terminal Safe-Stop",
+        "tsvr_pct": 28.6,
+        "min_clearance_m": -3.84,
+        "utility": 0.948
+      },
+      {
+        "variant": "No Byzantine Filter",
+        "disabled_module": "Trimmed Median",
+        "tsvr_pct": 31.8,
+        "min_clearance_m": -4.12,
+        "utility": 0.955
+      },
+      {
+        "variant": "No Feasibility Repair",
+        "disabled_module": "Projection Repair",
+        "tsvr_pct": 14.1,
+        "min_clearance_m": -1.15,
+        "utility": 0.312
+      }
+    ]
+  }
+}
