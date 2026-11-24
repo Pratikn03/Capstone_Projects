@@ -1,0 +1,119 @@
+[
+  {
+    "id": "Theorem A",
+    "title": "Viability-Preserving Action Release Feasibility",
+    "scope": "Dynamical Safety Invariance",
+    "lean_file": "formal/Orius/TheoremsAE.lean",
+    "lean_symbol": "theorem_a_viability_preservation",
+    "status": "Mechanized in Lean 4 (0 sorry)",
+    "content": "Proves that if true state x in U and action a in viableActionSet(U), then next state is safe and viable."
+  },
+  {
+    "id": "Theorem B",
+    "title": "Minimax Information Lower Bound (Fallback Necessity)",
+    "scope": "Information Theory / Minimax Estimation",
+    "lean_file": "formal/Orius/Program.lean & App. C",
+    "lean_symbol": "t_minimax_oasg_tradeoff_kernel",
+    "status": "Analytical Proof in App. C + Lean Kernel Bridge",
+    "content": "Proves under observation ambiguity radius delta > 0, any mandatory-release controller has inf_pi sup_P P(unsafe) >= 1/2 e^{-2 n D_KL}."
+  },
+  {
+    "id": "Theorem C",
+    "title": "Trajectory Safety Achievability (PAC Certificate)",
+    "scope": "Non-Asymptotic Statistical Safety",
+    "lean_file": "formal/Orius/Program.lean & App. C",
+    "lean_symbol": "t_trajectory_pac_certificate_kernel",
+    "status": "Analytical Proof in App. C + Lean Kernel Bridge",
+    "content": "Proves under (1-alpha) one-step coverage and Bonferroni/martingale rollout, trajectory violation is bounded by delta_T <= T * alpha."
+  },
+  {
+    "id": "Theorem D",
+    "title": "Safety-Utility Regret Pareto Frontier",
+    "scope": "Optimization & Regret Bounds",
+    "lean_file": "formal/Orius/Program.lean & App. C",
+    "lean_symbol": "l4_sandwich_bound_kernel",
+    "status": "Analytical Proof in App. C + Lean Kernel Bridge",
+    "content": "Characterizes the Pareto regret sandwich bound R_safe <= R_nominal + O(alpha * T) with certified zero true-state boundary penetration."
+  },
+  {
+    "id": "Theorem E",
+    "title": "Universal Structural Transfer Invariance",
+    "scope": "Universal Adapter Foundations",
+    "lean_file": "formal/Orius/TheoremsAE.lean & T2T4T11.lean",
+    "lean_symbol": "theorem_e_universal_transfer & t11_typed_transfer_deterministic",
+    "status": "Mechanized in Lean 4 (0 sorry)",
+    "content": "Formalizes the 4 essential domain adapter obligations (containment, safe core, fallback admissibility, causal certificate) yielding provable safety on any plant."
+  },
+  {
+    "id": "Theorem F",
+    "title": "Terminal Safe-Stop Viability (TV-SSK) under Unbounded Blackouts",
+    "scope": "Unbounded Delay & Zero-Energy Equilibrium",
+    "lean_file": "formal/Orius/TheoremsAE.lean & TheoremsFGH.lean",
+    "lean_symbol": "theorem_f_terminal_safe_stop_invariance & theorem_f_absorbing_equilibrium_forever",
+    "status": "Mechanized in Lean 4 (0 sorry)",
+    "content": "Proves that from any state in zero_energy_safe, fallback rollout preserves safety for all arbitrary duration k: Nat."
+  },
+  {
+    "id": "Theorem G",
+    "title": "Arbitrary AI Hallucination & Non-Exchangeable Shift Immunity",
+    "scope": "Supermartingale Testing & Byzantine Resilience",
+    "lean_file": "formal/Orius/TheoremsAE.lean & Program.lean",
+    "lean_symbol": "theorem_g_arbitrary_ai_hallucination_immunity & t11_byzantine_trimmed_mean_kernel",
+    "status": "Mechanized in Lean 4 (0 sorry)",
+    "content": "Proves that under governor projection G.project(pi_AI(y_obs)), true safety is preserved for ANY unconstrained AI policy pi_AI and Ville betting martingale detects arbitrary shift."
+  },
+  {
+    "id": "Theorem H",
+    "title": "Dynamic Liquidation Viability under Liquidity Floor",
+    "scope": "Extended Non-Physical / Market Execution",
+    "lean_file": "formal/Orius/TheoremsFGH.lean",
+    "lean_symbol": "theorem_h_liquidity_floor_safe_liquidation & liquidity_floor_prevents_barrier_singularity",
+    "status": "Mechanized in Lean 4 (0 sorry) [Demoted to Extended Remark]",
+    "content": "Proves under explicit L2 liquidity floor L_depth >= L_min > 0, Almgren-Chriss barrier is non-singular and unwinds inventory to flat with 0% solvency breach."
+  },
+  {
+    "id": "KBound Thm 1 & 2",
+    "title": "K-Bound Population Knowability Frontier",
+    "scope": "Epistemic Decision Mind",
+    "lean_file": "formal/Orius/KBoundMind.lean",
+    "lean_symbol": "frontier_positive_sound, frontier_negative_sound, frontier_band_zero_witness, frontier_open_band_opposite_witnesses",
+    "status": "Mechanized in Lean 4 (0 sorry)",
+    "content": "Proves M > beta => ADAPT is sound; M < -beta => FREEZE is sound; |M| <= beta => zero-benefit witness; |M| < beta => opposite-sign witnesses exist."
+  },
+  {
+    "id": "KBound Cor 1",
+    "title": "Matched-Evidence Abstention Lower Bound",
+    "scope": "Epistemic Risk Floor",
+    "lean_file": "formal/Orius/KBoundMind.lean",
+    "lean_symbol": "matched_evidence_abstention_lower_bound",
+    "status": "Mechanized in Lean 4 (0 sorry)",
+    "content": "Proves that under opposite-sign matched evidence, any algorithm controlling false-adapt and false-freeze to alpha MUST abstain with probability >= 1 - 2*alpha."
+  },
+  {
+    "id": "KBound Thm 3",
+    "title": "Exact Fibre-Wise Audit Floor",
+    "scope": "Conformal Auditability",
+    "lean_file": "formal/Orius/KBoundMind.lean",
+    "lean_symbol": "fibre_audit_floor_ge_beta",
+    "status": "Mechanized in Lean 4 (0 sorry)",
+    "content": "Proves that any valid label-free audit bound beta_hat covering both +/- beta must satisfy beta_hat >= beta."
+  },
+  {
+    "id": "KBound Prop 2",
+    "title": "Empirical Conformal Interval Decision Containment",
+    "scope": "Finite-Sample Certificate Gate",
+    "lean_file": "formal/Orius/KBoundMind.lean",
+    "lean_symbol": "cert_false_adapt_sound & cert_false_freeze_sound",
+    "status": "Mechanized in Lean 4 (0 sorry)",
+    "content": "Proves on the conformal coverage event |delta_hat - delta| <= eps, L = delta_hat - eps > 0 guarantees delta > 0, and U < 0 guarantees delta < 0."
+  },
+  {
+    "id": "KBound-ORIUS Bridge",
+    "title": "Epistemic Mind to Physical Viability Coupling",
+    "scope": "Unified Architecture Contract",
+    "lean_file": "formal/Orius/KBoundMind.lean",
+    "lean_symbol": "kbound_orius_epistemic_physical_coupling",
+    "status": "Mechanized in Lean 4 (0 sorry)",
+    "content": "Proves that every K-Bound epistemic decision (ADAPT, FREEZE, ABSTAIN) maps deterministically to a verified ORIUS physical viability mode with tube inflation."
+  }
+]
