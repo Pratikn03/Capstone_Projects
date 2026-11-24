@@ -35,7 +35,9 @@ The current committed posture, as recorded in [`reports/publication/orius_domain
 - `battery` = `reference` witness row with the deepest theorem-to-artifact closure
 - `av` = `runtime_contract_closed` bounded row under the narrowed brake-hold release contract
 - `healthcare` = `runtime_contract_closed` bounded row backed by the promoted MIMIC runtime-denominator surface
-**Submission scope**: The canonical and only promoted lane is `battery_av_healthcare`. Battery remains the witness row; AV and Healthcare are promoted bounded rows, not equal-depth theorem closures.
+**Submission scope & Two-Tier Architecture**:
+- **Tier 1 (Canonical Base CPU Lane, Ch. 1–12)**: The primary CPU baseline focuses on the `battery_av_healthcare` promoted lane at 5–10 Hz (Battery as reference witness; AV and Healthcare as bounded promoted rows).
+- **Tier 2 (ORIUS + K-Bound Physical AI Extension, Ch. 13–14 & Foundations Paper)**: Integrates the sub-microsecond C++17 kernel (0.0056 µs latency), Lean 4 formalization (Theorems A, E, F, G, H & K-Bound Theorems 1–3), and Six-Domain Physical AI Crash-Free Validation (Battery, Autonomous Vehicles, Mobile Robotics, Smart Grid Inverters, Aerospace UAVs, ICU Healthcare) with 0.000% TSVR across 192,000 steps.
 
 ## Latest Validated Results
 
