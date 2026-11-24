@@ -96,7 +96,7 @@ An Observation Quality Estimator (OQE) computes a health metric $w_t \in [0, 1]$
 Let $\mathcal{V} \subseteq \mathcal{S}_d$ be a non-empty viable domain with safe fallback action $u_{\mathrm{fb}} \in \mathcal{U}$ satisfying $\forall x \in \mathcal{V}, \forall w \in \mathcal{W}: f(x, u_{\mathrm{fb}}) + w \in \mathcal{V}$.
 For any non-empty uncertainty set $\mathcal{X}_t \subseteq \mathcal{V}$, define the certified action release set:
 \begin{equation}
-\mathcal{U}_{\mathrm{safe}}(\mathcal{X}_t) \triangleq \left\{ u \in \mathcal{U} \;\middle|\; \forall x \in \mathcal{X}_t, \, \forall w \in \mathcal{W}: f(x, u) + w \in \mathcal{V} \right\}.
+\mathcal{U}_{\mathrm{safe}}(\mathcal{X}_t) \triangleq \{ u \in \mathcal{U} \mid \forall x \in \mathcal{X}_t, \forall w \in \mathcal{W}: f(x, u) + w \in \mathcal{V} \}.
 \end{equation}
 Then:
 \begin{enumerate}
@@ -169,6 +169,7 @@ We evaluated ORIUS alongside five competing safety paradigms over 1,000 closed-l
 \caption{Baseline Performance Comparison under Observation Degradation}
 \label{tab:baselines}
 \centering
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Controller} & \textbf{TSVR (\%)} & \textbf{Utility} & \textbf{Interv. (\%)} & \textbf{Latency $p_{95}$ ($\mu\text{s}$)} \\
@@ -180,7 +181,8 @@ Always Fallback & 0.0\% & 0.083 & 0.0\% & 0.8 \\
 \textbf{ORIUS (DC3S)} & \textbf{0.0\%} & \textbf{0.915} & 40.0\% & 804.7 \\
 Ablation (Uncalib.) & 0.0\% & 0.945 & 0.0\% & 808.2 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 As reported in Table~\ref{tab:baselines}, both Fixed-Margin CBF and Tube-MPC suffer near-100\% true-state violation rates because they evaluate barriers on delayed or corrupted observations. ORIUS achieves \textbf{0.00\% violations} while preserving \textbf{91.5\% utility}, vastly outperforming the \textbf{8.3\% utility} of naive fallback.
@@ -226,6 +228,7 @@ To substantiate Theorem E's universal claim, we evaluated the identical ORIUS ke
 \caption{Cross-Domain Physical Synthesis Results}
 \label{tab:cross_domain}
 \centering
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Physical Plant} & \textbf{True Viol.} & \textbf{TSVR (\%)} & \textbf{Interv. (\%)} & \textbf{Latency $p_{95}$ ($\mu\text{s}$)} \\
@@ -234,7 +237,8 @@ Battery (BESS) & \textbf{0} & \textbf{0.00\%} & 84.2\% & 16.5 \\
 Grid Inverter & \textbf{0} & \textbf{0.00\%} & 37.1\% & 6.2 \\
 Robotics (ROS 2) & \textbf{0} & \textbf{0.00\%} & 28.0\% & 4.1 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 As shown in Table~\ref{tab:cross_domain}, zero true safety violations occurred across all three domains, with worst-case $p_{95}$ latency remaining below $17\,\mu\text{s}$, confirming real-time viability.
@@ -242,7 +246,10 @@ As shown in Table~\ref{tab:cross_domain}, zero true safety violations occurred a
 \section{Large-Scale Swarm, Proactive K-Bound Gating, and Crucible Verification}
 To evaluate scalability under learned timing attacks and compounding faults, we extended the ORIUS runtime with a \textbf{Velocity-Aware Kinematic Control Barrier Shield} and a \textbf{Proactive K-Bound Anticipatory Governor}. For an agent approaching barrier $x_{\mathrm{barrier}}$ at velocity $v_t$ under transport lag $\tau_{\mathrm{lag}}$, FDI residual $r_{\mathrm{FDI}}$, and deceleration floor $a_{\mathrm{floor}}$, the baseline forward-invariant stopping barrier is:
 \begin{equation}
-h(x_t, v_t, w_t) = (x_{\mathrm{barrier}} - x_t) - \left(v_t \tau_{\mathrm{eff}}(w_t) + \frac{v_t^2}{2 a_{\mathrm{floor}}} + d_{\mathrm{margin}}\right) \ge 0,
+\begin{aligned}
+h(x_t, v_t, w_t) &= (x_{\mathrm{barrier}} - x_t) \\
+&\quad - \left(v_t \tau_{\mathrm{eff}}(w_t) + \frac{v_t^2}{2 a_{\mathrm{floor}}} + d_{\mathrm{margin}}\right) \ge 0,
+\end{aligned}
 \end{equation}
 where $\tau_{\mathrm{eff}}(w_t) = \tau_{\mathrm{lag}} + 0.35(1-w_t) + 0.15$. Under adversarial delay spikes up to $\tau_{\max}$ (\texttt{AdversaryNet}), the observed lag $\tau_{\mathrm{lag}}$ at step $t$ under-reports the in-flight blackout horizon before the next packet arrives; we therefore replace $v_t \tau_{\mathrm{eff}}(w_t) + d_{\mathrm{margin}}$ with the inverse reliability clearance $d_{\mathrm{base}}/w_t$ plus the minimax unannounced blackout buffer $v_t \tau_{\max}$, yielding $h_{\mathrm{proactive}}(x_t,v_t,w_t) = (x_{\mathrm{barrier}}-x_t) - (d_{\mathrm{base}}/w_t + v_t^2/(2a_{\mathrm{floor}}) + v_t\tau_{\max}) \ge 0$. Because $v_t \tau_{\max}$ scales linearly with the certified blackout horizon $\tau_{\max}$, the $\tau_{\max}=3.0\,\text{s}$ regime enforces an earlier pre-braking deceleration envelope and achieves a larger terminal stop margin ($55.02\,\text{m}$) than the nominal zero-spike baseline ($42.10\,\text{m}$) and the $\tau_{\max}=1.0\,\text{s}$ regime ($15.74\,\text{m}$).
 
@@ -287,8 +294,9 @@ While ORIUS is primarily designed for physical embodied AI, its dynamical viabil
 (Lean~4: \texttt{theorem\_h\_\allowbreak liquidity\_\allowbreak floor\_\allowbreak safe\_\allowbreak liquidation}). Let $\mathcal{F}$ be an L2 limit-order-book or wholesale energy-market execution domain with net capital cushion $E_t \ge E_{\min}$, open inventory exposure $I_t$, volatility $\sigma_t$, and effective L2 depth satisfying the explicit liquidity viability floor $L_{\mathrm{depth}}(w_t) \ge L_{\min} > 0$. Under Almgren--Chriss market impact \cite{almgren_chriss_2001}, the safe-liquidation barrier
 \begin{equation}
 \begin{aligned}
-h_{\mathrm{fin}}(E_t, I_t, w_t) &= (E_t - E_{\min}) - \Biggl(|I_t|\,\sigma_t \sqrt{\tau_{\mathrm{eff}}(w_t)} \\
-&\quad + \frac{\gamma_{\mathrm{impact}} I_t^2}{2\,\max(L_{\mathrm{depth}}(w_t), L_{\min})} + m_{\mathrm{conf}}(E_t^{\mathrm{mart}})\Biggr) \ge 0
+h_{\mathrm{fin}}(E_t, I_t, w_t) &= (E_t - E_{\min}) - |I_t|\,\sigma_t \sqrt{\tau_{\mathrm{eff}}(w_t)} \\
+&\quad - \frac{\gamma_{\mathrm{impact}} I_t^2}{2\,\max(L_{\mathrm{depth}}(w_t), L_{\min})} \\
+&\quad - m_{\mathrm{conf}}(E_t^{\mathrm{mart}}) \ge 0
 \end{aligned}
 \end{equation}
 is strictly bounded away from division-by-zero singularity and structurally isomorphic to the second-order physical stopping barrier ($|I_t| \leftrightarrow |v_t|$, $L_{\mathrm{depth}}(w_t)/\gamma_{\mathrm{impact}} \leftrightarrow a_{\mathrm{brake}}$), with the delta-neutral flat-inventory state ($I_t = 0, E_t > E_{\min}$) forming $\mathcal{Z}_{\mathrm{stop}}$ reachable in $\le \lceil |I_0|/\Delta I_{\max}(L_{\min})\rceil$ steps with $0\%$ margin insolvency.
@@ -315,7 +323,7 @@ Financial L2 (ADAUSDC/RL) & 64.41\% & 22.94\% & 19.19\% & \textbf{0.000\%} \\
 }
 \end{table}
 
-We validated Theorems F, G, and H across all seven domains using real telemetry corpora ($224,000$ total simulation steps; $56,000$ ORIUS steps across five seeds and four extreme stress regimes). ORIUS+K-Bound achieves \textbf{0.000\% True Safety / Solvency Violation Rate ($0 / 56,000$ steps)} across all seven domains (Wilcoxon signed-rank $p < 10^{-20}$ vs.\ Unshielded AI, $p < 10^{-18}$ vs.\ Standard CBF, $p < 10^{-16}$ vs.\ Legacy DC3S; Clopper--Pearson $95\%$ exact one-sided upper bound $5.35 \times 10^{-5}$).
+We validated Theorems F, G, and H across all six Physical AI embodiments and the extended market settlement domain using real telemetry corpora ($224,000$ total simulation steps; $56,000$ ORIUS steps across five seeds and four extreme stress regimes). ORIUS+K-Bound achieves \textbf{0.000\% True Safety Violation Rate ($0 / 56,000$ steps)} across all embodiments (Wilcoxon signed-rank $p < 10^{-20}$ vs.\ Unshielded AI, $p < 10^{-18}$ vs.\ Standard CBF, $p < 10^{-16}$ vs.\ Legacy DC3S; Clopper--Pearson $95\%$ exact one-sided upper bound $5.35 \times 10^{-5}$).
 
 \begin{figure}[ht]
 \centering
@@ -375,7 +383,7 @@ Suite B: \texttt{B-3} (50A 2-Cell Bus) & \textbf{ORIUS+K-Bound} & \textbf{0/96 (
 \end{figure}
 
 \section{Conclusion}
-ORIUS + K-Bound provides a rigorous, mathematically justified, and formally mechanized bridge between partial, degraded physical or financial market telemetry and safe closed-loop action release. By establishing Theorems A--G (with extended market liquidation in Theorem~H), formalizing them in Lean~4 (\texttt{formal/Orius/\allowbreak TheoremsFGH.lean} and \texttt{KBoundMind.lean}) with zero unproved obligations, and demonstrating zero true-state violations across diverse real-data Physical AI domains, 100,000-agent adversarial swarms, the four-stage Crucible stress battery, and closed-loop mobile robot and battery bench verification, ORIUS establishes a definitive crash-free blueprint for certified Physical AI.
+ORIUS + K-Bound provides a rigorous, mathematically justified, and formally mechanized bridge between partial, degraded physical telemetry (with extended resource-constrained settlement) and safe closed-loop action release. By establishing Theorems A--G (with extended market liquidation in Theorem~H), formalizing them in Lean~4 (\texttt{formal/Orius/\allowbreak TheoremsFGH.lean} and \texttt{KBoundMind.lean}) with zero unproved obligations, and demonstrating zero true-state violations across diverse real-data Physical AI domains, 100,000-agent adversarial swarms, the four-stage Crucible stress battery, and closed-loop mobile robot and battery bench verification, ORIUS establishes a definitive crash-free blueprint for certified Physical AI.
 
 \begin{thebibliography}{10}
 \bibitem{annurev_safety_filter_2024}
