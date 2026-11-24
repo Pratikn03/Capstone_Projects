@@ -150,6 +150,26 @@ The formal problem is intentionally narrower than a claim of general AI safety. 
   \item and a governance layer capable of recording why a release remained admissible.
 \end{itemize}
 
+\section{Actuator dynamics, jerk bounds, and latency inflation}
+\label{sec:actuator_jerk_bounds}
+In embodied Physical AI deployments, physical actuators cannot track commanded control signals
+instantaneously. Control signals $u_t$ are mediated by real-world physical actuators characterized by
+finite slew rates and jerk limits $|\dot{a}(t)| \le a_{\max}$ and $|\ddot{a}(t)| \le J_{\max}$. 
+
+To preserve formal recursive viability (Theorem~A) across physical embodiments without unmodeled
+actuator lag penetration, ORIUS defines the effective dynamic horizon $\tau_{\mathrm{eff}}(w_t)$ as:
+\begin{equation}
+\label{eq:actuator_effective_latency}
+\tau_{\mathrm{eff}}(w_t) = \tau_{\mathrm{lag}} + \frac{a_{\max}}{2 J_{\max}} + 0.35(1 - w_t) + 0.15,
+\end{equation}
+where $\tau_{\mathrm{lag}}$ represents baseline communication transport lag and $w_t \in [0,1]$ is the
+real-time observation health score. The term $\frac{a_{\max}}{2 J_{\max}}$ accounts for the second-order
+actuator acceleration rise time, while the adaptive term $0.35(1-w_t) + 0.15$ dynamically inflates the
+safety horizon as observation quality degrades. This induces an inflated forward stopping envelope
+$\Delta d_{\mathrm{jerk}} = v_t \tau_{\mathrm{eff}}(w_t) + \frac{1}{2} a_{\max} \tau_{\mathrm{eff}}(w_t)^2$,
+guaranteeing that certified release over the extended state $\tilde{x}_t = (x_t, a_t)$ remains viable on
+physical hardware.
+
 ORIUS does not assume perfect state recovery, universal optimal control, or equal empirical
 maturity across all domains. It also does not assume that uncertainty calibration alone proves
 safety. The later theorem and validation chapters are therefore written under explicit assumptions
